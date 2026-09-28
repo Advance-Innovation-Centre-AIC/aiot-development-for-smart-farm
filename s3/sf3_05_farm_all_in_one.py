@@ -54,7 +54,7 @@ FAN_LO, FAN_SPAN = 25, 20       # VR3 ตั้งเกณฑ์เปิดพ
 PUMP_ON, PUMP_OFF = 35, 45      # ดินต่ำกว่า 35 % เปิดปั๊ม เกิน 45 % ปิด (hysteresis)
 GUARD_LO, GUARD_SPAN = 50, 200  # VR4 ตั้งเขตคอก 50-250 cm
 TICK_MS, REPORT_MS, RUN_MS = 500, 5000, 600000   # วัด+วาดจอ / รายงาน / เวลารันทั้งหมด
-VOLUME = 51                     # ความดังเสียง 0-127 (≈40%)
+VOLUME = 38                     # ความดังเสียง 0-127 (≈30%)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
