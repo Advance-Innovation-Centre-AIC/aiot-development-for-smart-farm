@@ -7,7 +7,7 @@
 # ของบนบอร์ดที่ใช้ : SHT40 = อุณหภูมิ + ความชื้น · แฟลช = คลังค่าตั้ง (ถอดไฟแล้วยังอยู่)
 #            จอไฟ RGB 16x8 = คำว่า CLOUD ตอนต่อติด แล้วนับใบที่ส่งสำเร็จ
 #            ลำโพงดังเฉพาะตอนต่อติด และตอนส่งสำเร็จ
-# บนจอ     : ตารางคลังค่าตั้ง 6 คีย์ (Table), ไฟ "ต่อติดแล้ว" (Led), วงหมุนตอนรอเน็ต (Spinner),
+# บนจอ     : ตารางคลังค่าตั้ง 6 คีย์ (Table), ไฟ "ต่อติดแล้ว" (Led),
 #            หลอดเวลารอสาย TLS 0-15 วิ (Bar), ตัวเลขใหญ่ ms ที่รอ กับจำนวนใบที่ส่ง (Seg7)
 # แนวคิด AIoT: sf2_02 ต้องพิมพ์ชื่อ broker กับหัวข้อในโค้ดทุกไฟล์ คลังค่าตั้งเก็บไว้ที่บอร์ดครั้งเดียว
 #            โปรแกรมทุกตัวอ่านค่าเดียวกัน และ publish() ประกอบหัวข้อให้เองจาก device_id
@@ -26,8 +26,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-WIFI_SSID = "bento-teamXX"
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 DEVICE_ID = "<device_id ที่ผู้สอนแจก>"
 # ห้ามใส่ broker.hivemq.com ตรงนี้ มันจะถูกเขียนลงแฟลชแล้วรอจนหมดเวลาเปล่า ๆ
 PLATFORM_BROKER = ""
@@ -156,7 +156,6 @@ def build_config_card(w):
 def build_link_card(w):
     card(12, 268, 390, 70, "สาย TLS: รอมาแล้วกี่ ms")
     w["led"] = ui.Led(x=24, y=298, w=34, h=34, color=COL_OK)     # 0 = หรี่ = ยังไม่ติด
-    w["spin"] = ui.Spinner(x=70, y=296, w=38, h=38)
     w["bar"] = ui.Bar(x=120, y=309, w=140, h=14, min=0, max=WAIT_MS)
     w["bar"].color(COL_WARN)           # สีตอนสร้างใช้ไม่ได้กับ Bar ต้องตั้งหลังสร้าง
     w["seg_ms"] = ui.Seg7(text="0", x=272, y=296, w=120, h=38, color=COL_INFO)
@@ -177,7 +176,6 @@ def build_screen():
     build_config_card(w)
     build_link_card(w)
     build_sent_card(w)
-    w["spin"].hide()                   # วงหมุนโผล่เฉพาะตอนรอเน็ต
     ui.poll()
     return w
 
@@ -213,7 +211,6 @@ def mark_link(w, col):
 
 def show_online(w):
     mark_link(w, COL_OK)
-    w["spin"].hide()
     w["led"].value(1)
     show_status(w, "ต่อแพลตฟอร์มติดแล้ว", COL_OK)
     rgbmatrix.scroll("CLOUD", rgbmatrix.CYAN, 80)
@@ -238,7 +235,6 @@ def show_sent(w, i, sent, t, h, ok):
 def stop(w, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม: ล้างจอไฟ RGB ดับไฟ "ต่อติด" แล้วบอกเหตุผลทั้งบนจอและคอนโซล
     matrix_show(0)
-    w["spin"].hide()
     w["led"].value(0)
     show_status(w, msg, col)
     print("หยุดที่:", msg)
@@ -272,7 +268,6 @@ def main():
         stop(w, problem[0], problem[1])
     show_cfg(w, save_platform())       # 2) เขียนทับสองคีย์ แล้วโชว์ค่าที่อ่านกลับมาจากแฟลช
     show_status(w, "กำลังต่อ WiFi จอจะนิ่งสักครู่", COL_WARN)
-    w["spin"].show()
     if not join_wifi():                # 3) WiFi ก่อน แพลตฟอร์มทีหลัง
         stop(w, "ต่อ WiFi ไม่ได้ ค่าที่ตั้งไว้ยังอยู่บนแฟลช")
     show_status(w, "สั่งต่อแล้ว กำลังรอสาย TLS", COL_WARN)

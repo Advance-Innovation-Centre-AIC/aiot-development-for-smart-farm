@@ -6,7 +6,7 @@
 #            ปิด Hotspot สัก 10 วินาทีแล้วเปิดใหม่ ดูวงแหวน ไฟ และกราฟว่าเห็นอะไร
 # ของบนบอร์ดที่ใช้ : ไฟ RGB_GREEN บนบอร์ด = ฟาร์มออนไลน์อยู่ · SHT40 = อากาศในโรงเรือน
 #            จอไฟ RGB 16x8 วิ่งคำว่า WIFI / ONLINE / OFFLINE · ลำโพงดังเฉพาะตอนสถานะเปลี่ยน
-# บนจอ     : วงหมุนตอนกำลังต่อ (Spinner), เวลาที่ใช้ต่อ (Seg7), วงแหวนออนไลน์ % (Arc),
+# บนจอ     : เวลาที่ใช้ต่อ (Seg7), วงแหวนออนไลน์ % (Arc),
 #            ไฟออนไลน์ (Led), กราฟลิงก์กับความแรงสัญญาณทุกวินาที (Chart)
 # แนวคิด AIoT: ก่อนจะส่งข้อมูลฟาร์มออกไปได้ บอร์ดต้องมี "ที่อยู่" (IP) บนเครือข่ายก่อน
 #            และ "ต่อติดครั้งหนึ่ง" ไม่ได้แปลว่า "ออนไลน์ตลอด" ต้องเฝ้าดูลิงก์เสมอ
@@ -25,8 +25,8 @@ import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
 # แก้สองบรรทัดนี้ให้ตรงกับ Hotspot มือถือของกลุ่ม (WiFi คณะที่ต้อง login ผ่านเว็บ บอร์ดใช้ไม่ได้)
-WIFI_SSID = "bento-teamXX"
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 
 FARM_NAME = "โรงเรือนกลุ่ม XX"          # ชื่อฟาร์มบนจอ แก้เป็นของกลุ่มคุณ
 RUN_MS = 60000                        # เฝ้าดูลิงก์นานเท่าไรหลังต่อติด
@@ -125,7 +125,6 @@ def connect_wifi(w):
     t0 = time.ticks_ms()
     ok = wifi.connect(WIFI_SSID, WIFI_PASS)
     took = time.ticks_diff(time.ticks_ms(), t0)
-    w["spin"].hide()
     w["seg"].text(str(took))           # Seg7 รับข้อความ ไม่ใช่ตัวเลข
     w["seg"].color(COL_OK if ok else COL_BAD)
     return ok, took
@@ -180,7 +179,7 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("ฟาร์มต่ออินเทอร์เน็ต", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label(FARM_NAME, x=320, y=12, color=COL_INFO, value=16)
-    w = {"spin": ui.Spinner(x=744, y=4, w=36, h=36)}          # หมุนระหว่างรอ connect()
+    w = {}
     card(12, 44, 380, 150, "ต่อ WiFi (ms) และ IP")
     w["seg"] = ui.Seg7(text="----", x=24, y=76, w=150, h=56, color=COL_WARN)
     w["ip"] = ui.Label("-", x=190, y=92, color=COL_TEXT, value=20)
@@ -243,7 +242,6 @@ def stop(w, led, msg, col):
     set_led(led, False)
     marquee("", rgbmatrix.WHITE)
     rgbmatrix.clear()
-    w["spin"].hide()
     show_note(w, msg, col)
     ui.poll()
 

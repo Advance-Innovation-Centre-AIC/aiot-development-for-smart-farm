@@ -25,8 +25,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-WIFI_SSID = "bento-teamXX"
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 TEAM = "teamXX"                        # เลขของกลุ่มที่เป็น Gateway (ต้องตรงกันทั้งสองบอร์ด)
 
 BROKER = "broker.hivemq.com"

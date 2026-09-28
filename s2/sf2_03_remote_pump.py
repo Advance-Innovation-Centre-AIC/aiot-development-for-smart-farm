@@ -7,7 +7,7 @@
 # ของบนบอร์ดที่ใช้ : ไฟ RGB_BLUE บนบอร์ด = ปั๊มน้ำ (รีเลย์) · VR1 = ความชื้นดิน (จำลอง) · VR4 = น้ำในถัง (จำลอง)
 #            SW5 (ปุ่มล่าง) = ปุ่มหยุดฉุกเฉินหน้าฟาร์ม ปั๊มดับทันทีโดยไม่ต้องพึ่งเน็ต
 #            จอไฟ RGB 16x8 = นับถอยหลังวินาทีที่ปั๊มเปิด หรือตัววิ่งจากคำสั่ง say · ลำโพงดังเฉพาะตอนคำสั่งเข้า
-# บนจอ     : ไฟปั๊ม (Led), วงแหวนนับถอยหลัง (Arc), หลอดน้ำในถัง (Bar), วงหมุนตอนกำลังต่อเน็ต (Spinner)
+# บนจอ     : ไฟปั๊ม (Led), วงแหวนนับถอยหลัง (Arc), หลอดน้ำในถัง (Bar)
 # แนวคิด AIoT: Command -> Check -> Act  ไม่เชื่อคนส่ง ตรวจทุกคำสั่งก่อนแตะของจริง
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
 # คำสั่งที่รู้จัก: {"cmd":"pump","on":1,"sec":10}  {"cmd":"pump","on":0}  {"cmd":"led","n":0,"on":1}
@@ -25,8 +25,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-WIFI_SSID = "bento-teamXX"
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 TEAM = "teamXX"                        # team01 ถึง team20 (team00 = บอร์ดผู้สอนหน้าห้อง)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
@@ -184,7 +184,7 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ปั๊มน้ำสั่งจากที่ไกล", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"spin": ui.Spinner(x=744, y=4, w=36, h=36)}
+    w = {}
     w["title"] = card(12, 44, 440, 290, "ปั๊มน้ำ = ไฟสีฟ้า (คำสั่ง 0)")
     w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)       # สร้างมาแบบหรี่ = ปั๊มปิด
     w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
@@ -227,7 +227,6 @@ def stop(w, pump, msg, col=COL_BAD):
     set_led(pump, False)
     rgbmatrix.scroll("")
     rgbmatrix.clear()
-    w["spin"].hide()
     show_note(w, msg, col)
     ui.poll()
     raise SystemExit
@@ -261,7 +260,6 @@ def main():
     problem = connect_farm(w)
     if problem:
         stop(w, pump, problem)
-    w["spin"].hide()
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
     stop_btn = Button(0)
     got = n = pump_ms = pump_t0 = 0
