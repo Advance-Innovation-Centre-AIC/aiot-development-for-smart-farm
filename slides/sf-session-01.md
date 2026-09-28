@@ -1059,9 +1059,11 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
 </svg>
 
 ```python
-rgbmatrix.RED | rgbmatrix.GREEN == rgbmatrix.YELLOW   # 1 | 2 = 3
-rgbmatrix.score(28, rgbmatrix.GREEN)   # เลขตัวใหญ่สีเขียว
-rgbmatrix.pixel(3, 5, rgbmatrix.CYAN)  # จุดเดียว x=3 y=5
+# แดง + เขียว = เหลือง (รวมแสงเหมือนไฟ RGB)
+yellow = rgbmatrix.RED | rgbmatrix.GREEN   # 1 + 2 = 3 = YELLOW
+rgbmatrix.fill(yellow)                     # ทั้งจอสีเหลือง
+rgbmatrix.score(28, rgbmatrix.GREEN)       # เลข 28 ตัวใหญ่สีเขียว
+rgbmatrix.pixel(3, 5, rgbmatrix.CYAN)      # จุดเดียวที่ x=3, y=5
 ```
 
 </div>
