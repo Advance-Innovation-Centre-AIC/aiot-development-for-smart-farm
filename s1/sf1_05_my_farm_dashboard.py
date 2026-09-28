@@ -52,7 +52,7 @@ MATRIX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)
 
 # ---- 2) ฮาร์ดแวร์ ----
 def read_climate():
-    """คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)"""
+    # คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)
     for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
         try:
             t_raw = sensors.sht40.temperature()
@@ -69,8 +69,8 @@ def read_climate():
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
+    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -86,9 +86,9 @@ def set_pump(pump, running):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
-    เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด" """
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
+    # เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด"
 
     def __init__(self, index):
         self.index = index
@@ -102,14 +102,14 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired = self.clicked
         self.clicked = False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -118,7 +118,7 @@ def wait_ms(ms, btns):
 
 
 def matrix_show(show_temp, t, score, zone, shown):
-    """จอไฟ RGB: คะแนนสุขภาพ (สีตามโซน) หรืออุณหภูมิ (สีฟ้า) วาดใหม่เฉพาะตอนเปลี่ยน"""
+    # จอไฟ RGB: คะแนนสุขภาพ (สีตามโซน) หรืออุณหภูมิ (สีฟ้า) วาดใหม่เฉพาะตอนเปลี่ยน
     if show_temp and t is not None:
         want = (int(t + 0.5), rgbmatrix.CYAN)
     else:
@@ -130,7 +130,7 @@ def matrix_show(show_temp, t, score, zone, shown):
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def pump_decision(pump_on, soil):
-    """กฎปั๊มแบบมีช่องกันกระพือ: เปิดเมื่อดินแห้งกว่า SOIL_MIN ปิดเมื่อชื้นเกิน SOIL_MIN + SOIL_HYST"""
+    # กฎปั๊มแบบมีช่องกันกระพือ: เปิดเมื่อดินแห้งกว่า SOIL_MIN ปิดเมื่อชื้นเกิน SOIL_MIN + SOIL_HYST
     if not pump_on and soil < SOIL_MIN:
         return True
     if pump_on and soil > SOIL_MIN + SOIL_HYST:
@@ -139,15 +139,15 @@ def pump_decision(pump_on, soil):
 
 
 def room_humidity(h_raw, t_raw, t_room):
-    """อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
-    ไอน้ำเท่าเดิมแต่ห้องเย็นกว่า จึงคูณด้วยอัตราส่วนความดันไออิ่มตัว (สูตร Magnus)"""
+    # อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
+    # ไอน้ำเท่าเดิมแต่ห้องเย็นกว่า จึงคูณด้วยอัตราส่วนความดันไออิ่มตัว (สูตร Magnus)
     def es(t):
         return 6.112 * math.exp(17.62 * t / (243.12 + t))
     return min(100.0, h_raw * es(t_raw) / es(t_room))
 
 
 def health(t, h, soil):
-    """คะแนนสุขภาพฟาร์ม 0-100 (TODO: ปรับน้ำหนักตามความสำคัญของงานกลุ่ม)"""
+    # คะแนนสุขภาพฟาร์ม 0-100 (TODO: ปรับน้ำหนักตามความสำคัญของงานกลุ่ม)
     if t is None or h is None:
         return 0
     score = 100
@@ -161,14 +161,14 @@ def health(t, h, soil):
 
 
 def zone_of(score):
-    """0 = ดี (80 ขึ้นไป), 1 = พอใช้, 2 = แย่ (ต่ำกว่า 50)"""
+    # 0 = ดี (80 ขึ้นไป), 1 = พอใช้, 2 = แย่ (ต่ำกว่า 50)
     if score >= 80:
         return 0
     return 1 if score >= 50 else 2
 
 
 def advice_parts(t, h, soil):
-    """รายการคำแนะนำจากสถานะตอนนี้ (TODO: เพิ่มคำแนะนำของกลุ่มคุณเอง)"""
+    # รายการคำแนะนำจากสถานะตอนนี้ (TODO: เพิ่มคำแนะนำของกลุ่มคุณเอง)
     tips = []
     if t is not None and t > T_HI:
         tips.append("เปิดพัดลม/พ่นหมอก")
@@ -185,15 +185,15 @@ def advice_parts(t, h, soil):
 
 # ---- 4) หน้าจอ ----
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)"""
+    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
+    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def build_overview_tab(w, tab):
-    """หน้า "ภาพรวม" (พิกัดนับจากมุมซ้ายบนของหน้าแท็บ ไม่ใช่ของจอ)"""
+    # หน้า "ภาพรวม" (พิกัดนับจากมุมซ้ายบนของหน้าแท็บ ไม่ใช่ของจอ)
     w["arc"] = ui.Arc(x=0, y=0, w=150, h=150, min=0, max=100, value=0, parent=tab)
     w["score"] = ui.Label("0", x=50, y=54, color=COL_TEXT, value=28, parent=tab)
     ui.Label("สุขภาพฟาร์ม", x=20, y=156, color=COL_INFO, value=16, parent=tab)
@@ -207,7 +207,7 @@ def build_overview_tab(w, tab):
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label(FARM_NAME + " - " + CROP, x=12, y=6, color=COL_TEXT, value=24)
@@ -227,7 +227,7 @@ def build_screen():
 
 
 def note_event(w, sec, what, score, sound):
-    """มีเหตุการณ์: เสียงหนึ่งครั้ง + ขึ้นบรรทัด "ล่าสุด" ใต้คะแนน (เรียกเฉพาะตอนเกิดเหตุ ไม่ใช่ทุกรอบ)"""
+    # มีเหตุการณ์: เสียงหนึ่งครั้ง + ขึ้นบรรทัด "ล่าสุด" ใต้คะแนน (เรียกเฉพาะตอนเกิดเหตุ ไม่ใช่ทุกรอบ)
     ui.sfx(sound)
     w["event"].color(COL_TEXT)
     w["event"].text("วินาที %d: %s (คะแนน %d)" % (sec, what, score))

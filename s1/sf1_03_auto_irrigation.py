@@ -55,8 +55,8 @@ def tank_percent():
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
+    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -67,7 +67,7 @@ def led_named(name):
 
 
 def set_pump(pump, running):
-    """ไฟสีฟ้าบนบอร์ดแทน "รีเลย์ปั๊มน้ำ" (ฟาร์มจริงต่อรีเลย์ที่ขาเดียวกันนี้)"""
+    # ไฟสีฟ้าบนบอร์ดแทน "รีเลย์ปั๊มน้ำ" (ฟาร์มจริงต่อรีเลย์ที่ขาเดียวกันนี้)
     if pump is None:
         return
     if running:
@@ -77,10 +77,10 @@ def set_pump(pump, running):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 (ปุ่มล่าง), 1 = SW6 (ปุ่มบน)) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
-    ถ้าอ่านรอบละครั้ง (ทุกครึ่งวินาที) การกดแบบแตะจะหายไปเฉย ๆ
-    เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด" """
+    # ปุ่มบนฐานบอร์ด (0 = SW5 (ปุ่มล่าง), 1 = SW6 (ปุ่มบน)) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
+    # ถ้าอ่านรอบละครั้ง (ทุกครึ่งวินาที) การกดแบบแตะจะหายไปเฉย ๆ
+    # เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด"
 
     def __init__(self, index):
         self.index = index
@@ -94,14 +94,14 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired = self.clicked
         self.clicked = False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while True:
         for b in btns:
@@ -113,7 +113,7 @@ def wait_ms(ms, btns):
 
 
 def put(buf, x, y, c):
-    """ตั้งสีจุด (x, y) ในเฟรม 64 ไบต์ของจอไฟ RGB (จุดละ 4 บิต)"""
+    # ตั้งสีจุด (x, y) ในเฟรม 64 ไบต์ของจอไฟ RGB (จุดละ 4 บิต)
     i = y * 8 + (x >> 1)
     if x & 1:
         buf[i] = (buf[i] & 0x0F) | (c << 4)
@@ -122,7 +122,7 @@ def put(buf, x, y, c):
 
 
 def draw_farm(soil, th, tank, running):
-    """วาดจอไฟ RGB ทั้งจอ: ซ้าย = ดิน, กลาง = น้ำไหล, ขวา = น้ำในถัง"""
+    # วาดจอไฟ RGB ทั้งจอ: ซ้าย = ดิน, กลาง = น้ำไหล, ขวา = น้ำในถัง
     buf = bytearray(64)
     s_rows = soil * 8 // 100            # ความชื้นดิน 0-8 แถว (นับจากล่าง)
     t_rows = tank * 8 // 100            # น้ำในถัง 0-8 แถว
@@ -146,7 +146,7 @@ def draw_farm(soil, th, tank, running):
 
 
 def matrix_update(soil, th, tank, running, drawn):
-    """วาดจอไฟ RGB ใหม่เฉพาะตอนภาพจะเปลี่ยนจริง แล้วคืนภาพที่วาดอยู่"""
+    # วาดจอไฟ RGB ใหม่เฉพาะตอนภาพจะเปลี่ยนจริง แล้วคืนภาพที่วาดอยู่
     frame = (soil * 8 // 100, th * 8 // 100, tank * 8 // 100, soil < th,
              tank >= TANK_MIN, running)
     if frame != drawn:
@@ -156,8 +156,8 @@ def matrix_update(soil, th, tank, running, drawn):
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def pump_decision(pump_on, soil, th):
-    """กฎปั๊มแบบมีช่องกันกระพือ (hysteresis):
-    เปิดเมื่อดินแห้งกว่าเกณฑ์, ปิดเมื่อชื้นเกิน เกณฑ์ + HYST, ระหว่างนั้นคงสถานะเดิม"""
+    # กฎปั๊มแบบมีช่องกันกระพือ (hysteresis):
+    # เปิดเมื่อดินแห้งกว่าเกณฑ์, ปิดเมื่อชื้นเกิน เกณฑ์ + HYST, ระหว่างนั้นคงสถานะเดิม
     if not pump_on and soil < th:
         return True
     if pump_on and soil > th + HYST:
@@ -166,20 +166,20 @@ def pump_decision(pump_on, soil, th):
 
 
 def should_run(auto_wants, manual, tank_ok):
-    """ปั๊มเดินจริง = (กฎอัตโนมัติสั่ง หรือ กด SW5 (ปุ่มล่าง) ค้าง) และ น้ำในถังพอ"""
+    # ปั๊มเดินจริง = (กฎอัตโนมัติสั่ง หรือ กด SW5 (ปุ่มล่าง) ค้าง) และ น้ำในถังพอ
     return (auto_wants or manual) and tank_ok
 
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)"""
+    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
+    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
@@ -205,7 +205,7 @@ def build_pump_card(w):
 
 
 def build_chart(w):
-    """กราฟ: ฟ้า (ชุด 0) = ความชื้นดิน, แดง = เกณฑ์เปิดปั๊ม, เขียว = เกณฑ์ปิดปั๊ม"""
+    # กราฟ: ฟ้า (ชุด 0) = ความชื้นดิน, แดง = เกณฑ์เปิดปั๊ม, เขียว = เกณฑ์ปิดปั๊ม
     ui.Label("ฟ้า = ดิน   แดง = เกณฑ์เปิด   เขียว = เกณฑ์ปิด", x=12, y=236,
              color=COL_DIM, value=14)
     w["chart"] = line_chart(12, 258, 400, 80, 0, 100, COL_INFO)
@@ -221,7 +221,7 @@ def build_tank_card(w):
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ระบบรดน้ำอัตโนมัติ", x=12, y=6, color=COL_TEXT, value=24)
@@ -240,7 +240,7 @@ def build_screen():
 
 
 def read_auto_switch(w, auto):
-    """อ่านเหตุการณ์จากจอ: สวิตช์ส่ง toggled พร้อมค่า 1 = อัตโนมัติ, 0 = มือ"""
+    # อ่านเหตุการณ์จากจอ: สวิตช์ส่ง toggled พร้อมค่า 1 = อัตโนมัติ, 0 = มือ
     for ev in ui.poll():
         if ev["handle"] == w["switch"].id() and ev["type"] == "toggled":
             auto = ev["value"] == 1
@@ -249,7 +249,7 @@ def read_auto_switch(w, auto):
 
 
 def announce_pump(w, running):
-    """ตอนปั๊มเพิ่งเปิด/ปิด (ไม่ใช่ทุกรอบ): เสียงหนึ่งครั้ง"""
+    # ตอนปั๊มเพิ่งเปิด/ปิด (ไม่ใช่ทุกรอบ): เสียงหนึ่งครั้ง
     ui.sfx(ui.SFX_UI_START if running else ui.SFX_UI_BACK)
 
 
@@ -285,7 +285,7 @@ def show_chart(w, soil, th):
 
 # ---- 5) โปรแกรมหลัก ----
 def finish(w, pump, runs, water_l):
-    """จบรอบ: ปิดปั๊ม ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console"""
+    # จบรอบ: ปิดปั๊ม ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console
     set_pump(pump, False)
     try:
         rgbmatrix.clear()

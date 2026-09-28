@@ -46,7 +46,7 @@ RANGE = SAFE_DEG * 1.5   # เอียงเท่านี้ จุดบน�
 
 # ---- 2) ฮาร์ดแวร์ ----
 def read_motion():
-    """คืน (ax, ay, az) หน่วย m/s2 ถ้าอ่าน IMU ไม่ได้คืน None"""
+    # คืน (ax, ay, az) หน่วย m/s2 ถ้าอ่าน IMU ไม่ได้คืน None
     try:
         ax, ay, az, _, _, _ = sensors.bmi270.motion()
         return ax, ay, az
@@ -55,8 +55,8 @@ def read_motion():
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
+    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -76,10 +76,10 @@ def set_alarm(alarm, danger):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 (ปุ่มล่าง), 1 = SW6 (ปุ่มบน)) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
-    ถ้าอ่านรอบละครั้ง (ทุกครึ่งวินาที) การกดแบบแตะจะหายไปเฉย ๆ
-    เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด" """
+    # ปุ่มบนฐานบอร์ด (0 = SW5 (ปุ่มล่าง), 1 = SW6 (ปุ่มบน)) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
+    # ถ้าอ่านรอบละครั้ง (ทุกครึ่งวินาที) การกดแบบแตะจะหายไปเฉย ๆ
+    # เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด"
 
     def __init__(self, index):
         self.index = index
@@ -93,14 +93,14 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired = self.clicked
         self.clicked = False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while True:
         for b in btns:
@@ -112,8 +112,8 @@ def wait_ms(ms, btns):
 
 
 def measure_zero():
-    """ตอนเริ่ม: อ่าน IMU ZERO_SAMPLES ครั้งแล้วเฉลี่ย ท่าที่บอร์ดวางอยู่ = ศูนย์
-    (Dev Kit วางบนโต๊ะก็เอียงอยู่แล้วราว 39 องศา ถ้าไม่ตั้งศูนย์ จะขึ้น "อันตราย" ตั้งแต่เฟรมแรก)"""
+    # ตอนเริ่ม: อ่าน IMU ZERO_SAMPLES ครั้งแล้วเฉลี่ย ท่าที่บอร์ดวางอยู่ = ศูนย์
+    # (Dev Kit วางบนโต๊ะก็เอียงอยู่แล้วราว 39 องศา ถ้าไม่ตั้งศูนย์ จะขึ้น "อันตราย" ตั้งแต่เฟรมแรก)
     sum_roll = sum_pitch = 0.0
     n = 0
     for _ in range(ZERO_SAMPLES):
@@ -131,8 +131,8 @@ def measure_zero():
 
 
 def draw_bubble(bx, by, color):
-    """จุด 2x2 บนจอไฟ RGB 16x8 ที่ (bx, by)  จุดฟ้าตรงกลาง = เป้าที่ต้องเล็ง
-    เฟรม 64 ไบต์ จุดละ 4 บิต: x คู่ = 4 บิตล่าง, x คี่ = 4 บิตบน"""
+    # จุด 2x2 บนจอไฟ RGB 16x8 ที่ (bx, by)  จุดฟ้าตรงกลาง = เป้าที่ต้องเล็ง
+    # เฟรม 64 ไบต์ จุดละ 4 บิต: x คู่ = 4 บิตล่าง, x คี่ = 4 บิตบน
     buf = bytearray(64)
     dots = ((7, 3, rgbmatrix.BLUE), (8, 3, rgbmatrix.BLUE), (7, 4, rgbmatrix.BLUE),
             (8, 4, rgbmatrix.BLUE), (bx, by, color), (bx + 1, by, color),
@@ -150,7 +150,7 @@ def draw_bubble(bx, by, color):
 
 
 def matrix_update(roll, pitch, level, drawn):
-    """วาดจอไฟ RGB ใหม่เฉพาะตอนจุดขยับหรือเปลี่ยนสี แล้วคืนภาพที่วาดอยู่"""
+    # วาดจอไฟ RGB ใหม่เฉพาะตอนจุดขยับหรือเปลี่ยนสี แล้วคืนภาพที่วาดอยู่
     bx, by = bubble_cell(roll, pitch)
     want = (bx, by, MATRIX_COLORS[level])
     if want != drawn:
@@ -160,20 +160,20 @@ def matrix_update(roll, pitch, level, drawn):
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def tilt_angles(ax, ay, az):
-    """คืน (roll, pitch) เป็นองศา จากทิศของแรงโน้มถ่วง
-    ใช้ abs(az) เพื่อให้วางบอร์ดหงายหรือคว่ำก็ได้ค่าใกล้ 0 เหมือนกัน"""
+    # คืน (roll, pitch) เป็นองศา จากทิศของแรงโน้มถ่วง
+    # ใช้ abs(az) เพื่อให้วางบอร์ดหงายหรือคว่ำก็ได้ค่าใกล้ 0 เหมือนกัน
     roll = math.degrees(math.atan2(ay, abs(az)))
     pitch = math.degrees(math.atan2(-ax, math.sqrt(ay * ay + az * az)))
     return roll, pitch
 
 
 def g_force(ax, ay, az):
-    """แรงรวมเป็น "กี่เท่าของแรงโน้มถ่วง" (วางนิ่ง = 1.0 g)"""
+    # แรงรวมเป็น "กี่เท่าของแรงโน้มถ่วง" (วางนิ่ง = 1.0 g)
     return math.sqrt(ax * ax + ay * ay + az * az) / G
 
 
 def tilt_level(tilt):
-    """0 = ปลอดภัย, 1 = ระวัง (เกิน 70 % ของมุมปลอดภัย), 2 = อันตราย"""
+    # 0 = ปลอดภัย, 1 = ระวัง (เกิน 70 % ของมุมปลอดภัย), 2 = อันตราย
     if tilt > SAFE_DEG:
         return 2
     if tilt > SAFE_DEG * 0.7:
@@ -182,15 +182,15 @@ def tilt_level(tilt):
 
 
 def bubble_cell(roll, pitch):
-    """แปลงมุมเอียงเป็นตำแหน่งจุดบนจอไฟ RGB: x 0..14, y 0..6 (กลาง = 7, 3)"""
+    # แปลงมุมเอียงเป็นตำแหน่งจุดบนจอไฟ RGB: x 0..14, y 0..6 (กลาง = 7, 3)
     bx = int(round(7 + max(-1.0, min(1.0, pitch / RANGE)) * 7))   # ซ้าย-ขวา = แนวนอนของจอไฟ
     by = int(round(3 + max(-1.0, min(1.0, roll / RANGE)) * 3))    # หน้า-หลัง = แนวตั้งของจอไฟ
     return bx, by
 
 
 class Record:
-    """สถิติของรอบนี้: จำนวนครั้งที่โดนกระแทก, มุมเอียงมากสุด, แรงรวมสูงสุด
-    และเวลาที่ประคองแท็งก์ให้อยู่ในเป้าได้ (เกม)"""
+    # สถิติของรอบนี้: จำนวนครั้งที่โดนกระแทก, มุมเอียงมากสุด, แรงรวมสูงสุด
+    # และเวลาที่ประคองแท็งก์ให้อยู่ในเป้าได้ (เกม)
 
     def __init__(self):
         self.last_bump = 0
@@ -203,7 +203,7 @@ class Record:
         self.on_target_ms = 0
 
     def add(self, tilt, g, now, dt_ms):
-        """เก็บค่ารอบนี้ คืน True ถ้าเป็นแรงกระแทกครั้งใหม่ (ห่างครั้งก่อนเกินครึ่งวินาที)"""
+        # เก็บค่ารอบนี้ คืน True ถ้าเป็นแรงกระแทกครั้งใหม่ (ห่างครั้งก่อนเกินครึ่งวินาที)
         self.max_tilt = max(self.max_tilt, tilt)
         self.g_max = max(self.g_max, g)
         if tilt <= TARGET_DEG:
@@ -217,20 +217,20 @@ class Record:
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def set_needle(scale, value):
-    """Scale วาดแค่ขีดกับตัวเลข ไม่มีเข็มในตัว เราสั่งเข็มเอง:
-    ความยาวเข็มอยู่ 16 บิตบน ค่าที่ชี้อยู่ 16 บิตล่าง"""
+    # Scale วาดแค่ขีดกับตัวเลข ไม่มีเข็มในตัว เราสั่งเข็มเอง:
+    # ความยาวเข็มอยู่ 16 บิตบน ค่าที่ชี้อยู่ 16 บิตล่าง
     scale.prop(ui.PROP_SCALE_NEEDLE, (NEEDLE_LEN << 16) | (int(value) & 0xFFFF))
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)"""
+    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
+    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
@@ -258,7 +258,7 @@ def build_bump_card(w):
 
 
 def build_chart(w):
-    """กราฟ: เส้นฟ้า (ชุด 0) = มุมเอียง, เส้นแดง = มุมปลอดภัย"""
+    # กราฟ: เส้นฟ้า (ชุด 0) = มุมเอียง, เส้นแดง = มุมปลอดภัย
     ui.Label("เส้นฟ้า = มุมเอียง   เส้นแดง = มุมปลอดภัย", x=402, y=236,
              color=COL_DIM, value=14)
     w["chart"] = line_chart(402, 256, 378, 80, 0, GAUGE_MAX, COL_INFO)
@@ -267,7 +267,7 @@ def build_chart(w):
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("แท็งก์น้ำ/รถไถ เอียงเกินไหม", x=12, y=6, color=COL_TEXT, value=24)
@@ -306,7 +306,7 @@ def show_bumps(w, g, rec):
 
 # ---- 5) โปรแกรมหลัก ----
 def finish(w, alarm, rec):
-    """จบรอบ: ดับไฟเตือน ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console"""
+    # จบรอบ: ดับไฟเตือน ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console
     set_alarm(alarm, False)
     try:
         rgbmatrix.clear()

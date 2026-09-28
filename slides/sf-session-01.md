@@ -1652,7 +1652,7 @@ def tilt_angles(ax, ay, az):
 
 ```python
 def health(t, h, soil):
-    """คะแนนสุขภาพฟาร์ม 0-100 (TODO: ปรับน้ำหนักตามความสำคัญของงานกลุ่ม)"""
+    # คะแนนสุขภาพฟาร์ม 0-100 (TODO: ปรับน้ำหนักตามความสำคัญของงานกลุ่ม)
     if t is None or h is None:
         return 0
     score = 100
