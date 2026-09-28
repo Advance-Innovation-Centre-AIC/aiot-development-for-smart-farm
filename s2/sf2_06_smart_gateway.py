@@ -48,7 +48,7 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -64,8 +64,8 @@ def set_led(led, on):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
 
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
@@ -77,13 +77,13 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -93,7 +93,7 @@ def wait_ms(ms, btns):
 
 # ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
 def parse_json(raw):
-    """bytes -> dict หรือ None  (ใครส่งอะไรมาก็ได้ ไม่ใช่ JSON object ก็ไม่ใช้)"""
+    # bytes -> dict หรือ None  (ใครส่งอะไรมาก็ได้ ไม่ใช่ JSON object ก็ไม่ใช้)
     try:
         body = json.loads(raw.decode())
     except ValueError:
@@ -102,19 +102,19 @@ def parse_json(raw):
 
 
 def field_now(farm, name, now):
-    """ค่าล่าสุดของโหนด name (soil, tank, ...) ถ้าเงียบเกิน STALE_MS ถือว่าเชื่อไม่ได้ คืน None"""
+    # ค่าล่าสุดของโหนด name (soil, tank, ...) ถ้าเงียบเกิน STALE_MS ถือว่าเชื่อไม่ได้ คืน None
     got = farm.field.get(name)
     return got[0] if got and time.ticks_diff(now, got[1]) < STALE_MS else None
 
 
 def should_water(farm, soil, tank, since_cmd_ms):
-    """กฎออโต้: เปิดโหมด + ดินแห้ง + น้ำพอ + PLC บอกว่าปั๊มหยุด + พ้นช่วงรอ"""
+    # กฎออโต้: เปิดโหมด + ดินแห้ง + น้ำพอ + PLC บอกว่าปั๊มหยุด + พ้นช่วงรอ
     return (farm.auto and soil is not None and soil < SOIL_MIN and tank is not None
             and tank >= TANK_MIN and farm.pump == 0 and since_cmd_ms >= COOLDOWN_MS)
 
 
 def app_request(cmd, tank):
-    """คำสั่งจากแอป (สัญญาข้อ 4.1) -> (คำสั่งถึง PLC หรือ None, โหมดออโต้ใหม่หรือ None, ข้อความ)"""
+    # คำสั่งจากแอป (สัญญาข้อ 4.1) -> (คำสั่งถึง PLC หรือ None, โหมดออโต้ใหม่หรือ None, ข้อความ)
     act = cmd.get("cmd") if cmd else None
     if act == "pump" and not cmd.get("on", 1):
         return {"pump": 0}, None, "หยุดปั๊ม"
@@ -131,7 +131,7 @@ def app_request(cmd, tank):
 
 # ---- 4) เครือข่าย ----
 def connect_gateway(w):
-    """WiFi -> IP -> broker -> subscribe 3 หัวข้อ ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน"""
+    # WiFi -> IP -> broker -> subscribe 3 หัวข้อ ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_note(w, "ต่อ WiFi...", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
@@ -146,7 +146,7 @@ def connect_gateway(w):
 
 
 def send(topic, obj):
-    """ส่ง JSON คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError ไม่ใช่คืน False)"""
+    # ส่ง JSON คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError ไม่ใช่คืน False)
     try:
         mqtt.publish(BASE + topic, json.dumps(obj))
         return True
@@ -156,21 +156,21 @@ def send(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)"""
+    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
+    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("Smart IoT Gateway", x=12, y=6, color=COL_TEXT, value=24)
@@ -194,13 +194,13 @@ def build_screen():
 
 
 def show_note(w, text, col):
-    """ไม่เรียก ui.poll() ในนี้ เพราะจะกินเหตุการณ์แตะสวิตช์ที่ลูปหลักรออ่าน"""
+    # ไม่เรียก ui.poll() ในนี้ เพราะจะกินเหตุการณ์แตะสวิตช์ที่ลูปหลักรออ่าน
     w["note"].color(col)
     w["note"].text(text)
 
 
 def show_farm(w, soil, tank, farm):
-    """วาดค่าทั้งหมดใหม่ (ทุกครึ่งวินาที) ไฟ PLC ตามความจริงจาก plc/state เท่านั้น"""
+    # วาดค่าทั้งหมดใหม่ (ทุกครึ่งวินาที) ไฟ PLC ตามความจริงจาก plc/state เท่านั้น
     w["soil"].text("--" if soil is None else str(soil))
     w["arc"].value(soil or 0)
     w["arc"].color(COL_DIM if soil is None else (COL_BAD if soil < SOIL_MIN else COL_OK))
@@ -213,7 +213,7 @@ def show_farm(w, soil, tank, farm):
 
 # ---- 6) โปรแกรมหลัก ----
 class Farm:
-    """ทุกอย่างที่ Gateway รู้ตอนนี้: field = {ชื่อโหนด: (ค่า, เวลาที่ได้ยิน)} และสถานะ PLC ล่าสุด"""
+    # ทุกอย่างที่ Gateway รู้ตอนนี้: field = {ชื่อโหนด: (ค่า, เวลาที่ได้ยิน)} และสถานะ PLC ล่าสุด
 
     def __init__(self):
         self.field, self.pump, self.plc_ms = {}, None, None
@@ -221,7 +221,7 @@ class Farm:
 
 
 def on_plc(w, farm, body, now):
-    """สถานะใหม่จาก PLC (สัญญาข้อ 3.6): เสียง + event เฉพาะตอนปั๊มเปลี่ยน หรือ PLC ปฏิเสธ"""
+    # สถานะใหม่จาก PLC (สัญญาข้อ 3.6): เสียง + event เฉพาะตอนปั๊มเปลี่ยน หรือ PLC ปฏิเสธ
     pump, why = body.get("pump"), str(body.get("why", ""))[:16]
     if pump not in (0, 1):
         return
@@ -237,7 +237,7 @@ def on_plc(w, farm, body, now):
 
 
 def on_message(w, farm, msg, now):
-    """แยกข้อความตามหัวข้อ แล้วส่งให้ตัวจัดการที่ถูกเรื่อง คืนคำสั่งที่ต้องส่ง PLC (หรือ None)"""
+    # แยกข้อความตามหัวข้อ แล้วส่งให้ตัวจัดการที่ถูกเรื่อง คืนคำสั่งที่ต้องส่ง PLC (หรือ None)
     topic, body = msg[0][len(BASE):], parse_json(msg[1])
     if topic[:6] == "field/" and body:                  # โหนดไหนก็ได้ (สัญญาข้อ 3.5) รับค่า 0-100
         v = body.get("value")
@@ -256,7 +256,7 @@ def on_message(w, farm, msg, now):
 
 
 def check_plc_alive(w, farm, now):
-    """PLC เงียบเกิน STALE_MS: ไม่รู้แล้วว่าปั๊มเดินไหม ต้องบอกคนทันที (เสียง + ข้อความแดง + event)"""
+    # PLC เงียบเกิน STALE_MS: ไม่รู้แล้วว่าปั๊มเดินไหม ต้องบอกคนทันที (เสียง + ข้อความแดง + event)
     if farm.plc_ms is not None and not farm.lost and time.ticks_diff(now, farm.plc_ms) >= STALE_MS:
         farm.lost, farm.pump = True, None
         ui.sfx(ui.SFX_UI_DENY)
@@ -265,7 +265,7 @@ def check_plc_alive(w, farm, now):
 
 
 def buttons_and_touch(w, farm, water, toggle):
-    """ปุ่มล่าง = อยากรดน้ำ (คืน True) · ปุ่มบนหรือแตะสวิตช์บนจอ = สลับโหมดออโต้"""
+    # ปุ่มล่าง = อยากรดน้ำ (คืน True) · ปุ่มบนหรือแตะสวิตช์บนจอ = สลับโหมดออโต้
     for ev in ui.poll():
         if ev["handle"] == w["auto"].id() and ev["type"] == "toggled":
             farm.auto = bool(ev["value"])

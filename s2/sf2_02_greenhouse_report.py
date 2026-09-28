@@ -47,7 +47,7 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 def read_climate():
-    """คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None"""
+    # คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     t = h = p = None
     try:
         t, h = sensors.sht40.temperature() + TEMP_OFFSET, sensors.sht40.humidity()
@@ -61,7 +61,7 @@ def read_climate():
 
 
 def read_az():
-    """ค่าเร่งแกน z (m/s2) วางราบราว 9.8 ตะแคงแล้วลดลง = กระถางล้ม"""
+    # ค่าเร่งแกน z (m/s2) วางราบราว 9.8 ตะแคงแล้วลดลง = กระถางล้ม
     try:
         return sensors.bmi270.motion()[2]
     except Exception:
@@ -69,13 +69,13 @@ def read_az():
 
 
 def knob_percent(i):
-    """ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง"""
+    # ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง
     return pots.read(i) * 100 // 4095
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
 
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
@@ -87,13 +87,13 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -107,8 +107,8 @@ def r1(x, digits=1):
 
 
 def build_payload(n, t, h, p, az, knobs, manual):
-    """รายงานหนึ่งใบ ลำดับคีย์ตามสัญญา MQTT ข้อ 3.1: มี id กับ n เสมอ ตัวไหนอ่านไม่ได้เป็น None
-    sim บอกตรง ๆ ว่าคีย์ไหนมาจากลูกบิดจำลอง · by บอกว่าส่งเพราะครบเวลาหรือเพราะคนกด SW5"""
+    # รายงานหนึ่งใบ ลำดับคีย์ตามสัญญา MQTT ข้อ 3.1: มี id กับ n เสมอ ตัวไหนอ่านไม่ได้เป็น None
+    # sim บอกตรง ๆ ว่าคีย์ไหนมาจากลูกบิดจำลอง · by บอกว่าส่งเพราะครบเวลาหรือเพราะคนกด SW5
     body = {"id": TEAM, "n": n, "temp_c": r1(t), "rh": r1(h), "hpa": r1(p), "az": r1(az, 2)}
     body["soil"], body["light"], body["tank"] = knobs          # ลูกบิดจำลอง VR1 VR3 VR4
     body["sim"], body["by"] = "soil light tank", "sw5" if manual else "timer"
@@ -117,7 +117,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 # ---- 4) เครือข่าย ----
 def connect_farm(w):
-    """บันไดสามขั้น WiFi -> IP -> broker ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน"""
+    # บันไดสามขั้น WiFi -> IP -> broker ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
@@ -130,7 +130,7 @@ def connect_farm(w):
 
 
 def publish_json(topic, obj):
-    """คืน "ok" / "refused" (broker ไม่รับใบนี้) / "lost" (สายหลุด: publish โยน OSError ไม่ใช่คืน False)"""
+    # คืน "ok" / "refused" (broker ไม่รับใบนี้) / "lost" (สายหลุด: publish โยน OSError ไม่ใช่คืน False)
     try:
         return "ok" if mqtt.publish(topic, json.dumps(obj)) else "refused"
     except OSError:
@@ -139,21 +139,21 @@ def publish_json(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)"""
+    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
+    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("โรงเรือนรายงานตัว", x=12, y=6, color=COL_TEXT, value=24)
@@ -203,7 +203,7 @@ def stop(w, msg):
 
 
 def on_sent(w, body, manual):
-    """ใบนี้ออกไปแล้ว: นับ จอไฟ เสียง (เรียกเฉพาะตอนส่งสำเร็จ ไม่ใช่ทุกรอบ)"""
+    # ใบนี้ออกไปแล้ว: นับ จอไฟ เสียง (เรียกเฉพาะตอนส่งสำเร็จ ไม่ใช่ทุกรอบ)
     w["sent"].text("ส่งแล้ว %d ใบ" % body["n"])
     rgbmatrix.score(body["n"], rgbmatrix.GREEN)       # เขียนจอไฟเฉพาะตอนเลขเปลี่ยน
     if SOUND or manual:
