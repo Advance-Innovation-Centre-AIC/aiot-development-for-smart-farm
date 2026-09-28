@@ -5,7 +5,7 @@
 # สิ่งที่ต้องแก้ : ทุกบรรทัดที่มีคำว่า TODO (ชื่อฟาร์ม พืช เกณฑ์ ค่าชดเชย กฎ)
 # ลองเล่น  : เป่าลม จับบอร์ด หมุน VR1 แล้วดูคะแนนสุขภาพฟาร์มเปลี่ยน
 #            แตะแถบด้านบนเพื่อสลับหน้า: ภาพรวม / กราฟ · เหตุการณ์ล่าสุดขึ้นใต้คะแนน (ปั๊มเปิด-ปิด, ฟาร์มแย่ลง-ดีขึ้น)
-# ของบนบอร์ดที่ใช้ : SHT40, ลูกบิด VR1, ไฟ RGB_BLUE = ปั๊ม, SW5 (ปุ่มล่าง) กดค้าง = รดน้ำเอง,
+# ของบนบอร์ดที่ใช้ : SHT40, ลูกบิด VR1, ไฟ RGB_BLUE = ปั๊ม, SW5 (ปุ่มล่าง) กด = เริ่ม/หยุดรดน้ำเอง,
 #            SW6 (ปุ่มบน) = สลับจอไฟ RGB ระหว่างคะแนนสุขภาพกับอุณหภูมิ
 #            ลำโพงมีเสียงตอนปั๊มเปิด/ปิด และตอนฟาร์มแย่ลง/ดีขึ้น
 # บนจอ     : แท็บหลายหน้า (Tabview), วงแหวนคะแนน (Arc), ไฟปั๊ม (Led),
@@ -32,6 +32,7 @@ CROP = "มะเขือเทศ"             # TODO: พืชหรือ�
 T_LO, T_HI = 20, 30            # TODO: ช่วงอุณหภูมิที่เหมาะ (C)
 H_LO, H_HI = 60, 80            # TODO: ช่วงความชื้นอากาศที่เหมาะ (%)
 SOIL_MIN = 40                  # TODO: ดินแห้งกว่านี้ให้รดน้ำ (%)
+MANUAL_S = 10                  # กด SW5 (ปุ่มล่าง) หนึ่งครั้ง = รดน้ำเองนานกี่วินาที (กดอีกครั้ง = หยุด)
 SOIL_HYST = 5                  # ช่องกันกระพือของปั๊ม (%) เหมือน sf1_03
 TEMP_OFFSET = 0.0    # TODO: บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
                      # (ห้องแอร์ปกติ ~25-28 C) ใช้ค่าเดียวกับที่กลุ่มหาได้ใน sf1_01
@@ -259,7 +260,8 @@ def main():
     w = build_screen()
     pump = led_named("RGB_BLUE")   # ไฟสีฟ้าบนบอร์ด = ปั๊มน้ำ
     sw5, sw6 = Button(0), Button(1)
-    pump_on = running = show_temp = False   # show_temp: จอไฟ RGB โชว์อุณหภูมิแทนคะแนน
+    pump_on = running = show_temp = manual = False   # show_temp: จอไฟ RGB โชว์อุณหภูมิแทนคะแนน
+    manual_t0 = 0                                    # manual = สั่งรดเองด้วย SW5
     shown = zone_was = None
     last_alert = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
@@ -269,7 +271,11 @@ def main():
         score = health(t, h, soil)                            # 2) คิด
         zone = zone_of(score)
         pump_on = pump_decision(pump_on, soil)
-        now_running = pump_on or sw5.down                     # กฎอัตโนมัติ หรือกด SW5 (ปุ่มล่าง) ค้าง
+        if sw5.pressed_now():                                 # SW5 (ปุ่มล่าง) กดหนึ่งครั้ง = เริ่ม/หยุดรดเอง
+            manual, manual_t0 = not manual, time.ticks_ms()
+        if manual and time.ticks_diff(time.ticks_ms(), manual_t0) > MANUAL_S * 1000:
+            manual = False                                    # ครบเวลาแล้วหยุดเอง กันลืมปิด
+        now_running = pump_on or manual                       # กฎอัตโนมัติ หรือสั่งรดเอง
         if now_running != running:                           # 3) ทำ เฉพาะตอนเปลี่ยน
             note_event(w, sec, "ปั๊มเปิด" if now_running else "ปั๊มปิด", score,
                        ui.SFX_UI_START if now_running else ui.SFX_UI_BACK)

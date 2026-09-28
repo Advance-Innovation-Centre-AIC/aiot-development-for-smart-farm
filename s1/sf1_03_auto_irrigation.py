@@ -6,8 +6,8 @@
 # ลองเล่น  : หมุน VR1 ลงช้า ๆ (ดินแห้งลง) ดูว่าปั๊มติดที่ค่าไหน แล้วหมุนกลับขึ้น
 #            สังเกตว่าปั๊ม "ไม่สั่นไปมา" ที่ขอบเกณฑ์ เพราะเราใช้ hysteresis (ช่องกันกระพือ)
 #            ดูในกราฟ: ปั๊มเปิดตอนเส้นฟ้าต่ำกว่าเส้นแดง และปิดตอนเส้นฟ้าสูงกว่าเส้นเขียว
-#            แตะสวิตช์บนจอให้เป็น "มือ" แล้วปั๊มจะเดินเฉพาะตอนกด SW5 (ปุ่มล่าง) ค้าง
-# ของบนบอร์ดที่ใช้ : ลูกบิด VR1-VR3, ปุ่ม SW5 (ปุ่มล่าง) (กดค้าง = รดน้ำเอง) และ SW6 (ปุ่มบน) (ล้างตัวนับ),
+#            แตะสวิตช์บนจอให้เป็น "มือ" แล้วกด SW5 (ปุ่มล่าง) หนึ่งครั้ง = รดน้ำเอง MANUAL_S วินาที (กดอีกครั้ง = หยุด)
+# ของบนบอร์ดที่ใช้ : ลูกบิด VR1-VR3, ปุ่ม SW5 (ปุ่มล่าง) (กด = เริ่ม/หยุดรดน้ำเอง) และ SW6 (ปุ่มบน) (ล้างตัวนับ),
 #            ไฟ RGB_BLUE บนบอร์ด = รีเลย์ปั๊มน้ำ, ลำโพง (ปั๊มเปิด/ปิด และถังหมด)
 #            จอไฟ RGB: ซ้าย = ความชื้นดิน (เส้นแดง = เกณฑ์)  กลาง = น้ำไหล  ขวา = น้ำในถัง
 # บนจอ     : แถบ + ไม้บรรทัด (Bar + Scale), ไฟปั๊ม (Led), ไฟ Led ติดตอนปั๊มเดิน,
@@ -31,6 +31,7 @@ HYST = 5             # ช่องกันกระพือ (%) ปั๊ม�
 TANK_MIN = 10        # น้ำในถังต่ำกว่านี้ (%) ห้ามเดินปั๊ม
 FLOW_L_PER_S = 0.5   # สมมติปั๊มจ่าย 0.5 ลิตร/วินาที
 AUTO_AT_START = True # สวิตช์บนจอเริ่มที่ "อัตโนมัติ"
+MANUAL_S = 10        # กด SW5 (ปุ่มล่าง) หนึ่งครั้ง = รดน้ำเองนานกี่วินาที (กดอีกครั้ง = หยุดก่อน)
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
 RUN_MS = 180000
 TICK_MS = 500
@@ -166,7 +167,7 @@ def pump_decision(pump_on, soil, th):
 
 
 def should_run(auto_wants, manual, tank_ok):
-    # ปั๊มเดินจริง = (กฎอัตโนมัติสั่ง หรือ กด SW5 (ปุ่มล่าง) ค้าง) และ น้ำในถังพอ
+    # ปั๊มเดินจริง = (กฎอัตโนมัติสั่ง หรือ สั่งรดเองด้วย SW5 (ปุ่มล่าง)) และ น้ำในถังพอ
     return (auto_wants or manual) and tank_ok
 
 
@@ -233,7 +234,7 @@ def build_screen():
     build_pump_card(w)
     build_chart(w)
     build_tank_card(w)
-    w["help"] = ui.Label(BTN_NAMES[0] + " (ล่าง) ค้าง = รดเอง   " + BTN_NAMES[1] + " (บน) = ล้างตัวนับ",
+    w["help"] = ui.Label(BTN_NAMES[0] + " (ล่าง) = รดเอง/หยุด   " + BTN_NAMES[1] + " (บน) = ล้างตัวนับ",
                          x=12, y=352, color=COL_DIM, value=16)
     ui.poll()
     return w
@@ -266,7 +267,7 @@ def show_pump(w, running, tank_ok, auto, runs, water_l):
     w["led"].value(1 if running else 0)             # Led: 0 = หรี่ (ไม่ดับมืด)
     w["pump_lbl"].text("เปิด" if running else ("ถังหมด" if not tank_ok else "ปิด"))
     w["pump_lbl"].color(COL_OK if running else (COL_BAD if not tank_ok else COL_DIM))
-    w["mode"].text("อัตโนมัติ" if auto else "มือ: กด " + BTN_NAMES[0] + " ค้าง")
+    w["mode"].text("อัตโนมัติ" if auto else "มือ: กด " + BTN_NAMES[0] + " รดน้ำ")
     w["stats"].text("เปิด " + str(runs) + " ครั้ง  น้ำ %.1f ลิตร" % water_l)
 
 
@@ -302,6 +303,7 @@ def main():
     pump = led_named("RGB_BLUE")
     sw5, sw6 = Button(0), Button(1)   # SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
     auto = AUTO_AT_START
+    manual, manual_t0 = False, 0   # สั่งรดเองด้วย SW5 อยู่ไหม และเริ่มเมื่อไร
     pump_on = False       # สิ่งที่กฎอัตโนมัติอยากทำ (ตามความชื้นดิน)
     running = False       # ปั๊มเดินจริงไหม
     tank_was_ok = tank_percent() >= TANK_MIN   # ถังพร่องตั้งแต่เริ่ม = ไม่ส่งเสียงเตือนทันที
@@ -313,7 +315,11 @@ def main():
         soil, th, tank = soil_percent(), threshold_percent(), tank_percent()  # 1) อ่าน
         pump_on = pump_decision(pump_on, soil, th)                    # 2) ตัดสิน
         tank_ok = tank >= TANK_MIN
-        now_running = should_run(auto and pump_on, sw5.down, tank_ok)    # sw5.down = กด SW5 (ปุ่มล่าง) ค้างอยู่
+        if sw5.pressed_now():                                         # SW5 (ปุ่มล่าง) กดหนึ่งครั้ง = เริ่ม/หยุดรดเอง
+            manual, manual_t0 = not manual, time.ticks_ms()
+        if manual and time.ticks_diff(time.ticks_ms(), manual_t0) > MANUAL_S * 1000:
+            manual = False                                            # ครบเวลาแล้วหยุดเอง กันลืมปิด
+        now_running = should_run(auto and pump_on, manual, tank_ok)
         if now_running != running:                                    # 3) ทำ
             announce_pump(w, now_running)
             if now_running:
