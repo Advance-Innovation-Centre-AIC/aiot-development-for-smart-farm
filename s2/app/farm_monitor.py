@@ -2,7 +2,7 @@
 #
 # ติดตั้งครั้งเดียว : pip install paho-mqtt          (Python 3.8 ขึ้นไป ใช้ได้ทั้ง paho 1.x และ 2.x)
 # รัน              : python farm_monitor.py          กด Ctrl+C เพื่อหยุด
-# ต้องแก้ก่อนรัน   : TEAM ให้ตรงกับบอร์ดของกลุ่ม (team01 ถึง team20) ที่ TODO 1
+# ต้องแก้ก่อนรัน   : TEAM ให้ตรงกับบอร์ดของกลุ่ม (เช่น team05) ที่ TODO 1
 # ฟังจากบอร์ด      : bento-aiot/<TEAM>/telemetry  (sf2_02 ส่งค่าฟาร์ม, sf2_03 ส่งสถานะปั๊ม)
 #                    bento-aiot/<TEAM>/event      (sf2_02 กด SW6, sf2_04 แจ้งเตือนพืช)
 # สั่งกลับไปที่     : bento-aiot/<TEAM>/cmd        (sf2_03 รู้จัก pump beep say, sf2_04 รู้จัก ack set)

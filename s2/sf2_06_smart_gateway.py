@@ -28,7 +28,7 @@ import wifi
 # ---- 1) ตั้งค่า (แก้ได้) ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                        # team01 ถึง team20 (ต้องตรงกับ field_sim.py หรือบอร์ดแปลงของอีกกลุ่ม)
+TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก (ต้องตรงกับ field_sim.py หรือบอร์ดแปลงของอีกกลุ่ม)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
 CLIENT_ID = "bento-gw-" + TEAM         # ไม่ซ้ำกับบอร์ดแปลง (bento-field-...) หรือแอป
