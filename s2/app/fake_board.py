@@ -1,7 +1,7 @@
 # fake_board.py - บอร์ดจำลองบนโน้ตบุ๊ก ใช้ทดสอบแอปของกลุ่มตอนไม่มีบอร์ดจริง
 #
 # ทำอะไร   : ต่อ broker สาธารณะแล้วส่งข้อความ "หน้าตาเดียวกับบอร์ดจริง" ทุกตัวอักษร
-#            ช่วง 1 (20 วิแรก)  = แบบ sf2_02: ค่าฟาร์มทุก 5 วิ (ดินชื้น 55 %) + กด SW5 หนึ่งครั้ง
+#            ช่วง 1 (20 วิแรก)  = แบบ sf2_02: ค่าฟาร์มทุก 5 วิ (ดินชื้น 55 %) + กด SW6 หนึ่งครั้ง
 #            ช่วง 2 (ที่เหลือ)   = แบบ sf2_03: ดิน ถังน้ำ ปั๊ม ทุก 5 วิ (ดินแห้ง 20 % ให้แอปสั่งรดน้ำ)
 #            วินาทีที่ 40        = แจ้งเตือนพืช 1 ใบ แบบ sf2_04 (ร้อนไป ระดับ 2)
 #            และฟังหัวข้อ cmd ทำตามคำสั่งด้วยกฎเดียวกับ sf2_03 (ปั๊มไม่เกิน 30 วิ ถังต่ำกว่า 10 % ไม่เปิด)
@@ -103,7 +103,7 @@ def main():
     client.loop_start()
     print("บอร์ดจำลอง", TEAM, "ส่งเข้า", T_TEL, "| ฟัง", T_CMD, "| Ctrl+C เพื่อหยุด")
     n2 = n3 = 0
-    next_send, sw5_sent, alert_sent = 0.0, False, False
+    next_send, sw6_sent, alert_sent = 0.0, False, False
     try:
         while elapsed() < RUN_S:
             if elapsed() >= next_send:
@@ -116,10 +116,10 @@ def main():
                     body = report_sf2_03(n3)
                 client.publish(T_TEL, json.dumps(body))
                 print("%6.1f วิ  ส่ง: %s" % (elapsed(), json.dumps(body)))
-            if not sw5_sent and elapsed() >= 12:
-                sw5_sent = True
-                client.publish(T_EVT, json.dumps({"id": TEAM, "event": "sw5", "msg": "call"}))
-                print("%6.1f วิ  กด SW5 (event)" % elapsed())
+            if not sw6_sent and elapsed() >= 12:
+                sw6_sent = True
+                client.publish(T_EVT, json.dumps({"id": TEAM, "event": "sw6", "msg": "call"}))
+                print("%6.1f วิ  กด SW6 (event)" % elapsed())
             if not alert_sent and elapsed() >= 40:
                 alert_sent = True
                 client.publish(T_EVT, json.dumps(alert_sf2_04()))

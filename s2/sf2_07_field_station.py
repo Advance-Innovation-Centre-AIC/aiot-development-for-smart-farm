@@ -8,9 +8,9 @@
 # ลองเล่น  : จับคู่กับอีกกลุ่ม ตั้ง TEAM เป็นเลขเดียวกันทั้งสองบอร์ด (ใช้เลขของกลุ่มที่เป็น Gateway)
 #            หมุน VR1 ลงให้ดินแห้ง แล้วดูว่า Gateway ของเพื่อนสั่งปั๊มบอร์ดนี้เองไหม · หมุน VR4 ลงต่ำกว่า 10 %
 # ของบนบอร์ดที่ใช้ : VR1 = เซนเซอร์ความชื้นดิน · VR4 = ระดับน้ำในถัง · ไฟ RGB_BLUE = รีเลย์ปั๊ม
-#            SW4 = ปุ่มหยุดฉุกเฉินที่โรงสูบ (ไม่ต้องพึ่งเน็ต) · จอไฟ RGB 16x8 = นับถอยหลังวินาทีที่ปั๊มเปิด
+#            SW5 (ปุ่มล่าง) = ปุ่มหยุดฉุกเฉินที่โรงสูบ (ไม่ต้องพึ่งเน็ต)
 #            ลำโพงดังเฉพาะตอนมีคำสั่งเข้าหรือปั๊มดับเอง
-# บนจอ     : หลอดดินกับถัง (Bar), ไฟรีเลย์ (Led), วงแหวนนับถอยหลัง (Arc), ตารางคำสั่งที่รับ (Table), วงหมุน (Spinner)
+# บนจอ     : หลอดดินกับถัง (Bar), ไฟรีเลย์ (Led), วงแหวนนับถอยหลัง (Arc) · เหตุผล (why) ใช้รหัสเดียวกับสัญญา MQTT
 # แนวคิด AIoT: PLC ไม่เชื่อใคร ตรวจทุกคำสั่งด้วยกฎความปลอดภัยของตัวเอง และบอกความจริงกลับทุกครั้ง
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) · สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5, 3.6, 4.2
 #            ไม่มีเพื่อนจับคู่ ใช้ app/field_sim.py บนโน้ตบุ๊กแทนบอร์ดนี้ได้ (ทำงานเหมือนกัน)
@@ -20,7 +20,6 @@ import gpio
 import json
 import mqtt
 import pots
-import rgbmatrix
 import time
 import ui
 import wifi
@@ -37,7 +36,7 @@ T_BASE = ROOT + "/" + TEAM + "/"
 PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC: เวลาเปิดสูงสุด, ถังต่ำสุดที่ยอมเปิด
 PLC_DEFAULT_S = 10
 SEND_MS, POLL_MS, RUN_MS = 5000, 100, 1800000
-LOG_ROWS = 4
+BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -71,26 +70,32 @@ def set_relay(relay, on):
         relay.off()
 
 
-class Edge:
-    """จับจังหวะ "เพิ่งกด" ของปุ่ม: กดหนึ่งครั้ง = ทำงานหนึ่งครั้ง แม้จะกดค้างไว้"""
+class Button:
+    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
 
-    def __init__(self):
-        self.was_down = False
+    def __init__(self, index):
+        self.index, self.down, self.clicked = index, False, False
 
-    def pressed_now(self, is_down):
-        fired = is_down and not self.was_down
-        self.was_down = is_down
+    def sample(self):
+        now_down = buttons.pressed(self.index)
+        if now_down and not self.down:
+            self.clicked = True
+        self.down = now_down
+
+    def pressed_now(self):
+        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        fired, self.clicked = self.clicked, False
         return fired
 
 
-def matrix_countdown(sec_left, shown):
-    """จอไฟ RGB นับถอยหลัง เขียนเฉพาะตอนเลขเปลี่ยน"""
-    if sec_left != shown:
-        if sec_left:
-            rgbmatrix.score(sec_left, rgbmatrix.BLUE)
-        else:
-            rgbmatrix.clear()
-    return sec_left
+def wait_ms(ms, btns):
+    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    t0 = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), t0) < ms:
+        for b in btns:
+            b.sample()
+        time.sleep_ms(20)
 
 
 # ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
@@ -127,10 +132,6 @@ def plc_message(left_ms, why, n):
     return {"pump": 1 if left else 0, "left_s": left, "why": why, "n": n}
 
 
-WHY_TEXT = {"on": "เปิดตามคำสั่ง", "off": "ปิดตามคำสั่ง", "blocked_tank": "ไม่เปิด: ถังต่ำ",
-            "bad_cmd": "คำสั่งอ่านไม่ได้", "timeout": "ครบเวลา ดับเอง", "stop": "หยุดฉุกเฉิน"}
-
-
 # ---- 4) เครือข่าย ----
 def connect_station(w):
     show_status(w, "กำลังต่อ WiFi จอจะนิ่งสักครู่", COL_WARN)
@@ -163,46 +164,39 @@ def card(x, y, w, h, title):
 def build_node_card(w):
     card(12, 44, 380, 130, "โหนดเซนเซอร์ (ส่งทุก 5 วิ)")
     ui.Label("ดิน VR1", x=24, y=78, color=COL_TEXT, value=16)
-    w["soil_bar"] = ui.Bar(x=110, y=80, w=200, h=20, min=0, max=100, value=0)
+    w["soil_bar"] = ui.Bar(x=110, y=80, w=200, h=20)
     w["soil"] = ui.Label("-- %", x=320, y=76, color=COL_TEXT, value=16)
     ui.Label("ถัง VR4", x=24, y=116, color=COL_TEXT, value=16)
-    w["tank_bar"] = ui.Bar(x=110, y=118, w=200, h=20, min=0, max=100, value=0)
+    w["tank_bar"] = ui.Bar(x=110, y=118, w=200, h=20)
     w["tank"] = ui.Label("-- %", x=320, y=114, color=COL_TEXT, value=16)
     w["sent"] = ui.Label("ส่งแล้ว 0 ใบ", x=24, y=148, color=COL_DIM, value=14)
 
 
-def build_plc_card(w, sw4):
-    card(12, 182, 380, 152, "PLC (รีเลย์ = ไฟ RGB สีฟ้า)")
-    w["relay"] = ui.Led(x=28, y=216, w=44, h=44, color=COL_INFO, value=0)
+def build_plc_card(w):
+    card(12, 182, 380, 152, "PLC (รีเลย์ = ไฟสีฟ้า)")
+    w["relay"] = ui.Led(x=28, y=216, w=44, h=44, color=COL_INFO)
     w["pump"] = ui.Label("ปั๊มหยุด", x=84, y=224, color=COL_DIM, value=20)
-    w["why"] = ui.Label("รอคำสั่ง", x=28, y=272, color=COL_DIM, value=16)
+    w["why"] = ui.Label("why = start", x=28, y=272, color=COL_DIM, value=16)
     w["arc"] = ui.Arc(x=270, y=208, w=110, h=110, min=0, max=PLC_MAX_S, value=0)
     w["arc"].color(COL_OK)
-    ui.Label(sw4 + " = หยุดฉุกเฉิน", x=28, y=304, color=COL_WARN, value=14)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=28, y=304, color=COL_WARN, value=14)
 
 
-def build_log_card(w):
-    w["log_title"] = card(402, 44, 378, 290, "คำสั่งจาก Gateway (plc/cmd)")
-    table = ui.Table(x=414, y=74, w=354, h=176, cols=2, rows=LOG_ROWS + 1)
-    table.col_width(0, 70)
-    table.col_width(1, 284)
-    table.add_row("วินาที", "PLC ทำ")
-    w["table"] = table
-    ui.Label("เปิดได้ไม่เกิน " + str(PLC_MAX_S) + " วิ ถังต่ำกว่า " + str(PLC_TANK_MIN) + " % ไม่เปิด",
-             x=414, y=262, color=COL_DIM, value=14)
+def build_rules_card(w):
+    card(402, 44, 378, 290, "กฎของ PLC (ตรวจก่อนทุกคำสั่ง)")
+    ui.Label("เปิดสูงสุด %d วิ / ถัง < %d%% ไม่เปิด" % (PLC_MAX_S, PLC_TANK_MIN), x=414, y=80, color=COL_TEXT, value=16)
+    w["got"] = ui.Label("รับคำสั่งแล้ว 0", x=414, y=120, color=COL_DIM, value=16)
 
 
-def build_screen(sw4):
+def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("แปลงผัก: โหนด + PLC", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"status": ui.Label("กำลังเริ่ม", x=300, y=12, color=COL_DIM, value=16),
-         "spin": ui.Spinner(x=744, y=4, w=36, h=36)}
+    w = {"status": ui.Label("กำลังเริ่ม", x=300, y=12, color=COL_DIM, value=16)}
     build_node_card(w)
-    build_plc_card(w, sw4)
-    build_log_card(w)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
-    show_log(w, [])
+    build_plc_card(w)
+    build_rules_card(w)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
     ui.poll()
     return w
 
@@ -211,13 +205,6 @@ def show_status(w, msg, col):
     w["status"].color(col)
     w["status"].text(msg)
     ui.poll()
-
-
-def show_log(w, log):
-    for r in range(LOG_ROWS):
-        row = log[r] if r < len(log) else ("-", "-")
-        w["table"].cell(r + 1, 0, row[0])
-        w["table"].cell(r + 1, 1, row[1])
 
 
 def show_knobs(w, soil, tank):
@@ -233,7 +220,7 @@ def show_relay(w, sec_left, why):
     w["pump"].color(COL_OK if sec_left else COL_DIM)
     w["pump"].text("ปั๊มเดิน อีก " + str(sec_left) + " วิ" if sec_left else "ปั๊มหยุด")
     w["arc"].value(sec_left)
-    w["why"].text(WHY_TEXT.get(why, why))
+    w["why"].text("why = " + why)          # รหัสเหตุผลตามสัญญา MQTT ข้อ 3.6 ตรง ๆ
 
 
 # ---- 6) โปรแกรมหลัก ----
@@ -253,55 +240,51 @@ def report_plc(plc, now, why=None):
     return send(T_BASE + "plc/state", plc_message(plc.left(now), why or plc.why, plc.n))
 
 
-def on_command(w, plc, raw, tank, now, sec, log):
+def on_command(w, plc, raw, tank, now, got):
     """คำสั่งหนึ่งใบจาก Gateway: ตรวจ -> ทำ -> เสียง -> จด -> ตอบสถานะทันที"""
     run_s, why = plc_decide(raw, tank)
     plc.why = why
     if run_s is not None:
         plc.run_ms, plc.t_on = run_s * 1000, now
     ui.sfx(ui.SFX_UI_SELECT if why == "on" else (ui.SFX_UI_BACK if why == "off" else ui.SFX_UI_DENY))
-    log.insert(0, (str(sec), WHY_TEXT.get(why, why) + ("" if not run_s else " " + str(run_s) + " วิ")))
-    del log[LOG_ROWS:]
-    show_log(w, log)
-    w["note"].text("คำสั่งล่าสุด: " + WHY_TEXT.get(why, why))
+    w["got"].text("รับคำสั่งแล้ว %d" % got)
+    w["note"].text("คำสั่งล่าสุด -> " + why)
     return report_plc(plc, now)
 
 
 def stop(w, relay, msg, col=COL_BAD):
     set_relay(relay, False)
-    rgbmatrix.clear()
-    w["spin"].hide()
     show_status(w, msg, col)
     raise SystemExit
 
 
 def main():
-    sw4 = buttons.name(0)
-    w = build_screen(sw4)
+    w = build_screen()
     relay = led_named("RGB_BLUE")
     if not valid_team(TEAM):
         stop(w, relay, "แก้ TEAM เป็นเลขกลุ่มที่เป็น Gateway")
     problem = connect_station(w)
     if problem:
         stop(w, relay, problem)
-    w["spin"].hide()
     show_status(w, "แปลงของ " + TEAM + " ออนไลน์", COL_OK)
-    plc, stop_btn, log = Plc(), Edge(), []
+    plc, stop_btn, got = Plc(), Button(0), 0
     counts, shown, was_on = {"soil": 0, "tank": 0}, -1, False
     t0 = time.ticks_ms()
     due = {"soil": 0, "state": SEND_MS // 4, "tank": SEND_MS // 2}   # เหลื่อมกัน กล่องรับของ Gateway มีช่องเดียว
     report_plc(plc, t0)
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         now = time.ticks_ms()
-        el, sec = time.ticks_diff(now, t0), time.ticks_diff(now, t0) // 1000
+        el = time.ticks_diff(now, t0)
         soil, tank = knob_percent(0), knob_percent(3)
-        if stop_btn.pressed_now(buttons.pressed(0)) and plc.run_ms:
+        if stop_btn.pressed_now() and plc.run_ms:
             plc.run_ms, plc.why = 0, "stop"
             ui.sfx(ui.SFX_UI_BACK)
             report_plc(plc, now)
         msg = mqtt.get_message()
-        if msg is not None and not on_command(w, plc, msg[1], tank, now, sec, log):
-            stop(w, relay, "สายหลุดตอนตอบ Gateway")
+        if msg is not None:
+            got += 1
+            if not on_command(w, plc, msg[1], tank, now, got):
+                stop(w, relay, "สายหลุด")
         left = plc.left(now)
         if plc.run_ms and (left <= 0 or tank < PLC_TANK_MIN):   # ครบเวลาหรือถังแห้งระหว่างเดิน: ดับเอง
             plc.run_ms, plc.why, left = 0, "timeout" if left <= 0 else "blocked_tank", 0
@@ -309,8 +292,8 @@ def main():
             report_plc(plc, now)
         set_relay(relay, plc.run_ms > 0)
         sec_left = (left + 999) // 1000 if plc.run_ms else 0
-        if sec_left != shown or was_on != (plc.run_ms > 0):
-            shown, was_on = matrix_countdown(sec_left, shown), plc.run_ms > 0
+        if sec_left != shown or was_on != (plc.run_ms > 0):      # วาดใหม่เฉพาะตอนเลขหรือสถานะเปลี่ยน
+            shown, was_on = sec_left, plc.run_ms > 0
             show_relay(w, sec_left, plc.why)
         show_knobs(w, soil, tank)
         for key in ("soil", "tank"):                 # โหนดเซนเซอร์: ทีละตัว ทุก 5 วิ
@@ -318,7 +301,7 @@ def main():
                 due[key] += SEND_MS
                 counts[key] += 1
                 if not send(T_BASE + "field/" + key, node_message(key, soil if key == "soil" else tank, counts[key])):
-                    stop(w, relay, "สายหลุดตอนส่งค่าแปลง")
+                    stop(w, relay, "สายหลุด")
         w["sent"].text("ส่งแล้ว " + str(counts["soil"] + counts["tank"]) + " ใบ")
         if el >= due["state"]:                       # ชีพจร PLC ทุก 5 วิ
             due["state"] += SEND_MS
@@ -326,7 +309,7 @@ def main():
         if not mqtt.is_connected():
             stop(w, relay, "สายหลุด")
         ui.poll()
-        time.sleep_ms(POLL_MS)
+        wait_ms(POLL_MS, (stop_btn,))
 
     stop(w, relay, "จบรอบแปลง", COL_DIM)
 

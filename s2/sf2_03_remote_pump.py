@@ -5,10 +5,9 @@
 # ลองเล่น  : เปิด farm_web.html?team=<เลขกลุ่ม> กด "รดน้ำ 10 วินาที" / "ปิดปั๊ม"
 #            หรือให้แอป farm_monitor.py ของกลุ่มสั่งเองเมื่อดิน (VR1) แห้ง · หมุน VR4 ต่ำกว่า 10 % แล้วสั่งอีกที
 # ของบนบอร์ดที่ใช้ : ไฟ RGB_BLUE บนบอร์ด = ปั๊มน้ำ (รีเลย์) · VR1 = ความชื้นดิน (จำลอง) · VR4 = น้ำในถัง (จำลอง)
-#            SW4 = ปุ่มหยุดฉุกเฉินหน้าฟาร์ม ปั๊มดับทันทีโดยไม่ต้องพึ่งเน็ต
+#            SW5 (ปุ่มล่าง) = ปุ่มหยุดฉุกเฉินหน้าฟาร์ม ปั๊มดับทันทีโดยไม่ต้องพึ่งเน็ต
 #            จอไฟ RGB 16x8 = นับถอยหลังวินาทีที่ปั๊มเปิด หรือตัววิ่งจากคำสั่ง say · ลำโพงดังเฉพาะตอนคำสั่งเข้า
-# บนจอ     : ไฟปั๊ม (Led), วงแหวนนับถอยหลัง (Arc), หลอดน้ำในถัง (Bar), ตารางคำสั่งล่าสุด (Table),
-#            วงหมุนตอนกำลังต่อเน็ต (Spinner)
+# บนจอ     : ไฟปั๊ม (Led), วงแหวนนับถอยหลัง (Arc), หลอดน้ำในถัง (Bar), วงหมุนตอนกำลังต่อเน็ต (Spinner)
 # แนวคิด AIoT: Command -> Check -> Act  ไม่เชื่อคนส่ง ตรวจทุกคำสั่งก่อนแตะของจริง
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
 # คำสั่งที่รู้จัก: {"cmd":"pump","on":1,"sec":10}  {"cmd":"pump","on":0}  {"cmd":"led","n":0,"on":1}
@@ -31,19 +30,17 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
 TEAM = "teamXX"                        # team01 ถึง team20 (team00 = บอร์ดผู้สอนหน้าห้อง)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-ROOT = "bento-aiot"
 CLIENT_ID = "bento-farm-" + TEAM       # ต้องไม่ซ้ำกับใครบน broker (แอปจึงต่อท้ายด้วยตัวสุ่ม)
-TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
-TOPIC = ROOT + "/" + TEAM + "/telemetry"
+TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd"
+TOPIC = "bento-aiot/" + TEAM + "/telemetry"
+BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินาที ก็ได้แค่ 30
 TANK_MIN = 10                          # น้ำในถังต่ำกว่านี้ ห้ามปั๊มทำงาน (ปั๊มแห้งพัง)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
-LOG_ROWS = 4                           # ตารางจำคำสั่งล่าสุดกี่แถว
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
-TONE_COLORS = {"ok": COL_OK, "warn": COL_WARN, "bad": COL_BAD, "info": COL_INFO}
 
 
 # ---- 2) ฮาร์ดแวร์ ----
@@ -53,8 +50,7 @@ def knob_percent(i):
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE"""
+    """หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*"""
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -64,31 +60,41 @@ def led_named(name):
         return None
 
 
-def set_pump(pump, running):
-    if pump is None:
-        return
-    if running:
-        pump.on()
-    else:
-        pump.off()
+def set_led(led, on):
+    if led:
+        led.on() if on else led.off()
 
 
-class Edge:
-    """จับจังหวะ "เพิ่งกด" ของปุ่ม: กดหนึ่งครั้ง = ทำงานหนึ่งครั้ง แม้จะกดค้างไว้"""
+class Button:
+    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
 
-    def __init__(self):
-        self.was_down = False
+    def __init__(self, index):
+        self.index, self.down, self.clicked = index, False, False
 
-    def pressed_now(self, is_down):
-        fired = is_down and not self.was_down
-        self.was_down = is_down
+    def sample(self):
+        now_down = buttons.pressed(self.index)
+        if now_down and not self.down:
+            self.clicked = True
+        self.down = now_down
+
+    def pressed_now(self):
+        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        fired, self.clicked = self.clicked, False
         return fired
+
+
+def wait_ms(ms, btns):
+    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    t0 = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), t0) < ms:
+        for b in btns:
+            b.sample()
+        time.sleep_ms(20)
 
 
 def matrix_countdown(sec_left, shown):
     """จอไฟ RGB: นับถอยหลังวินาทีที่ปั๊มเปิด เขียนเฉพาะตอนเลขเปลี่ยน (ทุกครั้งคือการเขียนบัส I2C)"""
-    if sec_left == shown:
-        return shown
     if shown <= 0 or sec_left == 0:
         rgbmatrix.scroll("")           # ปั๊มเริ่มหรือจบ: หยุดตัววิ่งก่อน จอไฟใช้ร่วมกัน
         rgbmatrix.clear()
@@ -98,19 +104,6 @@ def matrix_countdown(sec_left, shown):
 
 
 # ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
-def valid_team(team):
-    return len(team) == 6 and team[:4] == "team" and team[4:].isdigit()
-
-
-def parse_command(raw):
-    """bytes จาก broker -> dict หรือ None  (5, null, [] ก็เป็น JSON ได้ แต่ไม่ใช่คำสั่ง)"""
-    try:
-        cmd = json.loads(raw.decode())
-    except ValueError:
-        return None
-    return cmd if isinstance(cmd, dict) else None
-
-
 def pump_seconds(sec):
     """ตรวจเวลาที่สั่ง: ไม่ใช่จำนวนเต็มบวก = ค่าตั้งต้น  เกินเพดาน = เพดาน"""
     if not isinstance(sec, int) or sec <= 0:
@@ -123,62 +116,57 @@ def ascii_only(text):
     return "".join(c for c in str(text) if " " <= c <= "~")[:20]
 
 
-def handle_command(cmd, tank):
-    """ตัดสินว่าจะทำอะไรกับคำสั่งหนึ่งใบ คืน dict: do = สิ่งที่ต้องทำ, note = ข้อความขึ้นจอ, tone = สี"""
-    if cmd is None:
-        return {"do": "deny", "note": "ไม่ใช่คำสั่งที่อ่านได้", "tone": "bad"}
+def handle_command(raw, tank):
+    """ตัดสินคำสั่งหนึ่งใบ -> (ทำอะไร, วินาทีหรือข้อความ, ข้อความขึ้นจอ, สี)  ไม่แตะของจริงในนี้"""
+    try:
+        cmd = json.loads(raw.decode())
+    except ValueError:
+        cmd = None
+    if not isinstance(cmd, dict):      # 5, null, [] ก็เป็น JSON ได้ แต่ไม่ใช่คำสั่ง
+        return "deny", 0, "อ่านคำสั่งไม่ได้", COL_BAD
     act, on = cmd.get("cmd", ""), cmd.get("on", 1)
     if act == "led" and cmd.get("n", 0) != 0:
-        return {"do": "deny", "note": "ไม่มีปั๊มดวงที่ " + str(cmd.get("n")), "tone": "warn"}
+        return "deny", 0, "ไม่มีปั๊มดวงที่ " + str(cmd.get("n")), COL_WARN
     if act in ("led", "pump") and not on:
-        return {"do": "pump_off", "note": "สั่งปิดปั๊ม", "tone": "ok"}
+        return "off", 0, "สั่งปิดปั๊ม", COL_OK
     if act in ("led", "pump") and tank < TANK_MIN:
-        return {"do": "deny", "note": "น้ำเหลือ " + str(tank) + "% ไม่ยอมเปิด", "tone": "bad"}
+        return "deny", 0, "น้ำเหลือ %d%% ไม่ยอมเปิด" % tank, COL_BAD
     if act in ("led", "pump"):
         sec = pump_seconds(cmd.get("sec", PUMP_DEFAULT_S))
-        return {"do": "pump_on", "sec": sec, "note": "เปิดปั๊ม " + str(sec) + " วิ", "tone": "ok"}
+        return "on", sec, "เปิดปั๊ม %d วิ" % sec, COL_OK
     if act == "beep":
-        return {"do": "beep", "note": "เจ้าของฟาร์มเรียก!", "tone": "info"}
+        return "beep", 0, "เจ้าของฟาร์มเรียก!", COL_INFO
     if act == "say":
         text = ascii_only(cmd.get("text", ""))
-        return {"do": "say", "text": text, "note": "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), "tone": "info"}
+        return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_INFO
     if act == "ack":                   # ปุ่มรับทราบในหน้าเว็บเป็นของ sf2_04 ไฟล์นี้ไม่มีแจ้งเตือน
-        return {"do": "none", "note": "ไม่มีแจ้งเตือนให้รับทราบ (ใช้กับ sf2_04)", "tone": "info"}
+        return "", 0, "ไม่มีแจ้งเตือน (sf2_04)", COL_INFO
     if act != "":
-        return {"do": "deny", "note": "ไม่รู้จัก " + str(act)[:12], "tone": "warn"}
-    return {"do": "none", "note": "", "tone": "info"}
-
-
-def seconds_left(pump_ms, pump_t0, now):
-    """เหลือกี่มิลลิวินาทีก่อนปั๊มดับเอง (0 = ปั๊มไม่ได้เปิด)"""
-    return pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
-
-
-def build_report(n, soil, tank, running):
-    """รายงานสถานะ คีย์ตามสัญญา MQTT: sim บอกว่าคีย์ไหนมาจากลูกบิดจำลอง"""
-    return {"id": TEAM, "n": n, "soil": soil, "tank": tank, "pump": 1 if running else 0, "sim": "soil tank"}
+        return "deny", 0, "ไม่รู้จัก " + str(act)[:12], COL_WARN
+    return "", 0, "", COL_INFO
 
 
 # ---- 4) เครือข่าย ----
 def connect_farm(w):
-    """บันไดสามขั้น WiFi -> IP -> broker + subscribe ขั้นไหนพังบอกบนจอว่าพังตรงไหน"""
-    show_status(w, "กำลังต่อ WiFi จอจะนิ่งสักครู่", COL_WARN)
+    """บันไดสามขั้น WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน"""
+    show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
+    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
-        return "ต่อ WiFi ไม่ได้ ตรวจชื่อวงกับรหัส"
-    show_status(w, "ได้ IP แล้ว กำลังต่อ broker", COL_WARN)
+        return "ต่อ WiFi ไม่ได้"
     try:
         linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
     except OSError:
         linked = False
     if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
-        return "broker ไม่ตอบ เน็ตกันพอร์ต 1883?"
+        return "broker ไม่ตอบ พอร์ต 1883?"
     return ""
 
 
-def send_report(report):
-    """ส่งรายงาน คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError ไม่ใช่คืน False)"""
+def send_report(n, soil, tank, running):
+    """รายงานทุก 5 วิ (สัญญาข้อ 3.2) คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError)"""
     try:
-        mqtt.publish(TOPIC, json.dumps(report))
+        mqtt.publish(TOPIC, json.dumps({"id": TEAM, "n": n, "soil": soil, "tank": tank,
+                                        "pump": 1 if running else 0, "sim": "soil tank"}))
         return True
     except OSError:
         return False
@@ -191,175 +179,126 @@ def card(x, y, w, h, title):
     return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
-def build_pump_card(w, sw4):
-    card(12, 44, 380, 290, "ปั๊มน้ำ (ไฟ RGB สีฟ้าบนบอร์ด)")
-    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO, value=0)    # 0 = หรี่ (ไม่ดับมืด)
-    w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
-    w["arc"] = ui.Arc(x=236, y=74, w=140, h=140, min=0, max=PUMP_MAX_S, value=0)
-    w["arc"].color(COL_OK)             # สีตอนสร้างใช้ไม่ได้กับ Arc ต้องตั้งหลังสร้าง
-    w["sec"] = ui.Label("0", x=290, y=126, color=COL_TEXT, value=28)
-    ui.Label("วงแหวน = วินาทีที่เหลือ (เต็ม 30)", x=28, y=222, color=COL_DIM, value=14)
-    w["soil"] = ui.Label("ดิน (VR1) -- %", x=28, y=150, color=COL_TEXT, value=20)
-    ui.Label(sw4 + " = หยุดฉุกเฉิน ไม่ต้องพึ่งเน็ต", x=28, y=250, color=COL_WARN, value=16)
-    ui.Label("ปั๊มเปิดได้ครั้งละไม่เกิน " + str(PUMP_MAX_S) + " วิ", x=28, y=282, color=COL_DIM, value=14)
-
-
-def build_tank_card(w):
-    card(402, 44, 378, 100, "น้ำในถัง (VR4)")
-    w["tank_bar"] = ui.Bar(x=414, y=78, w=276, h=24, min=0, max=100, value=0)
-    w["tank"] = ui.Label("-- %", x=704, y=74, color=COL_TEXT, value=20)
-    ui.Label("ต่ำกว่า " + str(TANK_MIN) + " % ปั๊มไม่ยอมเปิด", x=414, y=112, color=COL_DIM, value=14)
-
-
-def build_log_card(w):
-    w["log_title"] = card(402, 152, 378, 182, "คำสั่งล่าสุด (รับแล้ว 0)")
-    table = ui.Table(x=414, y=180, w=354, h=146, cols=2, rows=LOG_ROWS + 1)
-    table.col_width(0, 70)
-    table.col_width(1, 284)
-    table.add_row("วินาที", "คำสั่ง -> บอร์ดทำ")
-    w["table"] = table
-
-
-def build_screen(sw4):
+def build_screen():
     """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ปั๊มน้ำสั่งจากที่ไกล", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"status": ui.Label("กำลังเริ่ม", x=300, y=12, color=COL_DIM, value=16),
-         "spin": ui.Spinner(x=744, y=4, w=36, h=36)}
-    build_pump_card(w, sw4)
-    build_tank_card(w)
-    build_log_card(w)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
-    show_log(w, [])
+    w = {"spin": ui.Spinner(x=744, y=4, w=36, h=36)}
+    w["title"] = card(12, 44, 440, 290, "ปั๊มน้ำ = ไฟสีฟ้า (คำสั่ง 0)")
+    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)       # สร้างมาแบบหรี่ = ปั๊มปิด
+    w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
+    w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
+    w["arc"].color(COL_OK)             # สีตอนสร้างใช้ไม่ได้กับ Arc ต้องตั้งหลังสร้าง
+    w["soil"] = ui.Label("ดิน (VR1) -- %", x=28, y=150, color=COL_TEXT)
+    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
+    card(462, 44, 318, 150, "น้ำในถัง (VR4)")
+    w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
+    w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
+    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
     ui.poll()
     return w
 
 
-def show_status(w, msg, col):
-    w["status"].color(col)
-    w["status"].text(msg)
-    ui.poll()
-
-
 def show_note(w, text, col):
     w["note"].color(col)
-    w["note"].text(text[:40])          # ป้ายรับได้ 126 ไบต์ ไทยตัวละ 3 ไบต์ ตัดก่อนเสมอ
+    w["note"].text(text)
 
 
-def show_log(w, log):
-    """เขียนตารางคำสั่งใหม่ทั้งตาราง (เรียกเฉพาะตอนมีคำสั่งเข้า ไม่ใช่ทุกรอบ)"""
-    for r in range(LOG_ROWS):
-        row = log[r] if r < len(log) else ("-", "-")
-        w["table"].cell(r + 1, 0, row[0])
-        w["table"].cell(r + 1, 1, row[1])
-
-
-def show_pump(w, running, sec_left):
-    w["led"].value(1 if running else 0)
-    w["pump"].color(COL_OK if running else COL_DIM)
-    w["pump"].text("เปิด" if running else "ปิด")
+def show_pump(w, sec_left):
+    w["led"].value(1 if sec_left else 0)
+    w["pump"].color(COL_OK if sec_left else COL_DIM)
+    w["pump"].text("เปิด อีก %d วิ" % sec_left if sec_left else "ปิด")
     w["arc"].value(sec_left)
-    w["sec"].text(str(sec_left))
 
 
 def show_knobs(w, soil, tank):
-    w["soil"].text("ดิน (VR1) " + str(soil) + " %")
+    w["soil"].text("ดิน (VR1) %d %%" % soil)
     w["tank_bar"].value(tank)
     w["tank_bar"].color(COL_INFO if tank >= TANK_MIN else COL_BAD)
-    w["tank"].text(str(tank) + " %")
+    w["tank"].text("%d %%" % tank)
 
 
 # ---- 6) โปรแกรมหลัก ----
 def stop(w, pump, msg, col=COL_BAD):
     """จบเพราะอะไรก็ตาม ปั๊มต้องดับก่อน แล้วค่อยบอกเหตุผล"""
-    set_pump(pump, False)
+    set_led(pump, False)
     rgbmatrix.scroll("")
     rgbmatrix.clear()
     w["spin"].hide()
-    show_status(w, msg, col)
+    show_note(w, msg, col)
+    ui.poll()
     raise SystemExit
 
 
-def act_on(w, result, now, pump_ms, pump_t0, running):
-    """ทำตามผลตัดสินของ handle_command แล้วคืน (pump_ms, pump_t0) ใหม่"""
-    do = result["do"]
-    if do == "pump_off":
+def act_on(w, raw, tank, now, pump_ms, pump_t0):
+    """คำสั่งหนึ่งใบ: ตัดสิน -> ทำ -> เสียง -> บอกบนจอ แล้วคืน (pump_ms, pump_t0) ใหม่"""
+    do, arg, text, col = handle_command(raw, tank)
+    if do == "off":
         pump_ms = 0
-    elif do == "pump_on":
-        pump_ms, pump_t0 = result["sec"] * 1000, now
+    elif do == "on":
+        pump_ms, pump_t0 = arg * 1000, now
     elif do == "beep":
         ui.tone(69, ui.WAVE_SQUARE, 90, 150)          # โน้ต MIDI ไม่ใช่ความถี่
-    elif do == "say" and result["text"] and not running:
-        rgbmatrix.scroll(result["text"], rgbmatrix.PURPLE, 80)
-    sfx = {"deny": ui.SFX_UI_DENY, "pump_off": ui.SFX_UI_BACK, "pump_on": ui.SFX_UI_SELECT,
-           "say": ui.SFX_UI_MOVE}.get(do)
+    elif do == "say" and arg and not pump_ms:
+        rgbmatrix.scroll(arg, rgbmatrix.PURPLE, 80)
+    sfx = {"deny": ui.SFX_UI_DENY, "off": ui.SFX_UI_BACK, "on": ui.SFX_UI_SELECT, "say": ui.SFX_UI_MOVE}.get(do)
     if sfx is not None:
         ui.sfx(sfx)                    # เสียงดังเฉพาะตอนมีคำสั่งเข้า ไม่ใช่ทุกรอบลูป
-    if result["note"]:
-        show_note(w, result["note"], TONE_COLORS[result["tone"]])
+    if text:
+        show_note(w, text, col)
     return pump_ms, pump_t0
 
 
 def main():
-    sw4 = buttons.name(0)              # ถามชื่อปุ่มจากเฟิร์มแวร์ ไม่พิมพ์เอง
-    w = build_screen(sw4)
+    w = build_screen()
     pump = led_named("RGB_BLUE")       # ไฟสีฟ้าบนบอร์ด = ปั๊มน้ำ
     rgbmatrix.clear()
-    if not valid_team(TEAM):
-        stop(w, pump, "แก้ TEAM เป็นเลขกลุ่มก่อน เช่น team05")
+    if len(TEAM) != 6 or TEAM[:4] != "team" or not TEAM[4:].isdigit():
+        stop(w, pump, "แก้ TEAM เป็นเลขกลุ่มก่อน")
     problem = connect_farm(w)
     if problem:
         stop(w, pump, problem)
     w["spin"].hide()
-    show_status(w, "ฟัง " + TOPIC_CMD, COL_OK)
-
-    stop_btn = Edge()
-    log, got, n = [], 0, 0
-    pump_ms = pump_t0 = 0
+    show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
+    stop_btn = Button(0)
+    got = n = pump_ms = pump_t0 = 0
     shown = -1
     t_send = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < LISTEN_MS:
         now = time.ticks_ms()
-        sec = time.ticks_diff(now, t0) // 1000
-        if stop_btn.pressed_now(buttons.pressed(0)) and pump_ms:     # SW4 ไม่ผ่านเน็ตเลย
+        if stop_btn.pressed_now() and pump_ms:                      # SW5 ไม่ผ่านเน็ตเลย
             pump_ms = 0
-            show_note(w, "หยุดฉุกเฉินจาก " + sw4, COL_BAD)
+            show_note(w, "หยุดฉุกเฉิน " + BTN_NAMES[0], COL_BAD)
             ui.sfx(ui.SFX_UI_BACK)
         soil, tank = knob_percent(0), knob_percent(3)
-
         msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
         if msg is not None:
             got += 1
-            result = handle_command(parse_command(msg[1]), tank)
-            pump_ms, pump_t0 = act_on(w, result, now, pump_ms, pump_t0, pump_ms > 0)
-            log.insert(0, (str(sec), result["note"][:28] or "(ไม่มีคำสั่ง)"))
-            del log[LOG_ROWS:]
-            show_log(w, log)
-            w["log_title"].text("คำสั่งล่าสุด (รับแล้ว " + str(got) + ")")
-
-        left = seconds_left(pump_ms, pump_t0, now)    # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
-        if pump_ms and (left <= 0 or tank < TANK_MIN):
+            w["title"].text("ปั๊มน้ำ = ไฟสีฟ้า (คำสั่ง %d)" % got)
+            pump_ms, pump_t0 = act_on(w, msg[1], tank, now, pump_ms, pump_t0)
+        left = pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
+        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
             pump_ms = 0
-            show_note(w, "ครบเวลา ปั๊มดับเอง" if left <= 0 else "น้ำหมดถัง ปั๊มดับเอง", COL_INFO)
+            show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "ถังแห้ง ดับเอง", COL_INFO)
             ui.sfx(ui.SFX_UI_BACK)
-        set_pump(pump, pump_ms > 0)
+        set_led(pump, pump_ms)
         sec_left = left // 1000 + 1 if pump_ms else 0
         if sec_left != shown:
             shown = matrix_countdown(sec_left, shown)
-            show_pump(w, pump_ms > 0, sec_left)
+            show_pump(w, sec_left)
         show_knobs(w, soil, tank)
-
         if time.ticks_diff(now, t_send) >= SEND_MS:   # รายงานทุก 5 วิ ให้แอปเห็นว่าปั๊มทำงานจริง
             t_send, n = now, n + 1
-            if not send_report(build_report(n, soil, tank, pump_ms > 0)):
-                stop(w, pump, "สายหลุดตอนรายงาน")
+            if not send_report(n, soil, tank, pump_ms):
+                stop(w, pump, "สายหลุด")
         if not mqtt.is_connected():
-            stop(w, pump, "สายหลุดระหว่างฟัง")
+            stop(w, pump, "สายหลุด")
         ui.poll()
-        time.sleep_ms(POLL_MS)
-
-    stop(w, pump, "เลิกฟังแล้ว ได้รับ " + str(got) + " คำสั่ง", COL_DIM)   # ดับปั๊มก่อนจบเสมอ
+        wait_ms(POLL_MS, (stop_btn,))
+    stop(w, pump, "เลิกฟัง ได้รับ %d คำสั่ง" % got, COL_DIM)   # ดับปั๊มก่อนจบเสมอ
 
 
 main()
