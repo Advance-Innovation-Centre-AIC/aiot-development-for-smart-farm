@@ -275,7 +275,7 @@ def build():
 <div class="eyebrow">Intensive Course · TESAIoT Dev Kit · MicroPython</div>
 <h1>AIoT Development for <span class="g">Smart Farm</span></h1>
 <p class="sub">เปลี่ยนบอร์ดเล็ก ๆ หนึ่งตัวให้เป็น <b>Smart IoT Gateway</b> ของฟาร์ม: อ่านอากาศในโรงเรือน ดูแลความชื้นดิน เฝ้าแท็งก์น้ำ ส่งเสียงเตือนเมื่อพืชเริ่มเครียด แล้วส่งข้อมูลขึ้นอินเทอร์เน็ตให้<b>แอปบนมือถือของคุณเอง</b>แสดงผลและแจ้งเตือนแบบเรียลไทม์</p>
-<div class="meta"><span class="pill">บอร์ด <b>TESAIoT Dev Kit</b></span><span class="pill">firmware <b>v2.4.1</b></span><span class="pill"><b>BENTO IDE</b> + <b>BENTO Emulator</b></span><span class="pill">ลงมือทำตั้งแต่นาทีแรก</span></div>
+<div class="meta"><span class="pill">บอร์ด <b>TESAIoT Dev Kit</b></span><span class="pill"><b>BENTO IDE</b> + <b>BENTO Emulator</b></span><span class="pill">ลงมือทำตั้งแต่นาทีแรก</span></div>
 </header>
 {diagram}
 {setup}
