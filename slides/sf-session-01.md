@@ -3,7 +3,7 @@ marp: true
 theme: default
 paginate: true
 math: katex
-title: "คาบ 1 — ฟาร์มอัจฉริยะเริ่มที่เซนเซอร์"
+title: "Session 1 — ฟาร์มอัจฉริยะเริ่มที่เซนเซอร์ · AIoT Development for Smart Farm"
 ---
 
 <!-- fit-css -->
@@ -73,13 +73,13 @@ section.brk { background: linear-gradient(135deg,#ff9f1c 0%,#ffbf69 60%,#ffe8c2 
 <!-- _class: cover -->
 <!-- _paginate: false -->
 
-# คาบ 1 — ฟาร์มอัจฉริยะเริ่มที่เซนเซอร์
+# Session 1 — ฟาร์มอัจฉริยะเริ่มที่เซนเซอร์
 
 ## บอร์ดของเราคือผู้ช่วยในโรงเรือน
 
 > คาถาประจำคาบ: **อ่าน (Sense) → ตัดสิน (Decide) → ลงมือ (Act)**
 
-AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emulator
+AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO Emulator
 
 ---
 
@@ -109,14 +109,14 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
 </div>
 <div>
 
-**กลุ่มละ 2 คน สลับบทบาททุกกิจกรรม**
+**ทำงานเป็นคู่ สลับบทบาททุกกิจกรรม**
 
 | บทบาท | ทำอะไร |
 |---|---|
 | 🚜 **คนขับ** | คุมบอร์ด กด Program to Device |
 | 🧭 **ผู้นำทาง** | อ่านใบงาน ลองไฟล์เดียวกันใน **Emulator** ก่อน แล้วจดผล |
 
-ใบงาน: `sf-s1-th` (กลุ่มละ 1 ชุด)
+ใบงาน: `sf-s1-th` (ทีมละ 1 ชุด)
 
 </div>
 </div>
@@ -220,7 +220,7 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
 
 <div class="think">
 
-**สำหรับนิสิตโลจิสติกส์:** ถ้าลูกค้าถามว่า "ผักล็อตนี้เย็นตลอดทางจริงไหม?" — เราจะ **พิสูจน์** ด้วยข้อมูลอะไร? (กราฟนี้เป็นตัวอย่างสมมติ)
+**คิดแบบคนทำโลจิสติกส์:** ถ้าลูกค้าถามว่า "ผักล็อตนี้เย็นตลอดทางจริงไหม?" — เราจะ **พิสูจน์** ด้วยข้อมูลอะไร? (กราฟนี้เป็นตัวอย่างสมมติ)
 
 </div>
 
@@ -251,7 +251,7 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
   <line x1="275" y1="125" x2="368" y2="125" stroke="#546e7a" stroke-width="5" marker-end="url(#ar)"/>
   <line x1="630" y1="125" x2="723" y2="125" stroke="#546e7a" stroke-width="5" marker-end="url(#ar)"/>
   <path d="M790 214 C 790 292, 145 292, 145 216" fill="none" stroke="#546e7a" stroke-width="4" stroke-dasharray="10 7" marker-end="url(#ar)"/>
-  <text x="470" y="318" text-anchor="middle" font-size="20" fill="#546e7a">วนซ้ำเป็นรอบ ๆ (ทุก 0.2–1 วินาที) ในลูป while: อ่าน → ตัดสิน → ทำ</text>
+  <text x="470" y="318" text-anchor="middle" font-size="20" fill="#546e7a">วนซ้ำเป็นรอบ ๆ (ทุก 0.5–1 วินาที) ในลูป while: อ่าน → ตัดสิน → ทำ</text>
   <line x1="905" y1="212" x2="905" y2="238" stroke="#ff9f1c" stroke-width="3" stroke-dasharray="5 4"/>
   <rect x="815" y="240" width="180" height="50" rx="10" fill="#fff" stroke="#ff9f1c" stroke-width="3" stroke-dasharray="8 5"/>
   <text x="905" y="264" text-anchor="middle" font-size="17" fill="#e65100">④ รายงาน · Report</text>
@@ -405,7 +405,7 @@ section table { font-size: .7em; }
 
 <div class="warn">
 
-**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** ไม่ใช่ปุ่มของเรา — **ห้ามโยก** · ลำโพงดังพร้อมกัน 20 กลุ่มจะรบกวนกัน โค้ดทุกไฟล์จึงส่งเสียง **เฉพาะตอนมีเหตุการณ์**
+**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** ไม่ใช่ปุ่มของเรา — **ห้ามโยก** · ลำโพงหลายบอร์ดดังพร้อมกันจะรบกวนกัน โค้ดทุกไฟล์จึงส่งเสียง **เฉพาะตอนมีเหตุการณ์**
 
 </div>
 
@@ -461,7 +461,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 ---
 
-## Remote Flash v2.4.1 — กลุ่มละ 1 บอร์ด
+## Remote Flash v2.4.1 — ทีมละ 1 บอร์ด
 
 <style scoped>
 .step { display:flex; gap:14px; align-items:flex-start; margin:.3em 0; }
@@ -627,7 +627,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 </svg>
 
 - ในไฟล์ให้หาบรรทัด `# ---- 1) ตั้งค่า (แก้ได้) ----` ถึง `# ---- 5) โปรแกรมหลัก ----`
-- widget บนจอที่จะได้เจอวันนี้: หน้าปัดมีเข็ม (**Scale**) · วงแหวน (**Arc**) · ไฟสถานะ (**Led**) · กราฟ (**Chart**) · วงล้อเลือก (**Roller**) · สวิตช์ (**Switch**) · วงหมุน (**Spinner**) · แท็บ (**Tabview**) · ตาราง (**Table**)
+- widget บนจอที่จะได้เจอวันนี้: หน้าปัดมีเข็ม (**Scale**) · วงแหวน (**Arc**) · ไฟสถานะ (**Led**) · กราฟ (**Chart**) · วงล้อเลือก (**Roller**) · สวิตช์ (**Switch**) · แท็บ (**Tabview**) · ตาราง (**Table**)
 
 ---
 
@@ -1485,7 +1485,7 @@ $$\text{roll} = \operatorname{atan2}(a_y,\ |a_z|)$$
 1. **วางบอร์ดนิ่ง ๆ ตอนเริ่ม 1 วินาที** → บอร์ดถือท่านั้นเป็น "ศูนย์" เอง (ขยับตอนเริ่ม → กด **SW5** ตั้งศูนย์ใหม่)
 2. ค่อย ๆ เอียงจนไฟแดงบนบอร์ดติด + ได้ยินเสียง (เข็มเลยเลข 20) → **จดมุมที่เตือน**
 3. เอียงขวา จุดวิ่งไปทางไหน? (กลับด้าน → ลองแก้เครื่องหมายใน `bubble_cell()`)
-4. ยกบอร์ดเล็กน้อยแล้ววางกระแทกโต๊ะ **เบา ๆ** → นับแรงกระแทก (ตัวนับไม่ขึ้น? โค้ดอ่านทุก 0.2 วินาที แรงกระแทกสั้น ๆ อาจหลุด — ลองลด `BUMP_G`)
+4. ยกบอร์ดเล็กน้อยแล้ววางกระแทกโต๊ะ **เบา ๆ** → นับแรงกระแทก (ตัวนับไม่ขึ้น? โค้ดอ่านทุก 0.5 วินาที แรงกระแทกสั้น ๆ อาจหลุด — ลองลด `BUMP_G`)
 5. **เกมประคองแท็งก์** — บรรทัด "อยู่ในเป้า" นับวินาทีให้ · กด **SW6** ล้างแล้วแข่งกับกลุ่มข้าง ๆ
 
 </div>

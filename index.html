@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <title>AIoT Development for Smart Farm</title>
-<meta name="description" content="คอร์สสั้น 3 คาบ: ฟาร์มอัจฉริยะด้วย TESAIoT Dev Kit, BENTO IDE และ BENTO Emulator">
+<meta name="description" content="AIoT Development for Smart Farm — Intensive Course: เปลี่ยน TESAIoT Dev Kit ให้เป็น Smart IoT Gateway ของฟาร์ม ด้วย BENTO IDE และ BENTO Emulator">
 <style>
 :root{--ink:#eef2fb;--muted:#94a1bf;--faint:#6f7c9c;--bg:#080d18;--card:#0f1830;--card2:#121d38;
  --line:#1b2540;--teal:#22d3ee;--lime:#a3c93a;--btn:rgba(255,255,255,.04);--code:#cbd5f5;
@@ -66,13 +66,13 @@ h1 .g{background:linear-gradient(90deg,var(--lime),var(--teal));-webkit-backgrou
 </head>
 <body><div class="wrap">
 <header>
-<div class="eyebrow">Short Course · 3 คาบ + นำเสนอโปรเจกต์</div>
+<div class="eyebrow">Intensive Course · TESAIoT Dev Kit · MicroPython</div>
 <h1>AIoT Development for <span class="g">Smart Farm</span></h1>
-<p class="sub">เปลี่ยนบอร์ด <b>TESAIoT Dev Kit</b> ให้เป็น <b>Smart IoT Gateway</b> ของฟาร์ม — อ่านเซนเซอร์ ตัดสินใจ แสดงผล ส่งเสียงเตือน และสั่งปั๊ม แล้วต่อขึ้นอินเทอร์เน็ตให้แอปของกลุ่มเฝ้าดูได้จากมือถือ</p>
-<div class="meta"><span class="pill">บอร์ด <b>TESAIoT Dev Kit</b></span><span class="pill">firmware <b>v2.4.1</b></span><span class="pill"><b>BENTO IDE</b> + <b>BENTO Emulator</b></span><span class="pill">20 กลุ่ม × 2 คน</span></div>
+<p class="sub">เปลี่ยนบอร์ดเล็ก ๆ หนึ่งตัวให้เป็น <b>Smart IoT Gateway</b> ของฟาร์ม: อ่านอากาศในโรงเรือน ดูแลความชื้นดิน เฝ้าแท็งก์น้ำ ส่งเสียงเตือนเมื่อพืชเริ่มเครียด แล้วส่งข้อมูลขึ้นอินเทอร์เน็ตให้<b>แอปบนมือถือของคุณเอง</b>แสดงผลและแจ้งเตือนแบบเรียลไทม์</p>
+<div class="meta"><span class="pill">บอร์ด <b>TESAIoT Dev Kit</b></span><span class="pill">firmware <b>v2.4.1</b></span><span class="pill"><b>BENTO IDE</b> + <b>BENTO Emulator</b></span><span class="pill">ลงมือทำตั้งแต่นาทีแรก</span></div>
 </header>
-<section class="block"><h2>ภาพรวมระบบ: บอร์ดของเราคือ Smart IoT Gateway</h2><div class="diagram"><img src="slides/img/gateway_architecture.svg" alt="เซนเซอร์ไร้สายในแปลง ส่งค่าผ่าน MQTT ไปยัง broker; TESAIoT Dev Kit ตัดสิน แสดงผล และสั่ง PLC/รีเลย์ Wi-Fi คุมปั๊ม วาล์ว พัดลม; แอปของกลุ่มดูทุกอย่างบนมือถือ"></div><p class="cap">คาบ 1 ใช้ลูกบิดบนบอร์ดแทนเซนเซอร์ไร้สาย และไฟสีฟ้าแทน PLC คุมปั๊ม · คาบ 2 ต่อจริงผ่าน MQTT</p></section>
-<section class="block"><h2>เตรียมบอร์ดครั้งแรก (ทุกคน · 20 นาที)</h2>
+<section class="block"><h2>ภาพรวมระบบ: บอร์ดของเราคือ Smart IoT Gateway</h2><div class="diagram"><img src="slides/img/gateway_architecture.svg" alt="เซนเซอร์ไร้สายในแปลง ส่งค่าผ่าน MQTT ไปยัง broker; TESAIoT Dev Kit ตัดสิน แสดงผล และสั่ง PLC/รีเลย์ Wi-Fi คุมปั๊ม วาล์ว พัดลม; แอปของทีมดูทุกอย่างบนมือถือ"></div><p class="cap">Session 1 ใช้ลูกบิดบนบอร์ดแทนเซนเซอร์ไร้สาย และไฟสีฟ้าแทน PLC คุมปั๊ม · Session 2 ต่อจริงผ่าน MQTT</p></section>
+<section class="block"><h2>เตรียมบอร์ดครั้งแรก (ราว 20 นาที)</h2>
 <div class="two"><div class="card" style="--c:#5e35b1"><ol class="steps">
 <li><div><b>ติดตั้ง TESAIoT PSE84 Programmer</b> — <a class="lk" href="https://github.com/wiroon/TESAIoT_PSE84_Programmer/releases" target="_blank" rel="noopener">หน้า Releases</a> · macOS: <code>…_universal.dmg</code> · Windows: <code>…_x64-setup.exe</code> — เปิดค้างไว้ แล้วสลับเป็นโหมด <b>Remote</b></div></li>
 <li><div><b>เสียบ USB-C</b> เข้าพอร์ต <b>KitProg3</b> ของบอร์ด (ใช้สายที่ส่งข้อมูลได้)</div></li>
@@ -83,11 +83,11 @@ h1 .g{background:linear-gradient(90deg,var(--lime),var(--teal));-webkit-backgrou
 <p class="ch">เครื่องเตือนตอนเปิดแอป → เรียกผู้สอน · คอมไม่เห็นบอร์ด → เปลี่ยนสาย/พอร์ต USB · จอดำหลังแฟลชหรือรันโค้ด → กด RESET หนึ่งครั้ง ยังดำให้ถอดสายแล้วเสียบใหม่ · <b>SW2 บนฐานบอร์ดคือสวิตช์ตัดไฟ ห้ามโยก</b></p>
 <div class="ct" style="margin-top:8px">เรียนต่อที่บ้าน: BENTO Emulator</div>
 <p class="ch">ทุกไฟล์ในคอร์สรันใน BENTO Emulator ได้ (ในเมนูของ BENTO IDE) ใช้แผง <b>TESAIoT DEV KIT</b> (ลูกบิด VR1–VR4 ปุ่มคู่ของฐานบอร์ด จอไฟ RGB) กับแผง ENVIRONMENT/TILT แทนบอร์ดจริง — ค่าเซนเซอร์ใน Emulator เป็นค่าจำลอง</p></div></div></section>
-<section class="block"><h2>ตารางเรียน</h2><div class="grid">
+<section class="block"><h2>เส้นทางการเรียน</h2><div class="grid">
 <article class="card" style="--c:#22d3ee">
-<div class="cn">คาบ 1 · </div>
-<h3 class="ct">คาบ 1</h3>
-<p class="ch"></p>
+<div class="cn">Session 1 · 28 ก.ย.</div>
+<h3 class="ct">ฟาร์มอัจฉริยะเริ่มที่เซนเซอร์</h3>
+<p class="ch">แผงอากาศในโรงเรือน · หน้าพืชยิ้ม/เศร้า · รดน้ำอัตโนมัติ · ระดับน้ำ (bubble level) · แผงควบคุมฟาร์มของทีม</p>
 <div class="btns">
 <a class="btn" href="slides/sf-session-01.html">🎞️ สไลด์</a>
 <a class="btn" href="s1/sf-s1-th.docx">📝 ใบงาน .docx</a>
@@ -102,9 +102,9 @@ h1 .g{background:linear-gradient(90deg,var(--lime),var(--teal));-webkit-backgrou
 </div>
 </article>
 <article class="card" style="--c:#a3c93a">
-<div class="cn">คาบ 2 · </div>
-<h3 class="ct">คาบ 2</h3>
-<p class="ch"></p>
+<div class="cn">Session 2 · 5 ต.ค.</div>
+<h3 class="ct">ฟาร์มต่ออินเทอร์เน็ต</h3>
+<p class="ch">บอร์ดส่งค่าขึ้น MQTT · Smart IoT Gateway สั่ง PLC · เขียนแอปของตัวเองมา subscribe</p>
 <div class="btns">
 <span class="btn off">🎞️ สไลด์ · เร็ว ๆ นี้</span>
 <a class="btn" href="s2/sf-s2-th.docx">📝 ใบงาน .docx</a>
@@ -122,9 +122,9 @@ h1 .g{background:linear-gradient(90deg,var(--lime),var(--teal));-webkit-backgrou
 <div class="exs"><div class="exh">แอปบนโน้ตบุ๊ก + สัญญา MQTT</div><a class="ex app" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md" target="_blank" rel="noopener"><code>MQTT_CONTRACT_th.md</code><span>สัญญา MQTT ของฟาร์ม (คาบ 2) — ใช้เขียนแอปของกลุ่มเอง</span></a><a class="ex app" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.py" target="_blank" rel="noopener"><code>fake_board.py</code><span>บอร์ดจำลองบนโน้ตบุ๊ก ใช้ทดสอบแอปของกลุ่มตอนไม่มีบอร์ดจริง</span></a><a class="ex app" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py" target="_blank" rel="noopener"><code>farm_monitor.py</code><span>แอปเฝ้าฟาร์มบนโน้ตบุ๊กของกลุ่ม: ฟังค่าจากบอร์ด จดลง CSV แล้วสั่งปั๊มกลับ</span></a><a class="ex app" href="s2/app/farm_web.html"><code>farm_web.html</code><span>หน้าเว็บเฝ้าฟาร์มของกลุ่ม ไม่ต้องติดตั้งอะไร เปิดในเบราว์เซอร์ได้เลย (มือถือก็ได้)</span></a><a class="ex app" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py" target="_blank" rel="noopener"><code>field_sim.py</code><span>แปลงผักจำลองบนโน้ตบุ๊ก: โหนดเซนเซอร์ไร้สาย + PLC WiFi คุมปั๊ม</span></a></div>
 </article>
 <article class="card" style="--c:#f59e0b">
-<div class="cn">คาบ 3 · </div>
-<h3 class="ct">คาบ 3</h3>
-<p class="ch"></p>
+<div class="cn">Session 3 · 12 ต.ค.</div>
+<h3 class="ct">AI ในฟาร์ม + ลงมือทำโปรเจกต์</h3>
+<p class="ch">เรดาร์เฝ้าคอก · หูฟังเล้าไก่ · ตรวจการสั่นของปั๊ม · ระบบครบวงจร</p>
 <div class="btns">
 <span class="btn off">🎞️ สไลด์ · เร็ว ๆ นี้</span>
 <a class="btn" href="s3/sf-s3-th.docx">📝 ใบงาน .docx</a>
@@ -138,11 +138,11 @@ h1 .g{background:linear-gradient(90deg,var(--lime),var(--teal));-webkit-backgrou
 <a class="ex" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener"><code>sf3_05_farm_all_in_one.py</code><span>Smart HMI ฟาร์มครบวงจร: แม่แบบโปรเจกต์ของกลุ่ม</span></a>
 </div>
 </article>
-<article class="card" style="--c:#c084fc"><div class="cn">นำเสนอ · 26 ต.ค.</div><h3 class="ct">Project Presentation</h3><p class="ch"></p><div class="btns"><a class="btn" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">📄 โจทย์โปรเจกต์ (อ่านออนไลน์)</a><a class="btn" href="PROJECT_BRIEF_th.docx">📝 โจทย์โปรเจกต์ .docx</a></div></article>
+<article class="card" style="--c:#c084fc"><div class="cn">Project Showcase · 26 ต.ค.</div><h3 class="ct">นำเสนอผลงาน</h3><p class="ch">สาธิตบนบอร์ดจริงและแอปของทีม</p><div class="btns"><a class="btn" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">📄 โจทย์โปรเจกต์ (อ่านออนไลน์)</a><a class="btn" href="PROJECT_BRIEF_th.docx">📝 โจทย์โปรเจกต์ .docx</a></div></article>
 </div></section>
-<section class="block"><h2>แอปของกลุ่ม (เว็บ/มือถือ)</h2><p class="muted">กำลังเตรียม — แอปเว็บ/มือถือ (PWA) ตัวอย่างสำหรับดูข้อมูลฟาร์มและรับแจ้งเตือน จะขึ้นที่นี่</p></section>
+<section class="block"><h2>แอปของทีม (เว็บ/มือถือ)</h2><p class="muted">กำลังเตรียม — แอปเว็บ/มือถือ (PWA) ตัวอย่างสำหรับดูข้อมูลฟาร์มและรับแจ้งเตือน จะขึ้นที่นี่</p></section>
 <section class="block"><h2>รู้จักบอร์ดให้ลึกขึ้น</h2><div class="card" style="--c:var(--teal)">
 <div class="ct">TESAIoT Dev Kit SDK</div><p class="ch">ฮาร์ดแวร์ทั้งบอร์ด · ซอฟต์แวร์ · ความปลอดภัย · Edge AI · เอกสาร SDK</p>
 <div class="btns"><a class="btn" href="https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/" target="_blank" rel="noopener">เปิดเว็บ SDK ↗</a><a class="btn" href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm" target="_blank" rel="noopener">repo ของคอร์สนี้ ↗</a></div></div></section>
-<footer class="foot">อินโฟกราฟิกและภาพหน้าจอทำขึ้นสำหรับคอร์สนี้ · เครดิตภาพและวิดีโอทั้งหมดอยู่ที่สไลด์สุดท้ายของแต่ละคาบ · หน้านี้สร้างด้วย <code>tools/gen_index.py</code></footer>
+<footer class="foot">อินโฟกราฟิกและภาพหน้าจอทำขึ้นสำหรับคอร์สนี้ · เครดิตภาพและวิดีโอทั้งหมดอยู่ที่สไลด์ท้ายของแต่ละ Session · หน้านี้สร้างด้วย <code>tools/gen_index.py</code></footer>
 </div></body></html>
