@@ -54,6 +54,7 @@ FAN_LO, FAN_SPAN = 25, 20       # VR3 ตั้งเกณฑ์เปิดพ
 PUMP_ON, PUMP_OFF = 35, 45      # ดินต่ำกว่า 35 % เปิดปั๊ม เกิน 45 % ปิด (hysteresis)
 GUARD_LO, GUARD_SPAN = 50, 200  # VR4 ตั้งเขตคอก 50-250 cm
 TICK_MS, REPORT_MS, RUN_MS = 500, 5000, 600000   # วัด+วาดจอ / รายงาน / เวลารันทั้งหมด
+VOLUME = 51                     # ความดังเสียง 0-127 (≈40%)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -320,7 +321,7 @@ def check_net(w, f):
             f.remote = sec * 1000               # 0 = แอปสั่งปิด
         f.silenced = f.silenced or act == "ack"
         if act == "beep":
-            ui.tone(69, ui.WAVE_SQUARE, 90, 150)    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
+            ui.tone(69, ui.WAVE_SQUARE, VOLUME, 150)    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
         else:
             ui.sfx(ui.SFX_UI_SELECT if act else ui.SFX_UI_DENY)
         w["cmd"].text("แอป: %s %d วิ" % (act, sec) if act == "pump" else "แอป: " + str(act or "?"))

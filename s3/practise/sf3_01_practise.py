@@ -10,7 +10,7 @@
 #            sf3_01_pen_guard.py เพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบกับของตัวเอง
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยคาบหน้า · ทำที่บ้านใน BENTO Emulator ได้
 #
-# (ทำจาก sf3_01_pen_guard.py 0dadd4c63dc3)
+# (ทำจาก sf3_01_pen_guard.py 9e4a8b9ea853)
 
 import buttons
 import pots
@@ -25,6 +25,7 @@ CONFIRM_N = 3                # ต้องเห็นติดกันกี�
 THRESH_DB = 4.0              # เป้าต้องแรงกว่าฉากนิ่งกี่ dB (ตั้งได้ 0.1-60 · ค่าที่ตัวอย่าง IDE สอบเทียบไว้)
 MAX_CM = 300                 # ระยะไกลสุดที่แถบ ไม้บรรทัด และกราฟแสดง
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+VOLUME = 51                  # ความดังเสียง 0-127 (≈40%)
 RUN_MS = 180000
 SAMPLE_MS = 250              # อ่านเรดาร์ทุก 0.25 วินาที (CONFIRM_N = 3 รอบ = ราว 0.75 วินาที)
 TICK_MS = 500                # อัปเดตจอทุก 0.5 วินาที (ถี่กว่านี้จอกะพริบและกินแรงบอร์ด)
@@ -119,7 +120,7 @@ def show_matrix(armed, inside, count):
 def siren():
     # สลับสองโน้ตสี่ครั้ง (เลขโน้ต MIDI ไม่ใช่เฮิรตซ์) เล่นตอนเริ่มบุกรุกเท่านั้น
     for note in (81, 74, 81, 74):
-        ui.tone(note, ui.WAVE_SQUARE, 100, 140)
+        ui.tone(note, ui.WAVE_SQUARE, VOLUME, 140)
         time.sleep_ms(150)
 
 

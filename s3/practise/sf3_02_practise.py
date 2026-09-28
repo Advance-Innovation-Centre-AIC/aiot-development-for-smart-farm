@@ -12,6 +12,7 @@
 #
 # (ทำจาก sf3_02_coop_ears.py 8c7ad7735690)
 
+import gc
 import mic
 import pots
 import rgbmatrix
@@ -260,6 +261,7 @@ def finish(w, total, alarms):
 def main():
     if not self_test():
         return
+    gc.collect()                  # เก็บขยะจากการตรวจก่อน ไมค์ต้องจองหน่วยความจำก้อนใหญ่ (8 KB)
     w = build_screen()
     mx(rgbmatrix.clear)
     mic.start(sens=SENS)          # start() ทิ้งเสียงสองชุดแรกให้เอง เพราะยังไม่นิ่ง
