@@ -45,13 +45,13 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 def knob_percent(i):
-    """ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %"""
+    # ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %
     return pots.read(i) * 100 // 4095
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
+    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -71,8 +71,8 @@ def set_relay(relay, on):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
 
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
@@ -84,13 +84,13 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -104,7 +104,7 @@ def valid_team(team):
 
 
 def plc_decide(raw, tank):
-    """คำสั่งจาก plc/cmd (สัญญาข้อ 4.2) -> (วินาทีที่จะเปิด / 0 = ปิด / None = ไม่ทำ, เหตุผล)"""
+    # คำสั่งจาก plc/cmd (สัญญาข้อ 4.2) -> (วินาทีที่จะเปิด / 0 = ปิด / None = ไม่ทำ, เหตุผล)
     try:
         cmd = json.loads(raw.decode())
     except ValueError:
@@ -122,12 +122,12 @@ def plc_decide(raw, tank):
 
 
 def node_message(sensor, value, n):
-    """ข้อความโหนดเซนเซอร์ (สัญญาข้อ 3.5)"""
+    # ข้อความโหนดเซนเซอร์ (สัญญาข้อ 3.5)
     return {"node": sensor + "-1", "value": value, "unit": "%", "n": n}
 
 
 def plc_message(left_ms, why, n):
-    """สถานะ PLC (สัญญาข้อ 3.6): left_s ปัดขึ้น เพื่อไม่ให้ขึ้น 0 ทั้งที่ปั๊มยังเดิน"""
+    # สถานะ PLC (สัญญาข้อ 3.6): left_s ปัดขึ้น เพื่อไม่ให้ขึ้น 0 ทั้งที่ปั๊มยังเดิน
     left = (left_ms + 999) // 1000 if left_ms > 0 else 0
     return {"pump": 1 if left else 0, "left_s": left, "why": why, "n": n}
 
@@ -156,7 +156,7 @@ def send(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน) คืนป้ายหัวเรื่อง"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน) คืนป้ายหัวเรื่อง
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
@@ -225,7 +225,7 @@ def show_relay(w, sec_left, why):
 
 # ---- 6) โปรแกรมหลัก ----
 class Plc:
-    """สถานะของ PLC: ปั๊มเดินถึงเมื่อไร เหตุผลล่าสุด และตัวนับข้อความ"""
+    # สถานะของ PLC: ปั๊มเดินถึงเมื่อไร เหตุผลล่าสุด และตัวนับข้อความ
 
     def __init__(self):
         self.run_ms, self.t_on, self.why, self.n = 0, 0, "start", 0
@@ -235,13 +235,13 @@ class Plc:
 
 
 def report_plc(plc, now, why=None):
-    """ส่งสถานะ PLC ตามความจริงตอนนี้ (why = "tick" ตอนรายงานตามรอบ) คืน False ถ้าสายหลุด"""
+    # ส่งสถานะ PLC ตามความจริงตอนนี้ (why = "tick" ตอนรายงานตามรอบ) คืน False ถ้าสายหลุด
     plc.n += 1
     return send(T_BASE + "plc/state", plc_message(plc.left(now), why or plc.why, plc.n))
 
 
 def on_command(w, plc, raw, tank, now, got):
-    """คำสั่งหนึ่งใบจาก Gateway: ตรวจ -> ทำ -> เสียง -> จด -> ตอบสถานะทันที"""
+    # คำสั่งหนึ่งใบจาก Gateway: ตรวจ -> ทำ -> เสียง -> จด -> ตอบสถานะทันที
     run_s, why = plc_decide(raw, tank)
     plc.why = why
     if run_s is not None:

@@ -45,12 +45,12 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 def knob_percent(i):
-    """ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง"""
+    # ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง
     return pots.read(i) * 100 // 4095
 
 
 def led_named(name):
-    """หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*"""
+    # หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -66,8 +66,8 @@ def set_led(led, on):
 
 
 class Button:
-    """ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms"""
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
 
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
@@ -79,13 +79,13 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        """True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)"""
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    """รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ"""
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -94,7 +94,7 @@ def wait_ms(ms, btns):
 
 
 def matrix_countdown(sec_left, shown):
-    """จอไฟ RGB: นับถอยหลังวินาทีที่ปั๊มเปิด เขียนเฉพาะตอนเลขเปลี่ยน (ทุกครั้งคือการเขียนบัส I2C)"""
+    # จอไฟ RGB: นับถอยหลังวินาทีที่ปั๊มเปิด เขียนเฉพาะตอนเลขเปลี่ยน (ทุกครั้งคือการเขียนบัส I2C)
     if shown <= 0 or sec_left == 0:
         rgbmatrix.scroll("")           # ปั๊มเริ่มหรือจบ: หยุดตัววิ่งก่อน จอไฟใช้ร่วมกัน
         rgbmatrix.clear()
@@ -105,19 +105,19 @@ def matrix_countdown(sec_left, shown):
 
 # ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
 def pump_seconds(sec):
-    """ตรวจเวลาที่สั่ง: ไม่ใช่จำนวนเต็มบวก = ค่าตั้งต้น  เกินเพดาน = เพดาน"""
+    # ตรวจเวลาที่สั่ง: ไม่ใช่จำนวนเต็มบวก = ค่าตั้งต้น  เกินเพดาน = เพดาน
     if not isinstance(sec, int) or sec <= 0:
         sec = PUMP_DEFAULT_S
     return min(sec, PUMP_MAX_S)
 
 
 def ascii_only(text):
-    """จอไฟ RGB รับแต่อักษรอังกฤษ ตัวเลข เครื่องหมาย กรองที่เหลือทิ้งและตัดให้สั้น"""
+    # จอไฟ RGB รับแต่อักษรอังกฤษ ตัวเลข เครื่องหมาย กรองที่เหลือทิ้งและตัดให้สั้น
     return "".join(c for c in str(text) if " " <= c <= "~")[:20]
 
 
 def handle_command(raw, tank):
-    """ตัดสินคำสั่งหนึ่งใบ -> (ทำอะไร, วินาทีหรือข้อความ, ข้อความขึ้นจอ, สี)  ไม่แตะของจริงในนี้"""
+    # ตัดสินคำสั่งหนึ่งใบ -> (ทำอะไร, วินาทีหรือข้อความ, ข้อความขึ้นจอ, สี)  ไม่แตะของจริงในนี้
     try:
         cmd = json.loads(raw.decode())
     except ValueError:
@@ -148,7 +148,7 @@ def handle_command(raw, tank):
 
 # ---- 4) เครือข่าย ----
 def connect_farm(w):
-    """บันไดสามขั้น WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน"""
+    # บันไดสามขั้น WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
@@ -163,7 +163,7 @@ def connect_farm(w):
 
 
 def send_report(n, soil, tank, running):
-    """รายงานทุก 5 วิ (สัญญาข้อ 3.2) คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError)"""
+    # รายงานทุก 5 วิ (สัญญาข้อ 3.2) คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError)
     try:
         mqtt.publish(TOPIC, json.dumps({"id": TEAM, "n": n, "soil": soil, "tank": tank,
                                         "pump": 1 if running else 0, "sim": "soil tank"}))
@@ -174,13 +174,13 @@ def send_report(n, soil, tank, running):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    """การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน) คืนป้ายหัวเรื่อง"""
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน) คืนป้ายหัวเรื่อง
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def build_screen():
-    """สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง"""
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ปั๊มน้ำสั่งจากที่ไกล", x=12, y=6, color=COL_TEXT, value=24)
@@ -223,7 +223,7 @@ def show_knobs(w, soil, tank):
 
 # ---- 6) โปรแกรมหลัก ----
 def stop(w, pump, msg, col=COL_BAD):
-    """จบเพราะอะไรก็ตาม ปั๊มต้องดับก่อน แล้วค่อยบอกเหตุผล"""
+    # จบเพราะอะไรก็ตาม ปั๊มต้องดับก่อน แล้วค่อยบอกเหตุผล
     set_led(pump, False)
     rgbmatrix.scroll("")
     rgbmatrix.clear()
@@ -234,7 +234,7 @@ def stop(w, pump, msg, col=COL_BAD):
 
 
 def act_on(w, raw, tank, now, pump_ms, pump_t0):
-    """คำสั่งหนึ่งใบ: ตัดสิน -> ทำ -> เสียง -> บอกบนจอ แล้วคืน (pump_ms, pump_t0) ใหม่"""
+    # คำสั่งหนึ่งใบ: ตัดสิน -> ทำ -> เสียง -> บอกบนจอ แล้วคืน (pump_ms, pump_t0) ใหม่
     do, arg, text, col = handle_command(raw, tank)
     if do == "off":
         pump_ms = 0
