@@ -12,7 +12,7 @@
 #            ปุ่ม SW5 (ปุ่มล่าง) = ตั้งศูนย์ใหม่ (ท่าตอนกด = ศูนย์), SW6 (ปุ่มบน) = ล้างตัวนับ
 #            จอไฟ RGB = "ระดับน้ำ (bubble level)" จุดวิ่งตามการเอียง เขียว/เหลือง/แดง
 #            ลำโพง: มีเสียงตอนเริ่มเอียงเกินมุมปลอดภัย และทุกครั้งที่โดนกระแทก
-# บนจอ     : หน้าปัดมุมเอียงมีเข็ม (Scale), ตัวเลข 7 ส่วน (Seg7), ไฟเตือน (Led),
+# บนจอ     : หน้าปัดมุมเอียงมีเข็ม (Scale), ตัวนับแรงกระแทก (Seg7),
 #            แถบแรงรวม (Bar) และกราฟมุมเอียงเทียบมุมปลอดภัย (Chart)
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
 
@@ -33,7 +33,6 @@ TICK_MS = 500
 ZERO_SAMPLES = 5     # ตอนเริ่มอ่าน 5 ครั้ง (1 วินาที) แล้วเฉลี่ยเป็น "ศูนย์"
 GAUGE_MAX = 60       # หน้าปัดมุมเอียง 0-60 องศา
 NEEDLE_LEN = 48      # ความยาวเข็มหน้าปัด (พิกเซล) สั้นกว่าวงตัวเลข จะได้ไม่บังเลข
-CHART_EVERY = 1      # ใส่จุดในกราฟทุกกี่รอบ (1 = ทุก 0.2 วินาที) กราฟ 400 จุดจึงย้อนหลังได้ราว 80 วินาที
 TARGET_DEG = 3       # เกม "ประคองแท็งก์": เอียงไม่เกินกี่องศานับว่า "อยู่ในเป้า"
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -245,22 +244,17 @@ def build_tilt_card(w):
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
     w["gauge"] = gauge
     # ชิปบน Dev Kit วางหันแบบนี้: roll = atan2(ay, az) คือเอียง "หน้า-หลัง" ของบอร์ด
-    ui.Label("หน้า-หลัง (roll)", x=200, y=96, color=COL_DIM, value=14)
-    w["seg_roll"] = ui.Seg7(text="0", x=200, y=118, w=100, h=40, color=COL_OK)
-    ui.Label("ซ้าย-ขวา (pitch)", x=200, y=170, color=COL_DIM, value=14)
-    w["seg_pitch"] = ui.Seg7(text="0", x=200, y=192, w=100, h=40, color=COL_OK)
+    w["angles"] = ui.Label("หน้า-หลัง 0\nซ้าย-ขวา 0", x=200, y=110, color=COL_OK, value=20)
     w["verdict"] = ui.Label("...", x=24, y=262, color=COL_WARN, value=28)
     w["max"] = ui.Label("", x=24, y=306, color=COL_DIM, value=16)
 
 
 def build_bump_card(w):
-    card(402, 64, 378, 164, "แรงกระแทก")
+    card(402, 64, 378, 164, "แรงกระแทก (เต็มแถบ = 3 g)")
     w["seg_bump"] = ui.Seg7(text="0", x=414, y=94, w=90, h=40, color=COL_WARN)
     ui.Label("ครั้ง", x=512, y=104, color=COL_DIM, value=16)
-    w["lamp"] = ui.Led(x=724, y=92, w=40, h=40, color=COL_BAD, value=0)
     w["lbl_g"] = ui.Label("แรงรวม 1.00 g", x=414, y=144, color=COL_TEXT, value=16)
     w["bar_g"] = ui.Bar(x=414, y=174, w=354, h=18, min=0, max=300, value=100)
-    ui.Label("เต็มแถบ = 3 g", x=414, y=198, color=COL_DIM, value=14)
 
 
 def build_chart(w):
@@ -292,10 +286,8 @@ def build_screen():
 def show_tilt(w, roll, pitch, tilt, level, rec):
     col = LEVEL_COLORS[level]
     set_needle(w["gauge"], min(GAUGE_MAX, tilt))
-    w["seg_roll"].text(str(int(roll)))
-    w["seg_pitch"].text(str(int(pitch)))
-    w["seg_roll"].color(col)
-    w["seg_pitch"].color(col)
+    w["angles"].text("หน้า-หลัง %d\nซ้าย-ขวา %d" % (roll, pitch))
+    w["angles"].color(col)
     w["verdict"].color(col)
     if level == 2:
         w["verdict"].text("อันตราย! เอียง " + str(tilt) + " องศา")
@@ -303,7 +295,6 @@ def show_tilt(w, roll, pitch, tilt, level, rec):
         w["verdict"].text("ระวัง" if level == 1 else "ปลอดภัย")
     w["max"].text("เอียงมากสุด " + str(rec.max_tilt) + " องศา   อยู่ในเป้า " +
                   str(rec.on_target_ms // 1000) + " วินาที")
-    w["lamp"].value(1 if level == 2 else 0)        # Led: 0 = หรี่ (ไม่ดับมืด)
 
 
 def show_bumps(w, g, rec):
@@ -337,7 +328,6 @@ def main():
     w["help"].text(BTN_NAMES[0] + " (ล่าง) = ตั้งศูนย์ใหม่   " + BTN_NAMES[1] + " (บน) = ล้างตัวนับ")
     drawn = None                       # ภาพที่จอไฟ RGB วาดอยู่
     was_danger = False
-    tick = 0
     last_ms = time.ticks_ms()          # เวลาของรอบก่อน (ใช้จับเวลาเกม)
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
@@ -369,10 +359,8 @@ def main():
         drawn = matrix_update(roll, pitch, level, drawn)
         show_tilt(w, roll, pitch, tilt, level, rec)         # 4) โชว์
         show_bumps(w, g, rec)
-        if tick % CHART_EVERY == 0:
-            w["chart"].set_next(w["s_tilt"], min(GAUGE_MAX, tilt))
-            w["chart"].set_next(w["s_safe"], int(SAFE_DEG))
-        tick += 1
+        w["chart"].set_next(w["s_tilt"], min(GAUGE_MAX, tilt))     # กราฟ 400 จุด ย้อนหลังราว 3 นาที
+        w["chart"].set_next(w["s_safe"], int(SAFE_DEG))
         ui.poll()
         wait_ms(TICK_MS, (sw5, sw6))       # รอ แต่ยังคอยฟังปุ่ม
 
