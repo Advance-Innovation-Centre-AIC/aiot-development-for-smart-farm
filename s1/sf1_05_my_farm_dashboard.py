@@ -4,14 +4,14 @@
 #            + ปั๊มอัตโนมัติ + คะแนนสุขภาพฟาร์ม แล้ว "แต่งให้เป็นฟาร์มของกลุ่มคุณ"
 # สิ่งที่ต้องแก้ : ทุกบรรทัดที่มีคำว่า TODO (ชื่อฟาร์ม พืช เกณฑ์ ค่าชดเชย กฎ)
 # ลองเล่น  : เป่าลม จับบอร์ด หมุน VR1 แล้วดูคะแนนสุขภาพฟาร์มเปลี่ยน
-#            แตะแถบด้านบนเพื่อสลับหน้า: ภาพรวม / กราฟ / บันทึก (ปั๊มเปิด-ปิด, ฟาร์มแย่ลง-ดีขึ้น) / งานจริง
+#            แตะแถบด้านบนเพื่อสลับหน้า: ภาพรวม / กราฟ · เหตุการณ์ล่าสุดขึ้นใต้คะแนน (ปั๊มเปิด-ปิด, ฟาร์มแย่ลง-ดีขึ้น)
 # ของบนบอร์ดที่ใช้ : SHT40, ลูกบิด VR1, ไฟ RGB_BLUE = ปั๊ม, SW5 (ปุ่มล่าง) กดค้าง = รดน้ำเอง,
 #            SW6 (ปุ่มบน) = สลับจอไฟ RGB ระหว่างคะแนนสุขภาพกับอุณหภูมิ
 #            ลำโพงมีเสียงตอนปั๊มเปิด/ปิด และตอนฟาร์มแย่ลง/ดีขึ้น
 # บนจอ     : แท็บหลายหน้า (Tabview), วงแหวนคะแนน (Arc), ไฟปั๊ม (Led),
-#            กราฟ 3 เส้น (Chart), ตารางบันทึกเหตุการณ์ (Table)
-# ในงานจริง : ถ้าฟาร์มคุณมีเซนเซอร์ไร้สายและ PLC ต่อ Wi-Fi บอร์ดนี้คือแผงควบคุมกลาง (ดูแท็บ "งานจริง")
-# ส่งงาน    : ถ่ายรูปจอตอนคะแนนสูงสุดและต่ำสุด (และหน้า "บันทึก") แนบในใบงาน
+#            กราฟ 2 เส้น (Chart)
+# ในงานจริง : ถ้าฟาร์มคุณมีเซนเซอร์ไร้สายและ PLC ต่อ Wi-Fi บอร์ดนี้คือแผงควบคุมกลาง (Smart IoT Gateway, คาบ 2)
+# ส่งงาน    : ถ่ายรูปจอตอนคะแนนสูงสุดและต่ำสุด แนบในใบงาน
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
 # หน่วยความจำ: ไฟล์นี้ใหญ่สุดในคาบ บอร์ดเหลือ RAM ให้โปรแกรมไม่มาก ถ้าเพิ่มของแล้วขึ้น MemoryError
 #            ให้ตัดของที่ไม่ใช้ออกก่อน (คอมเมนต์ไม่กินหน่วยความจำ โค้ดกิน)
@@ -40,7 +40,6 @@ HUM_FIX = True       # แปลงความชื้นเป็นของ
 RUN_MS = 300000
 TICK_MS = 500
 TAB_BAR_H = 44       # ความสูงแถบแท็บ (พิกเซล) ต้องสูงพอให้นิ้วแตะได้
-LOG_ROWS = 2         # ตารางบันทึกโชว์เหตุการณ์ล่าสุดกี่แถว (บนบอร์ดแถวละราว 68 px จอรับได้ 2 แถว + หัวตาราง)
 ALERT_GAP_MS = 3000  # ฟาร์มเปลี่ยนโซน: เตือน/จดได้ไม่ถี่กว่าทุก 3 วินาที (กันกระพือตอนค่าอยู่ตรงขอบ)
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
 
@@ -67,10 +66,6 @@ def read_climate():
     if TEMP_OFFSET != 0 and HUM_FIX:
         h = room_humidity(h, t_raw, t)
     return t, h
-
-
-def soil_percent():
-    return pots.read(0) * 100 // 4095      # VR1: 0 = แห้งสนิท, 100 = แฉะ
 
 
 def led_named(name):
@@ -129,10 +124,7 @@ def matrix_show(show_temp, t, score, zone, shown):
     else:
         want = (score, MATRIX_COLORS[zone])
     if want != shown:
-        try:
-            rgbmatrix.score(want[0], want[1])
-        except OSError:
-            pass            # จอไฟ RGB ตอบไม่ทัน: ข้ามภาพนี้ไป ไม่ให้โปรแกรมหยุด
+        rgbmatrix.score(want[0], want[1])
     return want
 
 
@@ -186,23 +178,9 @@ def advice_parts(t, h, soil):
         tips.append("เพิ่มความชื้น")
     if h is not None and h > H_HI:
         tips.append("เปิดระบายอากาศ")
-    if t is None or h is None:
-        tips.append("อ่านเซนเซอร์ไม่ได้")
     if soil < SOIL_MIN:
         tips.append("กำลังรดน้ำ")
     return tips
-
-
-def fit(parts, limit):
-    """ต่อคำแนะนำทีละข้อ จนกว่าจะเกิน limit ไบต์ (จอรับข้อความได้ไม่เกิน 126 ไบต์
-    ภาษาไทยตัวละ 3 ไบต์ จึงเพิ่มคำแนะนำเองได้โดยจอไม่ตัดกลางคำ)"""
-    out = ""
-    for p in parts:
-        cand = p if not out else out + ", " + p
-        if len(cand.encode()) > limit:
-            break
-        out = cand
-    return out
 
 
 # ---- 4) หน้าจอ ----
@@ -225,7 +203,7 @@ def build_overview_tab(w, tab):
     w["lbl_soil"] = ui.Label("-- %", x=544, y=62, color=COL_TEXT, value=20, parent=tab)
     w["led"] = ui.Led(x=170, y=104, w=32, h=32, color=COL_INFO, value=0, parent=tab)
     w["lbl_pump"] = ui.Label("ปั๊มน้ำ: ปิด", x=214, y=108, color=COL_DIM, value=20, parent=tab)
-    ui.Label(BTN_NAMES[1] + " (บน) = สลับจอไฟ RGB", x=170, y=156, color=COL_DIM, value=16, parent=tab)
+    w["event"] = ui.Label(BTN_NAMES[1] + " (บน) = สลับจอไฟ RGB", x=170, y=156, color=COL_DIM, value=16, parent=tab)
 
 
 def build_screen():
@@ -237,42 +215,22 @@ def build_screen():
     # Tabview กินพื้นที่แค่ที่เราให้ จบที่ y=338 เพราะมุมขวาล่างเป็นปุ่ม Console ของเฟิร์มแวร์
     tabs = ui.Tabview(x=12, y=44, w=768, h=294, value=TAB_BAR_H)
     build_overview_tab(w, tabs.add_tab("ภาพรวม"))
-    # หน้า "กราฟ": 3 เส้น สีตรงกับคำอธิบายด้านขวา
+    # หน้า "กราฟ": 2 เส้น สีตรงกับคำอธิบายด้านขวา
     tab = tabs.add_tab("กราฟ")
     w["chart"] = line_chart(0, 0, 400, 180, 0, 100, COL_WARN, tab)
-    w["s_hum"] = w["chart"].add_series(COL_INFO)
     w["s_soil"] = w["chart"].add_series(COL_OK)
-    ui.Label("ส้ม = อุณหภูมิ", x=420, y=10, color=COL_WARN, value=16, parent=tab)
-    ui.Label("ฟ้า = ชื้นอากาศ", x=420, y=50, color=COL_INFO, value=16, parent=tab)
-    ui.Label("เขียว = ชื้นดิน", x=420, y=90, color=COL_OK, value=16, parent=tab)
-    # หน้า "บันทึก": ตาราง 3 คอลัมน์ แถวแรกเป็นหัวตาราง
-    w["table"] = ui.Table(x=0, y=0, w=700, h=204, cols=3, rows=LOG_ROWS + 1,
-                          parent=tabs.add_tab("บันทึก"))
-    w["table"].add_row("วินาที", "เหตุการณ์", "คะแนน")
-    # หน้า "งานจริง": ถ้าฟาร์มมีเซนเซอร์ไร้สายและ PLC ต่อ Wi-Fi บอร์ดนี้คือแผงควบคุมกลาง
-    ui.Label("แผงควบคุมกลาง: เซนเซอร์ไร้สาย + PLC (คาบ 2)",
-             x=0, y=0, color=COL_TEXT, value=20, parent=tabs.add_tab("งานจริง"))
+    ui.Label("ส้ม = อุณหภูมิ\nเขียว = ชื้นดิน", x=420, y=10, color=COL_TEXT, value=16, parent=tab)
     # คำแนะนำอยู่นอกแท็บ จึงเห็นได้ทุกหน้า - ของที่ต้องเห็นตลอดห้ามซ่อนในแท็บ
-    w["advice"] = ui.Label("", x=12, y=352, color=COL_WARN, value=20)
+    w["advice"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=20)
     ui.poll()
     return w
 
 
-def show_log(w, rows):
-    """เขียนตารางบันทึกใหม่ทั้งตาราง (เรียกเฉพาะตอนมีเหตุการณ์ ไม่ใช่ทุกรอบ)"""
-    for r in range(LOG_ROWS):
-        row = rows[r] if r < len(rows) else ("-", "-", "-")
-        for c in range(3):
-            w["table"].cell(r + 1, c, row[c])
-
-
-def note_event(w, rows, sec, what, score, sound):
-    """มีเหตุการณ์: เสียงหนึ่งครั้ง + จดลงบันทึก (ใหม่สุดอยู่บน เก็บ LOG_ROWS แถว) + วาดตารางใหม่"""
+def note_event(w, sec, what, score, sound):
+    """มีเหตุการณ์: เสียงหนึ่งครั้ง + ขึ้นบรรทัด "ล่าสุด" ใต้คะแนน (เรียกเฉพาะตอนเกิดเหตุ ไม่ใช่ทุกรอบ)"""
     ui.sfx(sound)
-    rows.insert(0, (str(sec), what, str(score)))
-    if len(rows) > LOG_ROWS:
-        rows.pop()
-    show_log(w, rows)
+    w["event"].color(COL_TEXT)
+    w["event"].text("วินาที %d: %s (คะแนน %d)" % (sec, what, score))
 
 
 def show(w, t, h, soil, running, score, zone):
@@ -289,11 +247,10 @@ def show(w, t, h, soil, running, score, zone):
     w["lbl_pump"].color(COL_OK if running else COL_DIM)
     if t is not None:
         w["chart"].set_next(0, int(max(0, min(100, t))))   # เส้นส้ม (ชุด 0)
-    if h is not None:
-        w["chart"].set_next(w["s_hum"], int(h))
     w["chart"].set_next(w["s_soil"], soil)
     tips = advice_parts(t, h, soil)
-    w["advice"].text("แนะนำ: " + (fit(tips, 105) if tips else "ทุกอย่างปกติ"))
+    more = " (+%d)" % (len(tips) - 1) if len(tips) > 1 else ""      # จอรับได้ 126 ไบต์ จึงโชว์ข้อแรกข้อเดียว
+    w["advice"].text("แนะนำ: " + (tips[0] + more if tips else "ทุกอย่างปกติ"))
     w["advice"].color(COL_WARN if tips else COL_OK)
 
 
@@ -302,20 +259,19 @@ def main():
     w = build_screen()
     pump = led_named("RGB_BLUE")   # ไฟสีฟ้าบนบอร์ด = ปั๊มน้ำ
     sw5, sw6 = Button(0), Button(1)
-    rows = []             # บันทึกเหตุการณ์ (ใหม่สุดอยู่หน้า)
     pump_on = running = show_temp = False   # show_temp: จอไฟ RGB โชว์อุณหภูมิแทนคะแนน
     shown = zone_was = None
     last_alert = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         sec = time.ticks_diff(time.ticks_ms(), t0) // 1000
         t, h = read_climate()                                 # 1) อ่าน
-        soil = soil_percent()
+        soil = pots.read(0) * 100 // 4095                     # VR1: 0 = แห้งสนิท, 100 = แฉะ
         score = health(t, h, soil)                            # 2) คิด
         zone = zone_of(score)
         pump_on = pump_decision(pump_on, soil)
         now_running = pump_on or sw5.down                     # กฎอัตโนมัติ หรือกด SW5 (ปุ่มล่าง) ค้าง
         if now_running != running:                           # 3) ทำ เฉพาะตอนเปลี่ยน
-            note_event(w, rows, sec, "ปั๊มเปิด" if now_running else "ปั๊มปิด", score,
+            note_event(w, sec, "ปั๊มเปิด" if now_running else "ปั๊มปิด", score,
                        ui.SFX_UI_START if now_running else ui.SFX_UI_BACK)
             set_pump(pump, now_running)
         running = now_running
@@ -323,7 +279,7 @@ def main():
             zone_was = zone
         elif zone != zone_was and time.ticks_diff(time.ticks_ms(), last_alert) > ALERT_GAP_MS:
             worse = zone > zone_was                           # เปลี่ยนโซนจริง ไม่ใช่กระพือ
-            note_event(w, rows, sec, "ฟาร์มแย่ลง" if worse else "ฟาร์มดีขึ้น", score,
+            note_event(w, sec, "ฟาร์มแย่ลง" if worse else "ฟาร์มดีขึ้น", score,
                        ui.SFX_UI_DENY if worse else ui.SFX_PONG_WIN)
             zone_was = zone
             last_alert = time.ticks_ms()
@@ -341,7 +297,7 @@ def main():
     except OSError:
         pass
     w["advice"].color(COL_WARN)
-    w["advice"].text("จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่")
+    w["advice"].text("จบรอบ - กด Program to Device เพื่อเล่นใหม่")
     ui.poll()
 
 
@@ -352,6 +308,6 @@ main()
 # 2) เพิ่มของลงหน้า "ภาพรวม" จากไฟล์ก่อนหน้า: มุมเอียง (sf1_04) หรือความกดอากาศ (sf1_01)
 #    หรือใช้ลูกบิดที่เหลือ: VR3 = น้ำในถัง (จาก sf1_03), VR4 = แสงแดด/เวลาของวัน
 #    (ไฟล์นี้ใกล้เพดานหน่วยความจำของบอร์ดแล้ว เพิ่มทีละนิดแล้วลองรัน ถ้า MemoryError ให้ตัดของอื่นออก)
-# 3) เพิ่มเหตุการณ์ของกลุ่มลงบันทึก เช่น note_event(w, rows, sec, "ร้อนเกิน", score, ui.SFX_UI_DENY)
+# 3) เพิ่มเหตุการณ์ของกลุ่ม เช่น note_event(w, sec, "ร้อนเกิน", score, ui.SFX_UI_DENY)
 #    ตอนอุณหภูมิเพิ่งเกิน T_HI (จดเฉพาะตอน "เพิ่งเกิน" ไม่ใช่ทุกรอบ)
 # 4) คิดชื่อโปรเจกต์ของกลุ่ม: ฟาร์มนี้ยังขาดอะไร ถ้าต่ออินเทอร์เน็ตได้จะทำอะไรเพิ่ม
