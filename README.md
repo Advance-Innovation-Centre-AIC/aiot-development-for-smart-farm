@@ -80,4 +80,4 @@
 
 **BENTO : : Make Anything.**
 
-© 2026 รองศาสตราจารย์ วิรุฬห์ ศรีบริรักษ์ · Advance Innovation Centre (AIC), มหาวิทยาลัยบูรพา · BENTO & TESAIoT
+© 2026 รองศาสตราจารย์ วิรุฬห์ ศรีบริรักษ์ · Advance Innovation Centre (AIC), วิศวกรรมระบบสมองกลฝังตัว ภาควิชาวิศวกรรมไฟฟ้า มหาวิทยาลัยบูรพา · BENTO & TESAIoT
