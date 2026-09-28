@@ -1901,7 +1901,7 @@ section table { font-size: .9em; }
 | รถไถบนเนินชัน | David Martin | CC BY-SA 2.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ploughing_a_steep_field_above_Kellaton_-_geograph.org.uk_-_4889475.jpg) |
 | ภาพบอร์ด TESAIoT Dev Kit + ตำแหน่งหมุด 1–8 · ภาพหน้าเว็บ SDK | TESAIoT | ใช้โดยได้รับอนุญาตจากเจ้าของ | [TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk](https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/) |
 
-**ภาพที่ทำขึ้นเองสำหรับคอร์สนี้:** ปก · อินโฟกราฟิกทุกภาพที่วาดด้วย SVG/HTML (Sense→Decide→Act, 5 เสาหลัก, เซนเซอร์ความชื้น, ความชื้นสัมพัทธ์, ความกดอากาศ, การสอบเทียบ, ช่วงที่พืชชอบ, สี RGB, hysteresis, Smart IoT Gateway, มุมเอียง, เมนู GPIO & RGB Matrix) · **ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ถ่ายด้วย [`tools/shoot_emulator.mjs`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/tools/shoot_emulator.mjs) ค่าเซนเซอร์เป็นค่าจำลอง)
+**ภาพที่ทำขึ้นเองสำหรับคอร์สนี้:** ปก · อินโฟกราฟิกทุกภาพที่วาดด้วย SVG/HTML (Sense→Decide→Act, 5 เสาหลัก, เซนเซอร์ความชื้น, ความชื้นสัมพัทธ์, ความกดอากาศ, การสอบเทียบ, ช่วงที่พืชชอบ, สี RGB, hysteresis, Smart IoT Gateway, มุมเอียง, เมนู GPIO & RGB Matrix) · **ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ค่าเซนเซอร์เป็นค่าจำลอง)
 
 **อีโมจิ:** Twemoji — Twitter, Inc. และผู้ร่วมพัฒนา (jdecked/twemoji) — CC BY 4.0 · สูตรคณิตศาสตร์แสดงด้วย KaTeX
 
