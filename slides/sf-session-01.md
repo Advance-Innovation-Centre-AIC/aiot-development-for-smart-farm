@@ -756,7 +756,11 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 </div>
 <div>
 
-$$\%RH = \frac{\text{ไอน้ำที่มีจริง}}{\text{ไอน้ำมากที่สุดที่รับได้ ณ อุณหภูมินั้น}} \times 100$$
+<div style="display:flex;align-items:center;justify-content:center;gap:.5em;font-size:.85em;margin:.3em 0 .9em;line-height:1.25">
+<b>%RH =</b>
+<div style="text-align:center"><div style="border-bottom:2px solid currentColor;padding:0 .4em .15em">ไอน้ำที่มีจริงในอากาศ</div><div style="padding:.15em .4em 0">ไอน้ำมากที่สุดที่อากาศรับได้<br>ณ อุณหภูมินั้น</div></div>
+<b>× 100</b>
+</div>
 
 - อากาศ **อุ่น** รับไอน้ำได้ **มากกว่า** อากาศเย็นมาก
 - ไอน้ำเท่าเดิม แต่อากาศร้อนขึ้น → **%RH ลดลง** ทั้งที่น้ำไม่ได้หายไปไหน
