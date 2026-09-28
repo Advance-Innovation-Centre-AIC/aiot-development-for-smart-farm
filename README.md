@@ -78,4 +78,6 @@
 
 ---
 
-**BENTO : : Make Anything.** · BENTO & TESAIoT
+**BENTO : : Make Anything.**
+
+© 2026 รองศาสตราจารย์ วิรุฬห์ ศรีบริรักษ์ · Advance Innovation Centre (AIC), มหาวิทยาลัยบูรพา · BENTO & TESAIoT
