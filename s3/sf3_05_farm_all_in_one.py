@@ -1,22 +1,37 @@
-# sf3_05_farm_all_in_one.py - Smart HMI ฟาร์มครบวงจร: แม่แบบโปรเจกต์ของกลุ่ม
+# sf3_05_farm_all_in_one.py - ฟาร์มครบวงจรในไฟล์เดียว: บอร์ดของเราคือ Smart IoT Gateway ของฟาร์ม
 #
+# ภาพฟาร์มจริง : เซนเซอร์ (อากาศ ดิน เรดาร์ที่คอก) -> Dev Kit ตัดสินใจ -> สั่งรีเลย์ PLC WiFi ผ่าน MQTT
+#               -> PLC เปิดพัดลม/ปั๊ม/ไซเรนจริง · แอปของกลุ่มดูทุกอย่าง และสั่งผ่าน Gateway (ไม่สั่ง PLC ตรง)
+#               ในไฟล์นี้ "รีเลย์" คือไฟ Led บนจอ + จอไฟ RGB + ลำโพง (ต่อ PLC จริงได้ ดูข้อ 3 ท้ายไฟล์)
 # ภารกิจ   : บอร์ดเดียวดูแลสามจุดของฟาร์ม และครบ "ห้าเสา" ของโปรเจกต์ในไฟล์เดียว
-#            1) HMI     จอสัมผัสสามการ์ด + ปุ่มบนจอ "ส่งรายงานเลย"
-#            2) เซนเซอร์ + ค่าตั้ง  SHT40/DPS368/เรดาร์ · VR2 = ดิน(จำลอง) VR3 = เกณฑ์พัดลม VR4 = เขตคอก
-#                               SW4 ค้าง = รดน้ำเอง · SW5 = รับทราบผู้บุกรุก ปิดไซเรน
-#            3) เสียง + RGB matrix  เขียว = ปกติ · เหลือง = มีเครื่องทำงาน · แดงวิ่ง INTRUDER
-#            4) MQTT ฝั่งบอร์ด  ส่ง .../telemetry ทุก 5 วิ · ส่ง .../event ตอนเกิดเหตุ · ฟัง .../cmd
-#            5) แอปของกลุ่ม    เปิด s2/app/farm_monitor.py หรือ s2/app/farm_web.html ใส่ TEAM เดียวกัน
-#               แล้วสั่งกลับมาได้: {"cmd":"pump","on":1,"sec":10} {"cmd":"beep"} {"cmd":"silence"}
-# ลองเล่น  : หมุน VR2 ลง (ดินแห้ง) · หมุน VR3 ลง (ให้พัดลมเปิด) · เดินเข้าหาบอร์ด · สั่งปั๊มจากแอป
-# แนวคิด AIoT: เน็ตหลุดฟาร์มต้องไม่หยุด - ถ้าต่อ WiFi/broker ไม่ได้ ไฟล์นี้ทำงานต่อแบบออฟไลน์
-#            (กฎทุกข้ออยู่บนบอร์ด เน็ตมีไว้รายงานและรับคำสั่ง ไม่ได้มีไว้ตัดสินใจแทน)
+#            1) HMI      จอสัมผัสสามการ์ด + ปุ่มบนจอ "ส่งรายงานเลย"
+#            2) เซนเซอร์ + ค่าตั้ง  SHT40/DPS368/เรดาร์ · VR2 = ดิน(จำลอง) · VR3 = เกณฑ์พัดลม 25-45 C
+#                               VR4 = เขตคอก 50-250 cm · SW5 ค้าง = รดน้ำเอง · SW6 = รับทราบผู้บุกรุก
+#            3) เสียง + จอไฟ RGB  เขียว = ปกติ · เหลือง = มีเครื่องทำงาน · แดงวิ่ง INTRUDER
+#            4) MQTT ฝั่งบอร์ด  ส่ง .../telemetry ทุก 5 วิ · ส่ง .../event ตอนคอกเปลี่ยน · ฟัง .../cmd
+#            5) แอปของกลุ่ม    s2/app/farm_monitor.py หรือ s2/app/farm_web.html ใส่ TEAM เดียวกัน
+#               สั่งกลับมาได้: {"cmd":"pump","on":1,"sec":10} {"cmd":"pump","on":0} {"cmd":"beep"}
+#               {"cmd":"ack"} (หรือ {"cmd":"silence"}) = รับทราบผู้บุกรุก
+# ลองเล่น  : หมุน VR2 ลง (ดินแห้ง) · หมุน VR3 ลง (ให้พัดลมเปิด) · เดินเข้าหาบอร์ด แล้วกด SW6
+#            กดปุ่ม "รดน้ำ 10 วินาที" ในหน้าเว็บ แล้วดูไฟปั๊มบนจอ · แตะ "ส่งรายงานเลย" แล้วดูบรรทัดล่างสุด
+# ของบนบอร์ดที่ใช้ : SHT40 (อากาศ) DPS368 (ความกดอากาศ) เรดาร์ (ระยะคนที่คอก) ลูกบิด VR2-VR4
+#            SW5 (ปุ่มล่าง) กดค้าง = รดน้ำเอง · SW6 (ปุ่มบน) = รับทราบผู้บุกรุก ปิดไซเรน
+#            ลำโพง (ดังเฉพาะตอนมีเหตุ) · จอไฟ RGB 16x8 (ส่งซ้ำทุก 3 วิ เผื่อเฟรมหล่นตอนบอร์ดยุ่ง)
+# บนจอ     : การ์ดโรงเรือน (อุณหภูมิ ความชื้น + ไฟพัดลม Led), การ์ดแปลงผัก (วงแหวนดิน Arc + ไฟปั๊ม Led),
+#            การ์ดคอกสัตว์ (ระยะ + ไฟไซเรน Led), แถบสถานะเน็ต + คำสั่งจากแอป + ปุ่ม "ส่งรายงานเลย",
+#            บรรทัดล่างสุด = JSON ใบล่าสุดที่บอร์ดส่ง (ความกดอากาศ hpa อยู่ในนี้และใน telemetry)
+# แนวคิด AIoT: เน็ตหลุดฟาร์มต้องไม่หยุด - ต่อ WiFi/broker ไม่ได้ ไฟล์นี้ทำงานต่อแบบออฟไลน์
+#            กฎทุกข้ออยู่บนบอร์ด เน็ตมีไว้รายงานและรับคำสั่ง ไม่ได้มีไว้ตัดสินใจแทน
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
 #            (ใน Emulator VR1 คือระยะเรดาร์ จึงใช้ VR2 แทนดิน สองอย่างจะได้ไม่ชนกัน)
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM (เหมือนคาบ 2) · broker ไม่เข้ารหัส ห้ามส่งของลับ
+# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM · ยังไม่แก้ TEAM = ทำงานออฟไลน์ (บอกบนจอ)
+#            broker ไม่เข้ารหัส ห้ามส่งของลับ
+# สัญญา MQTT: s2/app/MQTT_CONTRACT_th.md (หัวข้อ bento-aiot/<ทีม>/... คีย์ temp_c rh hpa soil pump)
+#            คีย์ที่ไฟล์นี้เพิ่ม: fan intruder intrusions (0/1 และจำนวนครั้ง) · event: intruder / clear
 
 import buttons
 import json
+import math
 import mqtt
 import pots
 import rgbmatrix
@@ -25,50 +40,82 @@ import time
 import ui
 import wifi
 
-# ----- แก้สามบรรทัดนี้ -----
-WIFI_SSID = "bento-teamXX"
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
-TEAM = "teamXX"                        # team01 ถึง team20
+# ---- 1) ตั้งค่า (แก้ได้) ----
+WIFI_SSID = "bento-teamXX"             # ชื่อ Hotspot ของกลุ่ม
+WIFI_PASS = "<รหัส WiFi>"              # อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
+TEAM = "teamXX"                        # เลขทีมของกลุ่ม เช่น team05 (ต้องตรงกับแอป)
 
-BROKER = "broker.hivemq.com"
-ROOT = "bento-aiot"                    # ชื่อนำหน้าเดียวกับคาบ 2 แอปของกลุ่มฟังชื่อนี้
-TOPIC_TELE = ROOT + "/" + TEAM + "/telemetry"
-TOPIC_EVENT = ROOT + "/" + TEAM + "/event"
-TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
+BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
+BASE = "bento-aiot/" + TEAM + "/"      # ชื่อนำหน้าเดียวกับคาบ 2 แอปของกลุ่มฟังชื่อนี้
+BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
+TEMP_OFFSET = 0.0   # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง แล้วใส่ค่าชดเชย เช่น -7.0
 
-FAN_LO, FAN_SPAN = 25.0, 10.0   # VR3 ตั้งเกณฑ์เปิดพัดลม 25-35 C · ปิดเมื่อเย็นกว่าเกณฑ์ 1 C
+FAN_LO, FAN_SPAN = 25, 20       # VR3 ตั้งเกณฑ์เปิดพัดลม 25-45 C · ปิดเมื่อเย็นกว่าเกณฑ์ 1 C
 PUMP_ON, PUMP_OFF = 35, 45      # ดินต่ำกว่า 35 % เปิดปั๊ม เกิน 45 % ปิด (hysteresis)
 GUARD_LO, GUARD_SPAN = 50, 200  # VR4 ตั้งเขตคอก 50-250 cm
-REMOTE_MAX_S = 30               # แอปสั่งรดน้ำนานแค่ไหนก็ได้ไม่เกินนี้
-CONFIRM_N = 3
-THRESH_DB = 4.0
-REPORT_MS, SENSE_MS, TICK_MS = 5000, 500, 100   # ถามกล่องคำสั่งทุก 100 ms (กล่องมีช่องเดียว)
-RUN_MS = 600000
+TICK_MS, REPORT_MS, RUN_MS = 500, 5000, 600000   # วัด+วาดจอ / รายงาน / เวลารันทั้งหมด
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
-online = False
+
+# ---- 2) ฮาร์ดแวร์ ----
+class Button:
+    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
+
+    def __init__(self, index):
+        self.index, self.down, self.clicked = index, False, False
+
+    def sample(self):
+        now_down = buttons.pressed(self.index)
+        if now_down and not self.down:
+            self.clicked = True
+        self.down = now_down
+
+    def pressed_now(self):
+        # True ครั้งเดียวต่อการกดหนึ่งครั้ง · อยากรู้ว่ายังกดค้างอยู่ไหม ดู .down
+        fired, self.clicked = self.clicked, False
+        return fired
 
 
-def r1(v):
-    return None if v is None else round(v, 1)
+def wait_ms(ms, btns):
+    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
+    t0 = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), t0) < ms:
+        for b in btns:
+            b.sample()
+        time.sleep_ms(20)
 
 
 def read_air():
+    # คืน (อุณหภูมิ, ความชื้น, ความกดอากาศ) ของห้อง ปัดทศนิยม 1 ตำแหน่ง (จอกับ JSON เห็นเลขเดียวกัน)
+    # ตัวไหนอ่านไม่ได้รอบนี้เป็น None รอบหน้าอ่านใหม่
     try:
-        t, h = sensors.sht40.temperature(), sensors.sht40.humidity()
+        t_raw, h = sensors.sht40.temperature(), sensors.sht40.humidity()
+        t = t_raw + TEMP_OFFSET
+        if TEMP_OFFSET:                 # ชดเชยอุณหภูมิแล้ว ความชื้นต้องแปลงเป็นของห้องด้วย
+            h = room_humidity(h, t_raw, t)
+        t, h = round(t, 1), round(h, 1)
     except Exception:
         t = h = None
     try:
-        p = sensors.dps368.pressure()
+        p = round(sensors.dps368.pressure(), 1)
     except Exception:
         p = None
     return t, h, p
 
 
+def room_humidity(h_raw, t_raw, t_room):
+    # อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
+    # ไอน้ำเท่าเดิมแต่ห้องเย็นกว่า จึงคูณด้วยอัตราส่วนความดันไออิ่มตัว (สูตร Magnus)
+    # es(t) = 6.112 * exp(17.62 t / (243.12 + t)) · หารกันแล้ว 6.112 ตัดกัน เหลือ exp ของผลต่าง
+    return min(100.0, h_raw * math.exp(17.62 * t_raw / (243.12 + t_raw) - 17.62 * t_room / (243.12 + t_room)))
+
+
 def read_cm():
+    # ระยะเป้าหมายจากเรดาร์ (cm) ไม่มีเป้าหรือเรดาร์ไม่ตอบ = None
     try:
         rr = sensors.radar_range()
         return int(rr["distance_m"] * 100) if rr["target"] else None
@@ -76,187 +123,254 @@ def read_cm():
         return None
 
 
-def status_light(mode):
-    """ไฟสถานะบน RGB matrix วาดเฉพาะตอนสถานะเปลี่ยน (เต็มจอ 128 ดวง = คำสั่งเดียว)"""
+def radar_start():
+    # จำฉากนิ่งก่อน (เกณฑ์ 0) แล้วค่อยตั้งเกณฑ์จริง (เหมือน sf3_01) · เรดาร์ไม่ตอบ = คืน False
+    try:
+        sensors.radar_config(0)
+        time.sleep_ms(500)
+        sensors.radar_config(4.0)       # เกณฑ์ความแรง 4 dB (ต่ำลง = ไวขึ้น แต่ใบไม้ไหวก็เตือน)
+        return True
+    except OSError:
+        return False
+
+
+def matrix(mode):
+    # จอไฟ RGB: 0 เขียว = ปกติ · 1 เหลือง = มีเครื่องทำงาน · 2 แดงวิ่ง INTRUDER · -1 ดับ
+    # ห่อ try ไว้ จอไฟพัง (OSError) ก็ไม่ลากฟาร์มหยุดตาม · รอบไหนหล่น อีก 3 วิ tick() ส่งซ้ำเอง
     try:
         rgbmatrix.scroll("")                     # หยุดตัวหนังสือวิ่งเดิมก่อน
-        if mode == "intruder":
-            rgbmatrix.scroll("INTRUDER", rgbmatrix.RED, 60)
-        elif mode == "off":
+        if mode == 2:
+            rgbmatrix.scroll("INTRUDER", rgbmatrix.RED, 45)   # 45 ms/ช่อง วิ่งครบรอบก่อนส่งซ้ำ
+        elif mode < 0:
             rgbmatrix.clear()
         else:
-            rgbmatrix.fill(rgbmatrix.YELLOW if mode == "busy" else rgbmatrix.GREEN)
+            rgbmatrix.fill(rgbmatrix.YELLOW if mode else rgbmatrix.GREEN)
     except OSError:
         pass
 
 
-def send(topic, obj):
-    """ส่งขึ้น broker ถ้าสายหลุดก็แค่เปลี่ยนเป็นออฟไลน์ ฟาร์มไม่หยุด"""
-    global online
-    if online:
-        try:
-            return mqtt.publish(topic, json.dumps(obj))
-        except OSError:
-            online = False
-    return False
+# ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
+def decide(f, near):
+    # กฎทั้งฟาร์มในที่เดียว คืน True ตอนคอกเปลี่ยน (ผู้บุกรุกเข้า/ออก)
+    if f.t is not None:                 # อ่านอุณหภูมิไม่ได้ = พัดลมคงเดิม
+        f.fan = f.t > f.fan_at or (f.fan and f.t > f.fan_at - 1)   # เย็นกว่าเกณฑ์ 1 C ถึงปิด
+    f.auto = f.soil < PUMP_ON or (f.auto and f.soil < PUMP_OFF)    # ช่องตรงกลางกันปั๊มเปิดปิดรัว
+    f.streak = f.streak + 1 if near != f.inside else 0            # เรดาร์ต้องเห็นเหมือนเดิม 3 รอบติด
+    if f.streak < 3:                                              # ถึงเชื่อ (กันใบไม้ไหว)
+        return False
+    f.inside, f.streak, f.silenced = near, 0, False
+    f.count += near                     # True นับเป็น 1 = นับเฉพาะตอนเข้า
+    return True
 
 
-ui.screen()
-time.sleep_ms(200)
-ui.Label("ฟาร์มอัจฉริยะของกลุ่ม", x=20, y=8, color=COL_TEXT, value=24)
-net = ui.Label("กำลังต่อ WiFi จอจะนิ่งสักครู่", x=330, y=14, color=COL_WARN, value=16)
-
-
-def card(x, title):
-    ui.Panel(x=x, y=48, w=246, h=232, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 14, y=56, color=COL_INFO, value=18)
-    a = ui.Label("-", x=x + 14, y=90, color=COL_TEXT, value=24)
-    b = ui.Label("-", x=x + 14, y=128, color=COL_DIM, value=16)
-    c = ui.Label("-", x=x + 14, y=156, color=COL_DIM, value=16)
-    act = ui.Label("-", x=x + 14, y=206, color=COL_DIM, value=28)
-    return a, b, c, act
-
-
-g_val, g_sub, g_set, g_act = card(20, "โรงเรือน")
-s_val, s_sub, s_set, s_act = card(277, "แปลงผัก")
-p_val, p_sub, p_set, p_act = card(534, "คอกสัตว์")
-ui.Panel(x=20, y=290, w=660, h=98, color=COL_CARD, min=COL_DIM, max=12, value=1)  # เว้นมุมปุ่ม Console
-rep_n = ui.Label("รายงาน 0 ครั้ง", x=36, y=298, color=COL_DIM, value=16)
-cmd_lbl = ui.Label("ยังไม่มีคำสั่งจากแอป", x=36, y=324, color=COL_DIM, value=16)
-rep_line = ui.Label("-", x=36, y=354, color=COL_TEXT, value=14)
-send_id = ui.Button("ส่งรายงานเลย", x=520, y=300, w=150, h=40).id()
-s_set.text("เปิด<%d%% ปิด>%d%%" % (PUMP_ON, PUMP_OFF))
-p_sub.text("จำฉากนิ่ง... ถอยห่างบอร์ด")
-ui.poll()
-
-try:                                           # เสา 4: ต่อเน็ต ถ้าไม่ได้ก็ทำงานต่อแบบออฟไลน์
-    if wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0":
-        online = bool(mqtt.connect(BROKER, port=1883, client_id="bento-farm-" + TEAM,
-                                   keepalive=60)) and bool(mqtt.subscribe(TOPIC_CMD))
-except OSError:
-    online = False
-net.color(COL_OK if online else COL_WARN)
-net.text(("ออนไลน์ " + TEAM) if online else "ออฟไลน์ (ฟาร์มยังทำงานต่อ)")
-sensors.radar_config(0)                        # จำฉากนิ่ง แล้วตั้งเกณฑ์ (เหมือน sf3_01)
-time.sleep_ms(500)
-sensors.radar_config(THRESH_DB)
-ui.sfx(ui.SFX_UI_START)
-
-
-def handle(raw):
-    """เสา 5: คำสั่งจากแอปของกลุ่ม -> ข้อความสั้น ๆ สำหรับขึ้นจอ"""
-    global remote_ms, remote_t0, silenced
+def app_request(raw):
+    # ข้อความจาก .../cmd (bytes) -> (คำสั่ง, วินาทีรดน้ำ) ตามสัญญาข้อ 4 · ไม่รู้จัก = (None, 0)
     try:
         cmd = json.loads(raw.decode())
-    except ValueError:
-        cmd = None
-    if not isinstance(cmd, dict):              # 5, null, [] ก็เป็น JSON ได้ ต้องกันไว้
-        ui.sfx(ui.SFX_UI_DENY)
-        return "อ่านคำสั่งไม่ออก"
-    act = cmd.get("cmd", "")
-    if act == "pump" and not cmd.get("on", 1):
-        remote_ms = 0
-        return "แอปสั่งปิดปั๊ม"
-    if act == "pump":
+        act = cmd.get("cmd")            # 5, null, [] ก็เป็น JSON ได้ แต่ไม่มี .get -> ไม่ใช่คำสั่ง
+    except (ValueError, AttributeError):
+        return None, 0
+    if act == "silence":                # ชื่อเดิมของ ack (ปุ่มรับทราบใน farm_web.html ส่ง ack)
+        act = "ack"
+    if act == "pump" and cmd.get("on", 1):
         sec = cmd.get("sec", 10)
-        sec = min(sec, REMOTE_MAX_S) if isinstance(sec, int) and sec > 0 else 10
-        remote_ms, remote_t0 = sec * 1000, time.ticks_ms()
-        ui.sfx(ui.SFX_UI_SELECT)
-        return "แอปสั่งรดน้ำ %d วิ" % sec
-    if act == "beep":
-        ui.tone(69, ui.WAVE_SQUARE, 90, 150)   # โน้ต MIDI ไม่ใช่เฮิรตซ์
-        return "แอปเรียกหาเจ้าของ!"
-    if act == "silence":
-        silenced = True
-        return "แอปรับทราบผู้บุกรุก"
-    ui.sfx(ui.SFX_UI_DENY)
-    return "ไม่รู้จักคำสั่ง " + str(act)[:10]
+        return act, min(sec, 30) if isinstance(sec, int) and sec > 0 else 10   # ไม่เกิน 30 วิ
+    return (act, 0) if act in ("pump", "ack", "beep") else (None, 0)          # pump on:0 = ปิด
 
 
-fan_on = pump_on = inside = silenced = force = False
-t = h = p = cm = None
-soil = streak = count = sent = remote_ms = remote_t0 = 0
-shown = None
-prev = buttons.read()
-t0 = last_sense = last_rep = time.ticks_ms()
-while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-    now = time.ticks_ms()
-    b = buttons.read()                          # เสา 1-2: ปุ่มจริง (SW4 ค้างไหม, SW5 ค้างไหม)
-    if b[1] and not prev[1] and inside:         # ขอบกด SW5 = รับทราบแล้ว
-        silenced = True
-        ui.sfx(ui.SFX_UI_BACK)
-    prev = b
-    for ev in ui.poll():                        # ปุ่มบนจอสัมผัส
-        if ev.get("handle") == send_id:
-            force = True
-    if online:
-        msg = mqtt.get_message()                # None หรือ (topic, bytes)
-        if msg is not None:
-            cmd_lbl.color(COL_INFO)
-            cmd_lbl.text(handle(msg[1])[:24])
-        if not mqtt.is_connected():
-            online = False
-            net.color(COL_WARN)
-            net.text("เน็ตหลุด ทำงานต่อแบบออฟไลน์")
-    if remote_ms and time.ticks_diff(now, remote_t0) >= remote_ms:
-        remote_ms = 0                           # ครบเวลาที่แอปสั่ง ปั๊มหยุดเอง
+# ---- 4) เครือข่าย ----
+OFFLINE = "ออฟไลน์ (ทำงานต่อ)"          # เน็ตหลุดฟาร์มไม่หยุด แค่ไม่ได้รายงาน
 
-    if time.ticks_diff(now, last_sense) >= SENSE_MS:
-        last_sense = now
-        t, h, p = read_air()                    # วัด
-        soil = pots.read(1) * 100 // 4095
-        fan_at = FAN_LO + pots.read(2) * FAN_SPAN / 4095
-        guard_cm = GUARD_LO + pots.read(3) * GUARD_SPAN // 4095
-        cm = read_cm()
-        if t is not None:                       # ตัดสิน
-            fan_on = t > fan_at or (fan_on and t > fan_at - 1.0)
-        pump_on = soil < PUMP_ON or (pump_on and soil < PUMP_OFF)
-        near = cm is not None and cm < guard_cm
-        streak = streak + 1 if near != inside else 0
-        if streak >= CONFIRM_N:
-            inside, streak, silenced = near, 0, False
-            count += 1 if inside else 0
-            ui.sfx(ui.SFX_SHOOT_EXPLODE if inside else ui.SFX_PONG_WIN)
-            send(TOPIC_EVENT, {"id": TEAM, "event": "intruder" if inside else "clear",
-                               "n": count, "cm": cm})
-        pump_cmd = pump_on or b[0] or remote_ms > 0
 
-        mode = "intruder" if (inside and not silenced) else ("busy" if (fan_on or pump_cmd) else "ok")
-        if mode != shown:                       # สั่งงาน: matrix เฉพาะตอนเปลี่ยน
-            shown = mode
-            status_light(mode)
-        g_val.text("--" if t is None else "%.1f C" % t)
-        g_sub.text(("" if h is None else "%.0f %%RH  " % h) + ("" if p is None else "%.0f hPa" % p))
-        g_set.text("พัดลมเปิด > %.1f C (VR3)" % fan_at)
-        g_act.text("พัดลม: " + ("เปิด" if fan_on else "ปิด"))
-        g_act.color(COL_OK if fan_on else COL_DIM)
-        s_val.text("ดินชื้น %d %%" % soil)
-        s_sub.text("SW4 รดเอง" if b[0] else ("แอปสั่งรด" if remote_ms else "อัตโนมัติ"))
-        s_act.text("ปั๊ม: " + ("เปิด" if pump_cmd else "ปิด"))
-        s_act.color(COL_INFO if pump_cmd else COL_DIM)
-        p_val.text("ระยะ " + ("---" if cm is None else str(cm)) + " cm")
-        p_sub.text("ผู้บุกรุก %d ครั้ง" % count)
-        p_set.text("เขตคอก %d cm (VR4)" % guard_cm)
-        p_act.text(("รับทราบแล้ว" if silenced else "ไซเรน!") if inside else "เงียบ")
-        p_act.color((COL_WARN if silenced else COL_BAD) if inside else COL_DIM)
+def go_online(w):
+    # WiFi -> broker -> ฟัง cmd · ขั้นไหนพังคืน False แล้วฟาร์มทำงานต่อแบบออฟไลน์
+    # client id สร้างจาก TEAM: ถ้าหลายกลุ่มลืมแก้ teamXX จะชนกันแล้ว broker เตะกันหลุด จึงไม่ต่อเลย
+    if not TEAM[4:].isdigit():
+        show_note(w, "แก้ TEAM ก่อน: " + OFFLINE, COL_WARN)
+        return False
+    show_note(w, "ต่อ WiFi...", COL_WARN)
+    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    try:
+        ok = (wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0"
+              and mqtt.connect(BROKER, port=1883, client_id="bento-farm-" + TEAM, keepalive=60)
+              and mqtt.subscribe(BASE + "cmd"))
+    except OSError:
+        ok = False
+    show_note(w, ("ออนไลน์ " + TEAM) if ok else OFFLINE, COL_OK if ok else COL_WARN)
+    return ok
 
-    if force or time.ticks_diff(now, last_rep) >= REPORT_MS:   # รายงาน
-        body = {"id": TEAM, "n": sent + 1, "temp_c": r1(t), "rh": r1(h), "hpa": r1(p),
-                "soil": soil, "fan": int(fan_on), "pump": int(pump_on or b[0] or remote_ms > 0),
-                "intruder": int(inside), "intrusions": count, "by": "touch" if force else "timer"}
-        force, last_rep = False, now
-        if send(TOPIC_TELE, body):
-            sent += 1
-        print(json.dumps(body))                 # ออฟไลน์ก็ยังเห็นในช่อง Console
-        rep_n.text(("ส่งขึ้น broker %d ครั้ง" % sent) if online else "ออฟไลน์: พิมพ์ลง Console")
-        rep_line.text(json.dumps(body)[:76])
-    time.sleep_ms(TICK_MS)
 
-status_light("off")
-if online:
-    mqtt.disconnect()
-print("ฟาร์มจบรอบ ส่งรายงาน", sent, "ครั้ง ผู้บุกรุก", count, "ครั้ง")
+def send(f, topic, obj):
+    # ส่ง JSON ขึ้น broker แล้วคืนข้อความที่ส่ง · ออฟไลน์หรือสายหลุด (publish โยน OSError) ฟาร์มไม่หยุด
+    line = json.dumps(obj)
+    if f.online:
+        try:
+            mqtt.publish(BASE + topic, line)
+        except OSError:
+            pass
+    return line
 
-# ----- ตาคุณ แก้แล้วรันใหม่ (แล้วต่อยอดเป็นโปรเจกต์) -----
-# 1) เพิ่มกฎข้ามระบบ: "มีผู้บุกรุก ห้ามเปิดปั๊ม" และส่ง event บอกแอปว่าปั๊มถูกล็อกเพราะอะไร
-# 2) ในแอปของกลุ่ม (s2/app/) เพิ่มกฎ: รายงานหายเกิน 15 วิ = ขึ้นเตือน "บอร์ดเงียบ" (ฟาร์มดับ/เน็ตหลุด)
+
+# ---- 5) หน้าจอ ----
+def label(text, x, y, col=COL_DIM, size=16):
+    # ป้ายข้อความหนึ่งอัน (size = ขนาดตัวอักษร 14/16/20/24/28)
+    return ui.Label(text, x=x, y=y, color=col, value=size)
+
+
+def led(x, y, col):
+    # ไฟ Led = "รีเลย์" หนึ่งตัว สร้างมาแบบหรี่ = ปิด · .value(1) ติดเป็นสี col
+    return ui.Led(x=x, y=y, w=36, h=36, color=col)
+
+
+def card(x, y, w, h, title):
+    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
+    ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
+    label(title, x + 12, y + 6, COL_INFO)
+
+
+def build_screen():
+    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
+    ui.screen()
+    time.sleep_ms(200)
+    label("Smart IoT Gateway", 12, 6, COL_TEXT, 24)
+    w = {}
+    card(12, 44, 252, 226, "โรงเรือน")
+    w["t"] = label("--", 26, 80, COL_TEXT, 28)                 # อุณหภูมิ + ความชื้น
+    w["fan"] = led(26, 176, COL_OK)
+    w["fan_at"] = label(" ", 72, 184)
+    card(272, 44, 252, 226, "แปลงผัก")
+    w["arc"] = ui.Arc(x=284, y=76, w=112, h=112)                # Arc ตั้งต้น 0-100 อยู่แล้ว
+    w["soil"] = label("--", 406, 112, COL_TEXT, 28)
+    w["pump"] = led(286, 204, COL_INFO)
+    label("ปั๊ม <%d%% เปิด >%d%% ปิด" % (PUMP_ON, PUMP_OFF), 332, 212, COL_DIM, 14)
+    card(532, 44, 248, 226, "คอกสัตว์")
+    w["cm"] = label("--", 546, 80, COL_TEXT, 28)
+    w["guard"] = label(" ", 546, 124)
+    w["siren"] = led(546, 176, COL_BAD)
+    w["pen"] = label("ถอยห่างบอร์ด", 592, 184)       # เรดาร์กำลังจำฉากนิ่ง
+    ui.Panel(x=12, y=278, w=668, h=62, color=COL_CARD, min=COL_DIM, max=12, value=1)  # เว้นมุมปุ่ม Console
+    w["note"] = label(" ", 24, 286)
+    w["cmd"] = label("แอป: -", 24, 312, COL_INFO)
+    w["send"] = ui.Button("ส่งรายงานเลย", x=520, y=286, w=150, h=46).id()
+    w["json"] = label(" ", 12, 352, COL_TEXT, 14)   # JSON ใบล่าสุดที่บอร์ดส่ง (n = ลำดับใบ)
+    ui.poll()
+    return w
+
+
+def show_note(w, text, col):
+    # ไม่เรียก ui.poll() ในนี้ เพราะจะกินเหตุการณ์แตะปุ่มที่ลูปหลักรออ่าน
+    w["note"].color(col)
+    w["note"].text(text)
+
+
+def show_farm(w, f):
+    # วาดค่าทั้งหมดใหม่ทุก TICK_MS · ไฟ Led = "รีเลย์" ที่ Gateway สั่งอยู่ตอนนี้
+    w["t"].text("--" if f.t is None else "%.1f C  %.0f%%" % (f.t, f.h))   # อ่านไม่ได้ = --
+    w["fan"].value(int(f.fan))
+    w["fan_at"].text("พัดลม > %.1f C (VR3)" % f.fan_at)
+    w["arc"].value(f.soil)
+    w["arc"].color(COL_BAD if f.soil < PUMP_ON else COL_OK)    # แดง = แห้งกว่าเกณฑ์เปิดปั๊ม
+    w["soil"].text("%d %%" % f.soil)
+    w["pump"].value(int(f.pump))
+    w["cm"].text("--" if f.cm is None else "%d cm" % f.cm)
+    w["guard"].text("เขต %d cm (VR4)" % f.guard)
+    siren = f.inside and not f.silenced
+    w["siren"].value(int(siren))
+    w["pen"].text(("ไซเรน! กด " + BTN_NAMES[1]) if siren else "บุกรุก %d ครั้ง" % f.count)
+
+
+# ---- 6) โปรแกรมหลัก ----
+class Farm:
+    # ทุกอย่างที่ Gateway รู้และตัดสินไว้ตอนนี้ (ค่าที่วัด + สถานะเครื่อง + สถานะคอก)
+
+    def __init__(self):
+        self.t = self.h = self.p = self.cm = self.soil = self.shown = None
+        self.fan = self.auto = self.pump = self.inside = self.silenced = self.online = False
+        self.streak = self.count = self.n = self.remote = self.t_mx = 0
+
+
+def tick(w, f, down, now):
+    # ทุก TICK_MS: วัด -> ตัดสิน -> สั่ง (ไฟ Led จอไฟ เสียง event) -> วาดจอ · down = SW5 ค้างอยู่ไหม
+    f.t, f.h, f.p = read_air()
+    f.soil = pots.read(1) * 100 // 4095
+    f.fan_at = FAN_LO + pots.read(2) * FAN_SPAN / 4095
+    f.guard = GUARD_LO + pots.read(3) * GUARD_SPAN // 4095
+    f.cm = read_cm()
+    f.remote = max(0, f.remote - TICK_MS)       # เวลาที่แอปสั่งรดน้ำ นับถอยหลังจนหยุดเอง
+    if decide(f, f.cm is not None and f.cm < f.guard):     # เสียง + event เฉพาะตอนคอกเปลี่ยน
+        ui.sfx(ui.SFX_SHOOT_EXPLODE if f.inside else ui.SFX_PONG_WIN)
+        send(f, "event", {"id": TEAM, "event": "intruder" if f.inside else "clear", "cm": f.cm})
+    f.pump = f.auto or down or f.remote > 0
+    show_farm(w, f)
+    mode = 2 if f.inside and not f.silenced else int(f.fan or f.pump)
+    if mode != f.shown or time.ticks_diff(now, f.t_mx) >= 3000:     # ส่งซ้ำทุก 3 วิ เผื่อเฟรมหล่น
+        f.shown, f.t_mx = mode, now
+        matrix(mode)
+
+
+def check_net(w, f):
+    # สายหลุด = ออฟไลน์ (ฟาร์มไม่หยุด) · ออนไลน์ = หยิบคำสั่งจากกล่อง (มีช่องเดียว จึงถามทุก 0.1 วิ)
+    if f.online and not mqtt.is_connected():
+        f.online = False
+        show_note(w, OFFLINE, COL_WARN)
+    msg = mqtt.get_message() if f.online else None      # None หรือ (topic, bytes)
+    if msg:
+        act, sec = app_request(msg[1])
+        if act == "pump":
+            f.remote = sec * 1000               # 0 = แอปสั่งปิด
+        f.silenced = f.silenced or act == "ack"
+        if act == "beep":
+            ui.tone(69, ui.WAVE_SQUARE, 90, 150)    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
+        else:
+            ui.sfx(ui.SFX_UI_SELECT if act else ui.SFX_UI_DENY)
+        w["cmd"].text("แอป: %s %d วิ" % (act, sec) if act == "pump" else "แอป: " + str(act or "?"))
+
+
+def report(w, f, by):
+    # รายงานค่าฟาร์มเข้า telemetry · ออฟไลน์ก็ยังพิมพ์ลง Console และขึ้นบรรทัดล่างสุดของจอ
+    f.n += 1
+    line = send(f, "telemetry", {"id": TEAM, "n": f.n, "temp_c": f.t, "rh": f.h, "hpa": f.p,
+                                 "soil": f.soil, "fan": int(f.fan), "pump": int(f.pump),
+                                 "intruder": int(f.inside), "intrusions": f.count, "sim": "soil", "by": by})
+    print(line)
+    w["json"].text(line[:76])
+
+
+def main():
+    w = build_screen()
+    f = Farm()
+    f.online = go_online(w)
+    if not radar_start():
+        w["cmd"].text("เรดาร์ไม่ตอบ")        # คอกไม่ได้เฝ้า แต่ส่วนอื่นของฟาร์มทำงานต่อ
+    ui.sfx(ui.SFX_UI_SELECT)
+    water, ack = Button(0), Button(1)
+    t0 = t_tick = t_rep = time.ticks_ms()
+    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+        wait_ms(100, (water, ack))              # ถามกล่องคำสั่งทุก 0.1 วิ (กล่องมีช่องเดียว)
+        now = time.ticks_ms()
+        force = False
+        for ev in ui.poll():                    # ปุ่มบนจอสัมผัส (อ่านที่นี่ที่เดียว)
+            force = force or ev["handle"] == w["send"]
+        check_net(w, f)
+        if ack.pressed_now() and f.inside:
+            f.silenced = True                   # SW6 = รับทราบ ไซเรนเงียบจนคอกเปลี่ยนอีกครั้ง
+            ui.sfx(ui.SFX_UI_BACK)
+        if time.ticks_diff(now, t_tick) >= TICK_MS:
+            t_tick = now
+            tick(w, f, water.down, now)
+        if force or time.ticks_diff(now, t_rep) >= REPORT_MS:
+            t_rep = now
+            report(w, f, "touch" if force else "timer")
+    matrix(-1)
+    if f.online:
+        mqtt.disconnect()
+    show_note(w, "จบรอบ", COL_DIM)
+
+
+main()
+
+# ----- ตาคุณ แก้แล้วรันใหม่ -----
+# 1) เพิ่มกฎข้ามระบบใน decide(): "มีผู้บุกรุก ห้ามเปิดปั๊ม" แล้วส่ง event บอกแอปว่าปั๊มถูกล็อกเพราะอะไร
+# 2) ในแอปของกลุ่ม (s2/app/) เพิ่มกฎ: รายงานหายเกิน 15 วิ = ขึ้นเตือน "บอร์ดเงียบ" (ฟาร์มดับหรือเน็ตหลุด)
+# 3) ต่อ PLC จริง: รัน s2/app/field_sim.py (TEAM เดียวกัน) แล้วให้ tick() ส่ง {"pump":1,"sec":10} เข้า
+#    "plc/cmd" ตอนปั๊มเปลี่ยนเป็นเปิด และ {"pump":0} ตอนปิด (สัญญาข้อ 4.2) ดูว่า PLC ตอบอะไรใน plc/state
