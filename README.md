@@ -57,7 +57,7 @@
 
 1. ติดตั้ง **TESAIoT PSE84 Programmer** จาก [GitHub Releases](https://github.com/wiroon/TESAIoT_PSE84_Programmer/releases)
 2. เสียบบอร์ดด้วยสาย USB-C เข้าพอร์ต KitProg3
-3. เปิด **BENTO IDE** ที่ <https://ide.tesaiot.com/> ด้วย Chrome หรือ Edge → หน้า Welcome → **Remote Flash** → เลือก **BENTO MicroPython — TESAIoT Dev Kit v2.4.1**
+3. เปิด **BENTO IDE** ที่ <https://ide.tesaiot.com/> ด้วย Chrome หรือ Edge → หน้า Welcome → **Remote Flash** → เลือก **BENTO Firmware — TESAIoT Dev Kit** แล้วกด **Flash this board →** (รุ่น v2.4.1)
 4. เปิดไฟล์ตัวอย่าง แล้วกด **Program to Device**
 5. ไม่มีบอร์ดอยู่ใกล้มือ? ทุกตัวอย่างลองเล่นได้ใน **BENTO Emulator** ภายใน BENTO IDE
 

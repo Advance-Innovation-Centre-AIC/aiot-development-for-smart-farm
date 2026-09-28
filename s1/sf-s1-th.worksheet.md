@@ -22,7 +22,7 @@
 
 1. [ ] **ดาวน์โหลดและติดตั้ง TESAIoT PSE84 Programmer** จาก **github.com/wiroon/TESAIoT_PSE84_Programmer/releases** (เลือกไฟล์ให้ตรงกับเครื่อง macOS หรือ Windows) แล้ว **เปิดโปรแกรมค้างไว้**
 2. [ ] เสียบบอร์ดด้วยสาย USB-C เข้าพอร์ต **KitProg3**
-3. [ ] เปิด **BENTO IDE** ที่ **https://ide.tesaiot.com/** ด้วย **Chrome หรือ Edge** → หน้า **Welcome** → **Remote Flash** → เลือก **BENTO MicroPython — TESAIoT Dev Kit v2.4.1** → จับคู่กับ Programmer ตามที่หน้าจอบอก → **Flash**
+3. [ ] เปิด **BENTO IDE** ที่ **https://ide.tesaiot.com/** ด้วย **Chrome หรือ Edge** → หน้า **Welcome** → **Remote Flash** → เลือก **BENTO Firmware — TESAIoT Dev Kit** แล้วกด **Flash this board →** (รุ่น v2.4.1) → จับคู่กับ Programmer ตามที่หน้าจอบอก → **Flash**
 4. [ ] รอจนเสร็จ ดูมุมจอบอร์ดว่าขึ้น **v2.4.1**
 5. [ ] กด **Connect** ใน IDE
 6. [ ] ผู้สอนชี้ให้ดู: ปุ่ม **RESET** อยู่ตรงไหน · **ห้ามโยกสวิตช์บนฐานบอร์ด** (SW2 คือสวิตช์ตัดไฟ) · เปิด **BENTO Emulator** ในเครื่องของผู้นำทาง
