@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--
+  farm_web.html - หน้าเว็บเฝ้าฟาร์มของกลุ่ม ไม่ต้องติดตั้งอะไร เปิดในเบราว์เซอร์ได้เลย (มือถือก็ได้)
+  เปิดแบบนี้: farm_web.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม) หรือพิมพ์เลขกลุ่มในช่องบนหน้า
+  ฟัง  bento-aiot/<ทีม>/telemetry กับ /event  และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd  (ชุดเดียวกับบอร์ด)
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+  TODO ของกลุ่ม: แก้ LABELS ให้เป็นชื่อที่กลุ่มอยากเห็น / เพิ่มปุ่มคำสั่งของกลุ่มเอง / ทำให้การ์ดเป็นสีแดงเมื่อค่าเกินเกณฑ์
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ฟาร์มของเรา</title>
+<style>
+  :root { --bg: #f6f6f3; --card: #ffffff; --ink: #1d1d1b; --dim: #6b6b66; --ok: #1f7a4d; --bad: #b3261e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --card: #232321; --ink: #ededea; --dim: #9a9a94; --ok: #5cc08c; --bad: #f08a80; }
+  }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+  h1 { font-size: 1.6em; margin: .2em 0 .4em; }
+  #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .card, #events { background: var(--card); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+  .name { color: var(--dim); font-size: 14px; }
+  .num { font-size: clamp(26px, 7vw, 38px); font-weight: 700; overflow-wrap: anywhere; }
+  #events { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  button, input { font-size: 16px; padding: 10px 12px; margin: 4px 4px 0 0; }
+</style>
+</head>
+<body>
+<h1>ฟาร์มของเรา</h1>
+<p>ทีม <input id="team" size="7" value="teamXX"> <button id="go">ต่อ</button> สถานะ: <b id="status">ยังไม่ได้ต่อ</b></p>
+<div id="cards"></div>
+<p>
+  <button data-cmd='{"cmd":"pump","on":1,"sec":10}'>รดน้ำ 10 วินาที</button>
+  <button data-cmd='{"cmd":"pump","on":0}'>ปิดปั๊ม</button>
+  <button data-cmd='{"cmd":"beep"}'>เรียกคนที่ฟาร์ม</button>
+  <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
+</p>
+<p><input id="say" maxlength="20" placeholder="ข้อความอังกฤษขึ้นจอ LED"> <button id="sayBtn">ส่งข้อความ</button></p>
+<p>เหตุการณ์ล่าสุด (ใหม่อยู่บน):</p>
+<div id="events">(ยังไม่มี)</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";   // สำรอง: "wss://test.mosquitto.org:8081/mqtt"
+const ROOT = "bento-aiot";
+// ชื่อไทยของคีย์ที่บอร์ดส่ง คีย์ที่ไม่อยู่ในนี้ก็ยังขึ้นการ์ด แค่ใช้ชื่ออังกฤษ (TODO: แก้ได้ตามใจ)
+const LABELS = { temp_c: "อุณหภูมิ C", rh: "ความชื้น %", hpa: "ความกด hPa", az: "เอียง az",
+                 soil: "ดิน % (VR1)", light: "แสง % (VR3)", tank: "ถังน้ำ % (VR4)", pump: "ปั๊ม", n: "ใบที่" };
+const $ = (id) => document.getElementById(id);
+let client = null, team = new URLSearchParams(location.search).get("team") || "teamXX";
+$("team").value = team;
+const events = [];
+
+function setStatus(text, ok) { $("status").textContent = text; $("status").style.color = ok ? "var(--ok)" : "var(--bad)"; }
+
+function connect() {
+  team = $("team").value.trim();
+  // รับเฉพาะ team01..team99 ชื่อผิดไม่ต่อเลย กันไปฟังหรือสั่งบอร์ดของคนอื่น
+  if (!/^team\d{2}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (client) client.end(true);
+  // client id สุ่มทุกครั้ง ถ้าซ้ำกับบอร์ด broker จะเตะบอร์ดหลุด
+  client = mqtt.connect(BROKER_URL, { clientId: "farm-web-" + Math.random().toString(16).slice(2, 10) });
+  client.on("connect", () => { setStatus("ต่อแล้ว (" + ROOT + "/" + team + ")", true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่...", false));
+  client.on("message", (topic, payload) => {
+    const text = payload.toString();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
+    if (topic.endsWith("/telemetry") && data && typeof data === "object" && !Array.isArray(data)) showCards(data);
+    else if (topic.endsWith("/event")) {
+      events.unshift(new Date().toLocaleTimeString() + "  " + text.slice(0, 160));
+      $("events").textContent = events.slice(0, 8).join("\n");
+    }
+  });
+}
+
+// การ์ดหนึ่งใบต่อหนึ่งคีย์ ใช้ textContent เสมอ ใครส่งอะไรมาก็ไม่ถูกรันเป็นโค้ด
+function showCards(data) {
+  const box = $("cards");
+  box.replaceChildren();
+  for (const key of Object.keys(data).slice(0, 20)) {
+    if (key === "id") continue;
+    const card = document.createElement("div"), name = document.createElement("div"), num = document.createElement("div");
+    card.className = "card"; name.className = "name"; num.className = "num";
+    name.textContent = LABELS[key] || key;
+    num.textContent = key === "pump" ? (data[key] ? "เปิด" : "ปิด") : String(data[key]).slice(0, 24);
+    card.append(name, num);
+    box.append(card);
+  }
+}
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ กด ต่อ ก่อน", false); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+}
+
+$("go").addEventListener("click", connect);
+document.querySelectorAll("button[data-cmd]").forEach((b) => b.addEventListener("click", () => send(JSON.parse(b.dataset.cmd))));
+$("sayBtn").addEventListener("click", () => send({ cmd: "say", text: $("say").value }));
+if (team !== "teamXX") connect();
+</script>
+</body>
+</html>

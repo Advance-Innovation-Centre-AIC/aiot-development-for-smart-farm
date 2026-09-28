@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 450" width="1000" height="450" font-family="'Noto Sans Thai','IBM Plex Sans Thai',Sarabun,Tahoma,sans-serif">
+  <defs>
+    <marker id="a" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="18" markerHeight="18" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker>
+    <marker id="ag" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="18" markerHeight="18" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+    <marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="18" markerHeight="18" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#c62828"/></marker>
+    <marker id="a2" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="18" markerHeight="18" refX="10" refY="6" orient="auto-start-reverse"><path d="M0,0 L12,6 L0,12 z" fill="#5e35b1"/></marker>
+    <marker id="ab" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="18" markerHeight="18" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1565c0"/></marker>
+  </defs>
+  <rect width="1000" height="450" rx="18" fill="#fbfdf9"/>
+  <!-- field: wireless sensor nodes -->
+  <rect x="12" y="12" width="236" height="380" rx="16" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="2"/>
+  <text x="130" y="40" text-anchor="middle" font-size="19" font-weight="700" fill="#1b5e20">ในแปลง: เซนเซอร์ไร้สาย</text>
+  <g font-size="17">
+    <rect x="28" y="58" width="204" height="94" rx="12" fill="#fff" stroke="#43a047" stroke-width="2.5"/>
+    <text x="44" y="92" font-size="24">🌱</text><text x="76" y="90" font-weight="700" fill="#1b5e20">ความชื้นดิน</text>
+    <text x="44" y="120" font-size="14" fill="#546e7a">publish ทุก 1 นาที</text>
+    <rect x="44" y="128" width="170" height="18" rx="9" fill="#fff3e0"/><text x="129" y="142" text-anchor="middle" font-size="13" fill="#e65100">วันนี้ = ลูกบิด VR1</text>
+    <rect x="28" y="170" width="204" height="94" rx="12" fill="#fff" stroke="#43a047" stroke-width="2.5"/>
+    <text x="44" y="204" font-size="24">🛢️</text><text x="76" y="202" font-weight="700" fill="#1b5e20">ระดับน้ำในถัง</text>
+    <text x="44" y="232" font-size="14" fill="#546e7a">publish เมื่อค่าเปลี่ยน</text>
+    <rect x="44" y="240" width="170" height="18" rx="9" fill="#fff3e0"/><text x="129" y="254" text-anchor="middle" font-size="13" fill="#e65100">วันนี้ = ลูกบิด VR3</text>
+    <rect x="28" y="282" width="204" height="94" rx="12" fill="#fff" stroke="#43a047" stroke-width="2.5"/>
+    <text x="44" y="316" font-size="24">⛅</text><text x="76" y="314" font-weight="700" fill="#1b5e20">สถานีอากาศ</text>
+    <text x="44" y="344" font-size="14" fill="#546e7a">อุณหภูมิ ความชื้น ความกด</text>
+    <rect x="44" y="352" width="170" height="18" rx="9" fill="#fff3e0"/><text x="129" y="366" text-anchor="middle" font-size="13" fill="#e65100">วันนี้ = SHT40 + DPS368</text>
+  </g>
+  <!-- broker -->
+  <circle cx="440" cy="215" r="74" fill="#fff3e0" stroke="#ef6c00" stroke-width="4"/>
+  <text x="440" y="200" text-anchor="middle" font-size="30">📮</text>
+  <text x="440" y="232" text-anchor="middle" font-size="19" font-weight="700" fill="#e65100">MQTT broker</text>
+  <text x="440" y="254" text-anchor="middle" font-size="14" fill="#6d4c41">ไปรษณีย์กลาง</text>
+  <!-- sensors -> broker -->
+  <g stroke="#2e7d32" stroke-width="3" stroke-dasharray="9 6" fill="none">
+    <path d="M234 105 C 300 110, 330 160, 368 190" marker-end="url(#ag)"><animate attributeName="stroke-dashoffset" values="30;0" dur="1s" repeatCount="indefinite"/></path>
+    <path d="M234 217 L 362 217" marker-end="url(#ag)"><animate attributeName="stroke-dashoffset" values="30;0" dur="1s" repeatCount="indefinite"/></path>
+    <path d="M234 329 C 300 324, 330 270, 368 242" marker-end="url(#ag)"><animate attributeName="stroke-dashoffset" values="30;0" dur="1s" repeatCount="indefinite"/></path>
+  </g>
+  <text x="300" y="206" text-anchor="middle" font-size="13" fill="#2e7d32">① MQTT ผ่าน Wi-Fi</text>
+  <!-- gateway -->
+  <rect x="610" y="14" width="376" height="176" rx="18" fill="#e3f2fd" stroke="#1565c0" stroke-width="4"/>
+  <text x="798" y="46" text-anchor="middle" font-size="18" font-weight="800" fill="#0d47a1">TESAIoT Dev Kit = Smart IoT Gateway</text>
+  <g font-size="16" fill="#263238">
+    <text x="630" y="80">🧠 ตัดสินจากเซนเซอร์ในบอร์ด + ในแปลง</text>
+    <text x="630" y="108">🖥️ จอ Smart HMI ให้คนในฟาร์มดู/สั่ง</text>
+    <text x="630" y="136">🔊 เสียงเตือน · 🟩 จอไฟ RGB สถานะ</text>
+    <text x="630" y="164">📤 ส่งคำสั่งไปอุปกรณ์หน้างาน</text>
+  </g>
+  <path d="M506 180 C 540 150, 570 130, 604 118" stroke="#1565c0" stroke-width="3.5" fill="none" marker-end="url(#ab)"/>
+  <path d="M612 150 C 580 170, 552 190, 516 206" stroke="#1565c0" stroke-width="3.5" fill="none" stroke-dasharray="4 5" marker-end="url(#ab)"/>
+  <text x="548" y="140" text-anchor="end" font-size="13" fill="#1565c0">② subscribe</text>
+  <text x="585" y="212" text-anchor="middle" font-size="13" fill="#1565c0">③ คำสั่ง</text>
+  <!-- PLC + actuators -->
+  <rect x="640" y="238" width="190" height="104" rx="14" fill="#fce4ec" stroke="#c2185b" stroke-width="3"/>
+  <text x="735" y="270" text-anchor="middle" font-size="18" font-weight="700" fill="#880e4f">PLC / รีเลย์ Wi-Fi</text>
+  <text x="735" y="294" text-anchor="middle" font-size="14" fill="#4a148c">ที่รองรับ MQTT</text>
+  <rect x="660" y="306" width="150" height="20" rx="10" fill="#e3f2fd"/><text x="735" y="321" text-anchor="middle" font-size="13" fill="#1565c0">วันนี้ = ไฟ LED สีฟ้า</text>
+  <path d="M512 236 C 560 260, 600 275, 634 282" stroke="#c62828" stroke-width="3.5" fill="none" marker-end="url(#ar)"/>
+  <path d="M636 312 C 590 312, 548 290, 500 262" stroke="#c2185b" stroke-width="3" fill="none" stroke-dasharray="4 5" marker-end="url(#a)"/>
+  <text x="566" y="318" text-anchor="middle" font-size="13" fill="#880e4f">④ สถานะกลับ</text>
+  <rect x="862" y="222" width="124" height="136" rx="14" fill="#fff" stroke="#546e7a" stroke-width="2.5"/>
+  <text x="924" y="258" text-anchor="middle" font-size="24">⛽💧🌀</text>
+  <text x="924" y="288" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">ปั๊ม · วาล์ว</text>
+  <text x="924" y="310" text-anchor="middle" font-size="16" font-weight="700" fill="#263238">· พัดลม</text>
+  <text x="924" y="338" text-anchor="middle" font-size="13" fill="#546e7a">ของจริงในฟาร์ม</text>
+  <line x1="830" y1="290" x2="856" y2="290" stroke="#263238" stroke-width="6" marker-end="url(#a)"/>
+  <!-- app -->
+  <rect x="300" y="360" width="480" height="78" rx="16" fill="#ede7f6" stroke="#5e35b1" stroke-width="3"/>
+  <text x="330" y="398" font-size="26">📱💻</text>
+  <text x="400" y="392" font-size="18" font-weight="700" fill="#311b92">แอปของกลุ่มเรา (เว็บ/มือถือ PWA)</text>
+  <text x="400" y="420" font-size="14" fill="#4527a0">⑤ subscribe ทุกอย่าง · กราฟสวย ๆ · แจ้งเตือนเข้ามือถือ</text>
+  <path d="M440 352 L 440 296" stroke="#5e35b1" stroke-width="3.5" fill="none" marker-start="url(#a2)" marker-end="url(#a2)"/>
+</svg>

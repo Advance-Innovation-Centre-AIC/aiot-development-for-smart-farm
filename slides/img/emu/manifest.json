@@ -1,0 +1,127 @@
+{
+ "shot_at": "2026-09-28T02:52:30.312Z",
+ "note": "BENTO Emulator — ค่าเซนเซอร์เป็นค่าจำลอง",
+ "shots": [
+  {
+   "file": "s1/sf1_01_greenhouse_hello.py",
+   "shot": "room",
+   "status": "RUNS",
+   "images": [
+    "sf1_01_greenhouse_hello__room.png",
+    "sf1_01_greenhouse_hello__room_kit.png",
+    "sf1_01_greenhouse_hello__room_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_01_greenhouse_hello.py",
+   "shot": "breath",
+   "status": "RUNS",
+   "images": [
+    "sf1_01_greenhouse_hello__breath.png",
+    "sf1_01_greenhouse_hello__breath_kit.png",
+    "sf1_01_greenhouse_hello__breath_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_02_crop_comfort.py",
+   "shot": "comfy",
+   "status": "RUNS",
+   "images": [
+    "sf1_02_crop_comfort__comfy.png",
+    "sf1_02_crop_comfort__comfy_kit.png",
+    "sf1_02_crop_comfort__comfy_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_02_crop_comfort.py",
+   "shot": "stress",
+   "status": "RUNS",
+   "images": [
+    "sf1_02_crop_comfort__stress.png",
+    "sf1_02_crop_comfort__stress_kit.png",
+    "sf1_02_crop_comfort__stress_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_02_crop_comfort.py",
+   "shot": "bad",
+   "status": "RUNS",
+   "images": [
+    "sf1_02_crop_comfort__bad.png",
+    "sf1_02_crop_comfort__bad_kit.png",
+    "sf1_02_crop_comfort__bad_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_03_auto_irrigation.py",
+   "shot": "wet_idle",
+   "status": "RUNS",
+   "images": [
+    "sf1_03_auto_irrigation__wet_idle.png",
+    "sf1_03_auto_irrigation__wet_idle_kit.png",
+    "sf1_03_auto_irrigation__wet_idle_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_03_auto_irrigation.py",
+   "shot": "dry_pump_on",
+   "status": "RUNS",
+   "images": [
+    "sf1_03_auto_irrigation__dry_pump_on.png",
+    "sf1_03_auto_irrigation__dry_pump_on_kit.png",
+    "sf1_03_auto_irrigation__dry_pump_on_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_03_auto_irrigation.py",
+   "shot": "tank_empty",
+   "status": "RUNS",
+   "images": [
+    "sf1_03_auto_irrigation__tank_empty.png",
+    "sf1_03_auto_irrigation__tank_empty_kit.png",
+    "sf1_03_auto_irrigation__tank_empty_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_04_tank_tilt.py",
+   "shot": "level",
+   "status": "RUNS",
+   "images": [
+    "sf1_04_tank_tilt__level.png",
+    "sf1_04_tank_tilt__level_kit.png",
+    "sf1_04_tank_tilt__level_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_04_tank_tilt.py",
+   "shot": "tilted",
+   "status": "RUNS",
+   "images": [
+    "sf1_04_tank_tilt__tilted.png",
+    "sf1_04_tank_tilt__tilted_kit.png",
+    "sf1_04_tank_tilt__tilted_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_04_tank_tilt.py",
+   "shot": "bump",
+   "status": "RUNS",
+   "images": [
+    "sf1_04_tank_tilt__bump.png",
+    "sf1_04_tank_tilt__bump_kit.png",
+    "sf1_04_tank_tilt__bump_full.png"
+   ],
+   "console": ""
+  }
+ ]
+}

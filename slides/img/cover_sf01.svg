@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1426"/>
+      <stop offset="0.62" stop-color="#10324a"/>
+      <stop offset="1" stop-color="#1d4d2e"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd6ff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#7fd6ff" stop-opacity="0.06"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffd166" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffd166" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <circle cx="1120" cy="120" r="150" fill="url(#sun)"/>
+  <!-- rolling fields -->
+  <path d="M0 600 Q 320 540 640 590 T 1280 570 L1280 720 L0 720 Z" fill="#1f5f33"/>
+  <path d="M0 650 Q 360 610 720 650 T 1280 640 L1280 720 L0 720 Z" fill="#27773f"/>
+  <g stroke="#3d9a55" stroke-width="3" opacity="0.7">
+    <path d="M40 700 L300 650"/><path d="M160 710 L470 655"/><path d="M300 716 L640 660"/>
+    <path d="M480 718 L820 662"/><path d="M660 720 L1000 664"/><path d="M860 720 L1180 662"/>
+  </g>
+  <!-- greenhouse (right side, away from the title) -->
+  <g transform="translate(820 330)">
+    <path d="M0 250 L0 120 Q 170 -10 340 120 L340 250 Z" fill="url(#glass)" stroke="#8fd3ff" stroke-width="3"/>
+    <g stroke="#8fd3ff" stroke-width="2" opacity="0.7">
+      <path d="M85 250 L85 62"/><path d="M170 250 L170 38"/><path d="M255 250 L255 62"/>
+      <path d="M0 180 L340 180"/>
+    </g>
+    <!-- plants -->
+    <g fill="#5fd07a">
+      <ellipse cx="40" cy="232" rx="18" ry="12"/><ellipse cx="120" cy="230" rx="20" ry="14"/>
+      <ellipse cx="210" cy="232" rx="18" ry="12"/><ellipse cx="295" cy="230" rx="20" ry="14"/>
+    </g>
+    <g fill="#e5484d"><circle cx="118" cy="226" r="5"/><circle cx="130" cy="232" r="4"/><circle cx="292" cy="226" r="5"/></g>
+    <!-- sensor node + waves -->
+    <rect x="150" y="96" width="40" height="28" rx="5" fill="#132033" stroke="#22d3ee" stroke-width="2"/>
+    <circle cx="170" cy="110" r="4" fill="#22d3ee"/>
+    <g fill="none" stroke="#22d3ee" stroke-width="3" stroke-linecap="round">
+      <path d="M200 88 Q 214 110 200 132" opacity="0.9"/>
+      <path d="M214 76 Q 236 110 214 144" opacity="0.6"/>
+      <path d="M228 64 Q 258 110 228 156" opacity="0.35"/>
+    </g>
+  </g>
+  <!-- RGB matrix motif (16x8) -->
+  <g transform="translate(64 520)">
+    <rect x="-10" y="-10" width="356" height="180" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="2" opacity="0.92"/>
+    <g id="dots">
+      <!-- 16 columns x 8 rows, 20px pitch; lit dots spell a leaf + a drop -->
+    </g>
+    <g fill="#1b222c">
+      <!-- background dots drawn row by row -->
+      <g id="r0"><circle cx="8" cy="8" r="7"/><circle cx="29" cy="8" r="7"/><circle cx="50" cy="8" r="7"/><circle cx="71" cy="8" r="7"/><circle cx="92" cy="8" r="7"/><circle cx="113" cy="8" r="7"/><circle cx="134" cy="8" r="7"/><circle cx="155" cy="8" r="7"/><circle cx="176" cy="8" r="7"/><circle cx="197" cy="8" r="7"/><circle cx="218" cy="8" r="7"/><circle cx="239" cy="8" r="7"/><circle cx="260" cy="8" r="7"/><circle cx="281" cy="8" r="7"/><circle cx="302" cy="8" r="7"/><circle cx="323" cy="8" r="7"/></g>
+      <use href="#r0" y="20"/><use href="#r0" y="40"/><use href="#r0" y="60"/><use href="#r0" y="80"/><use href="#r0" y="100"/><use href="#r0" y="120"/><use href="#r0" y="140"/>
+    </g>
+    <!-- leaf (green) -->
+    <g fill="#30d158">
+      <circle cx="50" cy="28" r="7"/><circle cx="71" cy="28" r="7"/>
+      <circle cx="29" cy="48" r="7"/><circle cx="50" cy="48" r="7"/><circle cx="71" cy="48" r="7"/><circle cx="92" cy="48" r="7"/>
+      <circle cx="29" cy="68" r="7"/><circle cx="50" cy="68" r="7"/><circle cx="71" cy="68" r="7"/><circle cx="92" cy="68" r="7"/>
+      <circle cx="50" cy="88" r="7"/><circle cx="71" cy="88" r="7"/>
+      <circle cx="71" cy="108" r="7"/><circle cx="71" cy="128" r="7"/>
+    </g>
+    <!-- drop (blue) -->
+    <g fill="#4a9eff">
+      <circle cx="176" cy="28" r="7"/>
+      <circle cx="155" cy="48" r="7"/><circle cx="176" cy="48" r="7"/><circle cx="197" cy="48" r="7"/>
+      <circle cx="134" cy="68" r="7"/><circle cx="155" cy="68" r="7"/><circle cx="176" cy="68" r="7"/><circle cx="197" cy="68" r="7"/><circle cx="218" cy="68" r="7"/>
+      <circle cx="134" cy="88" r="7"/><circle cx="155" cy="88" r="7"/><circle cx="176" cy="88" r="7"/><circle cx="197" cy="88" r="7"/><circle cx="218" cy="88" r="7"/>
+      <circle cx="155" cy="108" r="7"/><circle cx="176" cy="108" r="7"/><circle cx="197" cy="108" r="7"/>
+    </g>
+    <!-- sun (yellow) -->
+    <g fill="#ffd60a">
+      <circle cx="281" cy="48" r="7"/><circle cx="302" cy="48" r="7"/>
+      <circle cx="260" cy="68" r="7"/><circle cx="281" cy="68" r="7"/><circle cx="302" cy="68" r="7"/><circle cx="323" cy="68" r="7"/>
+      <circle cx="260" cy="88" r="7"/><circle cx="281" cy="88" r="7"/><circle cx="302" cy="88" r="7"/><circle cx="323" cy="88" r="7"/>
+      <circle cx="281" cy="108" r="7"/><circle cx="302" cy="108" r="7"/>
+    </g>
+  </g>
+</svg>
