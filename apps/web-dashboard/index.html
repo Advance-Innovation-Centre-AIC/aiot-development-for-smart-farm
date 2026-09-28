@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!--
+  แดชบอร์ดฟาร์ม (Smart Farm Dashboard) - แอปเว็บของกลุ่ม ใช้ได้ทั้งมือถือและจอโปรเจกเตอร์
+  เปิด: index.html?team=team05 (เปลี่ยน 05 เป็นเลขกลุ่ม) ผ่าน http://localhost หรือ https (ดู ../README_th.md)
+  ฟัง bento-aiot/<กลุ่ม>/# ทุกหัวข้อตาม s2/app/MQTT_CONTRACT_th.md และส่งคำสั่งเข้า bento-aiot/<กลุ่ม>/cmd
+  broker สาธารณะ ใครก็อ่านและสั่งได้ ห้ามส่งรหัสผ่านหรือข้อมูลส่วนตัว
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ฟาร์มของเรา · Smart Farm Dashboard</title>
+<meta name="description" content="แดชบอร์ดฟาร์มอัจฉริยะ: ค่าจากบอร์ด Smart IoT Gateway ผังฟาร์มสด กราฟ แจ้งเตือน และปุ่มสั่งปั๊ม ผ่าน MQTT">
+<meta name="theme-color" content="#f3f4ef">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ฟาร์มของเรา">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // ตั้งธีมที่เลือกไว้ก่อนวาดหน้า (กันจอกะพริบขาวตอนเปิดในโหมดมืด)
+  try { var t = JSON.parse(localStorage.getItem("sf-dash:theme")); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="icons/icon.svg" alt="" width="36" height="36">
+    <div>
+      <h1>ฟาร์มของเรา</h1>
+      <small>Smart Farm Dashboard · <b id="team-label">ยังไม่เลือกกลุ่ม</b></small>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="status" class="status" data-state="idle" role="status" aria-live="polite"><i class="dot"></i><span id="status-text">ยังไม่ได้ต่อ</span></span>
+    <button id="install-btn" class="btn btn-icon" type="button" hidden aria-label="ติดตั้งเป็นแอป" title="ติดตั้งเป็นแอป"><i data-icon="install"></i></button>
+    <button id="theme-btn" class="btn btn-icon" type="button" aria-label="สลับธีม"></button>
+  </div>
+</header>
+
+<form id="team-form" class="teambar" novalidate>
+  <label for="team">เลขกลุ่ม</label>
+  <input id="team" name="team" placeholder="team05" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="6" aria-describedby="team-error">
+  <select id="broker" aria-label="เลือก broker"></select>
+  <button class="btn btn-primary" type="submit">ต่อ</button>
+  <span id="last-seen" class="muted">ยังไม่มีข้อความ</span>
+  <p id="team-error" class="error" role="alert"></p>
+</form>
+
+<main class="layout">
+
+  <!-- 1) ภาพรวม: ผังฟาร์มสด + การ์ดค่าจากบอร์ด -->
+  <section class="sec sec-overview" data-section="overview" aria-labelledby="h-overview">
+    <h2 id="h-overview" class="sr-narrow">ภาพรวมฟาร์ม</h2>
+    <div class="panel panel-map">
+      <div class="panel-head">
+        <h3>ผังฟาร์มสด</h3>
+        <small>โหนดในแปลง → Dev Kit (Smart IoT Gateway) → PLC WiFi → ปั๊ม · เส้นกะพริบ = มีข้อความวิ่งผ่านจริง</small>
+      </div>
+      <div id="map"></div>
+      <p class="legend-dots"><span><i class="dot" data-s="live"></i>ได้ยินใน 15 วิ</span><span><i class="dot" data-s="stale"></i>เงียบเกิน 15 วิ</span><span><i class="dot" data-s="none"></i>ยังไม่เคยได้ยิน</span></p>
+    </div>
+    <div class="panel panel-cards">
+      <div class="panel-head">
+        <h3>ค่าจากบอร์ด</h3>
+        <small>telemetry ทุก 5 วินาที · ป้าย "จำลอง" = ค่าจากลูกบิด ไม่ใช่เซนเซอร์จริง</small>
+      </div>
+      <div id="cards" class="cards"></div>
+    </div>
+  </section>
+
+  <!-- 2) กราฟ -->
+  <section class="sec sec-charts" data-section="charts" aria-labelledby="h-charts">
+    <div class="sec-head">
+      <h2 id="h-charts">กราฟแนวโน้ม</h2>
+      <div id="chart-window" class="segmented" role="group" aria-label="ช่วงเวลาของกราฟ"></div>
+    </div>
+    <div id="charts" class="charts"></div>
+  </section>
+
+  <!-- 3) ควบคุม: ใช้เฉพาะคำสั่งที่มีในสัญญาข้อ 4 / 4.1 · ป้าย sf2_0x = ไฟล์บนบอร์ดที่ฟังคำสั่งนั้น -->
+  <section class="sec sec-control" data-section="control" id="controls" aria-labelledby="h-control">
+    <h2 id="h-control">ควบคุม</h2>
+    <p class="hint">ส่งเข้า <code>cmd</code> ของกลุ่ม · ป้ายสีเขียว = ไฟล์ที่บอร์ดน่าจะรันอยู่ตอนนี้ · ส่งห่างกันใบละ 1.2 วิ เพราะกล่องรับของบอร์ดมีช่องเดียว</p>
+
+    <div class="panel ctl">
+      <div class="ctl-head"><h3><i data-icon="pump"></i> ปั๊มน้ำ</h3><span class="chip" data-file="sf2_03">sf2_03</span><span class="chip" data-file="sf2_06">sf2_06</span></div>
+      <label class="range">
+        <span>เปิดนาน <output id="pump-sec-out">10 วิ</output></span>
+        <input id="pump-sec" type="range" min="1" max="30" step="1" value="10" aria-label="จำนวนวินาทีที่เปิดปั๊ม">
+      </label>
+      <div class="btn-row">
+        <button id="pump-on" class="btn btn-primary" type="button" data-needs-online>เปิดปั๊ม</button>
+        <button id="pump-off" class="btn btn-danger" type="button" data-needs-online>ปิดปั๊ม</button>
+      </div>
+      <p class="hint">สูงสุด 30 วิ · น้ำในถังต่ำกว่า 10 % บอร์ดไม่ยอมเปิด · Gateway (sf2_06) ส่งต่อให้ PLC</p>
+    </div>
+
+    <div class="panel ctl">
+      <div class="ctl-head"><h3><i data-icon="auto"></i> รดน้ำอัตโนมัติ</h3><span class="chip" data-file="sf2_06">sf2_06</span></div>
+      <div class="btn-row">
+        <button id="auto-on" class="btn" type="button" data-needs-online>เปิดออโต้</button>
+        <button id="auto-off" class="btn" type="button" data-needs-online>ปิดออโต้</button>
+      </div>
+      <p class="hint">เปิด = Gateway สั่งรดเองเมื่อดินแห้ง · สถานะจริงดูที่การ์ด "รดน้ำอัตโนมัติ"</p>
+    </div>
+
+    <div class="panel ctl">
+      <div class="ctl-head"><h3><i data-icon="speaker"></i> เรียกคนที่ฟาร์ม</h3><span class="chip" data-file="sf2_03">sf2_03</span></div>
+      <div class="btn-row">
+        <button id="beep" class="btn" type="button" data-needs-online>ส่งเสียงเรียก (beep)</button>
+      </div>
+      <form id="say-form" class="inline-form">
+        <input id="say" placeholder="ข้อความอังกฤษขึ้นจอไฟ RGB" autocomplete="off" spellcheck="false" aria-label="ข้อความขึ้นจอไฟ RGB">
+        <button class="btn" type="submit" data-needs-online>ส่ง</button>
+      </form>
+      <p id="say-preview" class="hint"></p>
+      <p class="hint">อังกฤษ ตัวเลข เครื่องหมาย ไม่เกิน 20 ตัว · ไม่วิ่งระหว่างปั๊มเปิด</p>
+    </div>
+
+    <div class="panel ctl">
+      <div class="ctl-head"><h3><i data-icon="bell"></i> แจ้งเตือนพืช</h3><span class="chip" data-file="sf2_04">sf2_04</span></div>
+      <div class="btn-row">
+        <button id="ack" class="btn" type="button" data-needs-online>รับทราบ (ack)</button>
+      </div>
+      <form id="thi-form" class="inline-form">
+        <label for="thi">เกณฑ์ร้อน t_hi</label>
+        <input id="thi" type="number" inputmode="numeric" min="1" max="45" step="1" value="30">
+        <button class="btn" type="submit" data-needs-online>ตั้ง</button>
+      </form>
+      <p id="thi-hint" class="hint">จำนวนเต็ม มากกว่าเกณฑ์หนาวของพืช และไม่เกิน 45</p>
+    </div>
+    <p id="queue" class="muted" aria-live="polite"></p>
+  </section>
+
+  <!-- 4) แจ้งเตือน -->
+  <section class="sec sec-alerts" data-section="alerts" aria-labelledby="h-alerts">
+    <h2 id="h-alerts">แจ้งเตือน</h2>
+    <div class="panel">
+      <div class="perm">
+        <div>
+          <b>แจ้งเตือนเครื่อง:</b> <span id="perm-state" class="perm-state">—</span>
+        </div>
+        <button id="perm-btn" class="btn btn-primary" type="button" hidden>อนุญาตแจ้งเตือน</button>
+      </div>
+      <div class="prefs">
+        <label class="check"><input id="pref-notify" type="checkbox"> เด้งแจ้งเตือน</label>
+        <label class="check"><input id="pref-sound" type="checkbox"> เสียง</label>
+        <label class="check"><input id="pref-vibrate" type="checkbox"> สั่น <small id="pref-vibrate-note" class="muted"></small></label>
+        <button id="test-alert" class="btn" type="button">ทดสอบ</button>
+      </div>
+      <p class="hint">เตือนได้เฉพาะตอนหน้านี้เปิดอยู่ · อยากให้มือถือเด้งแม้ปิดแอป ใช้ตัวส่งต่อ ntfy ใน <code>apps/notify/</code></p>
+    </div>
+    <div class="panel">
+      <div class="panel-head row">
+        <h3>กฎเตือนของกลุ่ม</h3>
+        <div class="btn-row tight">
+          <button id="add-rule" class="btn" type="button"><i data-icon="plus"></i> เพิ่มกฎ</button>
+          <button id="reset-rules" class="btn btn-ghost" type="button">ค่าเริ่มต้น</button>
+        </div>
+      </div>
+      <p class="hint">ค่าต่อเนื่องเตือนตอนเพิ่งเข้าเงื่อนไข · event เตือนทุกใบที่ตรง · "เว้น" = กี่วินาทีก่อนเตือนกฎเดิมซ้ำ · silence = เงียบเกินกี่วินาที</p>
+      <div id="rules" class="rules"></div>
+      <p id="rules-empty" class="empty" hidden>ยังไม่มีกฎ กด "เพิ่มกฎ"</p>
+    </div>
+  </section>
+
+  <!-- 5) บันทึก + ส่งออก CSV -->
+  <section class="sec sec-log" data-section="log" aria-labelledby="h-log">
+    <h2 id="h-log">บันทึก</h2>
+    <div class="panel">
+      <dl class="stats">
+        <div><dt>telemetry</dt><dd id="stat-telemetry">0</dd></div>
+        <div><dt>event</dt><dd id="stat-event">0</dd></div>
+        <div><dt>field</dt><dd id="stat-field">0</dd></div>
+        <div><dt>plc</dt><dd id="stat-plc">0</dd></div>
+        <div><dt>เราสั่ง</dt><dd id="stat-sent">0</dd></div>
+        <div><dt>ใบหาย</dt><dd id="stat-lost">0</dd></div>
+      </dl>
+      <div class="btn-row">
+        <button id="csv-btn" class="btn btn-primary" type="button"><i data-icon="download"></i> ดาวน์โหลด CSV</button>
+        <button id="clear-btn" class="btn btn-ghost" type="button"><i data-icon="trash"></i> ล้างประวัติ</button>
+      </div>
+      <p class="hint">เก็บในเบราว์เซอร์เครื่องนี้ <b id="stat-history">0</b> รายการ (สูงสุด 3000) · CSV เปิดใน Excel ภาษาไทยไม่เพี้ยน</p>
+    </div>
+    <div class="panel">
+      <div id="log-filters" class="segmented" role="group" aria-label="กรองบันทึก">
+        <button class="seg" type="button" data-filter="all" aria-pressed="true">ทั้งหมด</button>
+        <button class="seg" type="button" data-filter="event" aria-pressed="false">บอร์ด/PLC</button>
+        <button class="seg" type="button" data-filter="cmd" aria-pressed="false">คำสั่ง</button>
+        <button class="seg" type="button" data-filter="alert" aria-pressed="false">เตือน</button>
+        <button class="seg" type="button" data-filter="sys" aria-pressed="false">ระบบ</button>
+      </div>
+      <ol id="log" class="log" reversed></ol>
+      <p class="empty">ยังไม่มีเหตุการณ์</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="เมนูหลัก">
+  <button type="button" data-tab="overview" aria-selected="true"><i data-icon="home"></i><span>ภาพรวม</span></button>
+  <button type="button" data-tab="charts" aria-selected="false"><i data-icon="chart"></i><span>กราฟ</span></button>
+  <button type="button" data-tab="control" aria-selected="false"><i data-icon="sliders"></i><span>ควบคุม</span></button>
+  <button type="button" data-tab="alerts" aria-selected="false"><i data-icon="bell"></i><span>แจ้งเตือน</span></button>
+  <button type="button" data-tab="log" aria-selected="false"><i data-icon="list"></i><span>บันทึก</span></button>
+</nav>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<datalist id="known-keys">
+  <option value="soil"><option value="tank"><option value="temp_c"><option value="rh"><option value="hpa">
+  <option value="az"><option value="light"><option value="pump"><option value="auto"><option value="level">
+  <option value="event"><option value="alert"><option value="why"><option value="value"><option value="left_s">
+</datalist>
+
+<!-- ไลบรารีจาก CDN: ล็อกรุ่น + integrity (SRI) ถ้าไฟล์บน CDN ถูกแก้ เบราว์เซอร์จะไม่รัน -->
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+        integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

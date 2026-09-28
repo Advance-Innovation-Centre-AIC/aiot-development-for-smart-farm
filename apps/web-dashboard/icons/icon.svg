@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- ไอคอนแดชบอร์ดฟาร์ม วาดเอง: ต้นกล้าบนดิน + สัญญาณ Wi-Fi (IoT) -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a9160"/>
+      <stop offset="1" stop-color="#17603c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-width="22">
+    <path d="M222 118a48 48 0 0 1 68 0"/>
+    <path d="M191 87a92 92 0 0 1 130 0" opacity=".65"/>
+  </g>
+  <circle cx="256" cy="152" r="15" fill="#ffffff"/>
+  <path d="M96 420c46-40 274-40 320 0v16H96z" fill="#7a4a24"/>
+  <path d="M96 420c46-40 274-40 320 0" fill="none" stroke="#a8703f" stroke-width="10" stroke-linecap="round"/>
+  <g transform="translate(256 404) scale(.84) translate(-256 -404)">
+    <path d="M256 400V262" stroke="#f4fbef" stroke-width="24" stroke-linecap="round"/>
+    <path d="M250 306c-72 6-122-30-130-100 70-6 122 30 130 100z" fill="#c6f0a2"/>
+    <path d="M262 268c4-78 56-126 136-128-2 80-54 126-136 128z" fill="#e9f9d6"/>
+    <path d="M250 306c-40-10-72-38-96-72" fill="none" stroke="#6fbf5a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M262 268c30-24 60-60 104-96" fill="none" stroke="#8fcf74" stroke-width="9" stroke-linecap="round"/>
+  </g>
+</svg>
