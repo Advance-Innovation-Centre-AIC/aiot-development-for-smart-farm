@@ -21,8 +21,8 @@
 //   [{ "name": "normal", "env": {"temp":27,"hum":65,"pressure":1009},
 //      "pots": [0.3, 0.5, 0.9, 0.5],      // สัดส่วน 0..1 ของ VR1..VR4 (null = ไม่แตะ)
 //      "tilt": [0, 0],                     // -1..1 เอียงซ้าย/ขวา, หน้า/หลัง
-//      "press": ["SW4"],                   // กดแล้วปล่อย ก่อนรอ
-//      "hold": ["SW4"],                    // กดค้างไว้ตลอดช่วงรอและตอนถ่าย
+//      "press": ["LOWER"],                 // กดแล้วปล่อย ก่อนรอ (LOWER = SW5 ปุ่มล่าง, UPPER = SW6 ปุ่มบน)
+//      "hold": ["LOWER"],                  // กดค้างไว้ตลอดช่วงรอและตอนถ่าย
 //      "shake": 700,                       // เขย่า ms
 //      "tap": [[300, 150]],                // แตะจอที่พิกัด (x, y) ของจอ 800x480 เช่น แท็บของ Tabview
 //      "wait": 6000 }]                     // รอกี่ ms หลังตั้งค่าแล้วค่อยถ่าย
@@ -117,7 +117,9 @@ process.on("SIGINT", () => { stopServer(); process.exit(130); });
 
 // ---------- ตัวช่วยควบคุมแผงฮาร์ดแวร์จำลอง ----------
 const post = (page, msg) => page.evaluate((m) => window.postMessage({ bento: true, ...m }, "*"), msg);
-const BTN = { SW4: 0, SW5: 1 };
+// ปุ่มคู่ของฐานบอร์ด: index 0 = SW5 บนบอร์ด (ปุ่มล่าง), index 1 = SW6 บนบอร์ด (ปุ่มบน)
+// แผง Emulator ยังพิมพ์ชื่อเป็น SW4 / SW5 จึงรับได้ทั้งสองแบบ + LOWER / UPPER
+const BTN = { LOWER: 0, UPPER: 1, SW4: 0, SW6: 1 };
 const PROFILE_LINE = 'import sensors as _sf_p; _sf_p.board("devkit"); del _sf_p\n';
 
 async function setPot(page, idx, frac) {
@@ -220,8 +222,16 @@ try {
     if (browser) await browser.close();
     stopServer();
 }
-writeFileSync(join(opt.out, "manifest.json"), JSON.stringify(
-    { shot_at: new Date().toISOString(), note: "BENTO Emulator — ค่าเซนเซอร์เป็นค่าจำลอง", shots: manifest },
+// รวมกับ manifest เดิม: ไฟล์ที่ถ่ายรอบนี้แทนที่รายการเดิมของไฟล์นั้น ไฟล์อื่นคงไว้
+const mpath = join(opt.out, "manifest.json");
+let prev = [];
+try { prev = JSON.parse(readFileSync(mpath, "utf8")).shots || []; } catch { prev = []; }
+const shotNow = new Set(manifest.map((m) => m.file));
+const merged = prev.filter((m) => !shotNow.has(m.file)).concat(
+    manifest.map((m) => ({ ...m, shot_at: new Date().toISOString() })));
+merged.sort((a, b) => (a.file + a.shot).localeCompare(b.file + b.shot));
+writeFileSync(mpath, JSON.stringify(
+    { updated_at: new Date().toISOString(), note: "BENTO Emulator — ค่าเซนเซอร์เป็นค่าจำลอง", shots: merged },
     null, 1));
 const bad = manifest.filter((m) => m.status === "ERROR");
 console.log(`shots: ${manifest.length}, errors: ${bad.length} -> ${relative(process.cwd(), opt.out) || "."}`);

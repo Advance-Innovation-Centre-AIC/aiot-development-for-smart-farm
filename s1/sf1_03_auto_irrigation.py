@@ -10,7 +10,7 @@
 # ของบนบอร์ดที่ใช้ : ลูกบิด VR1-VR3, ปุ่ม SW5 (ปุ่มล่าง) (กดค้าง = รดน้ำเอง) และ SW6 (ปุ่มบน) (ล้างตัวนับ),
 #            ไฟ RGB_BLUE บนบอร์ด = รีเลย์ปั๊มน้ำ, ลำโพง (ปั๊มเปิด/ปิด และถังหมด)
 #            จอไฟ RGB: ซ้าย = ความชื้นดิน (เส้นแดง = เกณฑ์)  กลาง = น้ำไหล  ขวา = น้ำในถัง
-# บนจอ     : แถบ + ไม้บรรทัด (Bar + Scale), ไฟปั๊ม (Led), วงหมุนตอนปั๊มเดิน (Spinner),
+# บนจอ     : แถบ + ไม้บรรทัด (Bar + Scale), ไฟปั๊ม (Led), ไฟ Led ติดตอนปั๊มเดิน,
 #            สวิตช์อัตโนมัติ/มือ (Switch), กราฟความชื้นดินเทียบเกณฑ์ (Chart)
 # แนวคิด    : ในฟาร์มจริง ปั๊มที่เปิด-ปิดถี่ ๆ จะพังเร็วและเปลืองไฟ
 # ในงานจริง : VR1 = โหนดเซนเซอร์ความชื้นดินไร้สาย ส่งค่ามาทาง MQTT
@@ -33,7 +33,7 @@ FLOW_L_PER_S = 0.5   # สมมติปั๊มจ่าย 0.5 ลิตร/
 AUTO_AT_START = True # สวิตช์บนจอเริ่มที่ "อัตโนมัติ"
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
 RUN_MS = 180000
-TICK_MS = 200
+TICK_MS = 500
 CHART_EVERY = 1      # ใส่จุดในกราฟทุกกี่รอบ (1 = ทุก 0.2 วินาที) กราฟ 400 จุดจึงย้อนหลังได้ราว 80 วินาที
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -199,8 +199,6 @@ def build_pump_card(w):
     card(492, 64, 288, 166, "ปั๊มน้ำ (PLC ต่อ Wi-Fi)")
     w["led"] = ui.Led(x=504, y=94, w=36, h=36, color=COL_INFO, value=0)
     w["pump_lbl"] = ui.Label("ปิด", x=552, y=96, color=COL_DIM, value=28)
-    w["spin"] = ui.Spinner(x=724, y=90, w=44, h=44)
-    w["spin"].hide()                        # โผล่เฉพาะตอนปั๊มเดิน
     w["switch"] = ui.Switch(x=504, y=142, w=64, h=32, value=1 if AUTO_AT_START else 0)
     w["mode"] = ui.Label("", x=578, y=146, color=COL_TEXT, value=16)
     w["stats"] = ui.Label("เปิด 0 ครั้ง  น้ำ 0.0 ลิตร", x=504, y=190, color=COL_DIM, value=16)
@@ -251,13 +249,8 @@ def read_auto_switch(w, auto):
 
 
 def announce_pump(w, running):
-    """ตอนปั๊มเพิ่งเปิด/ปิด (ไม่ใช่ทุกรอบ): เสียงหนึ่งครั้ง + วงหมุนบนจอโผล่/หาย"""
-    if running:
-        ui.sfx(ui.SFX_UI_START)
-        w["spin"].show()
-    else:
-        ui.sfx(ui.SFX_UI_BACK)
-        w["spin"].hide()
+    """ตอนปั๊มเพิ่งเปิด/ปิด (ไม่ใช่ทุกรอบ): เสียงหนึ่งครั้ง"""
+    ui.sfx(ui.SFX_UI_START if running else ui.SFX_UI_BACK)
 
 
 def show_soil(w, soil, th):
@@ -298,7 +291,6 @@ def finish(w, pump, runs, water_l):
         rgbmatrix.clear()
     except OSError:
         pass
-    w["spin"].hide()
     w["help"].color(COL_WARN)
     w["help"].text("จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่")
     ui.poll()

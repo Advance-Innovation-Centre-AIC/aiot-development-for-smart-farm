@@ -86,15 +86,15 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
 ## 3 ชั่วโมงของเราวันนี้
 
 <div class="timeline">
-<div style="flex:20;background:#546e7a"><b>0:00</b>เปิดคาบ<br>AIoT ในฟาร์ม<br>+ เตรียมบอร์ด</div>
-<div style="flex:30;background:#1e88e5"><b>0:20</b>กิจกรรม 1<br>โรงเรือนของเรา<br>ตอนนี้</div>
-<div style="flex:30;background:#43a047"><b>0:50</b>กิจกรรม 2<br>พืชของเรา<br>สบายดีไหม</div>
-<div style="flex:10;background:#ff9f1c"><b>1:20</b>พัก</div>
-<div style="flex:30;background:#00897b"><b>1:30</b>กิจกรรม 3<br>รดน้ำ<br>อัตโนมัติ</div>
-<div style="flex:20;background:#8e24aa"><b>2:00</b>กิจกรรม 4<br>แท็งก์/รถไถ<br>เอียงเกินไหม</div>
-<div style="flex:30;background:#e53935"><b>2:20</b>ภารกิจกลุ่ม<br>แผงควบคุม<br>ฟาร์มของเรา</div>
-<div style="flex:10;background:#37474f"><b>2:50</b>ไอเดีย<br>+ Exit</div>
-</div>
+<div style="flex:10;background:#546e7a"><b>0:00</b>เปิดคาบ<br>AIoT<br>ในฟาร์ม</div>
+<div style="flex:20;background:#5e35b1"><b>0:10</b>ติดตั้ง<br>Programmer<br>+ แฟลช v2.4.1</div>
+<div style="flex:30;background:#1e88e5"><b>0:30</b>กิจกรรม 1<br>โรงเรือนของเรา<br>ตอนนี้</div>
+<div style="flex:30;background:#43a047"><b>1:00</b>กิจกรรม 2<br>พืชของเรา<br>สบายดีไหม</div>
+<div style="flex:10;background:#ff9f1c"><b>1:30</b>พัก</div>
+<div style="flex:30;background:#00897b"><b>1:40</b>กิจกรรม 3<br>รดน้ำ<br>อัตโนมัติ</div>
+<div style="flex:20;background:#8e24aa"><b>2:10</b>กิจกรรม 4<br>แท็งก์/รถไถ<br>เอียงเกินไหม</div>
+<div style="flex:20;background:#e53935"><b>2:30</b>ภารกิจกลุ่ม<br>แผงควบคุม<br>ฟาร์มของเรา</div>
+<div style="flex:10;background:#37474f"><b>2:50</b>ไอเดีย<br>+ Exit</div></div>
 
 <div class="cols">
 <div>
@@ -125,7 +125,7 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
 
 <!-- _class: sec -->
 
-<div class="when">0:00 – 0:20</div>
+<div class="when">0:00 – 0:30 · เปิดคาบ 10 นาที + ติดตั้ง/แฟลช 20 นาที</div>
 
 # เปิดคาบ: AIoT ในฟาร์มจริง
 
@@ -245,7 +245,7 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
   <text x="500" y="178" text-anchor="middle" font-size="20" fill="#37474f">if ดิน &lt; เกณฑ์: รดน้ำ</text>
   <rect x="730" y="40" width="250" height="170" rx="22" fill="#e8f5e9" stroke="#2e7d32" stroke-width="4"/>
   <text x="855" y="84" text-anchor="middle" font-size="30" font-weight="700" fill="#1b5e20">③ ลงมือ · Act</text>
-  <text x="855" y="122" text-anchor="middle" font-size="20" fill="#37474f">จอไฟ RGB เป็นสีแดง</text>
+  <text x="855" y="122" text-anchor="middle" font-size="20" fill="#37474f">จอไฟ RGB เป็นสีเหลือง</text>
   <text x="855" y="150" text-anchor="middle" font-size="20" fill="#37474f">ลำโพงเตือน ui.sfx</text>
   <text x="855" y="178" text-anchor="middle" font-size="20" fill="#37474f">LED = ปั๊มน้ำเปิด</text>
   <line x1="275" y1="125" x2="368" y2="125" stroke="#546e7a" stroke-width="5" marker-end="url(#ar)"/>
@@ -357,15 +357,15 @@ AIoT for Smart Farm · Short Course 3 คาบ · TESAIoT Dev Kit + BENTO Emula
 <div class="cap">ภาพและตำแหน่งหมุด 1–8 จาก TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk · หมุดสีเขียว = ของที่ใช้วันนี้</div>
 
 <div class="cores">
-<div style="background:#455a64"><b>Cortex-M33 Secure</b><br>secure boot · TrustZone</div>
-<div style="background:#1565c0"><b>Cortex-M33 Non-secure</b> 200 MHz<br>WiFi · MQTT · TLS · OPTIGA</div>
+<div style="background:#455a64"><b>Cortex-M33 · ฝั่ง Secure</b><br>secure boot · TrustZone</div>
+<div style="background:#1565c0"><b>Cortex-M33 · ฝั่ง Non-secure</b> 200 MHz<br>WiFi · MQTT · TLS · OPTIGA</div>
 <div style="background:#6a1b9a"><b>Cortex-M55</b> 400 MHz + NPU Ethos-U55<br>จอแสดงผล · Edge AI</div>
 </div>
 
 </div>
 <div class="legend">
 
-**บอร์ดสองชั้น:** บอร์ดฐาน TESAIoT + โมดูล (SoM) **Infineon KIT_PSE84_AI** ที่มีชิป **PSoC™ Edge E84**
+**บอร์ดสองชั้น:** บอร์ดฐาน TESAIoT + โมดูล (SoM) **Infineon KIT_PSE84_AI** ที่มีชิป **PSoC™ Edge E84** — ข้างในมี M33 (แบ่งสองฝั่งความปลอดภัย) + M55 + NPU
 
 <ul>
 <li><span class="n g">1</span><b>จอสัมผัส 4.3 นิ้ว</b> — โมดูล <code>ui</code> · ทุกกิจกรรม</li>
@@ -396,59 +396,120 @@ section table { font-size: .7em; }
 | 📐 IMU **BMI270** (ความเร่ง 3 แกน + ไจโร) | `sensors.bmi270.motion()` | มุมเอียง แรงกระแทก | 4 |
 | 🟩 **จอไฟ RGB 16×8 จุด** (dot matrix) | `rgbmatrix` | ไฟสถานะที่เห็นจากอีกฝั่งห้อง | ทุกกิจกรรม |
 | 🎛️ ลูกบิด **VR1–VR4** | `pots.read(0)` … `pots.read(3)` | แทนเซนเซอร์ที่ยังไม่มี: ความชื้นดิน น้ำในถัง | 3 · ภารกิจ |
-| 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(0)`, `buttons.pressed(1)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | ทุกกิจกรรม |
-| 🔊 ลำโพง | `ui.sfx(...)`, `ui.tone(...)` | เสียงเตือน เสียงยืนยัน | 2 · 3 · 4 |
+| 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(0)`, `buttons.pressed(1)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | 1 · 3 · 4 · ภารกิจ |
+| 💡 ไฟ LED สีบนโมดูล SoM (RGB_RED / RGB_BLUE) | `gpio.led(...)` | ไฟแดง = พืช/แท็งก์มีปัญหา · ไฟฟ้า = ปั๊มเดิน (คนละอย่างกับจอไฟ RGB 16×8) | 2 · 3 · 4 · ภารกิจ |
+| 🔊 ลำโพง | `ui.sfx(...)`, `ui.tone(...)` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
 | 🖥️ จอสัมผัส | `ui` | แผงหน้าปัดฟาร์ม | ทุกกิจกรรม |
 
-<div class="src">SW5 (ปุ่มล่าง) = P17.5 · SW6 (ปุ่มบน) = P17.7 (ชื่อตามที่พิมพ์บนบอร์ด) · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
+<div class="src">SW5 (ปุ่มล่าง) = P17.5 · SW6 (ปุ่มบน) = P17.7 · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
 
 <div class="warn">
 
-**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** ไม่ใช่ปุ่มของเรา — กดแล้วบอร์ดดับ · ลำโพงดังพร้อมกัน 20 กลุ่มจะรบกวนกัน โค้ดทุกไฟล์จึงส่งเสียง **เฉพาะตอนมีเหตุการณ์**
+**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** ไม่ใช่ปุ่มของเรา — **ห้ามโยก** · ลำโพงดังพร้อมกัน 20 กลุ่มจะรบกวนกัน โค้ดทุกไฟล์จึงส่งเสียง **เฉพาะตอนมีเหตุการณ์**
 
 </div>
 
 ---
 
-## เตรียมบอร์ด 10 นาที (ทำครั้งเดียว)
+## ติดตั้ง TESAIoT PSE84 Programmer — ทุกคนทำเอง
+
+<style scoped>
+.step { display:flex; gap:14px; align-items:flex-start; margin:.35em 0; }
+.step .num { flex:0 0 52px; height:52px; border-radius:50%; background:#5e35b1; color:#fff; font-size:30px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.step div { font-size:.9em; line-height:1.35; }
+section a { word-break: break-all; }
+</style>
 
 <div class="cols">
 <div class="c55">
 
-1. เสียบสาย USB-C เข้าพอร์ต **KitProg3** ของบอร์ด
-   <span class="src">บอร์ดติดไฟแต่คอมไม่เห็น → สายนั้นชาร์จได้อย่างเดียว เปลี่ยนสาย</span>
-2. เปิด **BENTO IDE** → หน้า **Welcome** → **Remote Flash**
-3. เลือก **BENTO MicroPython — TESAIoT Dev Kit v2.4.1** → **Flash**
-4. กด **Connect** แล้วดูว่าจอบอร์ดขึ้น **v2.4.1**
-5. ผู้นำทางเปิด **BENTO Emulator** รอไว้อีกเครื่อง
+<div class="step"><span class="num">1</span><div>
+
+**ดาวน์โหลด + ติดตั้ง** TESAIoT PSE84 Programmer (รุ่นล่าสุด v1.0.2)
+<https://github.com/wiroon/TESAIoT_PSE84_Programmer/releases>
+macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-setup.exe` (หรือ `.msi`)
+
+</div></div>
+
+<div class="step"><span class="num">2</span><div>
+
+**เปิดแอปค้างไว้** แล้วสลับเป็นโหมด **Remote** — หน้า IDE จะจับคู่กับแอปนี้เพื่อแฟลชบอร์ดผ่าน USB
+
+</div></div>
+
+<div class="step"><span class="num">3</span><div>
+
+**เสียบ USB-C** เข้าพอร์ต **KitProg3** ของบอร์ด (ใช้สายที่ส่งข้อมูลได้ · บอร์ดมี USB-C หลายช่อง — ผู้สอนจะชี้ช่อง KitProg3 บนบอร์ดจริง)
+
+</div></div>
+
+<div class="warn">
+
+**เครื่องเตือนตอนเปิดแอป** (macOS/Windows ถามว่าไว้ใจแอปนี้ไหม) → **ยกมือเรียกผู้สอน** อย่ากดข้ามเอง
+
+</div>
+
+</div>
+<div class="shot">
+
+![w:430](img/ide/remote_flash_step1.png)
+
+<div class="cap">หน้าจอจริงของ BENTO IDE (ide.tesaiot.com) — Remote Flash ขั้นที่ 1: ต้องมี TESAIoT Programmer ก่อน</div>
+
+</div>
+</div>
+
+---
+
+## Remote Flash v2.4.1 — กลุ่มละ 1 บอร์ด
+
+<style scoped>
+.step { display:flex; gap:14px; align-items:flex-start; margin:.3em 0; }
+.step .num { flex:0 0 48px; height:48px; border-radius:50%; background:#2e7d32; color:#fff; font-size:28px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.step div { font-size:.86em; line-height:1.32; }
+</style>
+
+<div class="cols">
+<div class="c45">
+
+<div class="step"><span class="num">4</span><div>
+
+เปิด **Chrome หรือ Edge** → <https://ide.tesaiot.com/> → หน้า **Welcome** → เลือก **TESAIoT Dev Kit** → แถบ **BENTO Firmware — TESAIoT Dev Kit** → **Flash this board →**
+
+</div></div>
+
+<div class="step"><span class="num">5</span><div>
+
+**I'm ready →** จับคู่กับ Programmer → ตรวจว่าเป็น **v2.4.1** → **Flash** แล้วรอจนเสร็จ
+
+</div></div>
+
+<div class="step"><span class="num">6</span><div>
+
+จอบอร์ดขึ้น **v2.4.1** → กด **Connect** ใน IDE ✅
+
+</div></div>
 
 <div class="think">
 
-**จอดำหลังกด Program to Device?** กด **RESET** หนึ่งครั้ง → ยังดำ: **ถอดสาย USB แล้วเสียบใหม่**
+**แก้ปัญหาเร็ว**
+- คอมไม่เห็นบอร์ด → **เปลี่ยนสาย / เปลี่ยนพอร์ต USB** (สายชาร์จอย่างเดียวใช้ไม่ได้)
+- จอดำหลังแฟลช/รันโค้ด → กด **RESET** หนึ่งครั้ง → ยังดำ: **ถอดสาย USB แล้วเสียบใหม่**
+- **SW2** บนฐานบอร์ด = **สวิตช์ตัดไฟ** ห้ามโยก/ห้ามกด
 
 </div>
 
 </div>
-<div>
+<div class="shot">
 
-<svg viewBox="0 0 470 360" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" style="max-height:360px">
-  <rect x="10" y="10" width="450" height="60" rx="12" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
-  <text x="235" y="48" text-anchor="middle" font-size="22" fill="#0d47a1">🔌 USB-C → พอร์ต KitProg3</text>
-  <rect x="10" y="95" width="450" height="60" rx="12" fill="#ede7f6" stroke="#5e35b1" stroke-width="3"/>
-  <text x="235" y="133" text-anchor="middle" font-size="22" fill="#311b92">⚡ Remote Flash v2.4.1</text>
-  <rect x="10" y="180" width="450" height="60" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
-  <text x="235" y="218" text-anchor="middle" font-size="22" fill="#1b5e20">✅ Connect → จอขึ้น v2.4.1</text>
-  <rect x="10" y="265" width="450" height="80" rx="12" fill="#ffebee" stroke="#e53935" stroke-width="3"/>
-  <text x="235" y="298" text-anchor="middle" font-size="21" fill="#b71c1c">⛔ SW2 บนฐาน = สวิตช์ตัดไฟ</text>
-  <text x="235" y="328" text-anchor="middle" font-size="20" fill="#b71c1c">ห้ามโยก / ห้ามกด</text>
-  <g stroke="#90a4ae" stroke-width="4"><line x1="235" y1="72" x2="235" y2="92"/><line x1="235" y1="157" x2="235" y2="177"/></g>
-</svg>
+![w:600](img/ide/ide_welcome_devkit.png)
+
+<div class="cap">หน้าจอจริงของ BENTO IDE — หน้า Welcome เลือก TESAIoT Dev Kit แล้วกด "Flash this board →" (ภาพถ่ายเมื่อ 28 ก.ย. 2569)</div>
 
 </div>
 </div>
 
 > โปรแกรมแต่ละไฟล์เดิน 2–5 นาทีแล้ว **จบเอง** อยากเล่นต่อ กด Program to Device อีกครั้ง
-
 ---
 
 ## BENTO Emulator — บอร์ดจำลองของผู้นำทาง (และการบ้าน)
@@ -540,9 +601,39 @@ section table { font-size: .7em; }
 
 ---
 
+## อ่านโค้ดให้เป็น: ทุกไฟล์วันนี้มี 5 ส่วนเรียงเหมือนกัน
+
+<svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
+  <g font-size="17">
+    <rect x="10" y="20" width="180" height="150" rx="14" fill="#eceff1" stroke="#546e7a" stroke-width="3"/>
+    <text x="100" y="56" text-anchor="middle" font-size="30">⚙️</text><text x="100" y="92" text-anchor="middle" font-weight="700" fill="#37474f">1) ตั้งค่า</text>
+    <text x="100" y="118" text-anchor="middle" fill="#546e7a">เกณฑ์ ค่าชดเชย</text><text x="100" y="140" text-anchor="middle" fill="#546e7a">เวลา สี</text>
+    <rect x="207" y="20" width="180" height="150" rx="14" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
+    <text x="297" y="56" text-anchor="middle" font-size="30">🔌</text><text x="297" y="92" text-anchor="middle" font-weight="700" fill="#1565c0">2) ฮาร์ดแวร์</text>
+    <text x="297" y="118" text-anchor="middle" fill="#546e7a">อ่านเซนเซอร์ ปุ่ม</text><text x="297" y="140" text-anchor="middle" fill="#546e7a">สั่งไฟ จอไฟ RGB</text>
+    <rect x="404" y="20" width="180" height="150" rx="14" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
+    <text x="494" y="56" text-anchor="middle" font-size="30">🧠</text><text x="494" y="92" text-anchor="middle" font-weight="700" fill="#6a1b9a">3) สมอง</text>
+    <text x="494" y="116" text-anchor="middle" font-size="15" fill="#546e7a">judge()</text><text x="494" y="136" text-anchor="middle" font-size="15" fill="#546e7a">pump_decision()</text><text x="494" y="156" text-anchor="middle" font-size="15" fill="#546e7a">health()</text>
+    <rect x="601" y="20" width="180" height="150" rx="14" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
+    <text x="691" y="56" text-anchor="middle" font-size="30">🖥️</text><text x="691" y="92" text-anchor="middle" font-weight="700" fill="#e65100">4) หน้าจอ</text>
+    <text x="691" y="118" text-anchor="middle" fill="#546e7a">build_screen()</text><text x="691" y="140" text-anchor="middle" fill="#546e7a">show...()</text>
+    <rect x="798" y="20" width="192" height="150" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+    <text x="894" y="56" text-anchor="middle" font-size="30">🔁</text><text x="894" y="92" text-anchor="middle" font-weight="700" fill="#1b5e20">5) โปรแกรมหลัก</text>
+    <text x="894" y="118" text-anchor="middle" fill="#546e7a">main() วนลูป</text><text x="894" y="140" text-anchor="middle" font-size="15" fill="#546e7a">อ่าน→ตัดสิน→ทำ→โชว์</text>
+  </g>
+  <g font-size="16" text-anchor="middle" fill="#37474f">
+    <text x="100" y="205">แก้ "ตัวเลข"</text><text x="297" y="205">Sense + Act</text><text x="494" y="205">แก้ "กฎ" (Decide)</text><text x="691" y="205">แก้ "หน้าตา"</text><text x="894" y="205">ทุกอย่างต่อกัน</text>
+  </g>
+</svg>
+
+- ในไฟล์ให้หาบรรทัด `# ---- 1) ตั้งค่า (แก้ได้) ----` ถึง `# ---- 5) โปรแกรมหลัก ----`
+- widget บนจอที่จะได้เจอวันนี้: หน้าปัดมีเข็ม (**Scale**) · วงแหวน (**Arc**) · ไฟสถานะ (**Led**) · กราฟ (**Chart**) · วงล้อเลือก (**Roller**) · สวิตช์ (**Switch**) · วงหมุน (**Spinner**) · แท็บ (**Tabview**) · ตาราง (**Table**)
+
+---
+
 <!-- _class: sec -->
 
-<div class="when">0:20 – 0:50 · คนขับ = คนที่ 1</div>
+<div class="when">0:30 – 1:00 · คนขับ = คนที่ 1</div>
 
 # กิจกรรม 1 — โรงเรือนของเราตอนนี้
 
@@ -623,7 +714,7 @@ $$\%RH = \frac{\text{ไอน้ำที่มีจริง}}{\text{ไอ�
 
 - อากาศ **อุ่น** รับไอน้ำได้ **มากกว่า** อากาศเย็นมาก
 - ไอน้ำเท่าเดิม แต่อากาศร้อนขึ้น → **%RH ลดลง** ทั้งที่น้ำไม่ได้หายไปไหน
-- ห้องแอร์จึงมักแห้งกว่าที่มะเขือเทศชอบ (ต่ำกว่า 60 %RH)
+- ห้องแอร์มักแห้งกว่าที่มะเขือเทศชอบ (ต่ำกว่า 60 %RH) เพราะคอยล์เย็นของแอร์กลั่นน้ำออกจากอากาศ
 
 <div class="think">
 
@@ -657,6 +748,7 @@ $$\%RH = \frac{\text{ไอน้ำที่มีจริง}}{\text{ไอ�
 </svg>
 
 - ตัวเลข "ครั้งเดียว" บอกไม่ได้มาก — **แนวโน้ม** ต่างหากที่สำคัญ
+- **ในเขตร้อนอย่างไทย** ความกดอากาศลดลงทุกบ่ายราว 2–3 hPa เป็นปกติ (ขึ้น-ลงตามเวลาของวัน) → ต้อง **เทียบกับเวลาเดียวกันของเมื่อวาน**
 - ขึ้นที่สูง ~8 เมตร ความกดลดราว 1 hPa → ย้ายบอร์ดขึ้นชั้นบนก็เห็นค่าต่าง
 - บอร์ดของผู้สอนวัดได้ **1010.95 hPa** (เช้าวันนี้)
 
@@ -679,8 +771,14 @@ $$\%RH = \frac{\text{ไอน้ำที่มีจริง}}{\text{ไอ�
 
 ## ทำไมบอร์ดอ่านอุณหภูมิ "ร้อนกว่าห้อง" — เรื่องของการสอบเทียบ
 
+<style scoped>
+section svg { max-height: 230px; }
+section pre { font-size: .6em; }
+section li { font-size: .9em; }
+</style>
+
 <div class="cols">
-<div class="c55">
+<div class="c45">
 
 <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
   <text x="280" y="26" text-anchor="middle" font-size="19" fill="#37474f">วัดจริงบน TESAIoT Dev Kit (firmware 2.4.1) เช้าวันนี้</text>
@@ -696,25 +794,27 @@ $$\%RH = \frac{\text{ไอน้ำที่มีจริง}}{\text{ไอ�
   <text x="455" y="266" text-anchor="middle" font-size="18" fill="#37474f">ห้องแอร์ปกติ</text>
 </svg>
 
+```python
+TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช่น -9.5
+HUM_FIX = True       # ... แปลงความชื้นเป็นของห้อง
+# ... ใน read_climate()
+    t = None if t_raw is None else t_raw + TEMP_OFFSET
+    if h is not None and t is not None and TEMP_OFFSET != 0 and HUM_FIX:
+        h = room_humidity(h, t_raw, t)
+```
+
 </div>
 <div>
 
-- ชิปประมวลผล จอ และวงจรจ่ายไฟ **อุ่นตัวเอง** ขณะทำงาน → เซนเซอร์บนบอร์ดอ่านความร้อนของบอร์ดปนเข้าไปด้วย
-- ของจริงในฟาร์มแก้ด้วยการ **สอบเทียบ** (calibration) เทียบกับเครื่องวัดอ้างอิง
-
-$$\texttt{TEMP\_OFFSET} = T_{\text{ห้อง}} - T_{\text{บอร์ด}}$$
-
-```python
-TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช่น -7.0
-# ... ใน read_climate()
-    t = None if t_raw is None else t_raw + TEMP_OFFSET
-```
-
+- ชิปประมวลผล จอ และวงจรจ่ายไฟ **อุ่นตัวเอง** → เซนเซอร์บนบอร์ดอ่านความร้อนของบอร์ดปนเข้าไปด้วย
+- งานจริงแก้ด้วยการ **สอบเทียบ** (calibration): $\texttt{TEMP\_OFFSET} = T_{\text{ห้อง}} - T_{\text{บอร์ด}}$
+- เทียบกับ **เทอร์โมมิเตอร์ในห้อง** — ค่าชดเชยมักราว **−9 ถึง −10**
+- **ความชื้นก็ถูกแปลงเป็นของห้อง:** อากาศรอบเซนเซอร์อุ่นกว่าห้อง %RH จึงอ่านได้ต่ำกว่า (ย้อนดูสไลด์ "ความชื้นสัมพัทธ์") · ถ้าสูงเกินจริงเมื่อเทียบไฮโกรมิเตอร์ ตั้ง `HUM_FIX = False`
 - ค่า **"ดิบ"** บนจอไม่เปลี่ยน แต่เข็ม เลขใหญ่ และสีเปลี่ยน — ใช้ค่าเดียวกันต่อใน **กิจกรรม 2 และภารกิจกลุ่ม**
 
 <div class="think">
 
-**คิด:** ถ้าจะติดตั้งจริงในโรงเรือน ควรวางเซนเซอร์ **ห่างจากตัวกล่องควบคุม** หรือ **ในร่มที่ลมผ่าน** — เพราะอะไร?
+**คิด:** ติดตั้งจริงในโรงเรือน ควรวางเซนเซอร์ **ห่างจากกล่องควบคุม** หรือ **ในร่มที่ลมผ่าน** — เพราะอะไร?
 
 </div>
 
@@ -738,7 +838,7 @@ TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช�
 
 **ลองทำ**
 1. รันไฟล์ → **หน้าปัดเข็ม** อุณหภูมิ · **วงแหวน** ความชื้น · ความกดอากาศ · **กราฟย้อนหลัง** (ฟ้า = ความชื้น, ส้ม = อุณหภูมิ)
-2. **ขั้นแรก: ชดเชยค่า** — เทียบเลข **"ดิบ"** กับเทอร์โมมิเตอร์/แอปอากาศ แล้วตั้ง `TEMP_OFFSET` (สไลด์ก่อนหน้า) · จดไว้ใช้ต่อ
+2. **ขั้นแรก: ชดเชยค่า** — เทียบเลข **"ดิบ"** กับ **เทอร์โมมิเตอร์ในห้อง** (หรือค่าที่ผู้สอนประกาศ) แล้วตั้ง `TEMP_OFFSET` (สไลด์ก่อนหน้า) · จดไว้ใช้ต่อ
 3. จอไฟ RGB: เลขอุณหภูมิตัวใหญ่ 🟩 ปกติ · 🟨 เกิน 30 · 🟥 เกิน 35
 4. **แข่ง!** เป่าลมหายใจ → ความชื้นสูงสุด · จับบอร์ด → อุณหภูมิสูงสุด · กด **SW5** ล้างสถิติแล้วแข่งใหม่
 
@@ -769,7 +869,7 @@ TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช�
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         t, t_raw, h, p = read_climate()                  # 1) อ่าน
         rounds += 1
-        if sw4.pressed_now():                             # 2) SW4 = เริ่มแข่งใหม่
+        if sw5.pressed_now():                             # 2) SW5 (ปุ่มล่าง) = เริ่มแข่งใหม่
             temp_rec.reset()
             hum_rec.reset()
             ui.sfx(ui.SFX_UI_SELECT)
@@ -821,7 +921,7 @@ TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช�
 
 <!-- _class: sec -->
 
-<div class="when">0:50 – 1:20 · คนขับ = คนที่ 2</div>
+<div class="when">1:00 – 1:30 · คนขับ = คนที่ 2</div>
 
 # กิจกรรม 2 — พืชของเราสบายดีไหม
 
@@ -853,7 +953,7 @@ TEMP_OFFSET = 0.0    # ... แล้วใส่ค่าชดเชย เช�
 <div>
 
 - ช่วงนี้คือ **ค่าตั้งต้นในไฟล์** `sf1_02_crop_comfort.py` — ตัวเลขสำหรับการเรียน **ไม่ใช่คำแนะนำทางเกษตรกรรม**
-- **เห็ดนางฟ้า** ต้องการความชื้นสูงกว่าพืชอื่นมาก → ห้องแอร์ของเรา "แห้งเกินไป" แน่นอน
+- **เห็ดนางฟ้า** (เห็ดเป็นเชื้อรา ไม่ใช่พืช แต่ใช้กฎเดียวกันได้) ต้องการความชื้นสูงกว่าตัวอื่นมาก → ห้องแอร์ของเรา "แห้งเกินไป" แน่นอน
 
 </div>
 <div>
@@ -1038,7 +1138,7 @@ def judge(t, h, crop):
 
 # ☕ พัก 10 นาที
 
-<div class="big">1:20 – 1:30</div>
+<div class="big">1:30 – 1:40</div>
 
 **ระหว่างพัก ลองทายเล่น:** ปั๊มน้ำจริงที่ "เปิด-ปิด-เปิด-ปิด" 30 ครั้งในหนึ่งนาที จะเกิดอะไรขึ้นกับมัน?
 
@@ -1048,7 +1148,7 @@ def judge(t, h, crop):
 
 <!-- _class: sec -->
 
-<div class="when">1:30 – 2:00 · คนขับ = คนที่ 1</div>
+<div class="when">1:40 – 2:10 · คนขับ = คนที่ 1</div>
 
 # กิจกรรม 3 — รดน้ำอัตโนมัติ
 
@@ -1132,7 +1232,7 @@ def judge(t, h, crop):
 </div>
 <div>
 
-**เทอร์โมสแตตแอร์ตั้ง 25 °C**
+**ตัวอย่าง: แอร์แบบเปิด-ปิด (ไม่ใช่อินเวอร์เตอร์) ตั้ง 25 °C**
 - คอมเพรสเซอร์ **ติด** เมื่อห้องร้อนถึง ~26 °C
 - **ดับ** เมื่อเย็นลงถึง ~24 °C
 - ช่วงกลาง 24–26 °C = ช่องกันกระพือ → ไม่ติด-ดับทุกนาที
@@ -1156,7 +1256,7 @@ def judge(t, h, crop):
 </div>
 <div>
 
-**ของจริงในโรงเรือน:** ลูกบิดล่าง 温度設定 = **อุณหภูมิที่เริ่มเปิดหน้าต่าง** (5–35 °C) · ลูกบิดบน 感度 = **ความไว 0.5–2 °C** — นั่นคือ **ช่องกันกระพือ** ที่ชาวสวนตั้งเองได้ด้วยมือ
+**ของจริงในโรงเรือน:** ลูกบิดล่าง 温度設定 = **อุณหภูมิที่เริ่มเปิดหน้าต่าง** (5–35 °C) · ลูกบิดบน 感度 = **ความไว 0.5–2 °C** — ทำหน้าที่แบบเดียวกับ **ช่องกันกระพือ** ที่ชาวสวนตั้งเองได้ด้วยมือ
 
 เทียบกับกิจกรรม 3: **VR2 = เกณฑ์** · **HYST = ความไว**
 
@@ -1276,7 +1376,7 @@ def should_run(auto_wants, manual, tank_ok):
 
 <!-- _class: sec -->
 
-<div class="when">2:00 – 2:20 · คนขับ = คนที่ 2</div>
+<div class="when">2:10 – 2:30 · คนขับ = คนที่ 2</div>
 
 # กิจกรรม 4 — แท็งก์น้ำ/รถไถเอียงเกินไหม
 
@@ -1300,7 +1400,7 @@ def should_run(auto_wants, manual, tank_ok):
 <div>
 
 - ข้างในชิปมี **มวลจิ๋วแขวนบนสปริงซิลิคอน** อยู่ระหว่างแผ่นขั้วไฟฟ้า
-- บอร์ดเร่ง/เอียง → มวลขยับ → **ระยะห่างแผ่นเปลี่ยน → ค่าความจุเปลี่ยน** (หลักการเดียวกับ SHT40!)
+- บอร์ดเร่ง/เอียง → มวลขยับ → **ระยะห่างแผ่นเปลี่ยน → ค่าความจุเปลี่ยน** (วัดด้วยค่าความจุเหมือน SHT40 แต่ที่นี่ "ระยะห่าง" เปลี่ยน ไม่ใช่ชั้นพอลิเมอร์)
 - ทำ 3 ชุดตั้งฉากกัน = วัด 3 แกน X Y Z
 - **อยู่นิ่ง ๆ ก็วัดได้ 1 g** (9.81 m/s²) — นั่นคือแรงโน้มถ่วง
 
@@ -1358,7 +1458,7 @@ $$\text{roll} = \operatorname{atan2}(a_y,\ |a_z|)$$
 
 <div class="think">
 
-**ของจริงบนโต๊ะเรา:** บอร์ดของผู้สอนวางปกติแต่ IMU อ่านได้ $a_y ≈ -6.2,\ a_z ≈ +7.7$ m/s² → atan2(6.2, 7.7) ≈ **39°**
+**ของจริงบนโต๊ะเรา:** บอร์ดของผู้สอนวางปกติแต่ IMU อ่านได้ $a_y ≈ -6.2,\ a_z ≈ +7.7$ m/s² → atan2(−6.2, 7.7) ≈ −39° คือ **เอียงราว 39°**
 แปลว่า IMU บนบอร์ดไม่ได้วางราบกับโต๊ะ — โค้ดจึง **วัดท่าตอนเริ่ม 1 วินาทีเป็นศูนย์** (`measure_zero()`) และกด **SW5** ตั้งศูนย์ใหม่ได้
 
 </div>
@@ -1385,7 +1485,7 @@ $$\text{roll} = \operatorname{atan2}(a_y,\ |a_z|)$$
 1. **วางบอร์ดนิ่ง ๆ ตอนเริ่ม 1 วินาที** → บอร์ดถือท่านั้นเป็น "ศูนย์" เอง (ขยับตอนเริ่ม → กด **SW5** ตั้งศูนย์ใหม่)
 2. ค่อย ๆ เอียงจนไฟแดงบนบอร์ดติด + ได้ยินเสียง (เข็มเลยเลข 20) → **จดมุมที่เตือน**
 3. เอียงขวา จุดวิ่งไปทางไหน? (กลับด้าน → ลองแก้เครื่องหมายใน `bubble_cell()`)
-4. ยกบอร์ดเล็กน้อยแล้ววางกระแทกโต๊ะ **เบา ๆ** → นับแรงกระแทก
+4. ยกบอร์ดเล็กน้อยแล้ววางกระแทกโต๊ะ **เบา ๆ** → นับแรงกระแทก (ตัวนับไม่ขึ้น? โค้ดอ่านทุก 0.2 วินาที แรงกระแทกสั้น ๆ อาจหลุด — ลองลด `BUMP_G`)
 5. **เกมประคองแท็งก์** — บรรทัด "อยู่ในเป้า" นับวินาทีให้ · กด **SW6** ล้างแล้วแข่งกับกลุ่มข้าง ๆ
 
 </div>
@@ -1447,7 +1547,7 @@ def tilt_angles(ax, ay, az):
 
 <!-- _class: sec -->
 
-<div class="when">2:20 – 2:50 · สลับกันขับ</div>
+<div class="when">2:30 – 2:50 · สลับกันขับ</div>
 
 # ภารกิจกลุ่ม — แผงควบคุมฟาร์มของเรา
 

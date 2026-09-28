@@ -36,6 +36,7 @@ SOIL_HYST = 5                  # ช่องกันกระพือขอ�
 TEMP_OFFSET = 0.0    # TODO: บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
                      # (ห้องแอร์ปกติ ~25-28 C) ใช้ค่าเดียวกับที่กลุ่มหาได้ใน sf1_01
                      # ตั้งแล้ว ความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย (ดู room_humidity)
+HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์ในห้องแล้วสูงเกินจริง ให้ตั้ง False
 RUN_MS = 300000
 TICK_MS = 500
 TAB_BAR_H = 44       # ความสูงแถบแท็บ (พิกเซล) ต้องสูงพอให้นิ้วแตะได้
@@ -59,7 +60,7 @@ def read_climate():
     except Exception:
         return None, None
     t = t_raw + TEMP_OFFSET
-    if TEMP_OFFSET != 0:
+    if TEMP_OFFSET != 0 and HUM_FIX:
         h = room_humidity(h, t_raw, t)
     return t, h
 
@@ -200,13 +201,6 @@ def fit(parts, limit):
     return out
 
 
-def log_add(rows, sec, what, score):
-    """จดเหตุการณ์ลงบันทึก ใหม่สุดอยู่บนสุด เก็บไว้ไม่เกิน LOG_ROWS แถว"""
-    rows.insert(0, (str(sec), what, str(score)))
-    if len(rows) > LOG_ROWS:
-        rows.pop()
-
-
 # ---- 4) หน้าจอ ----
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
     """กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
@@ -227,8 +221,7 @@ def build_overview_tab(w, tab):
     w["lbl_soil"] = ui.Label("-- %", x=544, y=62, color=COL_TEXT, value=20, parent=tab)
     w["led"] = ui.Led(x=170, y=104, w=32, h=32, color=COL_INFO, value=0, parent=tab)
     w["lbl_pump"] = ui.Label("ปั๊มน้ำ: ปิด", x=214, y=108, color=COL_DIM, value=20, parent=tab)
-    ui.Label("จอไฟ RGB: คะแนน / อุณหภูมิ  (" + BTN_NAMES[1] + " ปุ่มบน = สลับ)", x=170, y=156,
-             color=COL_DIM, value=16, parent=tab)
+    ui.Label(BTN_NAMES[1] + " (บน) = สลับจอไฟ RGB", x=170, y=156, color=COL_DIM, value=16, parent=tab)
 
 
 def build_screen():
@@ -236,7 +229,7 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label(FARM_NAME + " - " + CROP, x=12, y=6, color=COL_TEXT, value=24)
-    w = {"clock": ui.Label("", x=640, y=12, color=COL_DIM, value=16)}
+    w = {}
     # Tabview กินพื้นที่แค่ที่เราให้ จบที่ y=338 เพราะมุมขวาล่างเป็นปุ่ม Console ของเฟิร์มแวร์
     tabs = ui.Tabview(x=12, y=44, w=768, h=294, value=TAB_BAR_H)
     build_overview_tab(w, tabs.add_tab("ภาพรวม"))
@@ -245,20 +238,18 @@ def build_screen():
     w["chart"] = line_chart(0, 0, 400, 180, 0, 100, COL_WARN, tab)
     w["s_hum"] = w["chart"].add_series(COL_INFO)
     w["s_soil"] = w["chart"].add_series(COL_OK)
-    ui.Label("ส้ม = อุณหภูมิ C", x=420, y=10, color=COL_WARN, value=16, parent=tab)
-    ui.Label("ฟ้า = ความชื้นอากาศ %", x=420, y=50, color=COL_INFO, value=16, parent=tab)
-    ui.Label("เขียว = ความชื้นดิน %", x=420, y=90, color=COL_OK, value=16, parent=tab)
+    ui.Label("ส้ม = อุณหภูมิ", x=420, y=10, color=COL_WARN, value=16, parent=tab)
+    ui.Label("ฟ้า = ชื้นอากาศ", x=420, y=50, color=COL_INFO, value=16, parent=tab)
+    ui.Label("เขียว = ชื้นดิน", x=420, y=90, color=COL_OK, value=16, parent=tab)
     # หน้า "บันทึก": ตาราง 3 คอลัมน์ แถวแรกเป็นหัวตาราง
     w["table"] = ui.Table(x=0, y=0, w=700, h=204, cols=3, rows=LOG_ROWS + 1,
                           parent=tabs.add_tab("บันทึก"))
-    for c, width in ((0, 140), (1, 420), (2, 140)):
-        w["table"].col_width(c, width)
     w["table"].add_row("วินาที", "เหตุการณ์", "คะแนน")
-    ui.Label("ถ้าฟาร์มมีเซนเซอร์ไร้สายและ PLC ต่อ Wi-Fi บอร์ดนี้คือแผงควบคุมกลาง",
+    # หน้า "งานจริง": ถ้าฟาร์มมีเซนเซอร์ไร้สายและ PLC ต่อ Wi-Fi บอร์ดนี้คือแผงควบคุมกลาง
+    ui.Label("แผงควบคุมกลาง: เซนเซอร์ไร้สาย + PLC (คาบ 2)",
              x=0, y=0, color=COL_TEXT, value=20, parent=tabs.add_tab("งานจริง"))
     # คำแนะนำอยู่นอกแท็บ จึงเห็นได้ทุกหน้า - ของที่ต้องเห็นตลอดห้ามซ่อนในแท็บ
     w["advice"] = ui.Label("", x=12, y=352, color=COL_WARN, value=20)
-    show_log(w, [])
     ui.poll()
     return w
 
@@ -272,9 +263,11 @@ def show_log(w, rows):
 
 
 def note_event(w, rows, sec, what, score, sound):
-    """มีเหตุการณ์: เสียงหนึ่งครั้ง + จดลงบันทึก + วาดตารางใหม่"""
+    """มีเหตุการณ์: เสียงหนึ่งครั้ง + จดลงบันทึก (ใหม่สุดอยู่บน เก็บ LOG_ROWS แถว) + วาดตารางใหม่"""
     ui.sfx(sound)
-    log_add(rows, sec, what, score)
+    rows.insert(0, (str(sec), what, str(score)))
+    if len(rows) > LOG_ROWS:
+        rows.pop()
     show_log(w, rows)
 
 
@@ -335,7 +328,6 @@ def main():
             ui.sfx(ui.SFX_UI_MOVE)
         shown = matrix_show(show_temp, t, score, zone, shown)
         show(w, t, h, soil, running, score, zone)             # 4) โชว์
-        w["clock"].text(str(sec) + " วินาที")
         ui.poll()          # แตะแท็บ LVGL สลับหน้าให้เอง เราแค่ดึงเหตุการณ์ออกจากคิว
         wait_ms(TICK_MS, (sw5, sw6))       # รอ แต่ยังคอยฟังปุ่ม
 

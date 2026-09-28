@@ -1,5 +1,5 @@
 {
- "shot_at": "2026-09-28T02:52:30.312Z",
+ "shot_at": "2026-09-28T03:07:39.434Z",
  "note": "BENTO Emulator — ค่าเซนเซอร์เป็นค่าจำลอง",
  "shots": [
   {
@@ -120,6 +120,72 @@
     "sf1_04_tank_tilt__bump.png",
     "sf1_04_tank_tilt__bump_kit.png",
     "sf1_04_tank_tilt__bump_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "healthy",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__healthy.png",
+    "sf1_05_my_farm_dashboard__healthy_kit.png",
+    "sf1_05_my_farm_dashboard__healthy_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "stressed",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__stressed.png",
+    "sf1_05_my_farm_dashboard__stressed_kit.png",
+    "sf1_05_my_farm_dashboard__stressed_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "trend",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__trend.png",
+    "sf1_05_my_farm_dashboard__trend_kit.png",
+    "sf1_05_my_farm_dashboard__trend_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "log",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__log.png",
+    "sf1_05_my_farm_dashboard__log_kit.png",
+    "sf1_05_my_farm_dashboard__log_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "real",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__real.png",
+    "sf1_05_my_farm_dashboard__real_kit.png",
+    "sf1_05_my_farm_dashboard__real_full.png"
+   ],
+   "console": ""
+  },
+  {
+   "file": "s1/sf1_05_my_farm_dashboard.py",
+   "shot": "sw6_temp",
+   "status": "RUNS",
+   "images": [
+    "sf1_05_my_farm_dashboard__sw6_temp.png",
+    "sf1_05_my_farm_dashboard__sw6_temp_kit.png",
+    "sf1_05_my_farm_dashboard__sw6_temp_full.png"
    ],
    "console": ""
   }

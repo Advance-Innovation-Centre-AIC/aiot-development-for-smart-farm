@@ -29,7 +29,7 @@ SAFE_DEG = 20        # เอียงเกินกี่องศาถือ
 BUMP_G = 1.8         # แรงรวมเกินกี่เท่าของแรงโน้มถ่วงถือว่า "กระแทก"
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
 RUN_MS = 120000
-TICK_MS = 200
+TICK_MS = 500
 ZERO_SAMPLES = 5     # ตอนเริ่มอ่าน 5 ครั้ง (1 วินาที) แล้วเฉลี่ยเป็น "ศูนย์"
 GAUGE_MAX = 60       # หน้าปัดมุมเอียง 0-60 องศา
 NEEDLE_LEN = 48      # ความยาวเข็มหน้าปัด (พิกเซล) สั้นกว่าวงตัวเลข จะได้ไม่บังเลข
@@ -131,22 +131,19 @@ def measure_zero():
     return sum_roll / n, sum_pitch / n
 
 
-def put(buf, x, y, c):
-    """ตั้งสีจุด (x, y) ในเฟรม 64 ไบต์ของจอไฟ RGB (จุดละ 4 บิต)"""
-    i = y * 8 + (x >> 1)
-    if x & 1:
-        buf[i] = (buf[i] & 0x0F) | (c << 4)
-    else:
-        buf[i] = (buf[i] & 0xF0) | c
-
-
 def draw_bubble(bx, by, color):
-    """จุด 2x2 บนจอไฟ RGB 16x8 ที่ (bx, by)  จุดฟ้าตรงกลาง = เป้าที่ต้องเล็ง"""
+    """จุด 2x2 บนจอไฟ RGB 16x8 ที่ (bx, by)  จุดฟ้าตรงกลาง = เป้าที่ต้องเล็ง
+    เฟรม 64 ไบต์ จุดละ 4 บิต: x คู่ = 4 บิตล่าง, x คี่ = 4 บิตบน"""
     buf = bytearray(64)
-    for (x, y) in ((7, 3), (8, 3), (7, 4), (8, 4)):
-        put(buf, x, y, rgbmatrix.BLUE)
-    for (x, y) in ((bx, by), (bx + 1, by), (bx, by + 1), (bx + 1, by + 1)):
-        put(buf, x, y, color)
+    dots = ((7, 3, rgbmatrix.BLUE), (8, 3, rgbmatrix.BLUE), (7, 4, rgbmatrix.BLUE),
+            (8, 4, rgbmatrix.BLUE), (bx, by, color), (bx + 1, by, color),
+            (bx, by + 1, color), (bx + 1, by + 1, color))
+    for x, y, c in dots:
+        i = y * 8 + (x >> 1)
+        if x & 1:
+            buf[i] = (buf[i] & 0x0F) | (c << 4)
+        else:
+            buf[i] = (buf[i] & 0xF0) | c
     try:
         rgbmatrix.blit(buf)
     except OSError:
@@ -252,8 +249,8 @@ def build_tilt_card(w):
     w["seg_roll"] = ui.Seg7(text="0", x=200, y=118, w=100, h=40, color=COL_OK)
     ui.Label("ซ้าย-ขวา (pitch)", x=200, y=170, color=COL_DIM, value=14)
     w["seg_pitch"] = ui.Seg7(text="0", x=200, y=192, w=100, h=40, color=COL_OK)
-    w["verdict"] = ui.Label("กำลังตั้งศูนย์...", x=24, y=262, color=COL_WARN, value=28)
-    w["max"] = ui.Label("เอียงมากสุด 0 องศา", x=24, y=306, color=COL_DIM, value=16)
+    w["verdict"] = ui.Label("...", x=24, y=262, color=COL_WARN, value=28)
+    w["max"] = ui.Label("", x=24, y=306, color=COL_DIM, value=16)
 
 
 def build_bump_card(w):
@@ -263,7 +260,7 @@ def build_bump_card(w):
     w["lamp"] = ui.Led(x=724, y=92, w=40, h=40, color=COL_BAD, value=0)
     w["lbl_g"] = ui.Label("แรงรวม 1.00 g", x=414, y=144, color=COL_TEXT, value=16)
     w["bar_g"] = ui.Bar(x=414, y=174, w=354, h=18, min=0, max=300, value=100)
-    ui.Label("แถบแรงรวม: เต็มแถบ = 3 g", x=414, y=198, color=COL_DIM, value=14)
+    ui.Label("เต็มแถบ = 3 g", x=414, y=198, color=COL_DIM, value=14)
 
 
 def build_chart(w):
@@ -316,11 +313,6 @@ def show_bumps(w, g, rec):
     w["bar_g"].color(COL_BAD if g > BUMP_G else COL_INFO)
 
 
-def show_imu_error(w):
-    w["verdict"].color(COL_BAD)
-    w["verdict"].text("อ่าน IMU ไม่ได้")
-
-
 # ---- 5) โปรแกรมหลัก ----
 def finish(w, alarm, rec):
     """จบรอบ: ดับไฟเตือน ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console"""
@@ -351,8 +343,8 @@ def main():
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         m = read_motion()                                   # 1) อ่าน
         if m is None:
-            show_imu_error(w)
-            ui.poll()
+            w["verdict"].color(COL_BAD)
+            w["verdict"].text("อ่าน IMU ไม่ได้")
             time.sleep_ms(500)
             continue
         raw_roll, raw_pitch = tilt_angles(m[0], m[1], m[2])

@@ -35,6 +35,7 @@ TICK_MS = 1000
 TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
                      # (ห้องแอร์ปกติ ~25-28 C)
                      # ตั้งแล้ว ความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย (ดู room_humidity)
+HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์ในห้องแล้วสูงเกินจริง ให้ตั้ง False
 CHART_MAX_C = 50     # กราฟอุณหภูมิ 0-50 C
 SOUND_GAP_MS = 3000  # เสียงเตือนห่างกันอย่างน้อย 3 วินาที (ค่าอยู่ตรงขอบช่วงจะได้ไม่ร้องรัว)
 
@@ -54,7 +55,7 @@ def read_climate():
     except Exception:
         return None, None
     t = t_raw + TEMP_OFFSET
-    if TEMP_OFFSET != 0:
+    if TEMP_OFFSET != 0 and HUM_FIX:
         h = room_humidity(h, t_raw, t)
     return t, h
 
