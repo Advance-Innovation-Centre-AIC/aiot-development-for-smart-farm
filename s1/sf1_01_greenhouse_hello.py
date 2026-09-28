@@ -44,11 +44,13 @@ def read_climate():
     """คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ"""
     t_raw = h = p = None
-    try:
-        t_raw = sensors.sht40.temperature()
-        h = sensors.sht40.humidity()
-    except Exception:
-        pass
+    for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
+        try:
+            t_raw = sensors.sht40.temperature()
+            h = sensors.sht40.humidity()
+            break
+        except Exception:
+            time.sleep_ms(20)
     try:
         p = sensors.dps368.pressure()
     except Exception:

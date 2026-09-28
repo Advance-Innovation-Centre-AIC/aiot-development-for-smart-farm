@@ -49,10 +49,14 @@ MOODS = ("สบายดี :)", "เริ่มเครียด", "แย�
 # ---- 2) ฮาร์ดแวร์ ----
 def read_climate():
     """คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)"""
-    try:
-        t_raw = sensors.sht40.temperature()
-        h = sensors.sht40.humidity()
-    except Exception:
+    for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
+        try:
+            t_raw = sensors.sht40.temperature()
+            h = sensors.sht40.humidity()
+            break
+        except Exception:
+            time.sleep_ms(20)
+    else:
         return None, None
     t = t_raw + TEMP_OFFSET
     if TEMP_OFFSET != 0 and HUM_FIX:
