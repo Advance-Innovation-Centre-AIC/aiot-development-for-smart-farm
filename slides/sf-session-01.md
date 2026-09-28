@@ -656,9 +656,9 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 <div>
 
 **ไฟล์ฝึก (ระดับ 3)**
-- `s1/practise/sf1_03_practise.py` — โจทย์หลัก กิจกรรม 3
-- `s1/practise/solutions/sf1_03_practise_solution.py` — เฉลย เปิดได้ในคาบ
-- `s1/practise/sf1_02_practise.py` — โจทย์เพิ่ม (การบ้าน รันใน Emulator ได้)
+- [`s1/practise/sf1_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/practise/sf1_03_practise.py) — โจทย์หลัก กิจกรรม 3
+- [`s1/practise/solutions/sf1_03_practise_solution.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/practise/solutions/sf1_03_practise_solution.py) — เฉลย เปิดได้ในคาบ
+- [`s1/practise/sf1_02_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/practise/sf1_02_practise.py) — โจทย์เพิ่ม (การบ้าน รันใน Emulator ได้)
 
 ช่องที่ต้องเติมเขียนว่า `____` · รันแล้วไฟล์ตรวจคำตอบให้เอง
 
@@ -683,7 +683,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 # กิจกรรม 1 — โรงเรือนของเราตอนนี้
 
-`sf1_01_greenhouse_hello.py` · เซนเซอร์ SHT40 + DPS368 · จอไฟ RGB โชว์อุณหภูมิ
+[`sf1_01_greenhouse_hello.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py) · เซนเซอร์ SHT40 + DPS368 · จอไฟ RGB โชว์อุณหภูมิ
 
 <div class="chal">🏆 <b>ท้าทาย:</b> กลุ่มไหนทำ <b>ความชื้นได้สูงสุด</b> ในห้อง — และใครทำ <b>อุณหภูมิขึ้น</b> ได้มากที่สุดด้วยมือเปล่า?</div>
 
@@ -971,7 +971,7 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
 
 # กิจกรรม 2 — พืชของเราสบายดีไหม
 
-`sf1_02_crop_comfort.py` · กฎ "สบาย / เครียด / แย่แล้ว" · หน้าพืชบนจอไฟ RGB · เสียง · LED
+[`sf1_02_crop_comfort.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py) · กฎ "สบาย / เครียด / แย่แล้ว" · หน้าพืชบนจอไฟ RGB · เสียง · LED
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ทำให้พืชบนจอไฟ <b>หน้าเศร้า</b> ให้ได้ — แล้ว <b>ช่วยให้กลับมายิ้ม</b> เร็วที่สุด!</div>
 
@@ -998,7 +998,7 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
 <div class="cols">
 <div>
 
-- ช่วงนี้คือ **ค่าตั้งต้นในไฟล์** `sf1_02_crop_comfort.py` — ตัวเลขสำหรับการเรียน **ไม่ใช่คำแนะนำทางเกษตรกรรม**
+- ช่วงนี้คือ **ค่าตั้งต้นในไฟล์** [`sf1_02_crop_comfort.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py) — ตัวเลขสำหรับการเรียน **ไม่ใช่คำแนะนำทางเกษตรกรรม**
 - **เห็ดนางฟ้า** (เห็ดเป็นเชื้อรา ไม่ใช่พืช แต่ใช้กฎเดียวกันได้) ต้องการความชื้นสูงกว่าตัวอื่นมาก → ห้องแอร์ของเรา "แห้งเกินไป" แน่นอน
 
 </div>
@@ -1198,7 +1198,7 @@ def judge(t, h, crop):
 
 # กิจกรรม 3 — รดน้ำอัตโนมัติ
 
-`sf1_03_auto_irrigation.py` · ลูกบิด 3 ตัว + ปุ่ม 2 ตัว · ช่องกันกระพือ (hysteresis)
+[`sf1_03_auto_irrigation.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py) · ลูกบิด 3 ตัว + ปุ่ม 2 ตัว · ช่องกันกระพือ (hysteresis)
 
 <div class="chal">🏆 <b>ท้าทาย:</b> รดน้ำให้ดินชื้นพอ <b>โดยปั๊มเปิดน้อยครั้งที่สุด</b> และ <b>ห้ามถังแห้ง</b> เด็ดขาด</div>
 
@@ -1426,7 +1426,7 @@ def should_run(auto_wants, manual, tank_ok):
 
 # กิจกรรม 4 — แท็งก์น้ำ/รถไถเอียงเกินไหม
 
-`sf1_04_tank_tilt.py` · IMU BMI270 · bubble level บนจอไฟ RGB · นับแรงกระแทก
+[`sf1_04_tank_tilt.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py) · IMU BMI270 · bubble level บนจอไฟ RGB · นับแรงกระแทก
 
 <div class="chal">🏆 <b>ท้าทาย:</b> เกม <b>ประคองแท็งก์</b> — ถือบอร์ดเดินรอบโต๊ะ 1 รอบ ให้จุดบนจอไฟ RGB อยู่ใน <b>เป้าสีฟ้า</b> (เอียงไม่เกิน 3°) นานที่สุด · ระวังสาย USB!</div>
 
@@ -1597,7 +1597,7 @@ def tilt_angles(ax, ay, az):
 
 # ภารกิจกลุ่ม — แผงควบคุมฟาร์มของเรา
 
-`sf1_05_my_farm_dashboard.py` · รวมทุกอย่างที่ทำมาเป็นแผงเดียว · แก้ทุก `TODO`
+[`sf1_05_my_farm_dashboard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_05_my_farm_dashboard.py) · รวมทุกอย่างที่ทำมาเป็นแผงเดียว · แก้ทุก `TODO`
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ฟาร์มไหนได้ <b>คะแนนสุขภาพ 100</b> ก่อน — แล้วใครทำให้ <b>ต่ำกว่า 50</b> ได้ด้วยวิธีที่แปลกที่สุด?</div>
 
@@ -1895,7 +1895,7 @@ section table { font-size: .9em; }
 | รถไถบนเนินชัน | David Martin | CC BY-SA 2.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ploughing_a_steep_field_above_Kellaton_-_geograph.org.uk_-_4889475.jpg) |
 | ภาพบอร์ด TESAIoT Dev Kit + ตำแหน่งหมุด 1–8 · ภาพหน้าเว็บ SDK | TESAIoT | ใช้โดยได้รับอนุญาตจากเจ้าของ | [TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk](https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/) |
 
-**ภาพที่ทำขึ้นเองสำหรับคอร์สนี้:** ปก · อินโฟกราฟิกทุกภาพที่วาดด้วย SVG/HTML (Sense→Decide→Act, 5 เสาหลัก, เซนเซอร์ความชื้น, ความชื้นสัมพัทธ์, ความกดอากาศ, การสอบเทียบ, ช่วงที่พืชชอบ, สี RGB, hysteresis, Smart IoT Gateway, มุมเอียง, เมนู GPIO & RGB Matrix) · **ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ถ่ายด้วย `tools/shoot_emulator.mjs` ค่าเซนเซอร์เป็นค่าจำลอง)
+**ภาพที่ทำขึ้นเองสำหรับคอร์สนี้:** ปก · อินโฟกราฟิกทุกภาพที่วาดด้วย SVG/HTML (Sense→Decide→Act, 5 เสาหลัก, เซนเซอร์ความชื้น, ความชื้นสัมพัทธ์, ความกดอากาศ, การสอบเทียบ, ช่วงที่พืชชอบ, สี RGB, hysteresis, Smart IoT Gateway, มุมเอียง, เมนู GPIO & RGB Matrix) · **ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ถ่ายด้วย [`tools/shoot_emulator.mjs`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/tools/shoot_emulator.mjs) ค่าเซนเซอร์เป็นค่าจำลอง)
 
 **อีโมจิ:** Twemoji — Twitter, Inc. และผู้ร่วมพัฒนา (jdecked/twemoji) — CC BY 4.0 · สูตรคณิตศาสตร์แสดงด้วย KaTeX
 
