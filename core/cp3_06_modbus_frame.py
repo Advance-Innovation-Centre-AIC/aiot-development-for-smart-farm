@@ -49,7 +49,7 @@ VOLUME = 25              # ความดังเสียง 0-127 (≈20%) �
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
 BROKER = "broker.hivemq.com"          # ต้องตรงกับ BROKER ใน modbus_bridge.py
-CLIENT_ID = "bento-mb-" + TEAM        # ต้องไม่ซ้ำกับใครบน broker
+CLIENT_ID = "bento-mb-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 T_REQ = "bento-aiot/" + TEAM + "/modbus/req"
 T_RESP = "bento-aiot/" + TEAM + "/modbus/resp"
 
@@ -113,9 +113,11 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("Modbus TCP 12 ไบต์", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
     ui.Label("บอร์ดไม่มี Modbus/socket: MQTT -> gateway -> PLC", x=12, y=38, color=COL_WARN, value=16)
     card(12, 62, 768, 112, "ฟ้า = MBAP  เขียว = PDU")
-    w = {"b": []}
+    w = {"b": [], "led": ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0),
+         "link": ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)}
     for i in range(12):                                   # ไบต์ที่ i อยู่ที่ x = 28 + i * 62
         w["b"].append(ui.Label("--", x=28 + i * 62, y=96, color=COL_INFO if i < 7 else COL_OK, value=28))
     # ชื่อช่องใต้ไบต์แรกของแต่ละช่อง: tid 2 ไบต์ proto 2 len 2 unit 1 | fc 1 addr 2 qty/value 2
@@ -136,6 +138,12 @@ def show(w, key, text, col):
     ui.poll()
 
 
+def show_link(w, online):
+    # ไฟ MQTT: ติด = ต่อ broker อยู่ ส่งกรอบได้ · หรี่ = ออฟไลน์
+    w["led"].value(1 if online else 0)
+    show(w, "link", "เชื่อมต่อแล้ว" if online else "ออฟไลน์", COL_OK if online else COL_DIM)
+
+
 # ---- 6) โปรแกรมหลัก ----
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
@@ -144,60 +152,68 @@ def main():
     problem = connect_farm(w) if WIFI_SSID[0] != "<" else "โหมดดูกรอบ"   # ยังไม่ตั้ง WiFi = โหมดดูกรอบ
     online = not problem                                  # ต่อไม่ติด = เหลือโหมดดูกรอบ (บอกบนจอ ไม่เงียบ)
     show(w, "stat", problem or T_REQ, COL_WARN if problem else COL_OK)   # ออนไลน์ = โชว์หัวข้อที่จะส่ง
+    show_link(w, online)
     beep("start")
     regs = ["--"] * 3                                     # HR0-HR2 ที่ PLC ยืนยันล่าสุด ("--" = ไม่รู้)
     want = 0 if online else 1                             # ค่าที่ SW6 จะเขียนครั้งหน้า: ออนไลน์และยังไม่รู้ = ปิดก่อน
     n = wait = 0                                          # n = tid ล่าสุด, wait = n ที่รอคำตอบอยู่ (0 = ไม่รอ)
     down = [False, False]
     t0 = t_req = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        now = time.ticks_ms()
-        for i in (0, 1):                                  # i = 0 คือ SW5, i = 1 คือ SW6
-            d = buttons.pressed(i)
-            if d and not down[i] and not wait:           # ขอบกด และไม่ได้รอคำตอบของคำขอก่อนหน้าอยู่
-                n += 1
-                arg = want if i else 3                    # SW6 เขียนค่า want ลง HR0 - SW5 อ่าน 3 ช่องเริ่ม HR0
-                frame = (fc06_write if i else fc03_read)(n, UNIT_ID, 0, arg)
-                for k in range(12):
-                    w["b"][k].text("%02X" % frame[k])    # ฐานสิบหก 2 หลักต่อไบต์ เหมือนที่ gateway พิมพ์
-                # บรรทัดผล (สีส้ม = ยังไม่มีผล): บอกว่ากรอบนี้ขออะไร ออนไลน์แล้วจะถูกแทนด้วยผลเมื่อคำตอบมา
-                show(w, "stat", ("#%d FC03 อ่าน HR0 %d ช่อง", "#%d FC06 เขียน HR0 = %d")[i] % (n, arg), COL_WARN)
-                beep("tap")
-                if i and not online:
-                    want = 1 - want                       # โหมดดูกรอบ: สลับเองให้เห็นกรอบทั้งสองแบบ (ไม่ใช่สถานะจริง)
-                if online:
-                    req = {"n": n, "fc": frame[7], "addr": 0, "hex": "%02x" * 12 % tuple(frame)}   # 12 ไบต์ = 24 ตัวอักษร hex
-                    req["value" if i else "qty"] = arg
-                    try:
-                        mqtt.publish(T_REQ, json.dumps(req))
-                    except OSError:                       # สายหลุด: ส่งไม่ออก ปล่อยให้หมดเวลา = ไม่รู้ผล
-                        pass
-                    wait, t_req = n, now
-            down[i] = d
-        if wait:                                          # ถามกล่องรับทุกรอบระหว่างรอ (กล่องมีช่องเดียว)
-            msg = mqtt.get_message()                      # None = ยังไม่มีอะไรมา / (topic, bytes)
-            try:
-                r = json.loads(msg[1].decode())
-                r = r if r.get("n") == wait else None     # คำตอบของคำขออื่น (เก่า/ของคนอื่น) = ไม่นับ
-            except Exception:                             # ไม่มีข้อความ / อ่านไม่ได้ / ไม่ใช่ dict (broker สาธารณะ ใครส่งขยะมาก็ได้)
-                r = None
-            if not r and time.ticks_diff(now, t_req) >= RESP_MS:
-                r = {"err": "ไม่มีคำตอบ"}                  # เงียบเกิน RESP_MS = ไม่รู้ ไม่ใช่ "สำเร็จ"
-            if r:
-                wait = 0
-                ok = r.get("ok") == 1
-                if ok:                                    # PLC ยืนยันแล้วเท่านั้นจึงเชื่อ
-                    v = r.get("v", [])
-                    regs = v + regs[len(v):]              # FC03 ได้ 3 ช่อง - FC06 ได้ค่าที่เขียนสำเร็จ (HR0)
-                    text, want = "ยืนยันแล้ว", 1 - regs[0]
-                elif "exc" in r:                          # PLC ตอบว่า "ไม่ทำ" (4 = ระบบป้องกัน เช่น ถังต่ำ)
-                    text = "PLC ปฏิเสธ %d" % r["exc"]
-                else:                                     # gateway แจ้ง err หรือหมดเวลา: ไม่รู้ว่าปั๊มเป็นอย่างไร
-                    text, regs[0], want = r.get("err"), "--", 0
-                show(w, "stat", "%s:  %s  %s  %s" % (text, regs[0], regs[1], regs[2]), COL_OK if ok else COL_BAD)
-                w["rhex"].text(r.get("hex", " "))         # กรอบคำตอบที่ PLC ส่งกลับ (gateway ส่งต่อเป็น hex)
-                beep("good" if ok else "bad")
-        time.sleep_ms(SAMPLE_MS)
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            if online and not mqtt.is_connected():        # สายหลุด: บอกบนจอ คำขอที่ค้างจะหมดเวลา = ไม่รู้ผล
+                online = False
+                show_link(w, False)
+            now = time.ticks_ms()
+            for i in (0, 1):                                  # i = 0 คือ SW5, i = 1 คือ SW6
+                d = buttons.pressed(i)
+                if d and not down[i] and not wait:           # ขอบกด และไม่ได้รอคำตอบของคำขอก่อนหน้าอยู่
+                    n += 1
+                    arg = want if i else 3                    # SW6 เขียนค่า want ลง HR0 - SW5 อ่าน 3 ช่องเริ่ม HR0
+                    frame = (fc06_write if i else fc03_read)(n, UNIT_ID, 0, arg)
+                    for k in range(12):
+                        w["b"][k].text("%02X" % frame[k])    # ฐานสิบหก 2 หลักต่อไบต์ เหมือนที่ gateway พิมพ์
+                    # บรรทัดผล (สีส้ม = ยังไม่มีผล): บอกว่ากรอบนี้ขออะไร ออนไลน์แล้วจะถูกแทนด้วยผลเมื่อคำตอบมา
+                    show(w, "stat", ("#%d FC03 อ่าน HR0 %d ช่อง", "#%d FC06 เขียน HR0 = %d")[i] % (n, arg), COL_WARN)
+                    beep("tap")
+                    if i and not online:
+                        want = 1 - want                       # โหมดดูกรอบ: สลับเองให้เห็นกรอบทั้งสองแบบ (ไม่ใช่สถานะจริง)
+                    if online:
+                        req = {"n": n, "fc": frame[7], "addr": 0, "hex": "%02x" * 12 % tuple(frame)}   # 12 ไบต์ = 24 ตัวอักษร hex
+                        req["value" if i else "qty"] = arg
+                        try:
+                            mqtt.publish(T_REQ, json.dumps(req))
+                        except OSError:                       # สายหลุด: ส่งไม่ออก ปล่อยให้หมดเวลา = ไม่รู้ผล
+                            pass
+                        wait, t_req = n, now
+                down[i] = d
+            if wait:                                          # ถามกล่องรับทุกรอบระหว่างรอ (กล่องมีช่องเดียว)
+                msg = mqtt.get_message()                      # None = ยังไม่มีอะไรมา / (topic, bytes)
+                try:
+                    r = json.loads(msg[1].decode())
+                    r = r if r.get("n") == wait else None     # คำตอบของคำขออื่น (เก่า/ของคนอื่น) = ไม่นับ
+                except Exception:                             # ไม่มีข้อความ / อ่านไม่ได้ / ไม่ใช่ dict (broker สาธารณะ ใครส่งขยะมาก็ได้)
+                    r = None
+                if not r and time.ticks_diff(now, t_req) >= RESP_MS:
+                    r = {"err": "ไม่มีคำตอบ"}                  # เงียบเกิน RESP_MS = ไม่รู้ ไม่ใช่ "สำเร็จ"
+                if r:
+                    wait = 0
+                    ok = r.get("ok") == 1
+                    if ok:                                    # PLC ยืนยันแล้วเท่านั้นจึงเชื่อ
+                        v = r.get("v", [])
+                        regs = v + regs[len(v):]              # FC03 ได้ 3 ช่อง - FC06 ได้ค่าที่เขียนสำเร็จ (HR0)
+                        text, want = "ยืนยันแล้ว", 1 - regs[0]
+                    elif "exc" in r:                          # PLC ตอบว่า "ไม่ทำ" (4 = ระบบป้องกัน เช่น ถังต่ำ)
+                        text = "PLC ปฏิเสธ %d" % r["exc"]
+                    else:                                     # gateway แจ้ง err หรือหมดเวลา: ไม่รู้ว่าปั๊มเป็นอย่างไร
+                        text, regs[0], want = r.get("err"), "--", 0
+                    show(w, "stat", "%s:  %s  %s  %s" % (text, regs[0], regs[1], regs[2]), COL_OK if ok else COL_BAD)
+                    w["rhex"].text(r.get("hex", " "))         # กรอบคำตอบที่ PLC ส่งกลับ (gateway ส่งต่อเป็น hex)
+                    beep("good" if ok else "bad")
+            time.sleep_ms(SAMPLE_MS)
+    finally:
+        mqtt.disconnect()                                 # หยุดกลางทางก็ตัดสาย broker ให้เรียบร้อย
+        show_link(w, False)
     show(w, "note", "จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่", COL_WARN)
     beep("good")
 

@@ -980,6 +980,12 @@ def zscore(x, mean, sd, sd_min):
 
 </div>
 
+<div class="think">
+
+**☆ โจทย์เพิ่ม:** โมเดลจริงอาจสลับคำตอบไปมา (วัดจริง: AnomalousVibration ขณะเขย่า) — ลองเปลี่ยน `cp2_06` เป็น "อย่างน้อย 3 ใน 5 ครั้งล่าสุด" แล้วเทียบกัน
+
+</div>
+
 </div>
 <div class="shot">
 
@@ -1260,10 +1266,16 @@ def why_send(value, last, quiet_ms):
 <div class="try">
 
 **ลองทำ** · [`cp3_03_report_by_exception.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py)
-1. แก้ `WIFI_SSID` `WIFI_PASS` `TEAM` แล้วรัน → วงไฟบนจอติด = ออนไลน์
+1. แก้ `WIFI_SSID` `WIFI_PASS` `TEAM` แล้วรัน → ไฟ **MQTT** บนจอติด ขึ้น **เชื่อมต่อแล้ว** = ออนไลน์
 2. ปล่อย **VR1** นิ่ง ๆ → มีแต่ใบ **heartbeat** ทุก 30 วิ
 3. หมุน VR1 ช้า ๆ แล้วเร็ว ๆ → เส้น **เขียว** (ใบที่ส่ง) เดินเป็น **ขั้นบันได** ตามเส้น **ฟ้า** (ค่าที่วัด)
 4. อ่าน **"ส่ง … ใบ / วัด … ครั้ง"** และ **% ประหยัด** · ดูใบจริงใน MQTT Explorer: subscribe `bento-aiot/<TEAM>/core/#` แล้วดูช่อง `n` `up_s` `why`
+
+</div>
+
+<div class="warn">
+
+ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม → รอ ~1 นาที หรือกด **RESET** แล้วรันใหม่
 
 </div>
 

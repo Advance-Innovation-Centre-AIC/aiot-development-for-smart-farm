@@ -36,7 +36,7 @@ SPEAKER = 40             # ความดังลำโพงรวม 0-100% 
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-pipe-" + TEAM      # ต้องไม่ซ้ำกับใครบน broker
+CLIENT_ID = "bento-pipe-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/core/pipes"
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -99,10 +99,13 @@ def build_screen(rows):
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ค่าเดียวกัน สองท่อ", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
+    led = ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0)
+    link = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)
     card(12, 44, 380, 294, "ท่อ 1: mqtt พอร์ต 1883")
     ui.Label("ไม่เข้ารหัส: ใครก็อ่านได้", x=28, y=76, color=COL_BAD)
     ui.Label("ใบที่วิ่งในสาย (ตัวอักษรตรง ๆ):", x=28, y=116, color=COL_DIM, value=16)
-    w = {"p1": ui.Label(" ", x=28, y=144, color=COL_TEXT, value=16)}
+    w = {"led": led, "link": link, "p1": ui.Label(" ", x=28, y=144, color=COL_TEXT, value=16)}
     w["s1"] = ui.Label(" ", x=28, y=290, color=COL_DIM, value=16)
     card(402, 44, 378, 294, "ท่อ 2: tesaiot (TLS)")
     ui.Label("เข้ารหัส + ตรวจบัตร broker", x=418, y=76, color=COL_OK)
@@ -122,6 +125,12 @@ def show(w, key, text, col):
     ui.poll()
 
 
+def show_link(w, online):
+    # ไฟ MQTT (ท่อ 1): ติด = ต่อ broker อยู่ · หรี่ = ออฟไลน์
+    w["led"].value(1 if online else 0)
+    show(w, "link", "เชื่อมต่อแล้ว" if online else "ออฟไลน์", COL_OK if online else COL_DIM)
+
+
 # ---- 6) โปรแกรมหลัก ----
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
@@ -129,25 +138,36 @@ def main():
     w = build_screen(read_config())
     problem = connect_plain(w) if WIFI_SSID[0] != "<" else "ยังไม่ตั้ง WiFi: ไม่ส่ง"
     show(w, "s1", problem or TOPIC, COL_WARN if problem else COL_OK)
+    if not problem:
+        show_link(w, True)
     beep("bad" if problem else "start")
     n = n1 = 0
     t0 = t_send = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        now = time.ticks_ms()
-        if n == 0 or time.ticks_diff(now, t_send) >= SEND_MS:     # ใบแรกออกทันที
-            t_send, n = now, n + 1
-            body = json.dumps({"id": TEAM, "n": n, "soil": pots.read(0) * 100 // 4095})
-            w["p1"].text(body)                    # ใบเดียวกันนี้ ถ้าไปท่อ 2 จะถูกเข้ารหัสก่อนออกจากบอร์ด
-            try:
-                if not problem and mqtt.publish(TOPIC, body):
-                    n1 += 1
-                    w["s1"].text("ส่งแล้ว %d ใบ (อ่านได้ทุกตัว)" % n1)
-            except OSError:                       # สายหลุด: publish โยน OSError
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            if not problem and not mqtt.is_connected():   # สายหลุดระหว่างรอบ: บอกบนจอ แล้วเลิกส่ง
                 problem = "สายหลุด"
+                show_link(w, False)
                 show(w, "s1", problem, COL_BAD)
-                beep("bad")
-            ui.poll()
-        time.sleep_ms(100)
+            now = time.ticks_ms()
+            if n == 0 or time.ticks_diff(now, t_send) >= SEND_MS:     # ใบแรกออกทันที
+                t_send, n = now, n + 1
+                body = json.dumps({"id": TEAM, "n": n, "soil": pots.read(0) * 100 // 4095})
+                w["p1"].text(body)                    # ใบเดียวกันนี้ ถ้าไปท่อ 2 จะถูกเข้ารหัสก่อนออกจากบอร์ด
+                try:
+                    if not problem and mqtt.publish(TOPIC, body):
+                        n1 += 1
+                        w["s1"].text("ส่งแล้ว %d ใบ (อ่านได้ทุกตัว)" % n1)
+                except OSError:                       # สายหลุด: publish โยน OSError
+                    problem = "สายหลุด"
+                    show_link(w, False)
+                    show(w, "s1", problem, COL_BAD)
+                    beep("bad")
+                ui.poll()
+            time.sleep_ms(100)
+    finally:
+        mqtt.disconnect()                         # หยุดกลางทางก็ตัดสาย broker ให้เรียบร้อย
+        show_link(w, False)
     show(w, "note", "จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่", COL_WARN)
     beep("good")
 

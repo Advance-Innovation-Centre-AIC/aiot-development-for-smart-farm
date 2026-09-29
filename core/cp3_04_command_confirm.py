@@ -42,7 +42,7 @@ VOLUME = 25              # ความดังเสียง 0-127 (≈20%) �
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
 BROKER = "broker.hivemq.com"          # ต้องตรงกับ BROKER ใน field_sim.py
-CLIENT_ID = "bento-cmd-" + TEAM       # ต้องไม่ซ้ำกับใครบน broker
+CLIENT_ID = "bento-cmd-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 T_CMD = "bento-aiot/" + TEAM + "/plc/cmd"
 T_STATE = "bento-aiot/" + TEAM + "/plc/state"
 STEPS = ("1 ส่ง plc/cmd", "2 รอ plc/state", "3 เงียบ: ส่งซ้ำ", "4 ยอมแพ้: สั่งปิด")
@@ -111,8 +111,11 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("สั่ง -> ยืนยัน -> ปลอดภัย", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
+    w = {"led": ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0)}
+    w["link"] = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)
     card(12, 64, 440, 274, "ขั้น")
-    w = {"steps": [ui.Label(STEPS[i], x=28, y=98 + i * 44, color=COL_DIM) for i in range(4)]}
+    w["steps"] = [ui.Label(STEPS[i], x=28, y=98 + i * 44, color=COL_DIM) for i in range(4)]
     w["res"] = ui.Label(" ", x=28, y=282, color=COL_TEXT)            # ไม่ใส่ value = ตัวอักษร 20
     card(462, 64, 318, 274, "PLC บอกว่า")
     w["pump"] = ui.Label("--", x=478, y=104, color=COL_DIM, value=24)   # สถานะปั๊มตาม PLC เท่านั้น
@@ -126,6 +129,12 @@ def show(w, key, text, col):
     w[key].color(col)
     w[key].text(text)
     ui.poll()
+
+
+def show_link(w, online):
+    # ไฟ MQTT: ติด = ต่อ broker อยู่ สั่งงานได้ · หรี่ = ออฟไลน์
+    w["led"].value(1 if online else 0)
+    show(w, "link", "เชื่อมต่อแล้ว" if online else "ออฟไลน์", COL_OK if online else COL_DIM)
 
 
 def show_steps(w, cols, text, col):
@@ -145,55 +154,64 @@ def main():
         show(w, "res", problem, COL_BAD)
         beep("bad")
         raise SystemExit
+    show_link(w, True)
     show(w, "res", "พร้อม", COL_OK)
     beep("start")
     want = None                                           # คำสั่งที่รอคำยืนยัน: 1 เปิด / 0 ปิด / None ไม่มี
     tries = 0
     down = [False, False]
     D, W, G, B = COL_DIM, COL_WARN, COL_OK, COL_BAD       # สีของขั้น: เทา ส้ม เขียว แดง
+    online = True
     t0 = t_sent = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        now = time.ticks_ms()
-        for i in (0, 1):                                  # i = 0 คือ SW5 (เปิด), i = 1 คือ SW6 (ปิด)
-            d = buttons.pressed(i)
-            if d and not down[i] and want is None:        # ขอบกด และไม่มีคำสั่งค้างรอคำยืนยันอยู่
-                want, tries, t_sent = 1 - i, 1, now
-                send_cmd(want)                            # ขั้น 1: ส่ง -> ขั้น 2: รอ
-                show_steps(w, (G, W, D, D), "...", COL_WARN)
-                beep("tap")
-            down[i] = d
-        msg = mqtt.get_message()                          # None = ยังไม่มีอะไรมา / (topic, bytes)
-        try:
-            st = json.loads(msg[1].decode())
-            why = st.get("why")                           # ไม่ใช่ dict = โยน AttributeError
-        except Exception:                                 # ไม่มีข้อความ / อ่านไม่ได้ (broker สาธารณะ ใครส่งขยะมาก็ได้)
-            st = None
-        if st:                                            # ทุกใบจาก PLC = ความจริงล่าสุด (สถานะปั๊มบนจอตามนี้เท่านั้น)
-            on = st.get("pump") == 1
-            show(w, "pump", "%s  why=%s" % ("เปิด อีก %s วิ" % st.get("left_s") if on else "ปิด", why),
-                 COL_OK if on else COL_TEXT)
-            verdict = judge(want, st)
-            if verdict == "ok":                           # ขั้น 2 ผ่าน: PLC ยืนยันเอง
-                show_steps(w, (G, G, G if tries > 1 else D, D), "ยืนยันแล้ว", COL_OK)
-                beep("good")
-                want = None
-            elif verdict:                                 # PLC ตอบว่าไม่ทำ (เช่น blocked_tank) = รู้ผลแล้ว ไม่ต้องส่งซ้ำ
-                show_steps(w, (G, B, D, D), "PLC ไม่ทำ: " + verdict, COL_BAD)
-                beep("bad")
-                want = None
-        if want is not None and time.ticks_diff(now, t_sent) >= TIMEOUT_MS:
-            if tries <= RETRIES:                          # ขั้น 3: เงียบ = ส่งซ้ำ (ไม่ใช่ "คงสำเร็จแล้วมั้ง")
-                tries, t_sent = tries + 1, now
-                send_cmd(want)
-                show_steps(w, (G, B, W, D), "ส่งซ้ำ", COL_WARN)
-                beep("tap")
-            else:                                         # ขั้น 4: ยอมแพ้ ถอยไปปลอดภัย
-                send_cmd(0)                               # สั่งปิด (ถ้าสายยังดี) แล้วเลิกเดา
-                show(w, "pump", "ไม่รู้ = ถือว่าปิด", COL_BAD)
-                show_steps(w, (G, B, B, B), "ยอมแพ้: สั่งปิด", COL_BAD)
-                beep("empty")
-                want = None
-        time.sleep_ms(SAMPLE_MS)
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            if online and not mqtt.is_connected():        # สายหลุด: บอกบนจอ คำสั่งที่ค้างจะหมดเวลาไปทางถอยเอง
+                online = False
+                show_link(w, False)
+            now = time.ticks_ms()
+            for i in (0, 1):                                  # i = 0 คือ SW5 (เปิด), i = 1 คือ SW6 (ปิด)
+                d = buttons.pressed(i)
+                if d and not down[i] and want is None:        # ขอบกด และไม่มีคำสั่งค้างรอคำยืนยันอยู่
+                    want, tries, t_sent = 1 - i, 1, now
+                    send_cmd(want)                            # ขั้น 1: ส่ง -> ขั้น 2: รอ
+                    show_steps(w, (G, W, D, D), "...", COL_WARN)
+                    beep("tap")
+                down[i] = d
+            msg = mqtt.get_message()                          # None = ยังไม่มีอะไรมา / (topic, bytes)
+            try:
+                st = json.loads(msg[1].decode())
+                why = st.get("why")                           # ไม่ใช่ dict = โยน AttributeError
+            except Exception:                                 # ไม่มีข้อความ / อ่านไม่ได้ (broker สาธารณะ ใครส่งขยะมาก็ได้)
+                st = None
+            if st:                                            # ทุกใบจาก PLC = ความจริงล่าสุด (สถานะปั๊มบนจอตามนี้เท่านั้น)
+                on = st.get("pump") == 1
+                show(w, "pump", "%s  why=%s" % ("เปิด อีก %s วิ" % st.get("left_s") if on else "ปิด", why),
+                     COL_OK if on else COL_TEXT)
+                verdict = judge(want, st)
+                if verdict == "ok":                           # ขั้น 2 ผ่าน: PLC ยืนยันเอง
+                    show_steps(w, (G, G, G if tries > 1 else D, D), "ยืนยันแล้ว", COL_OK)
+                    beep("good")
+                    want = None
+                elif verdict:                                 # PLC ตอบว่าไม่ทำ (เช่น blocked_tank) = รู้ผลแล้ว ไม่ต้องส่งซ้ำ
+                    show_steps(w, (G, B, D, D), "PLC ไม่ทำ: " + verdict, COL_BAD)
+                    beep("bad")
+                    want = None
+            if want is not None and time.ticks_diff(now, t_sent) >= TIMEOUT_MS:
+                if tries <= RETRIES:                          # ขั้น 3: เงียบ = ส่งซ้ำ (ไม่ใช่ "คงสำเร็จแล้วมั้ง")
+                    tries, t_sent = tries + 1, now
+                    send_cmd(want)
+                    show_steps(w, (G, B, W, D), "ส่งซ้ำ", COL_WARN)
+                    beep("tap")
+                else:                                         # ขั้น 4: ยอมแพ้ ถอยไปปลอดภัย
+                    send_cmd(0)                               # สั่งปิด (ถ้าสายยังดี) แล้วเลิกเดา
+                    show(w, "pump", "ไม่รู้ = ถือว่าปิด", COL_BAD)
+                    show_steps(w, (G, B, B, B), "ยอมแพ้: สั่งปิด", COL_BAD)
+                    beep("empty")
+                    want = None
+            time.sleep_ms(SAMPLE_MS)
+    finally:
+        mqtt.disconnect()                                 # หยุดกลางทางก็ตัดสาย broker ให้เรียบร้อย
+        show_link(w, False)
     show(w, "note", "จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่", COL_WARN)
     beep("good")
 
