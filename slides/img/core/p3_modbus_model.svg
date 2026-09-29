@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+  <defs>
+    <marker id="p3mb" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1565c0"/></marker>
+    <marker id="p3mg" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+  </defs>
+  <rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+  <!-- roles -->
+  <text x="170" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#37474f">บทบาท: ถาม 1 ตอบ 1</text>
+  <rect x="14" y="48" width="140" height="84" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
+  <text x="84" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">ผู้ถาม · client</text>
+  <text x="84" y="98" text-anchor="middle" font-size="13.5" fill="#37474f">เกตเวย์ · SCADA</text>
+  <text x="84" y="118" text-anchor="middle" font-size="13.5" fill="#37474f">โน้ตบุ๊ก</text>
+  <rect x="186" y="48" width="140" height="84" rx="12" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
+  <text x="256" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">ผู้ตอบ · server</text>
+  <text x="256" y="98" text-anchor="middle" font-size="13.5" fill="#37474f">PLC · VFD</text>
+  <text x="256" y="118" text-anchor="middle" font-size="13.5" fill="#37474f">มิเตอร์ · หัววัด</text>
+  <line x1="156" y1="160" x2="316" y2="160" stroke="#1565c0" stroke-width="3" marker-end="url(#p3mb)"/>
+  <text x="236" y="153" text-anchor="middle" font-size="13.5" fill="#1565c0">คำขอ (FC + ที่อยู่)</text>
+  <line x1="316" y1="188" x2="156" y2="188" stroke="#2e7d32" stroke-width="3" marker-end="url(#p3mg)"/>
+  <text x="236" y="208" text-anchor="middle" font-size="13.5" fill="#2e7d32">คำตอบ (ค่า / ข้อยกเว้น)</text>
+  <text x="170" y="240" text-anchor="middle" font-size="14" fill="#546e7a">server ไม่พูดก่อน ต่างจาก MQTT</text>
+  <text x="170" y="260" text-anchor="middle" font-size="14" fill="#546e7a">ที่ใครอยาก publish ก็ส่งเลย</text>
+  <line x1="340" y1="16" x2="340" y2="304" stroke="#cfd8dc" stroke-width="2"/>
+  <!-- four tables -->
+  <text x="552" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#37474f">ข้อมูลใน server อยู่ใน 4 ตาราง</text>
+  <g font-size="13.5">
+    <rect x="352" y="44" width="196" height="118" rx="10" fill="#f5f5f5" stroke="#90a4ae" stroke-width="2"/>
+    <text x="364" y="68" font-size="16" font-weight="700" fill="#455a64">Coils</text>
+    <text x="364" y="90" fill="#37474f">1 บิต · อ่าน/เขียน</text>
+    <text x="364" y="112" fill="#37474f">เช่น รีเลย์ปั๊ม เปิด/ปิด</text>
+    <text x="364" y="146" font-family="monospace" fill="#455a64">FC 01 · 05</text>
+    <rect x="556" y="44" width="196" height="118" rx="10" fill="#f5f5f5" stroke="#90a4ae" stroke-width="2"/>
+    <text x="568" y="68" font-size="16" font-weight="700" fill="#455a64">Discrete Inputs</text>
+    <text x="568" y="90" fill="#37474f">1 บิต · อ่านอย่างเดียว</text>
+    <text x="568" y="112" fill="#37474f">เช่น ลูกลอยถังน้ำ</text>
+    <text x="568" y="146" font-family="monospace" fill="#455a64">FC 02</text>
+    <rect x="352" y="170" width="196" height="118" rx="10" fill="#f5f5f5" stroke="#90a4ae" stroke-width="2"/>
+    <text x="364" y="194" font-size="16" font-weight="700" fill="#455a64">Input Registers</text>
+    <text x="364" y="216" fill="#37474f">16 บิต · อ่านอย่างเดียว</text>
+    <text x="364" y="238" fill="#37474f">เช่น ค่าจากหัววัด</text>
+    <text x="364" y="272" font-family="monospace" fill="#455a64">FC 04</text>
+    <rect x="556" y="170" width="196" height="118" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3.5"/>
+    <text x="568" y="194" font-size="16" font-weight="700" fill="#1b5e20">Holding Registers</text>
+    <text x="568" y="216" fill="#37474f">16 บิต · อ่าน/เขียน</text>
+    <text x="568" y="238" fill="#37474f">ค่าตั้ง · คำสั่ง · สถานะ</text>
+    <text x="568" y="274" font-size="13" font-family="monospace" font-weight="700" fill="#1b5e20">FC 03 · 06&#160;<tspan fill="#90a4ae" font-weight="400">· 16</tspan></text>
+    <rect x="690" y="258" width="56" height="22" rx="11" fill="#2e7d32"/>
+    <text x="718" y="274" text-anchor="middle" font-size="12.5" font-weight="700" fill="#fff">วันนี้</text>
+  </g>
+  <text x="552" y="308" text-anchor="middle" font-size="12.5" fill="#78909c">FC 16 ในกรอบเขียนเป็นเลขฐานสิบหก 0x10</text>
+  <line x1="764" y1="16" x2="764" y2="304" stroke="#cfd8dc" stroke-width="2"/>
+  <!-- who speaks it -->
+  <text x="878" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#37474f">ใครในฟาร์มพูด Modbus</text>
+  <g font-size="14.5" fill="#37474f">
+    <text x="778" y="70" font-size="22">⚙️</text><text x="810" y="68">อินเวอร์เตอร์ปั๊ม</text><text x="810" y="86" font-size="12.5" fill="#78909c">VFD ปรับรอบมอเตอร์</text>
+    <text x="778" y="124" font-size="22">⚡</text><text x="810" y="122">มิเตอร์ไฟฟ้า</text><text x="810" y="140" font-size="12.5" fill="#78909c">กินไฟเท่าไร กี่หน่วย</text>
+    <text x="778" y="178" font-size="22">🌱</text><text x="810" y="176">หัววัดดิน · EC · pH</text><text x="810" y="194" font-size="12.5" fill="#78909c">มักต่อสาย RS-485</text>
+    <text x="778" y="232" font-size="22">🗄️</text><text x="810" y="230">PLC ในตู้ควบคุม</text><text x="810" y="248" font-size="12.5" fill="#78909c">โรงสูบ · โรงเรือน</text>
+  </g>
+  <rect x="784" y="266" width="190" height="34" rx="17" fill="#37474f"/>
+  <text x="879" y="289" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">ใช้กันมาตั้งแต่ปี 1979</text>
+</svg>

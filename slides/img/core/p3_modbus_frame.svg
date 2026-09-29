@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+<rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+<path d="M14 52 L14 44 L458 44 L458 52" fill="none" stroke="#1565c0" stroke-width="3"/>
+<text x="236" y="34" text-anchor="middle" font-size="17" font-weight="700" fill="#1565c0">MBAP header · 7 ไบต์ (หัวของ TCP)</text>
+<path d="M462 52 L462 44 L778 44 L778 52" fill="none" stroke="#2e7d32" stroke-width="3"/>
+<text x="620" y="34" text-anchor="middle" font-size="17" font-weight="700" fill="#2e7d32">PDU · 5 ไบต์ (ตัวคำสั่ง)</text>
+<rect x="14" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="44" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="44" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">0</text>
+<rect x="78" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="108" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="108" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">1</text>
+<rect x="142" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="172" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="172" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">2</text>
+<rect x="206" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="236" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="236" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">3</text>
+<rect x="270" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="300" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="300" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">4</text>
+<rect x="334" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="364" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">06</text>
+<text x="364" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">5</text>
+<rect x="398" y="64" width="60" height="50" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="428" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="428" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">6</text>
+<rect x="462" y="64" width="60" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+<text x="492" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#2e7d32">06</text>
+<text x="492" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">7</text>
+<rect x="526" y="64" width="60" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+<text x="556" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="556" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">8</text>
+<rect x="590" y="64" width="60" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+<text x="620" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="620" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">9</text>
+<rect x="654" y="64" width="60" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+<text x="684" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="684" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">10</text>
+<rect x="718" y="64" width="60" height="50" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+<text x="748" y="98" text-anchor="middle" font-size="24" font-weight="700" font-family="monospace" fill="#2e7d32">01</text>
+<text x="748" y="128" text-anchor="middle" font-size="11" fill="#90a4ae">11</text>
+<path d="M17 134 L17 140 L135 140 L135 134" fill="none" stroke="#1565c0" stroke-width="2"/>
+<text x="76" y="158" text-anchor="middle" font-size="13" font-weight="700" fill="#1565c0">Transaction ID</text>
+<text x="76" y="178" text-anchor="middle" font-size="14" fill="#37474f">เลขรายการ = 1</text>
+<text x="76" y="196" text-anchor="middle" font-size="14" fill="#37474f">ใช้จับคู่คำตอบ</text>
+<path d="M145 134 L145 140 L263 140 L263 134" fill="none" stroke="#1565c0" stroke-width="2"/>
+<text x="204" y="158" text-anchor="middle" font-size="13" font-weight="700" fill="#1565c0">Protocol ID</text>
+<text x="204" y="178" text-anchor="middle" font-size="14" fill="#37474f">0 เสมอ</text>
+<text x="204" y="196" text-anchor="middle" font-size="14" fill="#37474f">= Modbus</text>
+<path d="M273 134 L273 140 L391 140 L391 134" fill="none" stroke="#1565c0" stroke-width="2"/>
+<text x="332" y="158" text-anchor="middle" font-size="13" font-weight="700" fill="#1565c0">Length</text>
+<text x="332" y="178" text-anchor="middle" font-size="14" fill="#37474f">นับไบต์ที่</text>
+<text x="332" y="196" text-anchor="middle" font-size="14" fill="#37474f">ตามหลังช่องนี้</text>
+<path d="M401 134 L401 140 L455 140 L455 134" fill="none" stroke="#1565c0" stroke-width="2"/>
+<text x="428" y="158" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1565c0">Unit ID</text>
+<text x="428" y="178" text-anchor="middle" font-size="14" fill="#37474f">เครื่อง</text>
+<text x="428" y="196" text-anchor="middle" font-size="14" fill="#37474f">เลข 1</text>
+<path d="M465 134 L465 140 L519 140 L519 134" fill="none" stroke="#2e7d32" stroke-width="2"/>
+<text x="492" y="158" text-anchor="middle" font-size="11.5" font-weight="700" fill="#2e7d32">Function</text>
+<text x="492" y="178" text-anchor="middle" font-size="14" fill="#37474f">06 = เขียน</text>
+<text x="492" y="196" text-anchor="middle" font-size="14" fill="#37474f">1 ช่อง</text>
+<path d="M529 134 L529 140 L647 140 L647 134" fill="none" stroke="#2e7d32" stroke-width="2"/>
+<text x="588" y="158" text-anchor="middle" font-size="13" font-weight="700" fill="#2e7d32">Address</text>
+<text x="588" y="178" text-anchor="middle" font-size="14" fill="#37474f">HR0</text>
+<text x="588" y="196" text-anchor="middle" font-size="14" fill="#37474f">= ปั๊ม</text>
+<path d="M657 134 L657 140 L775 140 L775 134" fill="none" stroke="#2e7d32" stroke-width="2"/>
+<text x="716" y="158" text-anchor="middle" font-size="13" font-weight="700" fill="#2e7d32">Value</text>
+<text x="716" y="178" text-anchor="middle" font-size="14" fill="#37474f">1</text>
+<text x="716" y="196" text-anchor="middle" font-size="14" fill="#37474f">= เปิด</text>
+<line x1="14" y1="218" x2="782" y2="218" stroke="#cfd8dc" stroke-width="2"/>
+<text x="14" y="240" font-size="15" font-weight="700" fill="#37474f">PLC ตอบกลับ</text>
+<text x="14" y="266" font-size="15" font-weight="700" fill="#2e7d32">✓ ทำแล้ว</text>
+<text x="200" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="226" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="252" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="278" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="304" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="330" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">06</text>
+<text x="356" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="382" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#2e7d32">06</text>
+<text x="408" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="434" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="460" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<text x="486" y="266" font-size="16" font-weight="700" font-family="monospace" fill="#2e7d32">01</text>
+<text x="520" y="266" font-size="14" fill="#546e7a">ทวนกลับครบ 12 ไบต์</text>
+<text x="14" y="294" font-size="15" font-weight="700" fill="#c62828">⚠ ถังต่ำกว่า 10 %</text>
+<text x="200" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="226" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="252" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="278" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="304" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<text x="330" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">03</text>
+<text x="356" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<text x="382" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#c62828">86</text>
+<text x="408" y="294" font-size="16" font-weight="700" font-family="monospace" fill="#c62828">04</text>
+<text x="442" y="294" font-size="14" fill="#546e7a">86 = 06 ติดบิตสูง (80) · รหัส 04 = ไม่ยอมทำ</text>
+<rect x="800" y="14" width="186" height="292" rx="12" fill="#fff" stroke="#2e7d32" stroke-width="3"/>
+<text x="893" y="40" text-anchor="middle" font-size="16" font-weight="700" fill="#1b5e20">แผนที่ register</text>
+<text x="893" y="60" text-anchor="middle" font-size="12.5" fill="#78909c">PLC จำลอง · unit 1</text>
+<rect x="808" y="76" width="170" height="40" rx="7" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+<text x="816" y="101" font-size="14" font-weight="700" font-family="monospace" fill="#1b5e20">HR0</text>
+<text x="856" y="94" font-size="13.5" fill="#37474f">ปั๊ม 0 / 1</text>
+<text x="856" y="109" font-size="11" fill="#78909c">อ่าน/เขียน ← FC06</text>
+<rect x="808" y="120" width="170" height="40" rx="7" fill="#f5f5f5" stroke="#cfd8dc" stroke-width="1.5"/>
+<text x="816" y="145" font-size="14" font-weight="700" font-family="monospace" fill="#455a64">HR1</text>
+<text x="856" y="138" font-size="13.5" fill="#37474f">ดิน %</text>
+<text x="856" y="153" font-size="11" fill="#78909c">อ่าน</text>
+<rect x="808" y="164" width="170" height="40" rx="7" fill="#f5f5f5" stroke="#cfd8dc" stroke-width="1.5"/>
+<text x="816" y="189" font-size="14" font-weight="700" font-family="monospace" fill="#455a64">HR2</text>
+<text x="856" y="182" font-size="13.5" fill="#37474f">ถัง %</text>
+<text x="856" y="197" font-size="11" fill="#78909c">อ่าน</text>
+<rect x="808" y="208" width="170" height="40" rx="7" fill="#f5f5f5" stroke="#cfd8dc" stroke-width="1.5"/>
+<text x="816" y="233" font-size="14" font-weight="700" font-family="monospace" fill="#455a64">HR3</text>
+<text x="856" y="226" font-size="13.5" fill="#37474f">วินาทีที่เหลือ</text>
+<text x="856" y="241" font-size="11" fill="#78909c">อ่าน</text>
+<rect x="808" y="252" width="170" height="40" rx="7" fill="#f5f5f5" stroke="#cfd8dc" stroke-width="1.5"/>
+<text x="816" y="277" font-size="14" font-weight="700" font-family="monospace" fill="#455a64">HR4</text>
+<text x="856" y="270" font-size="13.5" fill="#37474f">เหตุปฏิเสธล่าสุด</text>
+<text x="856" y="285" font-size="11" fill="#78909c">0 ไม่มี · 1 ถังต่ำ · 2 ค่าผิด</text>
+</svg>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 340" width="1000" height="340" font-family="sans-serif">
+<defs><marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker><marker id="arO" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#ef6c00"/></marker><marker id="arP" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8e24aa"/></marker></defs>
+<rect x="0" y="0" width="1000" height="340" rx="14" fill="#ffffff"/>
+<text x="20.0" y="26.0" font-size="16" fill="#37474f" text-anchor="start" font-weight="700">ซูมเข้าไปที่การกด 1 ครั้ง</text>
+<text x="20.0" y="60.0" font-size="15" fill="#37474f" text-anchor="start" font-weight="700">ขาดิบ P17.5</text>
+<text x="20.0" y="78.0" font-size="12" fill="#546e7a" text-anchor="start">ปล่อย = HIGH · กด = LOW</text>
+<text x="20.0" y="132.0" font-size="14" fill="#1565c0" text-anchor="start" font-weight="700">buttons.pressed(0)</text>
+<text x="20.0" y="150.0" font-size="12" fill="#546e7a" text-anchor="start">True = กด (กรองแล้ว)</text>
+<path d="M175,44 L265,44 L265,80 L272,80 L272,44 L280,44 L280,80 L286,80 L286,44 L294,44 L294,80 L300,80 L300,44 L305,44 L305,80 L645,80 L645,44 L651,44 L651,80 L658,80 L658,44 L665,44 L665,80 L671,80 L671,44 L985,44" fill="none" stroke="#546e7a" stroke-width="3"/>
+<text x="285.0" y="36.0" font-size="13" fill="#c62828" text-anchor="middle" font-weight="700">สั่น (bounce)</text>
+<text x="658.0" y="36.0" font-size="13" fill="#c62828" text-anchor="middle" font-weight="700">สั่น</text>
+<path d="M175,156 L405,156 L405,120 L771,120 L771,156 L985,156" fill="none" stroke="#1e88e5" stroke-width="4"/>
+<path d="M305,102 V108 H405 V102" fill="none" stroke="#ef6c00" stroke-width="2"/>
+<text x="355.0" y="99.0" font-size="13" fill="#e65100" text-anchor="middle" font-weight="700">นิ่งครบ 50 ms</text>
+<path d="M671,140 V146 H771 V140" fill="none" stroke="#ef6c00" stroke-width="2"/>
+<text x="721.0" y="137.0" font-size="13" fill="#e65100" text-anchor="middle" font-weight="700">นิ่งครบ 50 ms</text>
+<path d="M405,178 l-7,10 h14 z" fill="#2e7d32"/>
+<text x="415.0" y="188.0" font-size="13" fill="#1b5e20" text-anchor="start" font-weight="700">ขอบกดลง → นับ +1</text>
+<path d="M771,178 l-7,10 h14 z" fill="#546e7a"/>
+<text x="781.0" y="188.0" font-size="13" fill="#37474f" text-anchor="start" font-weight="700">ขอบปล่อย</text>
+<text x="985.0" y="26.0" font-size="13" fill="#1565c0" text-anchor="end" font-weight="700">เฟิร์มแวร์กรองสั่นให้ ทุกครั้งที่ Python เรียก pressed()</text>
+<line x1="20" y1="202" x2="980" y2="202" stroke="#cfd8dc" stroke-width="2"/>
+<text x="30.0" y="224.0" font-size="16" fill="#e65100" text-anchor="start" font-weight="700">คลิก</text>
+<rect x="92.5" y="236" width="100" height="52" fill="#fff3e0" stroke="#ef6c00" stroke-dasharray="5 4"/>
+<text x="142.5" y="272.0" font-size="12" fill="#e65100" text-anchor="middle">รอ 400 ms</text>
+<path d="M30.0,280 L55.0,280 L55.0,246 L92.5,246 L92.5,280 L300.0,280" fill="none" stroke="#1e88e5" stroke-width="3.5"/>
+<circle cx="192.5" cy="280" r="7" fill="#e65100" stroke="#fff" stroke-width="2"/>
+<text x="192.5" y="304.0" font-size="15" fill="#e65100" text-anchor="middle" font-weight="700">คลิก!</text>
+<text x="30.0" y="328.0" font-size="13" fill="#37474f" text-anchor="start">ปล่อยแล้วไม่มีครั้งที่ 2 ใน 400 ms</text>
+<text x="360.0" y="224.0" font-size="16" fill="#6a1b9a" text-anchor="start" font-weight="700">ค้าง · LONG_MS = 800</text>
+<rect x="385" y="236" width="200" height="52" fill="#f3e5f5" stroke="#8e24aa" stroke-dasharray="5 4"/>
+<text x="485.0" y="272.0" font-size="12" fill="#6a1b9a" text-anchor="middle">กดค้าง 800 ms</text>
+<path d="M360.0,280 L385.0,280 L385.0,246 L635.0,246 L635.0,280 L660.0,280" fill="none" stroke="#1e88e5" stroke-width="3.5"/>
+<circle cx="585.0" cy="246" r="7" fill="#6a1b9a" stroke="#fff" stroke-width="2"/>
+<text x="585.0" y="304.0" font-size="15" fill="#6a1b9a" text-anchor="middle" font-weight="700">ค้าง!</text>
+<text x="360.0" y="328.0" font-size="13" fill="#37474f" text-anchor="start">ครบเวลา ขึ้นทันที ไม่ต้องรอปล่อย</text>
+<text x="690.0" y="224.0" font-size="16" fill="#1b5e20" text-anchor="start" font-weight="700">ดับเบิล · DOUBLE_MS = 400</text>
+<rect x="745" y="236" width="100" height="52" fill="#e8f5e9" stroke="#2e7d32" stroke-dasharray="5 4"/>
+<path d="M690.0,280 L715.0,280 L715.0,246 L745.0,246 L745.0,280 L785.0,280 L785.0,246 L815.0,246 L815.0,280 L985.0,280" fill="none" stroke="#1e88e5" stroke-width="3.5"/>
+<circle cx="815.0" cy="280" r="7" fill="#1b5e20" stroke="#fff" stroke-width="2"/>
+<text x="815.0" y="304.0" font-size="15" fill="#1b5e20" text-anchor="middle" font-weight="700">ดับเบิล!</text>
+<text x="690.0" y="328.0" font-size="13" fill="#37474f" text-anchor="start">ปล่อยครั้งที่ 2 ภายใน 400 ms หลังปล่อยครั้งแรก</text>
+</svg>

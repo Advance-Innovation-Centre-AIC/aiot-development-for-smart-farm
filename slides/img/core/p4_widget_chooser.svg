@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" font-family="sans-serif">
+<defs>
+<pattern id="p4wc_dot" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="2" fill="#37474f"/></pattern>
+</defs>
+<rect width="1000" height="330" rx="18" fill="#fbfdf9"/>
+
+<!-- cell frames: blue = show a value, orange = take a command -->
+<g fill="#fff" stroke-width="3">
+<g stroke="#1e88e5">
+<rect x="12" y="12" width="188" height="98" rx="12"/><rect x="208" y="12" width="188" height="98" rx="12"/><rect x="404" y="12" width="188" height="98" rx="12"/><rect x="600" y="12" width="188" height="98" rx="12"/><rect x="796" y="12" width="188" height="98" rx="12"/>
+<rect x="12" y="220" width="188" height="98" rx="12"/><rect x="208" y="220" width="188" height="98" rx="12"/><rect x="600" y="220" width="188" height="98" rx="12"/>
+</g>
+<g stroke="#ef6c00">
+<rect x="12" y="116" width="188" height="98" rx="12"/><rect x="208" y="116" width="188" height="98" rx="12"/><rect x="404" y="116" width="188" height="98" rx="12"/><rect x="600" y="116" width="188" height="98" rx="12"/><rect x="796" y="116" width="188" height="98" rx="12"/>
+<rect x="404" y="220" width="188" height="98" rx="12"/>
+</g>
+</g>
+<rect x="796" y="220" width="188" height="98" rx="12" fill="#eceff1" stroke="#b0bec5" stroke-width="3" stroke-dasharray="8 5"/>
+
+<!-- data type titles -->
+<g font-size="17" font-weight="700" fill="#263238">
+<text x="24" y="36">ตัวเลข</text><text x="220" y="36">เปอร์เซ็นต์</text><text x="416" y="36">หน้าปัด</text><text x="612" y="36">ค่าย้อนหลัง</text><text x="808" y="36">สถานะ</text>
+<text x="24" y="140">เปิด / ปิด</text><text x="220" y="140">ค่าตั้ง (set-point)</text><text x="416" y="140">ตัวเลือก</text><text x="612" y="140">คำสั่ง</text><text x="808" y="140">ยืนยันก่อนทำ</text>
+<text x="24" y="244">บันทึกเหตุการณ์</text><text x="220" y="244">หลายหน้า</text><text x="416" y="244">พิมพ์ข้อความ</text><text x="612" y="244">ภาพ 16×8</text>
+</g>
+<!-- widget names -->
+<g font-size="15" font-weight="700">
+<g fill="#1565c0">
+<text x="24" y="100">Label · Seg7</text><text x="220" y="100">Bar · Arc</text><text x="416" y="100">Scale+เข็ม · Compass</text><text x="612" y="100">Chart</text><text x="808" y="100">Led</text>
+<text x="24" y="308">Table · List</text><text x="220" y="308">Tabview</text><text x="612" y="308">DotMatrix</text>
+</g>
+<g fill="#e65100">
+<text x="24" y="204">Switch</text><text x="220" y="204">Slider · Spinbox · Arc</text><text x="416" y="204">Roller · Dropdown</text><text x="612" y="204">Button</text><text x="808" y="204">MsgBox + Button</text>
+<text x="416" y="308">Textarea + Keyboard</text>
+</g>
+</g>
+
+<!-- row 1 minis -->
+<text x="150" y="80" text-anchor="middle" font-size="30" font-weight="700" fill="#263238">31.2</text>
+<rect x="222" y="54" width="104" height="14" rx="7" fill="#e0e0e0"/><rect x="222" y="54" width="62" height="14" rx="7" fill="#1e88e5"/>
+<path d="M346 78 A 20 20 0 1 1 382 78" fill="none" stroke="#e0e0e0" stroke-width="6" stroke-linecap="round"/>
+<path d="M346 78 A 20 20 0 0 1 372 50" fill="none" stroke="#1e88e5" stroke-width="6" stroke-linecap="round"/>
+<g stroke="#546e7a" stroke-width="2">
+<path d="M514 80 A 34 34 0 0 1 582 80" fill="none" stroke="#b0bec5" stroke-width="3"/>
+<line x1="514.0" y1="80" x2="521.0" y2="80"/><line x1="519.0" y1="63" x2="525.0" y2="67"/><line x1="531.0" y1="51" x2="535.0" y2="57"/><line x1="548.0" y1="46" x2="548.0" y2="53"/><line x1="565.0" y1="51" x2="561.0" y2="57"/><line x1="577.0" y1="63" x2="571.0" y2="67"/><line x1="582.0" y1="80" x2="575.0" y2="80"/>
+</g>
+<line x1="548.0" y1="80" x2="568.0" y2="58" stroke="#e53935" stroke-width="4" stroke-linecap="round"/>
+<circle cx="548.0" cy="80" r="5" fill="#263238"/>
+<polyline points="616,78 634,72 652,74 670,62 688,66 706,54 724,58 742,48 772,52" fill="none" stroke="#1e88e5" stroke-width="3"/>
+<circle cx="930" cy="62" r="21" fill="#43a047" opacity="0.25"/><circle cx="930" cy="62" r="13" fill="#43a047"/>
+
+<!-- row 2 minis -->
+<rect x="130" y="150" width="56" height="28" rx="14" fill="#43a047"/><circle cx="172" cy="164" r="11" fill="#fff"/>
+<line x1="222" y1="170" x2="310" y2="170" stroke="#e0e0e0" stroke-width="6" stroke-linecap="round"/>
+<line x1="222" y1="170" x2="268" y2="170" stroke="#ef6c00" stroke-width="6" stroke-linecap="round"/>
+<circle cx="268" cy="170" r="10" fill="#fff" stroke="#ef6c00" stroke-width="3"/>
+<rect x="324" y="156" width="62" height="28" rx="6" fill="#fff" stroke="#b0bec5" stroke-width="2"/>
+<text x="355" y="176" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">28.5</text>
+<g font-size="13" text-anchor="middle">
+<text x="540" y="150" fill="#90a4ae">มือ</text>
+<rect x="498" y="156" width="84" height="22" rx="5" fill="#ffe0b2"/>
+<text x="540" y="172" font-weight="700" fill="#e65100">อัตโนมัติ</text>
+<text x="540" y="192" fill="#90a4ae">ปิด</text>
+</g>
+<rect x="690" y="150" width="86" height="32" rx="8" fill="#4a9eff"/>
+<text x="733" y="171" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">เปิดปั๊ม</text>
+<text x="733" y="140" text-anchor="middle" font-size="12" fill="#e65100">อันตราย → กดค้าง</text>
+<rect x="902" y="146" width="76" height="46" rx="6" fill="#fff" stroke="#546e7a" stroke-width="2"/>
+<text x="940" y="161" text-anchor="middle" font-size="11" font-weight="700" fill="#263238">เปิดปั๊ม?</text>
+<rect x="908" y="168" width="30" height="17" rx="4" fill="#43a047"/><text x="923" y="181" text-anchor="middle" font-size="11" fill="#fff">ใช่</text>
+<rect x="943" y="168" width="30" height="17" rx="4" fill="#90a4ae"/><text x="958" y="181" text-anchor="middle" font-size="11" fill="#fff">ไม่</text>
+
+<!-- row 3 minis -->
+<g stroke="#90a4ae" stroke-width="1.5" fill="none">
+<rect x="130" y="252" width="60" height="36"/><line x1="130" y1="264" x2="190" y2="264"/><line x1="130" y1="276" x2="190" y2="276"/><line x1="156" y1="252" x2="156" y2="288"/>
+</g>
+<rect x="130" y="252" width="60" height="12" fill="#1e88e5" opacity="0.35"/>
+<rect x="306" y="250" width="30" height="14" rx="3" fill="#1e88e5"/><rect x="338" y="250" width="30" height="14" rx="3" fill="#bbdefb"/><rect x="370" y="250" width="20" height="14" rx="3" fill="#bbdefb"/>
+<rect x="306" y="264" width="84" height="26" fill="#e3f2fd" stroke="#1e88e5" stroke-width="1.5"/>
+<rect x="518" y="250" width="66" height="14" rx="3" fill="#fff" stroke="#ef6c00" stroke-width="1.5"/>
+<g fill="#ffe0b2"><rect x="518" y="268" width="14" height="9" rx="2"/><rect x="535" y="268" width="14" height="9" rx="2"/><rect x="552" y="268" width="14" height="9" rx="2"/><rect x="569" y="268" width="14" height="9" rx="2"/><rect x="518" y="280" width="14" height="9" rx="2"/><rect x="535" y="280" width="31" height="9" rx="2"/><rect x="569" y="280" width="14" height="9" rx="2"/></g>
+<rect x="686" y="246" width="96" height="48" fill="url(#p4wc_dot)"/>
+<g fill="#43a047"><circle cx="689" cy="291" r="2.4"/><circle cx="695" cy="291" r="2.4"/><circle cx="695" cy="285" r="2.4"/><circle cx="701" cy="291" r="2.4"/><circle cx="701" cy="285" r="2.4"/><circle cx="701" cy="279" r="2.4"/><circle cx="707" cy="291" r="2.4"/><circle cx="707" cy="285" r="2.4"/><circle cx="713" cy="291" r="2.4"/><circle cx="713" cy="285" r="2.4"/><circle cx="713" cy="279" r="2.4"/><circle cx="713" cy="273" r="2.4"/><circle cx="719" cy="291" r="2.4"/><circle cx="719" cy="285" r="2.4"/><circle cx="719" cy="279" r="2.4"/></g>
+<g fill="#f5a623"><circle cx="725" cy="291" r="2.4"/><circle cx="725" cy="285" r="2.4"/><circle cx="725" cy="279" r="2.4"/><circle cx="725" cy="273" r="2.4"/><circle cx="725" cy="267" r="2.4"/><circle cx="731" cy="291" r="2.4"/><circle cx="731" cy="285" r="2.4"/><circle cx="731" cy="279" r="2.4"/><circle cx="731" cy="273" r="2.4"/><circle cx="731" cy="267" r="2.4"/><circle cx="731" cy="261" r="2.4"/></g>
+<g fill="#e53935"><circle cx="737" cy="291" r="2.4"/><circle cx="737" cy="285" r="2.4"/><circle cx="737" cy="279" r="2.4"/><circle cx="737" cy="273" r="2.4"/><circle cx="737" cy="267" r="2.4"/><circle cx="737" cy="261" r="2.4"/><circle cx="737" cy="255" r="2.4"/></g>
+
+<!-- the widget that does not exist -->
+<text x="890" y="250" text-anchor="middle" font-size="17" font-weight="700" fill="#78909c" text-decoration="line-through">Gauge / Meter</text>
+<text x="890" y="274" text-anchor="middle" font-size="15" font-weight="700" fill="#546e7a">ไม่มีในเฟิร์มแวร์นี้</text>
+<text x="890" y="296" text-anchor="middle" font-size="14" fill="#546e7a">ใช้ Scale · Arc</text>
+<text x="890" y="312" text-anchor="middle" font-size="14" fill="#546e7a">หรือ Compass แทน</text>
+</svg>

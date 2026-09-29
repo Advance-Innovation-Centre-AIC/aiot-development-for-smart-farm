@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+<defs>
+<marker id="p3sb" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1565c0"/></marker>
+<marker id="p3sg" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+<marker id="p3sr" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#c62828"/></marker>
+</defs>
+<rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+<rect x="12" y="56" width="118" height="44" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="71" y="84" text-anchor="middle" font-size="16" font-weight="700" fill="#0d47a1">🖥️ Dev Kit</text>
+<rect x="12" y="214" width="118" height="44" rx="10" fill="#fff3e0" stroke="#ef6c00" stroke-width="2.5"/>
+<text x="71" y="242" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">🔌 PLC</text>
+<line x1="130" y1="78" x2="990" y2="78" stroke="#1565c0" stroke-width="2" stroke-dasharray="3 5"/>
+<line x1="130" y1="236" x2="990" y2="236" stroke="#ef6c00" stroke-width="2" stroke-dasharray="3 5"/>
+<text x="560" y="306" text-anchor="middle" font-size="12.5" fill="#78909c">ข้อความวิ่งผ่าน MQTT broker · เวลาเดินจากซ้ายไปขวา →</text>
+<text x="140" y="22" text-anchor="start" font-size="17" fill="#2e7d32" font-weight="700">A · ปกติ</text>
+<rect x="152" y="38" width="128" height="20" rx="5" fill="#2e7d32" opacity="0.2"/>
+<text x="216" y="53" text-anchor="middle" font-size="12.5" fill="#2e7d32" font-weight="700">รอไม่เกิน TIMEOUT</text>
+<line x1="152" y1="82" x2="205" y2="230" stroke="#1565c0" stroke-width="3.5" marker-end="url(#p3sb)"/>
+<text x="186" y="128" text-anchor="start" font-size="14" fill="#1565c0" font-weight="700">คำสั่ง n=7</text>
+<text x="186" y="146" text-anchor="start" font-size="13" fill="#1565c0">ปั๊ม = 1</text>
+<line x1="222" y1="232" x2="272" y2="84" stroke="#2e7d32" stroke-width="3.5" marker-end="url(#p3sg)"/>
+<text x="252" y="196" text-anchor="start" font-size="14" fill="#2e7d32" font-weight="700">สถานะ n=7</text>
+<text x="252" y="214" text-anchor="start" font-size="13" fill="#2e7d32">ปั๊ม = 1 จริง</text>
+<circle cx="292" cy="78" r="14" fill="#2e7d32"/>
+<text x="292" y="84" text-anchor="middle" font-size="18" fill="#fff" font-weight="700">✓</text>
+<text x="314" y="104" text-anchor="start" font-size="14" fill="#2e7d32" font-weight="700">ยืนยันแล้ว</text>
+<text x="314" y="122" text-anchor="start" font-size="12.5" fill="#2e7d32">เลข n ตรงกัน</text>
+<line x1="400" y1="16" x2="400" y2="300" stroke="#cfd8dc" stroke-width="2"/>
+<text x="416" y="22" text-anchor="start" font-size="17" fill="#c62828" font-weight="700">B · ไม่มีคำยืนยัน</text>
+<rect x="430" y="38" width="160" height="20" rx="5" fill="#c62828" opacity="0.2"/>
+<text x="510" y="53" text-anchor="middle" font-size="12.5" fill="#c62828" font-weight="700">TIMEOUT ครั้งที่ 1</text>
+<line x1="430" y1="82" x2="482" y2="168" stroke="#1565c0" stroke-width="3.5" marker-end="url(#p3sb)"/>
+<path d="M484 170 L500 186 M484 186 L500 170" stroke="#c62828" stroke-width="4" stroke-linecap="round"/>
+<text x="478" y="116" text-anchor="start" font-size="14" fill="#1565c0" font-weight="700">คำสั่ง n=8</text>
+<text x="478" y="204" text-anchor="middle" font-size="12.5" fill="#c62828">หายกลางทาง</text>
+<circle cx="596" cy="78" r="6" fill="#c62828"/>
+<rect x="604" y="38" width="160" height="20" rx="5" fill="#c62828" opacity="0.2"/>
+<text x="684" y="53" text-anchor="middle" font-size="12.5" fill="#c62828" font-weight="700">TIMEOUT ครั้งที่ 2</text>
+<line x1="604" y1="82" x2="656" y2="168" stroke="#1565c0" stroke-width="3.5" stroke-dasharray="8 5" marker-end="url(#p3sb)"/>
+<path d="M658 170 L674 186 M658 186 L674 170" stroke="#c62828" stroke-width="4" stroke-linecap="round"/>
+<text x="652" y="116" text-anchor="start" font-size="14" fill="#1565c0" font-weight="700">ส่งซ้ำ n=8</text>
+<text x="652" y="204" text-anchor="middle" font-size="12.5" fill="#c62828">เงียบอีก</text>
+<rect x="776" y="56" width="212" height="118" rx="12" fill="#ffebee" stroke="#c62828" stroke-width="3"/>
+<text x="882" y="80" text-anchor="middle" font-size="16" fill="#c62828" font-weight="700">⚠ ทางถอยที่ปลอดภัย</text>
+<text x="882" y="104" text-anchor="middle" font-size="13.5" fill="#37474f">จอ: "ไม่ทราบสถานะปั๊ม"</text>
+<text x="882" y="126" text-anchor="middle" font-size="13.5" fill="#37474f">ส่งคำสั่งปิดปั๊ม · เสียงเตือน</text>
+<text x="882" y="148" text-anchor="middle" font-size="13.5" fill="#37474f">ไม่ส่งซ้ำรัว ๆ · รอคนมาดู</text>
+<rect x="430" y="248" width="558" height="30" rx="8" fill="#fff3e0" stroke="#ef6c00" stroke-width="2"/>
+<text x="709" y="269" text-anchor="middle" font-size="13.5" fill="#e65100" font-weight="700">ชั้นสุดท้ายอยู่ที่ PLC: เปิดได้ไม่เกิน 30 วิ · ถังต่ำกว่า 10 % ไม่ยอมเปิด — แม้บอร์ดดับไปเลย</text>
+</svg>

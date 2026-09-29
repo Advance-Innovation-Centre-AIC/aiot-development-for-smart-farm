@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" width="1000" height="300" font-family="sans-serif">
+<defs><marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker><marker id="arO" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#ef6c00"/></marker><marker id="arP" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8e24aa"/></marker></defs>
+<rect x="0" y="0" width="1000" height="300" rx="14" fill="#ffffff"/>
+<rect x="20" y="14" width="120" height="156" rx="16" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+<text x="80.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">🌱</text>
+<text x="80.0" y="94.0" font-size="19" fill="#1b5e20" text-anchor="middle" font-weight="700">ของจริง</text>
+<text x="80.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">ความชื้น</text>
+<text x="80.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">ในดิน</text>
+<text x="80.0" y="204.0" font-size="15" fill="#1b5e20" text-anchor="middle" font-weight="700">ดินชื้นปานกลาง</text>
+<line x1="142" y1="92" x2="159" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="160" y="14" width="120" height="156" rx="16" fill="#e0f2f1" stroke="#00897b" stroke-width="3"/>
+<text x="220.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">🔌</text>
+<text x="220.0" y="94.0" font-size="19" fill="#00695c" text-anchor="middle" font-weight="700">ตัวแปลง</text>
+<text x="220.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">หัววัดดิน</text>
+<text x="220.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">(คลาสนี้ใช้ VR1)</text>
+<text x="220.0" y="204.0" font-size="15" fill="#00695c" text-anchor="middle" font-weight="700">หมุนครึ่งทาง</text>
+<line x1="282" y1="92" x2="299" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="300" y="14" width="120" height="156" rx="16" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
+<text x="360.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">〰️</text>
+<text x="360.0" y="94.0" font-size="19" fill="#1565c0" text-anchor="middle" font-weight="700">สัญญาณ</text>
+<text x="360.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">แรงดัน</text>
+<text x="360.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">0 – 1.8 V</text>
+<text x="360.0" y="204.0" font-size="15" fill="#1565c0" text-anchor="middle" font-weight="700">≈ 0.90 V</text>
+<line x1="422" y1="92" x2="439" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="440" y="14" width="120" height="156" rx="16" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
+<text x="500.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">🔢</text>
+<text x="500.0" y="94.0" font-size="19" fill="#6a1b9a" text-anchor="middle" font-weight="700">ค่าดิบ</text>
+<text x="500.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">0 – 4095</text>
+<text x="500.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">ADC 12 บิต</text>
+<text x="500.0" y="204.0" font-size="15" fill="#6a1b9a" text-anchor="middle" font-weight="700">2048</text>
+<line x1="562" y1="92" x2="579" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="580" y="14" width="120" height="156" rx="16" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
+<text x="640.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">📏</text>
+<text x="640.0" y="94.0" font-size="19" fill="#e65100" text-anchor="middle" font-weight="700">หน่วย</text>
+<text x="640.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">0 – 100 %</text>
+<text x="640.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">แปลง + clamp</text>
+<text x="640.0" y="204.0" font-size="15" fill="#e65100" text-anchor="middle" font-weight="700">50.0 %</text>
+<line x1="702" y1="92" x2="719" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="720" y="14" width="120" height="156" rx="16" fill="#ffebee" stroke="#e53935" stroke-width="3"/>
+<text x="780.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">🎯</text>
+<text x="780.0" y="94.0" font-size="19" fill="#c62828" text-anchor="middle" font-weight="700">สอบเทียบ</text>
+<text x="780.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">จุดแห้ง</text>
+<text x="780.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">+ จุดเปียก</text>
+<text x="780.0" y="204.0" font-size="15" fill="#c62828" text-anchor="middle" font-weight="700">ปรับตามจุดอ้างอิง</text>
+<line x1="842" y1="92" x2="859" y2="92" stroke="#546e7a" stroke-width="3" marker-end="url(#ar)"/>
+<rect x="860" y="14" width="120" height="156" rx="16" fill="#eceff1" stroke="#546e7a" stroke-width="3"/>
+<text x="920.0" y="56.0" font-size="32" fill="#37474f" text-anchor="middle">⏱️</text>
+<text x="920.0" y="94.0" font-size="19" fill="#37474f" text-anchor="middle" font-weight="700">เวลากำกับ</text>
+<text x="920.0" y="122.0" font-size="15" fill="#37474f" text-anchor="middle">ticks_ms()</text>
+<text x="920.0" y="144.0" font-size="14" fill="#546e7a" text-anchor="middle">วัดเมื่อไร</text>
+<text x="920.0" y="204.0" font-size="15" fill="#37474f" text-anchor="middle" font-weight="700">t = 12 345 ms</text>
+<rect x="20" y="182" width="960" height="34" rx="8" fill="none" stroke="#b0bec5" stroke-dasharray="6 5"/>
+<text x="500.0" y="236.0" font-size="14" fill="#546e7a" text-anchor="middle">▲ ตัวอย่างหนึ่งชุด: ลูกบิดอยู่กลาง (ตัวเลขสมมติเพื่อให้เห็นภาพ)</text>
+<text x="20.0" y="276.0" font-size="15" fill="#37474f" text-anchor="start" font-weight="700">ทางเดินสัญญาณ</text>
+<rect x="140" y="256" width="200" height="30" rx="15" fill="#1e88e5"/>
+<text x="240.0" y="277.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">ปุ่ม SW5 · SW6 → ขาดิจิทัล</text>
+<rect x="350" y="256" width="180" height="30" rx="15" fill="#00897b"/>
+<text x="440.0" y="277.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">VR1–VR4 → ADC 12 บิต</text>
+<rect x="540" y="256" width="250" height="30" rx="15" fill="#8e24aa"/>
+<text x="665.0" y="277.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">SHT40 · DPS368 · BMI270 → I²C</text>
+<rect x="800" y="256" width="200" height="30" rx="15" fill="#ef6c00"/>
+<text x="900.0" y="277.0" font-size="14" fill="#ffffff" text-anchor="middle" font-weight="700">ไมค์ → สตรีม PDM 16 kHz</text>
+</svg>

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+  <defs>
+    <marker id="p3gb" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1565c0"/></marker>
+    <marker id="p3gg" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+    <marker id="p3gx" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#90a4ae"/></marker>
+  </defs>
+  <rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+  <!-- band labels -->
+  <rect x="14" y="10" width="438" height="26" rx="8" fill="#e3f2fd"/>
+  <text x="233" y="29" text-anchor="middle" font-size="15" font-weight="700" fill="#0d47a1">โลก IoT: MQTT (JSON)</text>
+  <rect x="648" y="10" width="338" height="26" rx="8" fill="#e8f5e9"/>
+  <text x="817" y="29" text-anchor="middle" font-size="15" font-weight="700" fill="#1b5e20">โลกโรงงาน: Modbus TCP (ไบต์)</text>
+  <!-- Dev Kit -->
+  <rect x="14" y="48" width="170" height="122" rx="14" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
+  <text x="99" y="76" text-anchor="middle" font-size="17" font-weight="700" fill="#0d47a1">🖥️ Dev Kit</text>
+  <text x="99" y="100" text-anchor="middle" font-size="13.5" fill="#37474f">สร้างกรอบ 12 ไบต์</text>
+  <text x="99" y="118" text-anchor="middle" font-size="13.5" fill="#37474f">ด้วย struct · โชว์บนจอ</text>
+  <text x="99" y="140" text-anchor="middle" font-size="13.5" fill="#37474f">ส่ง "ความตั้งใจ"</text>
+  <text x="99" y="158" text-anchor="middle" font-size="13.5" fill="#37474f">+ กรอบ (hex)</text>
+  <!-- broker -->
+  <rect x="236" y="70" width="122" height="78" rx="12" fill="#eceff1" stroke="#455a64" stroke-width="3"/>
+  <text x="297" y="102" text-anchor="middle" font-size="15" font-weight="700" fill="#455a64">MQTT</text>
+  <text x="297" y="124" text-anchor="middle" font-size="15" font-weight="700" fill="#455a64">broker</text>
+  <!-- bridge -->
+  <rect x="410" y="48" width="200" height="122" rx="14" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
+  <text x="510" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="#e65100">💻 โน้ตบุ๊ก = Gateway</text>
+  <text x="510" y="98" text-anchor="middle" font-size="13" font-family="monospace" fill="#e65100">modbus_bridge.py</text>
+  <text x="510" y="122" text-anchor="middle" font-size="13.5" fill="#37474f">ตรวจกรอบ → ส่งทุกไบต์ต่อ</text>
+  <text x="510" y="142" text-anchor="middle" font-size="13.5" fill="#37474f">รอ PLC ไม่เกิน 2 วิ</text>
+  <text x="510" y="160" text-anchor="middle" font-size="13.5" fill="#37474f">ไม่ตอบ = บอกตรง ๆ</text>
+  <!-- PLC -->
+  <rect x="742" y="48" width="244" height="122" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+  <text x="864" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="#1b5e20">🔌 PLC จำลอง</text>
+  <text x="864" y="98" text-anchor="middle" font-size="13" font-family="monospace" fill="#1b5e20">modbus_plc_sim.py</text>
+  <text x="864" y="122" text-anchor="middle" font-size="13.5" fill="#37474f">HR0 ปั๊ม · HR1 ดิน · HR2 ถัง</text>
+  <text x="864" y="142" text-anchor="middle" font-size="13.5" fill="#37474f">ระบบป้องกันของตัวเอง</text>
+  <text x="864" y="160" text-anchor="middle" font-size="13.5" fill="#78909c">ของจริง: PLC · VFD · มิเตอร์</text>
+  <!-- arrows -->
+  <line x1="186" y1="96" x2="230" y2="96" stroke="#1565c0" stroke-width="3.5" marker-end="url(#p3gb)"/>
+  <line x1="360" y1="96" x2="404" y2="96" stroke="#1565c0" stroke-width="3.5" marker-end="url(#p3gb)"/>
+  <line x1="404" y1="126" x2="364" y2="126" stroke="#2e7d32" stroke-width="3.5" marker-end="url(#p3gg)"/>
+  <line x1="230" y1="126" x2="190" y2="126" stroke="#2e7d32" stroke-width="3.5" marker-end="url(#p3gg)"/>
+  <line x1="612" y1="96" x2="736" y2="96" stroke="#1565c0" stroke-width="3.5" marker-end="url(#p3gb)"/>
+  <line x1="736" y1="126" x2="616" y2="126" stroke="#2e7d32" stroke-width="3.5" marker-end="url(#p3gg)"/>
+  <text x="674" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#1565c0">12 ไบต์เดิม</text>
+  <text x="674" y="148" text-anchor="middle" font-size="13" font-weight="700" fill="#2e7d32">คำตอบ</text>
+  <text x="674" y="166" text-anchor="middle" font-size="12.5" fill="#546e7a">TCP :5020</text>
+  <!-- topic + JSON -->
+  <g font-size="13.5">
+    <text x="40" y="200" font-weight="700" fill="#1565c0">…/modbus/req</text>
+    <text x="152" y="200" font-family="monospace" fill="#0d47a1">{"n":1,"fc":6,"addr":0,"value":1,"hex":"000100000006010600000001"}</text>
+    <text x="40" y="224" font-weight="700" fill="#2e7d32">…/modbus/resp</text>
+    <text x="152" y="224" font-family="monospace" fill="#1b5e20">{"n":1,"ok":1,"hex":"000100000006010600000001","v":[1]}</text>
+    <text x="152" y="246" fill="#546e7a">"n" ใช้จับคู่คำขอกับคำตอบ · ok = 1 เฉพาะเมื่อ PLC ยืนยันแล้ว · ไม่สำเร็จจะได้ "exc" หรือ "err" แทน</text>
+  </g>
+  <!-- future branch -->
+  <path d="M26 172 L26 290 L200 290" fill="none" stroke="#90a4ae" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#p3gx)"/>
+  <rect x="206" y="268" width="780" height="42" rx="10" fill="#f5f5f5" stroke="#90a4ae" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="222" y="295" font-size="14.5" fill="#546e7a"><tspan font-weight="700">อนาคต (ยังไม่มีในเฟิร์มแวร์):</tspan> RS-485 บนบอร์ดฐาน → Modbus RTU → หัววัดดิน · VFD โดยไม่ต้องมีโน้ตบุ๊ก</text>
+</svg>

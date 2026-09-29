@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" font-family="sans-serif">
+<defs><marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker><marker id="arO" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#ef6c00"/></marker><marker id="arP" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8e24aa"/></marker></defs>
+<rect x="0" y="0" width="1000" height="330" rx="14" fill="#ffffff"/>
+<rect x="16" y="10" width="184" height="222" rx="14" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
+<path d="M16 24 a14 14 0 0 1 14 -14 h156 a14 14 0 0 1 14 14 v28 h-184 z" fill="#1e88e5"/>
+<text x="108.0" y="40.0" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="700">เหตุการณ์ · event</text>
+<rect x="28" y="62" width="160" height="58" rx="8" fill="#ffffff"/>
+<path d="M32.0,112.0 L70.0,112.0 L70.0,70.0 L82.2,70.0 L82.2,112.0 L138.4,112.0 L138.4,70.0 L147.5,70.0 L147.5,112.0 L184.0,112.0" fill="none" stroke="#1e88e5" stroke-width="3"/>
+<text x="108.0" y="144.0" font-size="15" fill="#1565c0" text-anchor="middle" font-weight="700">SW5 · SW6</text>
+<text x="108.0" y="164.0" font-size="14" fill="#37474f" text-anchor="middle">เรดาร์ presence</text>
+<text x="108.0" y="190.0" font-size="14" fill="#37474f" text-anchor="middle">เกิดเมื่อมีเรื่อง</text>
+<text x="108.0" y="217.0" font-size="17" fill="#1565c0" text-anchor="middle" font-weight="700">≈ 0 B/s ตอนเงียบ</text>
+<rect x="212" y="10" width="184" height="222" rx="14" fill="#e0f2f1" stroke="#00897b" stroke-width="3"/>
+<path d="M212 24 a14 14 0 0 1 14 -14 h156 a14 14 0 0 1 14 14 v28 h-184 z" fill="#00897b"/>
+<text x="304.0" y="40.0" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="700">ระดับ · level</text>
+<rect x="224" y="62" width="160" height="58" rx="8" fill="#ffffff"/>
+<path d="M228.0,105.7 L255.4,105.7 L255.4,99.4 L282.7,99.4 L282.7,88.9 L311.6,88.9 L311.6,91.0 L337.4,91.0 L337.4,80.5 L380.0,80.5" fill="none" stroke="#00897b" stroke-width="3"/>
+<text x="304.0" y="144.0" font-size="15" fill="#00695c" text-anchor="middle" font-weight="700">VR1 – VR4</text>
+<text x="304.0" y="164.0" font-size="14" fill="#37474f" text-anchor="middle">12 บิต 0–4095</text>
+<text x="304.0" y="190.0" font-size="14" fill="#37474f" text-anchor="middle">2 ครั้ง/วิ ก็พอ</text>
+<text x="304.0" y="217.0" font-size="17" fill="#00695c" text-anchor="middle" font-weight="700">≈ 16 B/s</text>
+<rect x="408" y="10" width="184" height="222" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+<path d="M408 24 a14 14 0 0 1 14 -14 h156 a14 14 0 0 1 14 14 v28 h-184 z" fill="#2e7d32"/>
+<text x="500.0" y="40.0" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="700">ค่าเดี่ยว · scalar</text>
+<rect x="420" y="62" width="160" height="58" rx="8" fill="#ffffff"/>
+<circle cx="434.0" cy="101.5" r="5" fill="#2e7d32"/>
+<circle cx="460.4" cy="96.6" r="5" fill="#2e7d32"/>
+<circle cx="486.8" cy="92.9" r="5" fill="#2e7d32"/>
+<circle cx="513.2" cy="90.5" r="5" fill="#2e7d32"/>
+<circle cx="539.6" cy="88.2" r="5" fill="#2e7d32"/>
+<circle cx="566.0" cy="84.9" r="5" fill="#2e7d32"/>
+<text x="500.0" y="144.0" font-size="15" fill="#1b5e20" text-anchor="middle" font-weight="700">SHT40 · DPS368</text>
+<text x="500.0" y="164.0" font-size="14" fill="#37474f" text-anchor="middle">°C · %RH · hPa</text>
+<text x="500.0" y="190.0" font-size="14" fill="#37474f" text-anchor="middle">1 ครั้ง/วิ อ่านช้า ๆ</text>
+<text x="500.0" y="217.0" font-size="17" fill="#1b5e20" text-anchor="middle" font-weight="700">≈ 12 B/s</text>
+<rect x="604" y="10" width="184" height="222" rx="14" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
+<path d="M604 24 a14 14 0 0 1 14 -14 h156 a14 14 0 0 1 14 14 v28 h-184 z" fill="#8e24aa"/>
+<text x="696.0" y="40.0" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="700">เวกเตอร์ · vector</text>
+<rect x="616" y="62" width="160" height="58" rx="8" fill="#ffffff"/>
+<path d="M620.0,79.0 L623.8,82.0 L627.6,84.5 L631.4,85.8 L635.2,85.8 L639.0,84.4 L642.8,82.0 L646.6,78.9 L650.4,75.9 L654.2,73.5 L658.0,72.2 L661.8,72.2 L665.6,73.6 L669.4,76.1 L673.2,79.1 L677.0,82.2 L680.8,84.6 L684.6,85.9 L688.4,85.8 L692.2,84.4 L696.0,81.9 L699.8,78.8 L703.6,75.8 L707.4,73.4 L711.2,72.1 L715.0,72.2 L718.8,73.7 L722.6,76.2 L726.4,79.2 L730.2,82.3 L734.0,84.6 L737.8,85.9 L741.6,85.8 L745.4,84.3 L749.2,81.8 L753.0,78.7 L756.8,75.7 L760.6,73.3 L764.4,72.1 L768.2,72.3 L772.0,73.7" fill="none" stroke="#e53935" stroke-width="2"/>
+<path d="M620.0,97.9 L623.8,96.9 L627.6,94.6 L631.4,91.6 L635.2,88.5 L639.0,85.9 L642.8,84.3 L646.6,84.1 L650.4,85.2 L654.2,87.4 L658.0,90.4 L661.8,93.5 L665.6,96.1 L669.4,97.7 L673.2,97.9 L677.0,96.8 L680.8,94.5 L684.6,91.5 L688.4,88.4 L692.2,85.9 L696.0,84.3 L699.8,84.1 L703.6,85.2 L707.4,87.5 L711.2,90.5 L715.0,93.6 L718.8,96.2 L722.6,97.7 L726.4,97.9 L730.2,96.7 L734.0,94.4 L737.8,91.4 L741.6,88.3 L745.4,85.8 L749.2,84.3 L753.0,84.1 L756.8,85.3 L760.6,87.6 L764.4,90.7 L768.2,93.7 L772.0,96.3" fill="none" stroke="#43a047" stroke-width="2"/>
+<path d="M620.0,101.2 L623.8,98.4 L627.6,96.6 L631.4,96.0 L635.2,96.8 L639.0,98.9 L642.8,101.7 L646.6,104.8 L650.4,107.6 L654.2,109.4 L658.0,110.0 L661.8,109.2 L665.6,107.1 L669.4,104.2 L673.2,101.1 L677.0,98.4 L680.8,96.5 L684.6,96.0 L688.4,96.9 L692.2,99.0 L696.0,101.8 L699.8,105.0 L703.6,107.7 L707.4,109.5 L711.2,110.0 L715.0,109.1 L718.8,107.0 L722.6,104.1 L726.4,101.0 L730.2,98.3 L734.0,96.5 L737.8,96.0 L741.6,96.9 L745.4,99.1 L749.2,102.0 L753.0,105.1 L756.8,107.8 L760.6,109.5 L764.4,110.0 L768.2,109.0 L772.0,106.9" fill="none" stroke="#1e88e5" stroke-width="2"/>
+<text x="696.0" y="144.0" font-size="15" fill="#6a1b9a" text-anchor="middle" font-weight="700">BMI270 6 แกน</text>
+<text x="696.0" y="164.0" font-size="14" fill="#37474f" text-anchor="middle">BMM350 3 แกน</text>
+<text x="696.0" y="190.0" font-size="14" fill="#37474f" text-anchor="middle">20 ครั้ง/วิ</text>
+<text x="696.0" y="217.0" font-size="17" fill="#6a1b9a" text-anchor="middle" font-weight="700">≈ 240 B/s</text>
+<rect x="800" y="10" width="184" height="222" rx="14" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
+<path d="M800 24 a14 14 0 0 1 14 -14 h156 a14 14 0 0 1 14 14 v28 h-184 z" fill="#ef6c00"/>
+<text x="892.0" y="40.0" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="700">สตรีม · stream</text>
+<rect x="812" y="62" width="160" height="58" rx="8" fill="#ffffff"/>
+<path d="M816.0,91.0 L816.6,102.2 L817.3,97.1 L817.9,82.8 L818.5,80.4 L819.2,93.6 L819.8,103.3 L820.4,95.0 L821.1,80.6 L821.7,81.4 L822.3,96.4 L823.0,103.7 L823.6,92.4 L824.2,78.8 L824.9,83.0 L825.5,99.1 L826.1,103.6 L826.8,89.5 L827.4,77.4 L828.0,85.2 L828.7,101.7 L829.3,102.7 L829.9,86.4 L830.6,76.7 L831.2,87.9 L831.8,103.9 L832.5,101.1 L833.1,83.3 L833.7,76.6 L834.4,91.0 L835.0,105.6 L835.6,98.9 L836.3,80.4 L836.9,77.3 L837.5,94.4 L838.2,106.7 L838.8,96.0 L839.4,77.8 L840.1,78.8 L840.7,97.8 L841.3,107.1 L842.0,92.8 L842.6,75.7 L843.2,81.0 L843.9,101.1 L844.5,106.6 L845.1,89.1 L845.8,74.2 L846.4,83.8 L847.0,104.1 L847.7,105.3 L848.3,85.4 L848.9,73.5 L849.6,87.2 L850.2,106.6 L850.8,103.2 L851.5,81.8 L852.1,73.7 L852.7,91.0 L853.4,108.5 L854.0,100.4 L854.6,78.4 L855.3,74.8 L855.9,95.0 L856.5,109.5 L857.2,96.9 L857.8,75.5 L858.4,76.7 L859.1,99.0 L859.7,109.7 L860.3,93.0 L861.0,73.2 L861.6,79.4 L862.2,102.7 L862.9,108.9 L863.5,88.9 L864.1,71.8 L864.8,82.8 L865.4,106.0 L866.0,107.3 L866.7,84.7 L867.3,71.2 L867.9,86.8 L868.6,108.6 L869.2,104.7 L869.8,80.6 L870.5,71.7 L871.1,91.1 L871.7,110.5 L872.4,101.4 L873.0,77.0 L873.6,73.1 L874.3,95.4 L874.9,111.4 L875.5,97.5 L876.2,74.0 L876.8,75.4 L877.4,99.7 L878.1,111.3 L878.7,93.2 L879.3,71.8 L880.0,78.5 L880.6,103.6 L881.2,110.3 L881.9,88.7 L882.5,70.4 L883.1,82.3 L883.8,106.9 L884.4,108.2 L885.0,84.3 L885.7,70.1 L886.3,86.6 L886.9,109.5 L887.6,105.4 L888.2,80.1 L888.8,70.8 L889.5,91.1 L890.1,111.2 L890.7,101.8 L891.4,76.5 L892.0,72.5 L892.6,95.6 L893.3,112.0 L893.9,97.6 L894.5,73.6 L895.2,75.1 L895.8,99.9 L896.4,111.7 L897.1,93.2 L897.7,71.5 L898.3,78.4 L899.0,103.7 L899.6,110.4 L900.2,88.7 L900.9,70.4 L901.5,82.3 L902.1,106.9 L902.8,108.1 L903.4,84.3 L904.0,70.3 L904.7,86.6 L905.3,109.3 L905.9,105.1 L906.6,80.3 L907.2,71.2 L907.8,91.1 L908.5,110.7 L909.1,101.4 L909.7,76.9 L910.4,73.1 L911.0,95.5 L911.6,111.2 L912.3,97.4 L912.9,74.3 L913.5,75.8 L914.2,99.5 L914.8,110.7 L915.4,93.1 L916.1,72.5 L916.7,79.1 L917.3,103.0 L918.0,109.2 L918.6,88.8 L919.2,71.7 L919.9,82.9 L920.5,105.9 L921.1,107.0 L921.8,84.8 L922.4,71.8 L923.0,87.0 L923.7,107.9 L924.3,104.0 L924.9,81.2 L925.6,72.9 L926.2,91.1 L926.8,109.0 L927.5,100.5 L928.1,78.2 L928.7,74.8 L929.4,95.0 L930.0,109.2 L930.6,96.7 L931.3,76.0 L931.9,77.4 L932.5,98.6 L933.2,108.5 L933.8,92.8 L934.4,74.6 L935.1,80.5 L935.7,101.6 L936.3,107.0 L937.0,89.0 L937.6,74.1 L938.2,84.0 L938.9,103.9 L939.5,104.8 L940.1,85.6 L940.8,74.4 L941.4,87.6 L942.0,105.5 L942.7,102.1 L943.3,82.6 L943.9,75.6 L944.6,91.1 L945.2,106.3 L945.8,99.0 L946.5,80.2 L947.1,77.3 L947.7,94.4 L948.4,106.3 L949.0,95.8 L949.6,78.5 L950.3,79.7 L950.9,97.3 L951.5,105.5 L952.2,92.5 L952.8,77.5 L953.4,82.4 L954.1,99.7 L954.7,104.1 L955.3,89.4 L956.0,77.3 L956.6,85.3 L957.2,101.5 L957.9,102.1 L958.5,86.6 L959.1,77.8 L959.8,88.3 L960.4,102.6 L961.0,99.8 L961.7,84.3 L962.3,78.8 L962.9,91.1 L963.6,103.0 L964.2,97.3 L964.8,82.6 L965.5,80.4 L966.1,93.6 L966.7,102.8 L967.4,94.6 L968.0,81.4" fill="none" stroke="#ef6c00" stroke-width="1.4"/>
+<text x="892.0" y="144.0" font-size="15" fill="#e65100" text-anchor="middle" font-weight="700">ไมค์ PDM</text>
+<text x="892.0" y="164.0" font-size="14" fill="#37474f" text-anchor="middle">16 บิตต่อตัวอย่าง</text>
+<text x="892.0" y="190.0" font-size="14" fill="#37474f" text-anchor="middle">16 000 ตัวอย่าง/วิ</text>
+<text x="892.0" y="217.0" font-size="17" fill="#e65100" text-anchor="middle" font-weight="700">32 000 B/s</text>
+<text x="20.0" y="268.0" font-size="15" fill="#37474f" text-anchor="start" font-weight="700">ข้อมูลต่อวินาที</text>
+<text x="20.0" y="288.0" font-size="13" fill="#546e7a" text-anchor="start">(สเกล log)</text>
+<line x1="190" y1="280" x2="940" y2="280" stroke="#90a4ae" stroke-width="3"/>
+<line x1="190" y1="273" x2="190" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="190.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">1 B/s</text>
+<line x1="340" y1="273" x2="340" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="340.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">10 B/s</text>
+<line x1="490" y1="273" x2="490" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="490.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">100 B/s</text>
+<line x1="640" y1="273" x2="640" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="640.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">1 k B/s</text>
+<line x1="790" y1="273" x2="790" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="790.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">10 k B/s</text>
+<line x1="940" y1="273" x2="940" y2="287" stroke="#90a4ae" stroke-width="2"/>
+<text x="940.0" y="306.0" font-size="13" fill="#546e7a" text-anchor="middle">100 k B/s</text>
+<circle cx="351.9" cy="280" r="8" fill="#2e7d32" stroke="#fff" stroke-width="2"/>
+<text x="347.9" y="262.0" font-size="13" fill="#2e7d32" text-anchor="end" font-weight="700">ค่าเดี่ยว</text>
+<circle cx="370.6" cy="280" r="8" fill="#00897b" stroke="#fff" stroke-width="2"/>
+<text x="374.6" y="262.0" font-size="13" fill="#00897b" text-anchor="start" font-weight="700">ระดับ</text>
+<circle cx="547.0" cy="280" r="8" fill="#8e24aa" stroke="#fff" stroke-width="2"/>
+<text x="547.0" y="262.0" font-size="13" fill="#8e24aa" text-anchor="middle" font-weight="700">เวกเตอร์</text>
+<circle cx="865.8" cy="280" r="8" fill="#ef6c00" stroke="#fff" stroke-width="2"/>
+<text x="865.8" y="262.0" font-size="13" fill="#ef6c00" text-anchor="middle" font-weight="700">สตรีม</text>
+<circle cx="190" cy="280" r="8" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+<text x="190.0" y="262.0" font-size="13" fill="#1e88e5" text-anchor="middle" font-weight="700">เหตุการณ์ ≈ 0</text>
+<text x="990.0" y="326.0" font-size="12" fill="#546e7a" text-anchor="end">≈ = ประมาณที่อัตราในไฟล์ของคอร์สนี้ · สตรีม 32 000 B/s = 16 000 × 2 ไบต์</text>
+</svg>

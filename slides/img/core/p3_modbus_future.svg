@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+<defs><marker id="p3fa" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6a1b9a"/></marker></defs>
+<rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+<text x="14" y="30" text-anchor="start" font-size="17" fill="#1565c0" font-weight="700">(a) Modbus TCP · ผ่าน Wi-Fi · พอร์ต 502</text>
+<rect x="14" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="35" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<rect x="59" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="80" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<rect x="104" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="125" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<rect x="149" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="170" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<rect x="194" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="215" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">00</text>
+<rect x="239" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="260" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">06</text>
+<rect x="284" y="44" width="42" height="40" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.2"/>
+<text x="305" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#1565c0">01</text>
+<rect x="329" y="44" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="350" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">06</text>
+<rect x="374" y="44" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="395" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="419" y="44" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="440" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="464" y="44" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="485" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="509" y="44" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="530" y="71" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">01</text>
+<text x="171" y="102" text-anchor="middle" font-size="13" fill="#1565c0">MBAP 7 ไบต์ (ไม่มี CRC · TCP ตรวจให้แล้ว)</text>
+<text x="441" y="102" text-anchor="middle" font-size="13" fill="#2e7d32" font-weight="700">PDU 5 ไบต์</text>
+<text x="14" y="176" text-anchor="start" font-size="17" fill="#6a1b9a" font-weight="700">(b) Modbus RTU · RS-485</text>
+<text x="276" y="216" text-anchor="end" font-size="12.5" fill="#78909c">เว้นช่วงเงียบคั่นกรอบ ▸</text>
+<rect x="284" y="190" width="42" height="40" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="2.2"/>
+<text x="305" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#6a1b9a">01</text>
+<rect x="329" y="190" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="350" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">06</text>
+<rect x="374" y="190" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="395" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="419" y="190" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="440" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="464" y="190" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="485" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">00</text>
+<rect x="509" y="190" width="42" height="40" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.2"/>
+<text x="530" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#2e7d32">01</text>
+<rect x="554" y="190" width="42" height="40" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="2.2"/>
+<text x="575" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#e65100">48</text>
+<rect x="599" y="190" width="42" height="40" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="2.2"/>
+<text x="620" y="217" text-anchor="middle" font-size="18" font-weight="700" font-family="monospace" fill="#e65100">0A</text>
+<text x="305" y="248" text-anchor="middle" font-size="13" fill="#6a1b9a" font-weight="700">address</text>
+<text x="441" y="248" text-anchor="middle" font-size="13" fill="#2e7d32" font-weight="700">PDU 5 ไบต์ (ชุดเดิม)</text>
+<text x="597" y="248" text-anchor="middle" font-size="13" fill="#e65100" font-weight="700">CRC 2 ไบต์</text>
+<line x1="350" y1="86" x2="350" y2="188" stroke="#a5d6a7" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="395" y1="86" x2="395" y2="188" stroke="#a5d6a7" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="440" y1="86" x2="440" y2="188" stroke="#a5d6a7" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="485" y1="86" x2="485" y2="188" stroke="#a5d6a7" stroke-width="2" stroke-dasharray="4 4"/>
+<line x1="530" y1="86" x2="530" y2="188" stroke="#a5d6a7" stroke-width="2" stroke-dasharray="4 4"/>
+<rect x="349" y="128" width="185" height="26" rx="13" fill="#2e7d32"/>
+<text x="441" y="146" text-anchor="middle" font-size="14" fill="#fff" font-weight="700">PDU เดียวกันทุกไบต์</text>
+<path d="M305 86 C 275 130, 275 150, 305 186" fill="none" stroke="#6a1b9a" stroke-width="2.5" marker-end="url(#p3fa)"/>
+<text x="265" y="140" text-anchor="end" font-size="12.5" fill="#6a1b9a">unit id ย้ายไป</text>
+<text x="265" y="156" text-anchor="end" font-size="12.5" fill="#6a1b9a">เป็น address</text>
+<rect x="690" y="14" width="296" height="112" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="2.5"/>
+<text x="704" y="40" text-anchor="start" font-size="15.5" fill="#1565c0" font-weight="700">ต้องมีเพิ่ม (a)</text>
+<text x="704" y="64" text-anchor="start" font-size="14" fill="#37474f">โมดูล modbus ภาษา C</text>
+<text x="704" y="84" text-anchor="start" font-size="14" fill="#37474f">บน network stack เดิมของบอร์ด</text>
+<text x="704" y="108" text-anchor="start" font-size="13.5" fill="#546e7a">→ บอร์ดคุยกับ PLC ได้เองทาง Wi-Fi</text>
+<rect x="690" y="160" width="296" height="112" rx="12" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="2.5"/>
+<text x="704" y="186" text-anchor="start" font-size="15.5" fill="#6a1b9a" font-weight="700">ต้องมีเพิ่ม (b)</text>
+<text x="704" y="210" text-anchor="start" font-size="14" fill="#37474f">ผูก UART + ขาคุมทิศส่ง/รับ</text>
+<text x="704" y="230" text-anchor="start" font-size="14" fill="#37474f">ของชิป RS-485 บนบอร์ดฐาน</text>
+<text x="704" y="254" text-anchor="start" font-size="13" fill="#546e7a">ใช้ขาร่วมกับปุ่ม SW5/SW6 (DIP switch เลือก)</text>
+<rect x="14" y="282" width="972" height="30" rx="8" fill="#eceff1"/>
+<text x="500" y="302" text-anchor="middle" font-size="14.5" fill="#455a64" font-weight="700">ทั้ง (a) และ (b) เป็นงานเฟิร์มแวร์ที่เป็นไปได้ในอนาคต — ยังไม่มีในบอร์ดวันนี้ และยังไม่มีกำหนดวัน</text>
+</svg>

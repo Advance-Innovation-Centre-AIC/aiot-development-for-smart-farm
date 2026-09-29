@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+  <defs>
+    <marker id="a" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker>
+    <marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#c62828"/></marker>
+    <marker id="ag" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+    <marker id="ap" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6a1b9a"/></marker>
+  </defs>
+  <rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+  <rect x="8" y="150" width="188" height="112" rx="14" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
+  <text x="102.0" y="179" font-size="21" fill="#1565c0" text-anchor="middle" font-weight="700">① ดิบ <tspan font-size="15" font-weight="400" fill="#546e7a">raw</tspan></text>
+  <rect x="20" y="187" width="164" height="24" rx="12" fill="#fff" stroke="#1e88e5" stroke-width="1.5"/>
+  <text x="102.0" y="204" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">31.2 31.5 85 31.4</text>
+  <text x="102.0" y="234" font-size="15" fill="#455a64" text-anchor="middle">sht40 · pots · mic</text>
+  <rect x="207" y="118" width="188" height="144" rx="14" fill="#ede7f6" stroke="#5e35b1" stroke-width="3"/>
+  <text x="301.0" y="147" font-size="21" fill="#4527a0" text-anchor="middle" font-weight="700">② สะอาด <tspan font-size="15" font-weight="400" fill="#546e7a">clean</tspan></text>
+  <rect x="219" y="155" width="164" height="24" rx="12" fill="#fff" stroke="#5e35b1" stroke-width="1.5"/>
+  <text x="301.0" y="172" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">31.4 (ตัด 85 ทิ้ง)</text>
+  <text x="301.0" y="202" font-size="15" fill="#455a64" text-anchor="middle">EMA · Median</text>
+  <text x="301.0" y="222" font-size="15" fill="#455a64" text-anchor="middle">Kalman1D · HPF</text>
+  <rect x="406" y="86" width="188" height="176" rx="14" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
+  <text x="500.0" y="115" font-size="21" fill="#6a1b9a" text-anchor="middle" font-weight="700">③ ฟีเจอร์ <tspan font-size="15" font-weight="400" fill="#546e7a">feature</tspan></text>
+  <rect x="418" y="123" width="164" height="24" rx="12" fill="#fff" stroke="#8e24aa" stroke-width="1.5"/>
+  <text x="500.0" y="140" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">z = 2.6</text>
+  <rect x="418" y="151" width="164" height="24" rx="12" fill="#fff" stroke="#8e24aa" stroke-width="1.5"/>
+  <text x="500.0" y="168" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">+0.8 °C / นาที</text>
+  <text x="500.0" y="198" font-size="15" fill="#455a64" text-anchor="middle">mean · std · z-score</text>
+  <text x="500.0" y="218" font-size="15" fill="#455a64" text-anchor="middle">ความชัน · FFT</text>
+  <text x="500.0" y="238" font-size="15" fill="#455a64" text-anchor="middle">จุดน้ำค้าง</text>
+  <rect x="605" y="54" width="188" height="208" rx="14" fill="#fce4ec" stroke="#ad1457" stroke-width="3"/>
+  <text x="699.0" y="83" font-size="21" fill="#880e4f" text-anchor="middle" font-weight="700">④ ตัดสิน <tspan font-size="15" font-weight="400" fill="#546e7a">decision</tspan></text>
+  <rect x="617" y="91" width="164" height="24" rx="12" fill="#fff" stroke="#ad1457" stroke-width="1.5"/>
+  <text x="699.0" y="108" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">สถานะ = WATCH</text>
+  <text x="699.0" y="138" font-size="15" fill="#455a64" text-anchor="middle">threshold · hysteresis</text>
+  <text x="699.0" y="158" font-size="15" fill="#455a64" text-anchor="middle">hold-time</text>
+  <text x="699.0" y="178" font-size="15" fill="#455a64" text-anchor="middle">state machine</text>
+  <text x="699.0" y="198" font-size="15" fill="#455a64" text-anchor="middle">สถิติ · AI + ด่าน</text>
+  <rect x="804" y="22" width="188" height="240" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+  <text x="898.0" y="51" font-size="21" fill="#1b5e20" text-anchor="middle" font-weight="700">⑤ ทำ <tspan font-size="15" font-weight="400" fill="#546e7a">action</tspan></text>
+  <rect x="816" y="59" width="164" height="24" rx="12" fill="#fff" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="898.0" y="76" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">เปิดพัดลม</text>
+  <text x="898.0" y="106" font-size="15" fill="#455a64" text-anchor="middle">ไฟ · เสียง · MQTT</text>
+  <text x="898.0" y="126" font-size="15" fill="#455a64" text-anchor="middle">สั่งปั๊ม / PLC</text>
+  <rect x="8" y="272" width="188" height="38" rx="10" fill="#1e88e5"/>
+  <text x="102.0" y="297" font-size="17" fill="#fff" text-anchor="middle" font-weight="700">Part 1 วัด</text>
+  <rect x="207" y="272" width="586" height="38" rx="10" fill="#8e24aa"/>
+  <text x="500.0" y="297" font-size="17" fill="#fff" text-anchor="middle" font-weight="700">Part 2 ประมวลผล &amp; ตัดสิน — วันนี้ตรงนี้</text>
+  <rect x="804" y="272" width="188" height="38" rx="10" fill="#2e7d32"/>
+  <text x="898.0" y="297" font-size="17" fill="#fff" text-anchor="middle" font-weight="700">Part 3 ทำ</text>
+  <text x="14" y="34" font-size="19" fill="#37474f" text-anchor="start" font-weight="700">ค่าตัวเดียวกัน เดินขึ้นบันได 5 ขั้น</text>
+  <text x="14" y="60" font-size="16" fill="#546e7a" text-anchor="start">ตัวอย่าง: อุณหภูมิในโรงเรือน</text>
+  <text x="14" y="84" font-size="16" fill="#546e7a" text-anchor="start">แต่ละขั้นมี &quot;เครื่องมือ&quot; ของมันเอง</text>
+</svg>

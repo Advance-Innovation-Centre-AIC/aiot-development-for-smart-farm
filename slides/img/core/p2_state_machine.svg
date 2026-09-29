@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" font-family="sans-serif">
+  <defs>
+    <marker id="a" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker>
+    <marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#c62828"/></marker>
+    <marker id="ag" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+    <marker id="ap" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6a1b9a"/></marker>
+  </defs>
+  <rect width="1000" height="330" rx="18" fill="#fbfdf9"/>
+  <circle cx="110" cy="110" r="62" fill="#e8f5e9" stroke="#2e7d32" stroke-width="4"/>
+  <text x="110" y="106" font-size="20" fill="#1b5e20" text-anchor="middle" font-weight="700">OK</text>
+  <text x="110" y="132" font-size="17" fill="#37474f" text-anchor="middle">ปกติ</text>
+  <circle cx="390" cy="110" r="62" fill="#fffde7" stroke="#f9a825" stroke-width="4"/>
+  <text x="390" y="106" font-size="20" fill="#8d6e00" text-anchor="middle" font-weight="700">WATCH</text>
+  <text x="390" y="132" font-size="17" fill="#37474f" text-anchor="middle">เฝ้าดู</text>
+  <circle cx="670" cy="110" r="62" fill="#ffebee" stroke="#e53935" stroke-width="4"/>
+  <text x="670" y="106" font-size="20" fill="#b71c1c" text-anchor="middle" font-weight="700">ALARM</text>
+  <text x="670" y="132" font-size="17" fill="#37474f" text-anchor="middle">เตือน!</text>
+  <circle cx="390" cy="262" r="62" fill="#e3f2fd" stroke="#1e88e5" stroke-width="4"/>
+  <text x="390" y="258" font-size="17" fill="#0d47a1" text-anchor="middle" font-weight="700">COOLDOWN</text>
+  <text x="390" y="284" font-size="17" fill="#37474f" text-anchor="middle">พักเตือน</text>
+  <path d="M172 96 L 324 96" stroke="#546e7a" stroke-width="3.5" fill="none" marker-end="url(#a)"/>
+  <text x="250" y="84" font-size="15" fill="#37474f" text-anchor="middle" font-weight="700">ร้อนเกินเส้น</text>
+  <path d="M328 126 L 176 126" stroke="#90a4ae" stroke-width="3" fill="none" marker-end="url(#a)"/>
+  <text x="250" y="148" font-size="15" fill="#78909c" text-anchor="middle">ลงต่ำกว่าเส้นก่อนครบเวลา</text>
+  <path d="M452 110 L 604 110" stroke="#546e7a" stroke-width="3.5" fill="none" marker-end="url(#a)"/>
+  <text x="530" y="90" font-size="15" fill="#37474f" text-anchor="middle" font-weight="700">เกินต่อเนื่อง</text>
+  <text x="530" y="138" font-size="15" fill="#37474f" text-anchor="middle" font-weight="700">HOLD_S = 3 วิ</text>
+  <path d="M650 50 C 630 0, 710 0, 690 50" stroke="#e53935" stroke-width="3" fill="none" marker-end="url(#ar)"/>
+  <text x="735" y="26" font-size="15" fill="#c62828" text-anchor="start" font-weight="700">ค้างไว้ (latch) แม้เย็นลงแล้ว</text>
+  <text x="735" y="46" font-size="15" fill="#c62828" text-anchor="start">จนกว่าคนจะรับทราบ</text>
+  <path d="M640 164 C 620 240, 520 262, 456 262" stroke="#546e7a" stroke-width="3.5" fill="none" marker-end="url(#a)"/>
+  <rect x="560" y="206" width="150" height="30" rx="15" fill="#263238"/>
+  <text x="635" y="227" font-size="15" fill="#fff" text-anchor="middle" font-weight="700">กด SW5 = รับทราบ</text>
+  <path d="M328 262 C 230 262, 130 240, 112 176" stroke="#546e7a" stroke-width="3.5" fill="none" marker-end="url(#a)"/>
+  <text x="150" y="262" font-size="15" fill="#37474f" text-anchor="middle" font-weight="700">พักครบ</text>
+  <text x="150" y="282" font-size="15" fill="#37474f" text-anchor="middle">COOLDOWN_S = 10 วิ</text>
+  <rect x="790" y="120" width="200" height="200" rx="14" fill="#fff" stroke="#cfd8dc" stroke-width="2"/>
+  <text x="890" y="148" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">ทำไมต้องมี 4 ขั้น</text>
+  <text x="804" y="176" font-size="15" fill="#455a64" text-anchor="start">WATCH กรองหนามสั้น</text>
+  <text x="804" y="202" font-size="15" fill="#455a64" text-anchor="start">ALARM ไม่ดับเอง</text>
+  <text x="804" y="228" font-size="15" fill="#455a64" text-anchor="start">ต้องมีคนรับรู้</text>
+  <text x="804" y="254" font-size="15" fill="#455a64" text-anchor="start">COOLDOWN กันเตือนรัว</text>
+  <text x="804" y="280" font-size="15" fill="#455a64" text-anchor="start">พักครบแล้วยังเกิน</text>
+  <text x="804" y="306" font-size="15" fill="#455a64" text-anchor="start">→ วนเตือนใหม่</text>
+</svg>

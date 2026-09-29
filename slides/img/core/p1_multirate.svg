@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" width="1000" height="300" font-family="sans-serif">
+<defs><marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker><marker id="arO" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#ef6c00"/></marker><marker id="arP" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#8e24aa"/></marker></defs>
+<rect x="0" y="0" width="1000" height="300" rx="14" fill="#ffffff"/>
+<text x="20.0" y="26.0" font-size="16" fill="#37474f" text-anchor="start" font-weight="700">ตารางนัด: แต่ละงานมีเวลานัดของตัวเอง</text>
+<text x="985.0" y="26.0" font-size="14" fill="#1565c0" text-anchor="end" font-weight="700">นัดถัดไป = นัดเดิม + คาบ (ticks_add)</text>
+<text x="20.0" y="62.0" font-size="15" fill="#1e88e5" text-anchor="start" font-weight="700">IMU 20 Hz</text>
+<text x="20.0" y="79.0" font-size="12" fill="#546e7a" text-anchor="start">ทุก 50 ms</text>
+<line x1="200" y1="66" x2="970" y2="66" stroke="#cfd8dc" stroke-width="2"/>
+<rect x="197.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="235.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="274.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="312.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="351.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="389.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="428.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="466.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="505.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="543.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="595.9" y="50" width="6" height="22" rx="2" fill="#e53935"/>
+<line x1="585.0" y1="46" x2="585.0" y2="76" stroke="#e53935" stroke-dasharray="3 3"/>
+<text x="606.9" y="46.0" font-size="12" fill="#c62828" text-anchor="start" font-weight="700">ตัวอย่าง: สาย 18 ms = jitter</text>
+<rect x="620.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="659.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="697.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="736.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="774.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="813.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="851.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="890.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="928.5" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<rect x="967.0" y="50" width="6" height="22" rx="2" fill="#1e88e5"/>
+<text x="20.0" y="112.0" font-size="15" fill="#ef6c00" text-anchor="start" font-weight="700">จอ 2 Hz</text>
+<text x="20.0" y="129.0" font-size="12" fill="#546e7a" text-anchor="start">ทุก 500 ms</text>
+<line x1="200" y1="116" x2="970" y2="116" stroke="#cfd8dc" stroke-width="2"/>
+<rect x="195.0" y="100" width="10" height="22" rx="2" fill="#ef6c00"/>
+<rect x="580.0" y="100" width="10" height="22" rx="2" fill="#ef6c00"/>
+<rect x="965.0" y="100" width="10" height="22" rx="2" fill="#ef6c00"/>
+<text x="20.0" y="162.0" font-size="15" fill="#2e7d32" text-anchor="start" font-weight="700">อากาศ 1 Hz</text>
+<text x="20.0" y="179.0" font-size="12" fill="#546e7a" text-anchor="start">ทุก 1000 ms</text>
+<line x1="200" y1="166" x2="970" y2="166" stroke="#cfd8dc" stroke-width="2"/>
+<rect x="195.0" y="150" width="10" height="22" rx="2" fill="#2e7d32"/>
+<rect x="965.0" y="150" width="10" height="22" rx="2" fill="#2e7d32"/>
+<line x1="200" y1="192" x2="970" y2="192" stroke="#546e7a" stroke-width="2"/>
+<line x1="200.0" y1="187" x2="200.0" y2="197" stroke="#546e7a" stroke-width="2"/>
+<text x="200.0" y="212.0" font-size="12" fill="#546e7a" text-anchor="middle">0 ms</text>
+<line x1="392.5" y1="187" x2="392.5" y2="197" stroke="#546e7a" stroke-width="2"/>
+<text x="392.5" y="212.0" font-size="12" fill="#546e7a" text-anchor="middle">250 ms</text>
+<line x1="585.0" y1="187" x2="585.0" y2="197" stroke="#546e7a" stroke-width="2"/>
+<text x="585.0" y="212.0" font-size="12" fill="#546e7a" text-anchor="middle">500 ms</text>
+<line x1="777.5" y1="187" x2="777.5" y2="197" stroke="#546e7a" stroke-width="2"/>
+<text x="777.5" y="212.0" font-size="12" fill="#546e7a" text-anchor="middle">750 ms</text>
+<line x1="970.0" y1="187" x2="970.0" y2="197" stroke="#546e7a" stroke-width="2"/>
+<text x="970.0" y="212.0" font-size="12" fill="#546e7a" text-anchor="middle">1000 ms</text>
+<text x="20.0" y="250.0" font-size="15" fill="#8e24aa" text-anchor="start" font-weight="700">sleep_ms(50) เฉย ๆ</text>
+<text x="20.0" y="267.0" font-size="12" fill="#546e7a" text-anchor="start">รอบ = งาน + 50 ms</text>
+<line x1="200" y1="254" x2="970" y2="254" stroke="#cfd8dc" stroke-width="2"/>
+<line x1="200.0" y1="236" x2="200.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="238.5" y1="236" x2="238.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="277.0" y1="236" x2="277.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="315.5" y1="236" x2="315.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="354.0" y1="236" x2="354.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="392.5" y1="236" x2="392.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="431.0" y1="236" x2="431.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="469.5" y1="236" x2="469.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="508.0" y1="236" x2="508.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="546.5" y1="236" x2="546.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="585.0" y1="236" x2="585.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="623.5" y1="236" x2="623.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="662.0" y1="236" x2="662.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="700.5" y1="236" x2="700.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="739.0" y1="236" x2="739.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="777.5" y1="236" x2="777.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="816.0" y1="236" x2="816.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="854.5" y1="236" x2="854.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="893.0" y1="236" x2="893.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="931.5" y1="236" x2="931.5" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<line x1="970.0" y1="236" x2="970.0" y2="262" stroke="#b0bec5" stroke-width="1.5" stroke-dasharray="3 3"/>
+<rect x="197.0" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="244.7" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="292.5" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="340.2" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="388.0" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="435.7" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="483.4" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="531.2" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="578.9" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="626.7" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="674.4" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="722.1" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="769.9" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="817.6" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="865.4" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="913.1" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<rect x="960.8" y="238" width="6" height="22" rx="2" fill="#8e24aa"/>
+<text x="985.0" y="292.0" font-size="13" fill="#6a1b9a" text-anchor="end" font-weight="700">ตัวอย่าง: งาน 12 ms + นอน 50 ms = รอบละ 62 ms → ≈ 16 ครั้ง/วิ แทน 20 และเลื่อนไปเรื่อย ๆ</text>
+</svg>

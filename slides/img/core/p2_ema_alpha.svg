@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 320" width="1000" height="320" font-family="sans-serif">
+  <defs>
+    <marker id="a" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker>
+    <marker id="ar" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#c62828"/></marker>
+    <marker id="ag" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker>
+    <marker id="ap" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6a1b9a"/></marker>
+    <linearGradient id="dial" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1e88e5"/><stop offset="1" stop-color="#ef6c00"/></linearGradient>
+  </defs>
+  <rect width="1000" height="320" rx="18" fill="#fbfdf9"/>
+  <text x="180" y="30" font-size="20" fill="#263238" text-anchor="middle" font-weight="700">หมุน α (alpha) ของ EMA</text>
+  <path d="M48 215 A 132 132 0 0 1 312 215" fill="none" stroke="url(#dial)" stroke-width="24" stroke-linecap="round"/>
+  <line x1="65.9" y1="177.9" x2="43.0" y2="170.5" stroke="#fff" stroke-width="3"/>
+  <text x="24" y="170" font-size="17" fill="#37474f" text-anchor="middle" font-weight="700">0.1</text>
+  <line x1="82.9" y1="144.5" x2="63.5" y2="130.4" stroke="#fff" stroke-width="3"/>
+  <text x="47" y="125" font-size="17" fill="#37474f" text-anchor="middle" font-weight="700">0.2</text>
+  <line x1="180.0" y1="95.0" x2="180.0" y2="71.0" stroke="#fff" stroke-width="3"/>
+  <text x="180" y="57" font-size="17" fill="#37474f" text-anchor="middle" font-weight="700">0.5</text>
+  <line x1="300.0" y1="215.0" x2="324.0" y2="215.0" stroke="#fff" stroke-width="3"/>
+  <text x="344" y="221" font-size="17" fill="#37474f" text-anchor="middle" font-weight="700">1</text>
+  <line x1="180" y1="215" x2="83.0" y2="183.5" stroke="#1e88e5" stroke-width="6" stroke-linecap="round"/>
+  <line x1="180" y1="215" x2="180.0" y2="113.0" stroke="#ef6c00" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="180" cy="215" r="11" fill="#37474f"/>
+  <text x="42" y="251" font-size="17" fill="#1565c0" text-anchor="start" font-weight="700">α เล็ก</text>
+  <text x="42" y="273" font-size="16" fill="#1565c0" text-anchor="start">เรียบ แต่ตามช้า</text>
+  <text x="328" y="251" font-size="17" fill="#e65100" text-anchor="end" font-weight="700">α ใหญ่</text>
+  <text x="328" y="273" font-size="16" fill="#e65100" text-anchor="end">ไว แต่สั่นตาม</text>
+  <text x="180" y="307" font-size="15" fill="#78909c" text-anchor="middle">α = 1 คือไม่กรองเลย</text>
+  <rect x="420" y="50" width="555" height="208" rx="8" fill="#fff" stroke="#e0e0e0"/>
+  <line x1="420" y1="214.0" x2="975" y2="214.0" stroke="#eceff1" stroke-width="1.5"/>
+  <text x="412" y="219" font-size="14" fill="#90a4ae" text-anchor="end">20</text>
+  <line x1="420" y1="154.0" x2="975" y2="154.0" stroke="#eceff1" stroke-width="1.5"/>
+  <text x="412" y="159" font-size="14" fill="#90a4ae" text-anchor="end">25</text>
+  <line x1="420" y1="94.0" x2="975" y2="94.0" stroke="#eceff1" stroke-width="1.5"/>
+  <text x="412" y="99" font-size="14" fill="#90a4ae" text-anchor="end">30</text>
+  <line x1="586.5" y1="52" x2="586.5" y2="256" stroke="#ef6c00" stroke-width="2" stroke-dasharray="5 4"/>
+  <line x1="836.2" y1="52" x2="836.2" y2="256" stroke="#1e88e5" stroke-width="2" stroke-dasharray="5 4"/>
+  <circle cx="420.0" cy="220.9" r="3.2" fill="#b0bec5"/>
+  <circle cx="433.9" cy="212.8" r="3.2" fill="#b0bec5"/>
+  <circle cx="447.8" cy="217.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="461.6" cy="211.3" r="3.2" fill="#b0bec5"/>
+  <circle cx="475.5" cy="210.7" r="3.2" fill="#b0bec5"/>
+  <circle cx="489.4" cy="225.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="503.2" cy="226.9" r="3.2" fill="#b0bec5"/>
+  <circle cx="517.1" cy="205.1" r="3.2" fill="#b0bec5"/>
+  <circle cx="531.0" cy="100.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="544.9" cy="101.0" r="3.2" fill="#b0bec5"/>
+  <circle cx="558.8" cy="80.9" r="3.2" fill="#b0bec5"/>
+  <circle cx="572.6" cy="94.8" r="3.2" fill="#b0bec5"/>
+  <circle cx="586.5" cy="85.1" r="3.2" fill="#b0bec5"/>
+  <circle cx="600.4" cy="94.6" r="3.2" fill="#b0bec5"/>
+  <circle cx="614.2" cy="90.3" r="3.2" fill="#b0bec5"/>
+  <circle cx="628.1" cy="103.2" r="3.2" fill="#b0bec5"/>
+  <circle cx="642.0" cy="90.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="655.9" cy="84.3" r="3.2" fill="#b0bec5"/>
+  <circle cx="669.8" cy="93.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="683.6" cy="87.6" r="3.2" fill="#b0bec5"/>
+  <circle cx="697.5" cy="89.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="711.4" cy="105.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="725.2" cy="87.2" r="3.2" fill="#b0bec5"/>
+  <circle cx="739.1" cy="91.6" r="3.2" fill="#b0bec5"/>
+  <circle cx="753.0" cy="99.2" r="3.2" fill="#b0bec5"/>
+  <circle cx="766.9" cy="106.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="780.8" cy="84.4" r="3.2" fill="#b0bec5"/>
+  <circle cx="794.6" cy="94.7" r="3.2" fill="#b0bec5"/>
+  <circle cx="808.5" cy="88.2" r="3.2" fill="#b0bec5"/>
+  <circle cx="822.4" cy="84.0" r="3.2" fill="#b0bec5"/>
+  <circle cx="836.2" cy="88.3" r="3.2" fill="#b0bec5"/>
+  <circle cx="850.1" cy="82.9" r="3.2" fill="#b0bec5"/>
+  <circle cx="864.0" cy="96.8" r="3.2" fill="#b0bec5"/>
+  <circle cx="877.9" cy="86.1" r="3.2" fill="#b0bec5"/>
+  <circle cx="891.8" cy="95.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="905.6" cy="82.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="919.5" cy="84.0" r="3.2" fill="#b0bec5"/>
+  <circle cx="933.4" cy="104.6" r="3.2" fill="#b0bec5"/>
+  <circle cx="947.2" cy="103.6" r="3.2" fill="#b0bec5"/>
+  <circle cx="961.1" cy="101.5" r="3.2" fill="#b0bec5"/>
+  <circle cx="975.0" cy="81.7" r="3.2" fill="#b0bec5"/>
+  <polyline points="420.0,220.9 433.9,216.9 447.8,217.2 461.6,214.2 475.5,212.4 489.4,219.0 503.2,222.9 517.1,214.0 531.0,157.2 544.9,129.1 558.8,105.0 572.6,99.9 586.5,92.5 600.4,93.6 614.2,91.9 628.1,97.6 642.0,94.0 655.9,89.1 669.8,91.3 683.6,89.4 697.5,89.5 711.4,97.5 725.2,92.3 739.1,92.0 753.0,95.6 766.9,101.0 780.8,92.7 794.6,93.7 808.5,91.0 822.4,87.5 836.2,87.9 850.1,85.4 864.0,91.1 877.9,88.6 891.8,92.0 905.6,87.3 919.5,85.6 933.4,95.1 947.2,99.4 961.1,100.4 975.0,91.1" fill="none" stroke="#ef6c00" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="420.0,220.9 433.9,220.1 447.8,219.8 461.6,219.0 475.5,218.2 489.4,218.9 503.2,219.7 517.1,218.2 531.0,206.4 544.9,195.9 558.8,184.4 572.6,175.4 586.5,166.4 600.4,159.2 614.2,152.3 628.1,147.4 642.0,141.7 655.9,136.0 669.8,131.7 683.6,127.3 697.5,123.5 711.4,121.7 725.2,118.3 739.1,115.6 753.0,114.0 766.9,113.2 780.8,110.3 794.6,108.8 808.5,106.7 822.4,104.4 836.2,102.8 850.1,100.8 864.0,100.4 877.9,99.0 891.8,98.6 905.6,97.0 919.5,95.7 933.4,96.6 947.2,97.3 961.1,97.7 975.0,96.1" fill="none" stroke="#1e88e5" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+  <text x="592.5" y="187.60000000000002" font-size="15" fill="#e65100" text-anchor="start" font-weight="700">α = 0.5: ถึง 90 % ใน 4 ค่า</text>
+  <text x="842.25" y="163.60000000000002" font-size="15" fill="#1565c0" text-anchor="start" font-weight="700">α = 0.1: ใน 22 ค่า</text>
+  <text x="420" y="32" font-size="16" fill="#546e7a" text-anchor="start">ค่าที่อ่านได้กระโดด 20 → 30 (จุดเทา มีสัญญาณรบกวน)</text>
+  <text x="697.5" y="282" font-size="15" fill="#37474f" text-anchor="middle">ลำดับค่าที่อ่าน → ถ้าอ่านทุก 0.5 วินาที: α = 0.5 ตามทันใน 2 วิ · α = 0.1 ใช้ 11 วิ</text>
+  <text x="697.5" y="306" font-size="16" fill="#263238" text-anchor="middle" font-weight="700">ค่าใหม่ = α × ค่าที่อ่าน + (1 − α) × ค่าเดิม</text>
+</svg>

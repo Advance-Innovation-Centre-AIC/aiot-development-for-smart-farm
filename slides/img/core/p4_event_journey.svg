@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 330" width="1000" height="330" font-family="sans-serif">
+<defs>
+<marker id="p4ej_a" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="13" markerHeight="13" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker>
+</defs>
+<rect width="1000" height="330" rx="18" fill="#fbfdf9"/>
+
+<!-- which core runs each step -->
+<text x="223" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#e65100">บน CM55 · เฟิร์มแวร์ทำให้</text>
+<line x1="8" y1="27" x2="420" y2="27" stroke="#ef6c00" stroke-width="3"/>
+<text x="705" y="20" text-anchor="middle" font-size="14" font-weight="700" fill="#1565c0">บน CM33 · Python ของเรา</text>
+<line x1="437" y1="27" x2="992" y2="27" stroke="#1e88e5" stroke-width="3"/>
+
+<!-- seven panels -->
+<g stroke-width="2.5">
+<rect x="8" y="34" width="126" height="170" rx="12" fill="#fff3e0" stroke="#ef6c00"/>
+<rect x="151" y="34" width="126" height="170" rx="12" fill="#fff3e0" stroke="#ef6c00"/>
+<rect x="294" y="34" width="126" height="170" rx="12" fill="#fff3e0" stroke="#ef6c00"/>
+<rect x="437" y="34" width="126" height="170" rx="12" fill="#e3f2fd" stroke="#1e88e5"/>
+<rect x="580" y="34" width="126" height="170" rx="12" fill="#e3f2fd" stroke="#1e88e5"/>
+<rect x="723" y="34" width="126" height="170" rx="12" fill="#e3f2fd" stroke="#1e88e5"/>
+<rect x="866" y="34" width="126" height="170" rx="12" fill="#e8f5e9" stroke="#2e7d32"/>
+</g>
+<g font-size="14" font-weight="700" fill="#fff" text-anchor="middle">
+<circle cx="26" cy="52" r="12" fill="#ef6c00"/><text x="26" y="57">1</text>
+<circle cx="169" cy="52" r="12" fill="#ef6c00"/><text x="169" y="57">2</text>
+<circle cx="312" cy="52" r="12" fill="#ef6c00"/><text x="312" y="57">3</text>
+<circle cx="455" cy="52" r="12" fill="#1e88e5"/><text x="455" y="57">4</text>
+<circle cx="598" cy="52" r="12" fill="#1e88e5"/><text x="598" y="57">5</text>
+<circle cx="741" cy="52" r="12" fill="#1e88e5"/><text x="741" y="57">6</text>
+<circle cx="884" cy="52" r="12" fill="#2e7d32"/><text x="884" y="57">7</text>
+</g>
+<!-- arrows -->
+<g stroke="#546e7a" stroke-width="3">
+<line x1="135" y1="119" x2="150" y2="119" marker-end="url(#p4ej_a)"/>
+<line x1="278" y1="119" x2="293" y2="119" marker-end="url(#p4ej_a)"/>
+<line x1="421" y1="119" x2="436" y2="119" marker-end="url(#p4ej_a)"/>
+<line x1="564" y1="119" x2="579" y2="119" marker-end="url(#p4ej_a)"/>
+<line x1="707" y1="119" x2="722" y2="119" marker-end="url(#p4ej_a)"/>
+<line x1="850" y1="119" x2="865" y2="119" marker-end="url(#p4ej_a)"/>
+</g>
+
+<!-- 1 finger -->
+<text x="71" y="102" text-anchor="middle" font-size="36">👆</text>
+<text x="71" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">นิ้วแตะจอ</text>
+<text x="71" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">ชิปจอสัมผัส</text>
+<text x="71" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">ถูกอ่านทุก 20 ms</text>
+<!-- 2 LVGL -->
+<rect x="176" y="72" width="76" height="34" rx="8" fill="#4a9eff"/>
+<text x="214" y="95" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">ปุ่ม</text>
+<text x="214" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">LVGL</text>
+<text x="214" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">รู้ว่าโดนวิดเจ็ตไหน</text>
+<text x="214" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">เกิดเหตุการณ์ 1 ชิ้น</text>
+<!-- 3 queue -->
+<g fill="#fff" stroke="#ef6c00" stroke-width="1.5">
+<rect x="310" y="80" width="11" height="18" rx="2"/><rect x="323" y="80" width="11" height="18" rx="2"/><rect x="336" y="80" width="11" height="18" rx="2"/><rect x="349" y="80" width="11" height="18" rx="2"/><rect x="362" y="80" width="11" height="18" rx="2"/>
+</g>
+<g fill="#e53935"><rect x="375" y="80" width="11" height="18" rx="2"/><rect x="388" y="80" width="11" height="18" rx="2"/></g>
+<text x="357" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">เข้าคิว 16 ช่อง</text>
+<text x="357" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">คิวเต็ม = ของใหม่</text>
+<text x="357" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">ถูกทิ้งเงียบ ๆ</text>
+<!-- 4 poll -->
+<rect x="450" y="76" width="100" height="28" rx="6" fill="#0d1117"/>
+<text x="500" y="95" text-anchor="middle" font-size="14" font-family="monospace" fill="#e6edf3">ui.poll()</text>
+<text x="500" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ถามทุกรอบ</text>
+<text x="500" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">ทุก 20–50 ms · ≤ 8 ชิ้น</text>
+<text x="500" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">มีเหลือ → ถามจนว่าง</text>
+<!-- 5 router -->
+<g font-family="monospace" font-size="10.5">
+<rect x="585" y="64" width="116" height="52" rx="6" fill="#fff" stroke="#1e88e5" stroke-width="1.5"/>
+<text x="591" y="79" fill="#1565c0">(3,clicked)→ถาม</text>
+<text x="591" y="94" fill="#1565c0">(3,long_pressed)</text>
+<text x="591" y="109" fill="#1565c0">  →เปิดปั๊ม</text>
+</g>
+<text x="643" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ตารางแยกทาง</text>
+<text x="643" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">กุญแจ = (id, type)</text>
+<text x="643" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">→ ฟังก์ชันที่ต้องเรียก</text>
+<!-- 6 handler -->
+<text x="786" y="102" text-anchor="middle" font-size="34">🧠</text>
+<text x="786" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ฟังก์ชันจัดการ</text>
+<text x="786" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">แก้สถานะของเรา</text>
+<text x="786" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">ตรวจเงื่อนไขก่อนทำ</text>
+<!-- 7 pump -->
+<text x="929" y="102" text-anchor="middle" font-size="36">💧</text>
+<text x="929" y="134" text-anchor="middle" font-size="15" font-weight="700" fill="#263238">ปั๊ม / ไฟ</text>
+<text x="929" y="156" text-anchor="middle" font-size="12.5" fill="#37474f">สั่งงานจริง</text>
+<text x="929" y="173" text-anchor="middle" font-size="12.5" fill="#37474f">แล้วอัปเดตจอ</text>
+
+<!-- event names: always on vs opt-in -->
+<text x="12" y="238" font-size="15" font-weight="700" fill="#2e7d32">เปิดเสมอ</text>
+<g font-family="monospace" font-size="14" fill="#fff">
+<rect x="96" y="220" width="78" height="26" rx="13" fill="#2e7d32"/><text x="135" y="238" text-anchor="middle">clicked</text>
+<rect x="180" y="220" width="130" height="26" rx="13" fill="#2e7d32"/><text x="245" y="238" text-anchor="middle">value_changed</text>
+<rect x="316" y="220" width="78" height="26" rx="13" fill="#2e7d32"/><text x="355" y="238" text-anchor="middle">toggled</text>
+</g>
+<text x="410" y="238" font-size="14" fill="#546e7a">ไม่ต้องขอ</text>
+<text x="12" y="276" font-size="15" font-weight="700" fill="#e65100">ต้องขอก่อน</text>
+<text x="12" y="296" font-size="13" font-family="monospace" fill="#e65100">.listen(…)</text>
+<g font-family="monospace" font-size="13" fill="#fff">
+<rect x="110" y="258" width="72" height="24" rx="12" fill="#ef6c00"/><text x="146" y="275" text-anchor="middle">pressed</text>
+<rect x="188" y="258" width="80" height="24" rx="12" fill="#ef6c00"/><text x="228" y="275" text-anchor="middle">released</text>
+<rect x="274" y="258" width="96" height="24" rx="12" fill="#ef6c00"/><text x="322" y="275" text-anchor="middle">press_lost</text>
+<rect x="376" y="258" width="112" height="24" rx="12" fill="#bf360c"/><text x="432" y="275" text-anchor="middle">long_pressed</text>
+<rect x="494" y="258" width="168" height="24" rx="12" fill="#ef6c00"/><text x="578" y="275" text-anchor="middle">long_pressed_repeat</text>
+<rect x="668" y="258" width="56" height="24" rx="12" fill="#ef6c00"/><text x="696" y="275" text-anchor="middle">ready</text>
+<rect x="730" y="258" width="64" height="24" rx="12" fill="#ef6c00"/><text x="762" y="275" text-anchor="middle">cancel</text>
+<rect x="110" y="290" width="72" height="24" rx="12" fill="#ef6c00"/><text x="146" y="307" text-anchor="middle">focused</text>
+<rect x="188" y="290" width="88" height="24" rx="12" fill="#ef6c00"/><text x="232" y="307" text-anchor="middle">defocused</text>
+<rect x="282" y="290" width="112" height="24" rx="12" fill="#ef6c00"/><text x="338" y="307" text-anchor="middle">scroll_begin</text>
+<rect x="400" y="290" width="96" height="24" rx="12" fill="#ef6c00"/><text x="448" y="307" text-anchor="middle">scroll_end</text>
+<rect x="502" y="290" width="72" height="24" rx="12" fill="#ef6c00"/><text x="538" y="307" text-anchor="middle">gesture</text>
+</g>
+<text x="590" y="307" font-size="13.5" fill="#546e7a">สะกดผิด = ValueError · เรียกซ้ำ = แทนชุดเดิม</text>
+</svg>
