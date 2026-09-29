@@ -1,10 +1,6 @@
-# sf3_01_practise.py - Code Quest ระดับ 3: เติม confirm()
-# วิธีเล่น : เหมือน sf3_01_pen_guard.py ยกเว้น confirm() ที่เว้นช่อง ____ ไว้ 3 ช่อง (A B C)
-#           เติมครบแล้วรัน: ตรวจ confirm() 7 กรณีก่อนเปิดจอ ผ่าน = Console ขึ้น "ผ่าน!"
-# ถ้าเจอ  : NameError: name '____' isn't defined = ยังมีช่องที่ไม่ได้เติม
-# ติดขัด? : คำใบ้ท้ายใบงาน หรือรัน sf3_01_pen_guard.py ไปก่อน
-# เฉลย    : โจทย์เพิ่ม (โบนัส) เฉลยคาบหน้า · ทำที่บ้านใน BENTO Emulator ได้
-#
+# sf3_01_practise.py - Code Quest ระดับ 3: เติมช่อง A B C ใน confirm()
+# รัน: ตรวจ confirm() 7 กรณีก่อนเปิดจอ ผ่าน = Console ขึ้น "ผ่าน!" · ติดขัด? ดูใบงาน
+# เฉลย: โบนัส เฉลยคาบหน้า
 # (ทำจาก sf3_01_pen_guard.py 4e1c10e2cffa)
 
 import buttons
