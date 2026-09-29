@@ -219,7 +219,7 @@ section table { font-size: .66em; }
 | 🎛️ ลูกบิด **VR2–VR4** | `pots.read(1)` … `pots.read(3)` ค่า 0–4095 | เขตเตือน · เกณฑ์เสียง · เกณฑ์พัดลม · ดิน (จำลอง) | 1 · 2 · 4 |
 | 🔘 ปุ่ม **SW5 (ล่าง)** / **SW6 (บน)** | `buttons.pressed(0)` / `buttons.pressed(1)` | เปิด/ปิดระบบเฝ้า · เรียนรู้ใหม่ · รดน้ำเอง · รับทราบ | 1 · 3 · 4 |
 | 🟩 **จอไฟ RGB 16×8** | `rgbmatrix.scroll()` · `score()` · `bar()` · `fill()` · `blit()` | INTRUDER · PANIC · แถบคะแนน · สีสถานะ | ทุกกิจกรรม |
-| 🔊 ลำโพง | `ui.sfx(...)` · `ui.tone(...)` | ไซเรน เสียงเตือน — **เฉพาะตอนเกิดเหตุ** | ทุกกิจกรรม |
+| 🔊 ลำโพง | `beep(...)` = `ui.tone(...)` เบา ๆ (`VOLUME` ≈20%) | ไซเรน เสียงเตือน — **เฉพาะตอนเกิดเหตุ** | ทุกกิจกรรม |
 
 <div class="warn">
 
@@ -568,7 +568,7 @@ def forget_old(events, now):
             forget_old(ears.events, now)             # 2) ตัดสิน
             was, panic = panic, len(ears.events) >= ALARM_EVENTS
             if panic != was:                         # 3) ทำ: เสียงเฉพาะตอนสถานะเปลี่ยน
-                ui.sfx(ui.SFX_UI_DENY if panic else ui.SFX_PONG_WIN)
+                beep(84, 76) if panic else beep(79, 84)
                 ears.mute()                          # ทุกครั้งที่ลำโพงดัง = ปิดหู MUTE_MS
 ```
 <div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py">sf3_02_coop_ears.py</a> · main()</div>
@@ -1119,7 +1119,7 @@ def decide(f, near):
 
 # โปรเจกต์ทีม — Smart HMI สำหรับฟาร์มและโลจิสติกส์เกษตร
 
-[`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md) · ทีมละ 2 คน · บอร์ด TESAIoT Dev Kit + BENTO Emulator · นำเสนอ **26 ต.ค.** บนบอร์ดจริง
+[`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md) · ทีมละ 2 คน · บอร์ด TESAIoT Dev Kit + BENTO Emulator · นำเสนอใน **Project Showcase** บนบอร์ดจริง
 
 <div class="chal">🏆 <b>ภายในวันนี้:</b> Project Canvas ผ่านการตรวจ + <b>MVP บนบอร์ดรันได้อย่างน้อยเสา 1–4</b></div>
 
@@ -1332,7 +1332,7 @@ section table { font-size: .6em; }
 
 ---
 
-## ปฏิทินงาน + วันนำเสนอ 26 ต.ค.
+## ปฏิทินงาน + Project Showcase
 
 <style scoped>
 section table { font-size: .6em; }
@@ -1344,12 +1344,12 @@ section li { font-size: .9em; }
 
 | วัน | สิ่งที่ต้องเสร็จ |
 |---|---|
-| 28 ก.ย. (Session 1) | เลือกปัญหาตั้งต้น 3 ข้อ |
-| 5 ต.ค. (Session 2) | แอปของทีมรับข้อมูลจากบอร์ดได้ และสั่งกลับได้ 1 คำสั่ง |
-| **12 ต.ค. (Session 3)** | **Canvas ผ่านการตรวจ · MVP บนบอร์ดรันได้อย่างน้อยเสา 1–4** |
-| 13–25 ต.ค. | พัฒนาต่อด้วย Emulator + ทดสอบบนบอร์ด · ครบห้าเสา · ตารางทดสอบ ≥ 5 กรณี · คลิปสำรอง |
+| Session 1 | เลือกปัญหาตั้งต้น 3 ข้อ |
+| Session 2 | แอปของทีมรับข้อมูลจากบอร์ดได้ และสั่งกลับได้ 1 คำสั่ง |
+| **Session 3** | **Canvas ผ่านการตรวจ · MVP บนบอร์ดรันได้อย่างน้อยเสา 1–4** |
+| ระหว่าง Session 3 กับ Project Showcase | พัฒนาต่อด้วย Emulator + ทดสอบบนบอร์ด · ครบห้าเสา · ตารางทดสอบ ≥ 5 กรณี · คลิปสำรอง |
 | ตามที่ผู้สอนแจ้ง | ส่งโค้ดบอร์ด `g<เลขทีม>_<ชื่อ>.py` · โค้ดแอป · สไลด์ 3–5 หน้า · ตารางทดสอบ · คลิปสำรอง |
-| **26 ต.ค.** | **นำเสนอและสาธิตสด** (13:00–13:10 เปิดงาน · 13:10–15:50 นำเสนอ · 15:50–16:00 ปิดงาน) |
+| **Project Showcase** | **นำเสนอและสาธิตสด** (13:00–13:10 เปิดงาน · 13:10–15:50 นำเสนอ · 15:50–16:00 ปิดงาน) |
 
 <div class="warn">
 
@@ -1401,7 +1401,7 @@ section table { font-size: .66em; }
 
 ## Code Quest — ไฟล์ฝึก + ติดขัดทำอย่างไร
 
-**ไฟล์ฝึกระดับ 3** — ช่องที่ต้องเติมเขียนว่า `____` · รันแล้วไฟล์ตรวจ 7 กรณีให้เองก่อนเปิดจอ ผ่านครบ = Console ขึ้น **"ผ่าน!"** · เฉลยโจทย์หลัก: [`sf3_02_practise_solution.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/solutions/sf3_02_practise_solution.py) (ลองเองก่อน)
+**ไฟล์ฝึกระดับ 3** — ช่องที่ต้องเติมเขียนว่า `____` · รันแล้วไฟล์ตรวจคำตอบให้เองก่อนเปิดจอ (5–7 กรณี) ผ่านครบ = Console ขึ้น **"ผ่าน!"** · เฉลยโจทย์หลัก: [`sf3_02_practise_solution.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/solutions/sf3_02_practise_solution.py) (ลองเองก่อน)
 
 ```python
     return (time.ticks_diff(now, mute_until) >= ____     # ช่อง A: พ้นช่วงปิดหูแล้ว ผลต่างเวลาต้องไม่ติดลบ

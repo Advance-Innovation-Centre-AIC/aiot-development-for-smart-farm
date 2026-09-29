@@ -23,6 +23,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 LEARN_MS = 5000      # เรียนรู้ค่าปกติกี่มิลลิวินาที
 SAMPLE_MS = 50       # อ่าน IMU ทุก 50 ms (การสั่นเร็ว อ่านห่างกว่านี้จะมองไม่เห็นการแกว่ง)
 WIN = 20             # ค่าสั่นคิดจาก 20 ตัวอย่างล่าสุด (20 x 50 ms = 1 วินาที)
@@ -44,6 +45,13 @@ MX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 def magnitude():
     # ขนาดความเร่งรวมสามแกน (m/s^2) วางนิ่งได้ราว 9.8 คือแรงโน้มถ่วง
     # ขนาดไม่เปลี่ยนตามมุมเอียง บอร์ดวางเอียงก็วัดการสั่นได้เหมือนวางราบ
@@ -265,16 +273,16 @@ def think(w, st, now):
     if st.base is None:
         if st.learn(now):
             show_learned(w, st)
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep(76)
         return
     old = st.judge()
     if st.level == old:
         return
     if st.level == 2:
-        ui.sfx(ui.SFX_UI_DENY)
+        beep(84, 76)
         print("ผิดปกติครั้งที่", st.bad_count, "ค่าสั่น %.3f" % st.vib)
     elif old == 2:
-        ui.sfx(ui.SFX_PONG_WIN)         # หายผิดปกติแล้ว
+        beep(79, 84)                    # หายผิดปกติแล้ว
 
 
 def refresh(w, st, now, mx, fails):
@@ -322,7 +330,7 @@ def main():
         if sw5.pressed_now():
             st.relearn(now)
             w["learn"].color(COL_WARN)
-            ui.sfx(ui.SFX_UI_START)
+            beep(72, 79)
         if time.ticks_diff(now, t_draw) >= TICK_MS:     # 3) โชว์ ทุก TICK_MS
             t_draw = now
             refresh(w, st, now, mx, fails)

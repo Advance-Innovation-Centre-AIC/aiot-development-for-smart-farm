@@ -25,6 +25,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 MODEL_KEY = "Motion"     # ลองเปลี่ยนเป็น "Cough" "Alarm" "Siren" (ฟังเสียง) หรือ "Push"
 CONF_MIN = 60            # มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุการณ์
 CONFIRM_N = 3            # คลาสอันตรายต้องชนะติดกันกี่ครั้งถึงจะเตือน
@@ -51,6 +52,13 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 def find_model(key):
     # หาโมเดลจาก "ชื่อ" เพราะลำดับบนแต่ละบอร์ดไม่เหมือนกัน
     # เก็บแค่ ลำดับ ชื่อ และชื่อคลาส ไม่เก็บทั้งแถว และข้ามโมเดลที่ไม่ได้ติดมากับบอร์ด
@@ -242,7 +250,7 @@ def show_result(w, r, conf, alerting, streak, alerts):
 def announce(alerting, mic):
     # เสียงเฉพาะตอนเริ่ม/หายเตือน แล้วคืนเวลาที่จะกลับมาเชื่อผล:
     # ถ้าโมเดลฟังไมค์ เสียงจากลำโพงบอร์ดเองจะเข้าไมค์ จึงไม่เชื่อผล MUTE_MS หลังเสียง
-    ui.sfx(ui.SFX_UI_DENY if alerting else ui.SFX_PONG_WIN)
+    beep(84, 76) if alerting else beep(79, 84)
     return time.ticks_add(time.ticks_ms(), MUTE_MS if mic else 0)
 
 
@@ -299,7 +307,7 @@ def main():
         msg = "ไม่พบโมเดล " + MODEL_KEY + " บนบอร์ดนี้"
         say(w, msg, COL_BAD)
         ui.poll()
-        print(msg, "- ลองทำ sf3_03 (กฎเขียนเอง) แทน")
+        print(msg, "- ใช้ sf3_03 แทน")      # sf3_03 = กฎที่เขียนเอง ไม่ต้องใช้โมเดล
         return
     index, name, labels = found
     mic = uses_mic(index)

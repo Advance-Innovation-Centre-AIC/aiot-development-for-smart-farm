@@ -30,7 +30,7 @@ CONFIRM_N = 3                # ต้องเห็นติดกันกี�
 THRESH_DB = 4.0              # เป้าต้องแรงกว่าฉากนิ่งกี่ dB (ตั้งได้ 0.1-60 · ค่าที่ตัวอย่าง IDE สอบเทียบไว้)
 MAX_CM = 300                 # ระยะไกลสุดที่แถบ ไม้บรรทัด และกราฟแสดง
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
-VOLUME = 38                  # ความดังเสียง 0-127 (≈30%)
+VOLUME = 25                  # ความดังเสียง 0-127 (≈20%)
 RUN_MS = 180000
 SAMPLE_MS = 250              # อ่านเรดาร์ทุก 0.25 วินาที (CONFIRM_N = 3 รอบ = ราว 0.75 วินาที)
 TICK_MS = 500                # อัปเดตจอทุก 0.5 วินาที (ถี่กว่านี้จอกะพริบและกินแรงบอร์ด)
@@ -45,6 +45,13 @@ COL_SAFE_BG, COL_ALERT_BG = 0x123322, 0x4A1216   # พื้นแผงปร�
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 def zone_cm():
     return MIN_CM + pots.read(2) * SPAN_CM // 4095   # VR3: เขตเตือน 50-250 cm
 
@@ -261,7 +268,7 @@ def start_guard(w):
         say(w, "เฝ้าคอกแล้ว เดินเข้าหาบอร์ดได้เลย", COL_OK)
     else:
         say(w, "จำฉากไม่สำเร็จ ใช้ฉากเดิม", COL_BAD)
-    ui.sfx(ui.SFX_UI_START)
+    beep(72, 79)                  # เริ่มเฝ้า = ok
 
 
 def on_arm(w, g, sw5):
@@ -276,7 +283,7 @@ def on_arm(w, g, sw5):
     if armed != g.armed:
         g.armed, g.inside, g.streak = armed, False, 0
         show_arm(w, armed)
-        ui.sfx(ui.SFX_UI_SELECT if armed else ui.SFX_UI_BACK)
+        beep(76)
 
 
 def on_radar(w, g, ok):
@@ -300,7 +307,7 @@ def decide(w, g, cm, alert_cm):
         print("ผู้บุกรุก" + msg)
         siren()
     elif was and not g.inside:
-        ui.sfx(ui.SFX_PONG_WIN)     # ออกไปแล้ว = ปลอดภัย
+        beep(79, 84)                # ออกไปแล้ว = ปลอดภัย
     return near
 
 

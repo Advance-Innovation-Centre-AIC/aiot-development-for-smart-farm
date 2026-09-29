@@ -22,6 +22,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 SENS = 3             # ความไวไมค์ 1-5
 PEAK_MIN, PEAK_SPAN = 3000, 27000   # VR3 ตั้งเกณฑ์ยอดเสียงได้ 3000-30000
 PEAK_FULL = 32768    # ยอดเสียงดิบเต็มสเกล (ไมค์ 16 บิต) ใช้เป็นสเกลของแถบและกราฟ
@@ -42,6 +43,13 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 def read_threshold():
     return PEAK_MIN + pots.read(2) * PEAK_SPAN // 4095    # VR3 -> เกณฑ์ยอดเสียงดิบ
 
@@ -262,7 +270,7 @@ def main():
             forget_old(ears.events, now)             # 2) ตัดสิน
             was, panic = panic, len(ears.events) >= ALARM_EVENTS
             if panic != was:                         # 3) ทำ: เสียงเฉพาะตอนสถานะเปลี่ยน
-                ui.sfx(ui.SFX_UI_DENY if panic else ui.SFX_PONG_WIN)
+                beep(84, 76) if panic else beep(79, 84)
                 ears.mute()                          # ทุกครั้งที่ลำโพงดัง = ปิดหู MUTE_MS
                 if panic:
                     alarms += 1

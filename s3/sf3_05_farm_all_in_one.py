@@ -54,7 +54,7 @@ FAN_LO, FAN_SPAN = 25, 20       # VR3 ตั้งเกณฑ์เปิดพ
 PUMP_ON, PUMP_OFF = 35, 45      # ดินต่ำกว่า 35 % เปิดปั๊ม เกิน 45 % ปิด (hysteresis)
 GUARD_LO, GUARD_SPAN = 50, 200  # VR4 ตั้งเขตคอก 50-250 cm
 TICK_MS, REPORT_MS, RUN_MS = 500, 5000, 600000   # วัด+วาดจอ / รายงาน / เวลารันทั้งหมด
-VOLUME = 38                     # ความดังเสียง 0-127 (≈30%)
+VOLUME = 25                     # ความดังเสียง 0-127 (≈20%)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -62,6 +62,13 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 class Button:
     # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
     # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
@@ -299,7 +306,7 @@ def tick(w, f, down, now):
     f.cm = read_cm()
     f.remote = max(0, f.remote - TICK_MS)       # เวลาที่แอปสั่งรดน้ำ นับถอยหลังจนหยุดเอง
     if decide(f, f.cm is not None and f.cm < f.guard):     # เสียง + event เฉพาะตอนคอกเปลี่ยน
-        ui.sfx(ui.SFX_SHOOT_EXPLODE if f.inside else ui.SFX_PONG_WIN)
+        beep(84, 76) if f.inside else beep(79, 84)
         send(f, "event", {"id": TEAM, "event": "intruder" if f.inside else "clear", "cm": f.cm})
     f.pump = f.auto or down or f.remote > 0
     show_farm(w, f)
@@ -321,9 +328,9 @@ def check_net(w, f):
             f.remote = sec * 1000               # 0 = แอปสั่งปิด
         f.silenced = f.silenced or act == "ack"
         if act == "beep":
-            ui.tone(69, ui.WAVE_SQUARE, VOLUME, 150)    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
+            beep(69)                    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
         else:
-            ui.sfx(ui.SFX_UI_SELECT if act else ui.SFX_UI_DENY)
+            beep(76) if act else beep(84, 76)
         w["cmd"].text("แอป: %s %d วิ" % (act, sec) if act == "pump" else "แอป: " + str(act or "?"))
 
 
@@ -343,7 +350,7 @@ def main():
     f.online = go_online(w)
     if not radar_start():
         w["cmd"].text("เรดาร์ไม่ตอบ")        # คอกไม่ได้เฝ้า แต่ส่วนอื่นของฟาร์มทำงานต่อ
-    ui.sfx(ui.SFX_UI_SELECT)
+    beep(72, 79)
     water, ack = Button(0), Button(1)
     t0 = t_tick = t_rep = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
@@ -355,7 +362,7 @@ def main():
         check_net(w, f)
         if ack.pressed_now() and f.inside:
             f.silenced = True                   # SW6 = รับทราบ ไซเรนเงียบจนคอกเปลี่ยนอีกครั้ง
-            ui.sfx(ui.SFX_UI_BACK)
+            beep(76)
         if time.ticks_diff(now, t_tick) >= TICK_MS:
             t_tick = now
             tick(w, f, water.down, now)
