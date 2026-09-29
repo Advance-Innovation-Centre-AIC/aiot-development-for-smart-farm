@@ -10,7 +10,7 @@
 #            sf3_01_pen_guard.py เพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบกับของตัวเอง
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยคาบหน้า · ทำที่บ้านใน BENTO Emulator ได้
 #
-# (ทำจาก sf3_01_pen_guard.py 647230c6c797)
+# (ทำจาก sf3_01_pen_guard.py c7ae401ff97d)
 
 import buttons
 import pots
@@ -26,6 +26,7 @@ THRESH_DB = 4.0              # เป้าต้องแรงกว่าฉ�
 MAX_CM = 300                 # ระยะไกลสุดที่แถบ ไม้บรรทัด และกราฟแสดง
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 VOLUME = 25                  # ความดังเสียง 0-127 (≈20%)
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 RUN_MS = 180000
 SAMPLE_MS = 250              # อ่านเรดาร์ทุก 0.25 วินาที (CONFIRM_N = 3 รอบ = ราว 0.75 วินาที)
 TICK_MS = 500                # อัปเดตจอทุก 0.5 วินาที (ถี่กว่านี้จอกะพริบและกินแรงบอร์ด)
@@ -333,12 +334,14 @@ def matrix_tick(g):
 def finish(w, count):
     # จบรอบ: ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console
     show_matrix(False, False, count)
-    say(w, "จบรอบแล้ว - กด Program to Device อีกครั้งเพื่อเล่นใหม่", COL_WARN)
+    say(w, "จบรอบแล้ว - กด Program to Device เพื่อเล่นใหม่", COL_WARN)
     ui.poll()
     print("เฝ้าคอกครบเวลา พบผู้บุกรุก", count, "ครั้ง")
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     if not self_test():
         return
     w = build_screen()

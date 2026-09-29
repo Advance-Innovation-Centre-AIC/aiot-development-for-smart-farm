@@ -16,7 +16,7 @@
 #            โมเดลนี้ฝึกจากท่ามือคน (ไม่ใช่ปั๊มจริง) เราใช้เป็นตัวแทนเพื่อเรียนแนวคิดเท่านั้น
 # โมเดล    : ใช้เฉพาะโมเดลที่ติดมากับบอร์ด และเรียกด้วย "ชื่อ" เท่านั้น
 #            (Motion, Push, Cough, Alarm, Siren) ถ้าผลไม่ขยับนาน จอจะบอกให้ลองรีเซ็ตบอร์ด
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
+# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) และ BENTO Emulator
 
 import edge_ai
 import gpio
@@ -26,6 +26,7 @@ import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
 VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 MODEL_KEY = "Motion"     # ลองเปลี่ยนเป็น "Cough" "Alarm" "Siren" (ฟังเสียง) หรือ "Push"
 CONF_MIN = 60            # มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุการณ์
 CONFIRM_N = 3            # คลาสอันตรายต้องชนะติดกันกี่ครั้งถึงจะเตือน
@@ -205,7 +206,7 @@ def build_screen():
     w = {"model": ui.Label("โมเดล: -", x=12, y=38, color=COL_DIM, value=16)}
     build_answer(w)
     build_scores(w)
-    ui.Label("ฟ้า = ความมั่นใจ (%)   แดง = เกณฑ์เตือน", x=12, y=242, color=COL_DIM, value=14)
+    ui.Label("ฟ้า = มั่นใจ %   แดง = เกณฑ์", x=12, y=242, color=COL_DIM, value=14)
     w["chart"] = line_chart(12, 262, 400, 76, 0, 100, COL_INFO)
     w["s_min"] = w["chart"].add_series(COL_BAD)
     card(422, 244, 358, 94, "สมองของ AI")
@@ -301,6 +302,8 @@ def start(w, index):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     found = find_model(MODEL_KEY)
     if found is None:

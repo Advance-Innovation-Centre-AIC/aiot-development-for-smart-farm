@@ -10,7 +10,7 @@
 #            sf3_02_coop_ears.py เพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบกับของตัวเอง
 # เฉลย     : โจทย์หลัก มีเฉลยในคาบ อยู่ที่ practise/solutions/sf3_02_practise_solution.py (ลองเองก่อน)
 #
-# (ทำจาก sf3_02_coop_ears.py 773923f08128)
+# (ทำจาก sf3_02_coop_ears.py ddbb6ef521de)
 
 import mic
 import pots
@@ -20,6 +20,7 @@ import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
 VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 SENS = 3             # ความไวไมค์ 1-5
 PEAK_MIN, PEAK_SPAN = 3000, 27000   # VR3 ตั้งเกณฑ์ยอดเสียงได้ 3000-30000
 PEAK_FULL = 32768    # ยอดเสียงดิบเต็มสเกล (ไมค์ 16 บิต) ใช้เป็นสเกลของแถบและกราฟ
@@ -253,6 +254,8 @@ def finish(w, total, alarms):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     if not self_test():
         return
     w = build_screen()

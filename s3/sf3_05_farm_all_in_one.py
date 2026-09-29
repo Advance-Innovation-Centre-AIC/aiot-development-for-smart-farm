@@ -22,7 +22,7 @@
 #            บรรทัดล่างสุด = JSON ใบล่าสุดที่บอร์ดส่ง (ความกดอากาศ hpa อยู่ในนี้และใน telemetry)
 # แนวคิด AIoT: เน็ตหลุดฟาร์มต้องไม่หยุด - ต่อ WiFi/broker ไม่ได้ ไฟล์นี้ทำงานต่อแบบออฟไลน์
 #            กฎทุกข้ออยู่บนบอร์ด เน็ตมีไว้รายงานและรับคำสั่ง ไม่ได้มีไว้ตัดสินใจแทน
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
+# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) และ BENTO Emulator
 #            (ใน Emulator VR1 คือระยะเรดาร์ จึงใช้ VR2 แทนดิน สองอย่างจะได้ไม่ชนกัน)
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM · ยังไม่แก้ TEAM = ทำงานออฟไลน์ (บอกบนจอ)
 #            broker ไม่เข้ารหัส ห้ามส่งของลับ
@@ -55,6 +55,7 @@ PUMP_ON, PUMP_OFF = 35, 45      # ดินต่ำกว่า 35 % เปิ�
 GUARD_LO, GUARD_SPAN = 50, 200  # VR4 ตั้งเขตคอก 50-250 cm
 TICK_MS, REPORT_MS, RUN_MS = 500, 5000, 600000   # วัด+วาดจอ / รายงาน / เวลารันทั้งหมด
 VOLUME = 25                     # ความดังเสียง 0-127 (≈20%)
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -345,6 +346,8 @@ def report(w, f, by):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     f = Farm()
     f.online = go_online(w)
