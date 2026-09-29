@@ -9,7 +9,7 @@
 #            จอไฟ RGB 16x8 = นับถอยหลังวินาทีที่ปั๊มเปิด หรือตัววิ่งจากคำสั่ง say · ลำโพงดังเฉพาะตอนคำสั่งเข้า
 # บนจอ     : ไฟปั๊ม (Led), วงแหวนนับถอยหลัง (Arc), หลอดน้ำในถัง (Bar)
 # แนวคิด AIoT: Command -> Check -> Act  ไม่เชื่อคนส่ง ตรวจทุกคำสั่งก่อนแตะของจริง
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
 # คำสั่งที่รู้จัก: {"cmd":"pump","on":1,"sec":10}  {"cmd":"pump","on":0}  {"cmd":"led","n":0,"on":1}
 #            {"cmd":"beep"}  {"cmd":"say","text":"HELLO"}  (สัญญาเต็มอยู่ใน app/MQTT_CONTRACT_th.md)
 # กับดัก    : get_message() ไม่บล็อก และกล่องรับมีช่องเดียว ลูปจึงต้องถามทุก 100 ms ห้ามหลับยาว
@@ -38,6 +38,7 @@ PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินา
 TANK_MIN = 10                          # น้ำในถังต่ำกว่านี้ ห้ามปั๊มทำงาน (ปั๊มแห้งพัง)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -264,6 +265,8 @@ def act_on(w, raw, tank, now, pump_ms, pump_t0):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     pump = led_named("RGB_BLUE")       # ไฟสีฟ้าบนบอร์ด = ปั๊มน้ำ
     rgbmatrix.clear()

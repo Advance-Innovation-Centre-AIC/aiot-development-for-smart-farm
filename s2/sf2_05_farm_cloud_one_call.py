@@ -11,7 +11,7 @@
 #            หลอดเวลารอสาย TLS 0-15 วิ (Bar), ตัวเลขใหญ่ ms ที่รอ กับจำนวนใบที่ส่ง (Seg7)
 # แนวคิด AIoT: sf2_02 ต้องพิมพ์ชื่อ broker กับหัวข้อในโค้ดทุกไฟล์ คลังค่าตั้งเก็บไว้ที่บอร์ดครั้งเดียว
 #            โปรแกรมทุกตัวอ่านค่าเดียวกัน และ publish() ประกอบหัวข้อให้เองจาก device_id
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (แพลตฟอร์มใน Emulator เป็นแบบจำลอง)
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (แพลตฟอร์มใน Emulator เป็นแบบจำลอง)
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS แล้ว DEVICE_ID กับ PLATFORM_BROKER (ผู้สอนแจก ยังไม่แจกให้ว่างไว้)
 # กับดัก    : tesaiot.connect() ใช้ TLS พอร์ต 8883/8884 เสมอ จึงต่อ broker.hivemq.com:1883 ไม่ได้
 #            และมันคืนค่าทันที ไม่ได้แปลว่าต่อติด ต้องวนถาม is_connected() เองพร้อมกำหนดเวลาเลิกรอ
@@ -41,6 +41,7 @@ N, GAP_MS = 6, 5000                    # ส่ง 6 ใบ ห่างกั�
 # port ในคลังคือค่าที่เก็บไว้ ไม่ใช่พอร์ตที่ connect() ใช้จริง พอร์ตจริงมาจาก tls_mode
 SHOW = ("device_id", "broker", "tls_mode", "port", "qos", "keepalive")
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -271,6 +272,8 @@ def send_all(w):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     cfg = tesaiot.config()             # 1) อ่านคลังค่าตั้ง: ไม่ต้องต่อเน็ต อ่านได้ทันที
     show_cfg(w, cfg)

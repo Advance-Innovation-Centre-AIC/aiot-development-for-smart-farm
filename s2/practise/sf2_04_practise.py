@@ -11,7 +11,7 @@
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยต้นคาบหน้า
 # ต้องแก้ก่อนรันบนบอร์ด: WIFI_SSID, WIFI_PASS, TEAM, CROP (ตรวจกฎผ่านได้โดยไม่ต้องต่อเน็ต)
 #
-# (ทำจาก sf2_04_crop_alert.py 6ce74cf31787)
+# (ทำจาก sf2_04_crop_alert.py e23a52936809)
 
 import buttons
 import json
@@ -54,6 +54,7 @@ CHART_MAX_C = 50                       # กราฟอุณหภูมิ 0-
 MX = (("OK", rgbmatrix.GREEN), ("WARN", rgbmatrix.YELLOW), ("ALERT", rgbmatrix.RED))
 BOX = (212, 90, 368, 150)              # กล่องเตือน (x, y, w, h) ลอยทับกลางจอโดยตั้งใจ จนกว่าจะมีคนรับทราบ
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -290,6 +291,8 @@ def read_and_judge(w, s):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     if not self_test():                # ตรวจกฎก่อน ไม่ผ่าน = ไม่เปิดจอ ไม่ต่อเน็ต
         return
     w = build_screen()

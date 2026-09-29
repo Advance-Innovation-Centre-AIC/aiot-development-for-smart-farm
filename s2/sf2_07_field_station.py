@@ -12,7 +12,7 @@
 #            ลำโพงดังเฉพาะตอนมีคำสั่งเข้าหรือปั๊มดับเอง
 # บนจอ     : หลอดดินกับถัง (Bar), ไฟรีเลย์ (Led), วงแหวนนับถอยหลัง (Arc) · เหตุผล (why) ใช้รหัสเดียวกับสัญญา MQTT
 # แนวคิด AIoT: PLC ไม่เชื่อใคร ตรวจทุกคำสั่งด้วยกฎความปลอดภัยของตัวเอง และบอกความจริงกลับทุกครั้ง
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) · สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5, 3.6, 4.2
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) · สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5, 3.6, 4.2
 #            ไม่มีเพื่อนจับคู่ ใช้ app/field_sim.py บนโน้ตบุ๊กแทนบอร์ดนี้ได้ (ทำงานเหมือนกัน)
 
 import buttons
@@ -38,6 +38,7 @@ PLC_DEFAULT_S = 10
 SEND_MS, POLL_MS, RUN_MS = 5000, 100, 1800000
 BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -271,6 +272,8 @@ def stop(w, relay, msg, col=COL_BAD):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     relay = led_named("RGB_BLUE")
     if not valid_team(TEAM):

@@ -11,7 +11,7 @@
 # บนจอ     : ตัวเลขใหญ่ (Seg7), หลอดลูกบิด (Bar), กราฟบอร์ดกับคลาวด์ (Chart), ไฟออนไลน์ (Led),
 #            หลอดนับถอยหลังใบถัดไป (Bar)
 # แนวคิด AIoT: Sense -> Send  วัดถี่ได้ แต่ส่งห่าง ๆ เพราะการส่งกวน broker ของทั้งห้อง
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
 # ระวัง     : broker.hivemq.com พอร์ต 1883 ไม่เข้ารหัส ใครก็อ่านหัวข้อเราได้ ห้ามส่งของลับ
 #            "ทุก 5 วินาที" คือถามว่าถึงเวลาหรือยัง ไม่ใช่ time.sleep(5) · คีย์ทั้งหมดอยู่ใน app/MQTT_CONTRACT_th.md
 
@@ -40,6 +40,7 @@ READ_MS, SEND_MS, POLL_MS = 1000, 5000, 100
 RUN_MS = 1800000                      # ส่งนาน 30 นาที พอให้ชั่วโมงที่ 2 มีข้อมูลเข้าแอป
 SOUND = True                          # ทุกบอร์ดในห้องดังพร้อมกันหนวกหู ตั้ง False = ดังเฉพาะตอนกด SW5
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -225,6 +226,8 @@ def on_sent(w, body, manual):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     if len(TEAM) != 6 or TEAM[:4] != "team" or not TEAM[4:].isdigit() or TEAM == "team00":
         stop(w, "แก้ TEAM เป็นเลขกลุ่มก่อน")

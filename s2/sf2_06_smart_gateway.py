@@ -14,7 +14,7 @@
 #            กราฟ (Chart): เส้นเขียว = ดิน, เส้นส้ม = ปั๊ม (สูง = เดิน)
 # แนวคิด AIoT: Sense (โหนด) -> Decide (Gateway) -> Act (PLC) -> Confirm (PLC บอกสถานะจริงกลับมา)
 #            คนสั่งไม่ใช่ความจริง ความจริงคือสิ่งที่ PLC รายงานกลับมา จอจึงโชว์ plc/state ไม่ใช่คำสั่งที่ส่งไป
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) · ใน BENTO Emulator รันได้แต่ MQTT เป็นแบบจำลอง จะไม่มีแปลงส่งค่ามา
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) · ใน BENTO Emulator รันได้แต่ MQTT เป็นแบบจำลอง จะไม่มีแปลงส่งค่ามา
 # สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5-3.8 และ 4.1-4.2
 
 import buttons
@@ -41,6 +41,7 @@ COOLDOWN_MS = 60000                    # สั่งแล้วรอกี่
 STALE_MS = 15000                       # ไม่ได้ยินเกินนี้ = ค่านั้นเชื่อไม่ได้แล้ว
 SEND_MS, POLL_MS, DRAW_MS, RUN_MS = 5000, 100, 500, 1800000
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -296,6 +297,8 @@ def stop(w, led, msg):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     led = led_named("RGB_BLUE")        # ไฟฟ้าบนบอร์ด = ปั๊มที่ PLC บอกว่าเดินอยู่
     if len(TEAM) != 6 or not TEAM[4:].isdigit() or TEAM == "team00":

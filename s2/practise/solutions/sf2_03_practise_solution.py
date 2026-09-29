@@ -12,7 +12,7 @@
 #            (ลองเองก่อน แล้วค่อยเปิดดูเมื่อจำเป็น)
 # ต้องแก้ก่อนรันบนบอร์ด: WIFI_SSID, WIFI_PASS, TEAM (ตรวจกฎผ่านได้โดยไม่ต้องต่อเน็ต)
 #
-# (ทำจาก sf2_03_remote_pump.py bef636922eee)
+# (ทำจาก sf2_03_remote_pump.py bf4d242bca37)
 
 import buttons
 import gpio
@@ -38,6 +38,7 @@ PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินา
 TANK_MIN = 10                          # น้ำในถังต่ำกว่านี้ ห้ามปั๊มทำงาน (ปั๊มแห้งพัง)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -283,6 +284,8 @@ def act_on(w, raw, tank, now, pump_ms, pump_t0):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     if not self_test():                # ตรวจกฎก่อน ไม่ผ่าน = ไม่เปิดจอ ไม่ต่อเน็ต
         return
     w = build_screen()

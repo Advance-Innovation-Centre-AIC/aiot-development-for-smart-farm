@@ -12,7 +12,7 @@
 # บนจอ     : ไฟสถานะ 3 ดวง (Led), ตัวนับแจ้งเตือน, กราฟอุณหภูมิเทียบช่วงที่พืชชอบ (Chart)
 #            และกล่องเตือน (MsgBox)
 # แนวคิด AIoT: Sense -> Decide -> Alert  ส่งเมื่อ "เปลี่ยน" คนรับจะได้ไม่ชินจนเมินแจ้งเตือน
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
+# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM, CROP และ TEMP_OFFSET (broker ตั้งไว้แล้ว ไม่ต้องแก้)
 # ภารกิจกลุ่ม: เติมคำสั่งเปิดปั๊มจาก sf2_03 ตรงจุด ">>> ภารกิจกลุ่ม" ในฟังก์ชัน on_command (ดูใบงาน)
 # สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.4 (แจ้งเตือนที่ส่ง) และข้อ 4 (ack, set ที่รับ)
@@ -58,6 +58,7 @@ CHART_MAX_C = 50                       # กราฟอุณหภูมิ 0-
 MX = (("OK", rgbmatrix.GREEN), ("WARN", rgbmatrix.YELLOW), ("ALERT", rgbmatrix.RED))
 BOX = (212, 90, 368, 150)              # กล่องเตือน (x, y, w, h) ลอยทับกลางจอโดยตั้งใจ จนกว่าจะมีคนรับทราบ
 
+SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -279,6 +280,8 @@ def read_and_judge(w, s):
 
 
 def main():
+    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     names = [c[0] for c in CROPS]
     if CROP not in names:              # สะกดไม่ตรง = หยุด ไม่เดาให้ เพราะรหัสพืชจะถูกส่งออกไปผิดตัว
