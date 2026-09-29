@@ -26,6 +26,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 # ชื่อฟาร์ม + พืช รวมกันยาวได้ราว 40 ตัวอักษรไทย (จอรับได้ 126 ไบต์ ไทยตัวละ 3 ไบต์)
 FARM_NAME = "ฟาร์มกลุ่มที่ ?"   # TODO: ตั้งชื่อฟาร์มของกลุ่ม
 CROP = "มะเขือเทศ"             # TODO: พืชหรือสัตว์ที่ดูแล
@@ -52,6 +53,17 @@ MATRIX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)
     for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
@@ -229,7 +241,7 @@ def build_screen():
 
 def note_event(w, sec, what, score, sound):
     # มีเหตุการณ์: เสียงหนึ่งครั้ง + ขึ้นบรรทัด "ล่าสุด" ใต้คะแนน (เรียกเฉพาะตอนเกิดเหตุ ไม่ใช่ทุกรอบ)
-    ui.sfx(sound)
+    beep(sound)
     w["event"].color(COL_TEXT)
     w["event"].text("วินาที %d: %s (คะแนน %d)" % (sec, what, score))
 
@@ -278,7 +290,7 @@ def main():
         now_running = pump_on or manual                       # กฎอัตโนมัติ หรือสั่งรดเอง
         if now_running != running:                           # 3) ทำ เฉพาะตอนเปลี่ยน
             note_event(w, sec, "ปั๊มเปิด" if now_running else "ปั๊มปิด", score,
-                       ui.SFX_UI_START if now_running else ui.SFX_UI_BACK)
+                       "start" if now_running else "stop")
             set_pump(pump, now_running)
         running = now_running
         if zone_was is None:
@@ -286,12 +298,12 @@ def main():
         elif zone != zone_was and time.ticks_diff(time.ticks_ms(), last_alert) > ALERT_GAP_MS:
             worse = zone > zone_was                           # เปลี่ยนโซนจริง ไม่ใช่กระพือ
             note_event(w, sec, "ฟาร์มแย่ลง" if worse else "ฟาร์มดีขึ้น", score,
-                       ui.SFX_UI_DENY if worse else ui.SFX_PONG_WIN)
+                       "bad" if worse else "good")
             zone_was = zone
             last_alert = time.ticks_ms()
         if sw6.pressed_now():                                 # SW6 (ปุ่มบน) = สลับจอไฟ RGB
             show_temp = not show_temp
-            ui.sfx(ui.SFX_UI_MOVE)
+            beep("tap")
         shown = matrix_show(show_temp, t, score, zone, shown)
         show(w, t, h, soil, running, score, zone)             # 4) โชว์
         ui.poll()          # แตะแท็บ LVGL สลับหน้าให้เอง เราแค่ดึงเหตุการณ์ออกจากคิว

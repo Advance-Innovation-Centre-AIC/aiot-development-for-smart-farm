@@ -21,6 +21,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 RUN_MS = 120000      # เดินนานเท่าไร (2 นาที)
 TICK_MS = 500        # อ่านเซนเซอร์ทุกกี่ ms
 TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
@@ -40,6 +41,17 @@ MATRIX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)  # บนจ�
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
@@ -318,7 +330,7 @@ def main():
         if sw5.pressed_now():                             # 2) SW5 (ปุ่มล่าง) = เริ่มแข่งใหม่
             temp_rec.reset()
             hum_rec.reset()
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         if t is not None:
             temp_rec.add(t)
             shown = matrix_show(t, shown)                # 3) ทำ: จอไฟ RGB

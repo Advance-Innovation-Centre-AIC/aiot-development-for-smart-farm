@@ -27,6 +27,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 HYST = 5             # ช่องกันกระพือ (%) ปั๊มปิดเมื่อชื้นเกิน เกณฑ์ + HYST
 TANK_MIN = 10        # น้ำในถังต่ำกว่านี้ (%) ห้ามเดินปั๊ม
 FLOW_L_PER_S = 0.5   # สมมติปั๊มจ่าย 0.5 ลิตร/วินาที
@@ -43,6 +44,17 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def soil_percent():
     return pots.read(0) * 100 // 4095      # VR1: 0 = แห้งสนิท, 100 = แฉะ
 
@@ -245,13 +257,13 @@ def read_auto_switch(w, auto):
     for ev in ui.poll():
         if ev["handle"] == w["switch"].id() and ev["type"] == "toggled":
             auto = ev["value"] == 1
-            ui.sfx(ui.SFX_UI_MOVE)
+            beep("tap")
     return auto
 
 
 def announce_pump(w, running):
     # ตอนปั๊มเพิ่งเปิด/ปิด (ไม่ใช่ทุกรอบ): เสียงหนึ่งครั้ง
-    ui.sfx(ui.SFX_UI_START if running else ui.SFX_UI_BACK)
+    beep("start" if running else "stop")
 
 
 def show_soil(w, soil, th):
@@ -326,11 +338,11 @@ def main():
                 runs += 1
         running = now_running
         if tank_was_ok and not tank_ok:
-            ui.sfx(ui.SFX_GAME_OVER)                                  # ถังหมด!
+            beep("empty")                                  # ถังหมด!
         tank_was_ok = tank_ok
         if sw6.pressed_now():                                         # SW6 (ปุ่มบน) = ล้างตัวนับ
             runs, water_l = 0, 0.0
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         if running:
             water_l += FLOW_L_PER_S * TICK_MS / 1000
         set_pump(pump, running)

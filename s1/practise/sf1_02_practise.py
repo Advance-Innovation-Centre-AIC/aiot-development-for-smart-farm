@@ -20,6 +20,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 # ช่วงที่พืชชอบ (ตัวเลขตั้งต้นสำหรับการเรียน ไม่ใช่คำแนะนำทางเกษตรกรรม)
 # แต่ละบรรทัด = (ชื่อ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)  เพิ่มพืชของกลุ่มต่อท้ายได้เลย
 CROPS = (
@@ -46,6 +47,17 @@ MOODS = ("สบายดี :)", "เริ่มเครียด", "แย�
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     """คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)"""
     for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
@@ -320,7 +332,7 @@ def main():
             idx = new_idx
             good = total = 0                           # พืชใหม่ = เริ่มนับคะแนนใหม่
             w["crop"].text(crop_text(CROPS[idx]))
-            ui.sfx(ui.SFX_UI_MOVE)
+            beep("tap")
         t, h = read_climate()                           # 1) อ่าน
         if t is None:
             show_sensor_error(w)
@@ -335,7 +347,7 @@ def main():
             draw_face(level)
             quiet = time.ticks_diff(time.ticks_ms(), last_sound) > SOUND_GAP_MS
             if last_level is not None and quiet:
-                ui.sfx(ui.SFX_UI_DENY if level > last_level else ui.SFX_PONG_WIN)
+                beep("bad" if level > last_level else "good")
                 last_sound = time.ticks_ms()
             last_level = level
         show_led(led, level, total)

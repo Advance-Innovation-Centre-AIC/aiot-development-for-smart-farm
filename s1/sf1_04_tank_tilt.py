@@ -25,6 +25,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 SAFE_DEG = 20        # เอียงเกินกี่องศาถือว่าอันตราย
 BUMP_G = 1.8         # แรงรวมเกินกี่เท่าของแรงโน้มถ่วงถือว่า "กระแทก"
 BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
@@ -45,6 +46,17 @@ RANGE = SAFE_DEG * 1.5   # เอียงเท่านี้ จุดบน�
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_motion():
     # คืน (ax, ay, az) หน่วย m/s2 ถ้าอ่าน IMU ไม่ได้คืน None
     try:
@@ -340,20 +352,20 @@ def main():
         raw_roll, raw_pitch = tilt_angles(m[0], m[1], m[2])
         if sw5.pressed_now():                          # SW5 (ปุ่มล่าง): ท่าตอนนี้ = ศูนย์
             roll0, pitch0 = raw_roll, raw_pitch
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         if sw6.pressed_now():                          # SW6 (ปุ่มบน): ล้างตัวนับ
             rec.reset()
-            ui.sfx(ui.SFX_UI_BACK)
+            beep("stop")
         roll, pitch = raw_roll - roll0, raw_pitch - pitch0  # 2) คิด
         tilt = int(max(abs(roll), abs(pitch)))
         g = g_force(m[0], m[1], m[2])
         now = time.ticks_ms()
         if rec.add(tilt, g, now, time.ticks_diff(now, last_ms)):
-            ui.sfx(ui.SFX_SHOOT_HIT)                        # โดนกระแทก!
+            beep("hit")                        # โดนกระแทก!
         last_ms = now
         level = tilt_level(tilt)
         if level == 2 and not was_danger:
-            ui.sfx(ui.SFX_SHOOT_LOSE_LIFE)                  # เพิ่งเอียงเกิน -> เตือนครั้งเดียว
+            beep("bad")                  # เพิ่งเอียงเกิน -> เตือนครั้งเดียว
         was_danger = level == 2
         set_alarm(alarm, was_danger)                        # 3) ทำ
         drawn = matrix_update(roll, pitch, level, drawn)
