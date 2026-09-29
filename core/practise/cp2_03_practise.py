@@ -132,7 +132,7 @@ def build_screen():
         x = 12 + 194 * i
         card(x, 66, 186, 272, TITLES[i])
         w["led"].append(ui.Led(x=x + 14, y=100, w=44, h=44, color=COL_BAD, value=0))
-        w["st"].append(ui.Label("ดับ", x=x + 68, y=110, color=COL_TEXT, value=20))
+        w["st"].append(ui.Label("ดับ", x=x + 64, y=114, color=COL_TEXT, value=16))
         ui.Label("สลับ (ครั้ง)", x=x + 14, y=160, color=COL_DIM, value=16)
         w["seg"].append(ui.Seg7(text="0", x=x + 14, y=186, w=150, h=56, color=COL_INFO))
         ui.Label(rules[i], x=x + 14, y=262, color=COL_DIM, value=16)
