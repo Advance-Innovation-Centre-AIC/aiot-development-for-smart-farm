@@ -130,7 +130,8 @@ def build_screen(models):
     w["go"] = ui.Button("Run", x=12, y=282, w=210, h=58, color=COL_OK, value=24)
     card(234, 40, 282, 300, "AI says")
     w["hits"] = ui.Label(" ", x=320, y=48, color=COL_DIM, value=16)
-    w["sig"] = ui.Led(x=250, y=72, w=44, h=44, color=COL_DIM, value=1)
+    # status disc: a round Panel, because an Led keeps its creation hue on the board (only brightness changes)
+    w["sig"] = ui.Panel(x=250, y=72, w=44, h=44, color=COL_DIM, min=COL_DIM, max=22, value=0)
     w["verdict"] = ui.Label("-", x=308, y=78, color=COL_TEXT, value=28)
     w["pct"] = ui.Label("-", x=250, y=122, color=COL_TEXT, value=16)
     w["vu"] = [ui.Led(x=250 + i * 16, y=146, w=12, h=24, value=0,
