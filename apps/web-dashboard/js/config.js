@@ -82,6 +82,8 @@ export const DEFAULT_RULES = [
   { name: "PLC ไม่ยอมเปิด ถังต่ำ", src: "plc/state", key: "why", op: "==", val: "blocked_tank", cool: 60, level: "warn" },
   { name: "บอร์ดเงียบเกิน 15 วิ", src: "silence", key: "telemetry", op: ">", val: 15, cool: 60, level: "crit" },
   { name: "AI พบความผิดปกติ (sf3_06)", src: "ai", key: "label", op: "==", val: "anomaly", win: 5, need: 3, cool: 30, level: "crit" },   // ป้ายสลับไปมา: 3 ใน 5 ใบล่าสุด
+  { name: "AI alarm เริ่ม (event)", src: "event", key: "event", op: "==", val: "ai_alarm_start", cool: 30, level: "crit" },   // บอร์ดตัดสิน 3 ใน 5 เองแล้วส่งครั้งเดียว
+  { name: "AI alarm ค้างอยู่ (state)", src: "ai", key: "alarm", op: "==", val: 1, cool: 60, level: "warn" },   // แอปที่เปิดกลางทางก็รู้ว่ากำลังเตือน
 ];
 
 // ---- คำสั่ง (สัญญาข้อ 4, 4.1) : ไฟล์บนบอร์ดที่ฟังคำสั่งนั้น ----
