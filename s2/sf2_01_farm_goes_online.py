@@ -36,12 +36,24 @@ TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของต
                      # (ใช้ค่าเดียวกับที่กลุ่มหาได้ในคาบ 1) ตั้งแล้วความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย
 HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์แล้วสูงเกินจริง ให้ตั้ง False
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
@@ -253,7 +265,7 @@ def failed(w, led, took):
     stop(w, led, "ได้ยินวงแต่ต่อไม่ผ่าน ตรวจรหัสผ่าน" if heard
          else "ไม่ได้ยินวง " + WIFI_SSID + " ตรวจชื่อวง", COL_BAD)
     rgbmatrix.fill(rgbmatrix.RED)
-    ui.sfx(ui.SFX_UI_DENY)
+    beep("bad")
     print("ต่อไม่สำเร็จใน", took, "ms | ได้ยินวงนี้:", heard)
     raise SystemExit
 
@@ -263,7 +275,7 @@ def link_changed(online, sec):
     if not online:
         print("หลุดตอนวินาทีที่", sec)
     marquee("ONLINE" if online else "OFFLINE", rgbmatrix.GREEN if online else rgbmatrix.RED)
-    ui.sfx(ui.SFX_UI_SELECT if online else ui.SFX_UI_DENY)
+    beep("good" if online else "bad")
 
 
 def watch_link(w, led):
@@ -303,7 +315,7 @@ def main():
     show_note(w, "จด IP กับเวลาลงใบงาน แล้วลองปิด Hotspot ดู", COL_DIM)
     ui.poll()
     marquee("ONLINE", rgbmatrix.GREEN)
-    ui.sfx(ui.SFX_UI_START)
+    beep("start")
     print("ต่อสำเร็จใน", took, "ms | ip =", ip)
     up, total, drops = watch_link(w, led)
     stop(w, led, "จบรอบ - กด Program to Device อีกครั้งเพื่อเล่นใหม่", COL_WARN)

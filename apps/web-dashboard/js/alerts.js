@@ -9,7 +9,7 @@
 //   - เตือนได้เฉพาะตอนหน้านี้ยังเปิดอยู่ ปิดแอปแล้วอยากให้มือถือเด้ง ใช้ apps/notify/ (ntfy)
 //   - navigator.vibrate ไม่มีบน iPhone · เสียงต้องกดเปิดหนึ่งครั้ง (เบราว์เซอร์ห้ามเล่นเสียงเองก่อนคนแตะจอ)
 
-import { DEFAULT_RULES } from "./config.js";
+import { DEFAULT_RULES, SOUND_VOLUME } from "./config.js";
 import { load, save } from "./storage.js";
 import { el, icon, $, short } from "./ui.js";
 
@@ -151,7 +151,7 @@ export class Alerts {
       osc.frequency.value = freq;
       const s = t0 + i * 0.22;
       gain.gain.setValueAtTime(0.0001, s);
-      gain.gain.exponentialRampToValueAtTime(0.25, s + 0.02);
+      gain.gain.exponentialRampToValueAtTime(SOUND_VOLUME, s + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.16);
       osc.connect(gain).connect(this.audio.destination);
       osc.start(s);

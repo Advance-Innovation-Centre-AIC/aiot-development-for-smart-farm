@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1426"/>
+      <stop offset="0.62" stop-color="#10324a"/>
+      <stop offset="1" stop-color="#1d4d2e"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd6ff" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#7fd6ff" stop-opacity="0.06"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <!-- fields -->
+  <path d="M0 600 Q 320 540 640 590 T 1280 570 L1280 720 L0 720 Z" fill="#1f5f33"/>
+  <path d="M0 650 Q 360 610 720 650 T 1280 640 L1280 720 L0 720 Z" fill="#27773f"/>
+  <g stroke="#3d9a55" stroke-width="3" opacity="0.7">
+    <path d="M40 700 L300 650"/><path d="M160 710 L470 655"/><path d="M300 716 L640 660"/>
+    <path d="M480 718 L820 662"/><path d="M660 720 L1000 664"/><path d="M860 720 L1180 662"/>
+  </g>
+  <!-- broker cloud (top right) -->
+  <g transform="translate(1000 110)">
+    <circle cx="0" cy="20" r="120" fill="url(#glow)"/>
+    <path d="M-80 50 Q -110 50 -110 20 Q -110 -12 -78 -14 Q -70 -52 -28 -50 Q 0 -80 40 -56 Q 80 -60 86 -20 Q 118 -14 114 20 Q 110 50 80 50 Z"
+          fill="#132033" stroke="#8fd3ff" stroke-width="3"/>
+    <text x="2" y="12" text-anchor="middle" font-family="sans-serif" font-size="30" font-weight="700" fill="#8fd3ff">MQTT</text>
+    <text x="2" y="40" text-anchor="middle" font-family="monospace" font-size="15" fill="#9aa3af">bento-aiot/…</text>
+  </g>
+  <!-- greenhouse with the board -->
+  <g transform="translate(700 340)">
+    <path d="M0 250 L0 120 Q 170 -10 340 120 L340 250 Z" fill="url(#glass)" stroke="#8fd3ff" stroke-width="3"/>
+    <g stroke="#8fd3ff" stroke-width="2" opacity="0.7">
+      <path d="M85 250 L85 62"/><path d="M170 250 L170 38"/><path d="M255 250 L255 62"/>
+      <path d="M0 180 L340 180"/>
+    </g>
+    <g fill="#5fd07a">
+      <ellipse cx="40" cy="232" rx="18" ry="12"/><ellipse cx="120" cy="230" rx="20" ry="14"/>
+      <ellipse cx="210" cy="232" rx="18" ry="12"/><ellipse cx="295" cy="230" rx="20" ry="14"/>
+    </g>
+    <g fill="#e5484d"><circle cx="118" cy="226" r="5"/><circle cx="130" cy="232" r="4"/><circle cx="292" cy="226" r="5"/></g>
+    <!-- board -->
+    <rect x="120" y="100" width="100" height="62" rx="6" fill="#0d1117" stroke="#22d3ee" stroke-width="2.5"/>
+    <rect x="130" y="110" width="80" height="42" rx="3" fill="#10324a"/>
+    <text x="170" y="138" text-anchor="middle" font-family="monospace" font-size="15" fill="#5fd07a">27.4°</text>
+  </g>
+  <!-- phone (right) -->
+  <g transform="translate(1110 330)">
+    <rect x="0" y="0" width="120" height="220" rx="18" fill="#0d1117" stroke="#e8eaed" stroke-width="3"/>
+    <rect x="10" y="22" width="100" height="176" rx="6" fill="#161615"/>
+    <rect x="18" y="32" width="84" height="46" rx="6" fill="#232321"/>
+    <text x="60" y="50" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9a9a94">soil %</text>
+    <text x="60" y="72" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#ededea">42</text>
+    <rect x="18" y="86" width="84" height="46" rx="6" fill="#232321"/>
+    <text x="60" y="104" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#9a9a94">temp_c</text>
+    <text x="60" y="126" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="700" fill="#ededea">27.4</text>
+    <rect x="18" y="146" width="84" height="34" rx="8" fill="#1f7a4d"/>
+    <text x="60" y="169" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#fff">รดน้ำ</text>
+  </g>
+  <!-- up link: board -> broker (green) -->
+  <path d="M875 430 C 900 300, 930 220, 960 170" fill="none" stroke="#5fd07a" stroke-width="4" stroke-dasharray="10 8"/>
+  <circle r="7" fill="#5fd07a">
+    <animateMotion dur="2.4s" repeatCount="indefinite" path="M875 430 C 900 300, 930 220, 960 170"/>
+  </circle>
+  <!-- broker -> phone (green) and phone -> broker (purple, the command) -->
+  <path d="M1080 160 C 1140 200, 1165 260, 1170 322" fill="none" stroke="#5fd07a" stroke-width="4" stroke-dasharray="10 8"/>
+  <path d="M1128 322 C 1120 260, 1085 215, 1040 172" fill="none" stroke="#c38cff" stroke-width="4" stroke-dasharray="10 8"/>
+  <circle r="7" fill="#c38cff">
+    <animateMotion dur="2.8s" repeatCount="indefinite" path="M1128 322 C 1120 260, 1085 215, 1040 172"/>
+  </circle>
+  <!-- RGB matrix motif (16x8): a scrolling "OK" feel, small, bottom left -->
+  <g transform="translate(64 540)" opacity="0.92">
+    <rect x="-10" y="-10" width="356" height="180" rx="10" fill="#0d1117" stroke="#30363d" stroke-width="2"/>
+    <g fill="#1b222c">
+      <g id="r0"><circle cx="8" cy="8" r="7"/><circle cx="29" cy="8" r="7"/><circle cx="50" cy="8" r="7"/><circle cx="71" cy="8" r="7"/><circle cx="92" cy="8" r="7"/><circle cx="113" cy="8" r="7"/><circle cx="134" cy="8" r="7"/><circle cx="155" cy="8" r="7"/><circle cx="176" cy="8" r="7"/><circle cx="197" cy="8" r="7"/><circle cx="218" cy="8" r="7"/><circle cx="239" cy="8" r="7"/><circle cx="260" cy="8" r="7"/><circle cx="281" cy="8" r="7"/><circle cx="302" cy="8" r="7"/><circle cx="323" cy="8" r="7"/></g>
+      <use href="#r0" y="21"/><use href="#r0" y="42"/><use href="#r0" y="63"/><use href="#r0" y="84"/><use href="#r0" y="105"/><use href="#r0" y="126"/><use href="#r0" y="147"/>
+    </g>
+    <!-- lit: an upward arrow (send) in green + a drop (water) in blue -->
+    <g fill="#30d158">
+      <circle cx="71" cy="29" r="7"/><circle cx="50" cy="50" r="7"/><circle cx="71" cy="50" r="7"/><circle cx="92" cy="50" r="7"/>
+      <circle cx="29" cy="71" r="7"/><circle cx="71" cy="71" r="7"/><circle cx="113" cy="71" r="7"/>
+      <circle cx="71" cy="92" r="7"/><circle cx="71" cy="113" r="7"/><circle cx="71" cy="134" r="7"/>
+    </g>
+    <g fill="#2f6bff">
+      <circle cx="239" cy="29" r="7"/><circle cx="218" cy="50" r="7"/><circle cx="239" cy="50" r="7"/><circle cx="260" cy="50" r="7"/>
+      <circle cx="197" cy="71" r="7"/><circle cx="218" cy="71" r="7"/><circle cx="239" cy="71" r="7"/><circle cx="260" cy="71" r="7"/><circle cx="281" cy="71" r="7"/>
+      <circle cx="197" cy="92" r="7"/><circle cx="218" cy="92" r="7"/><circle cx="239" cy="92" r="7"/><circle cx="260" cy="92" r="7"/><circle cx="281" cy="92" r="7"/>
+      <circle cx="218" cy="113" r="7"/><circle cx="239" cy="113" r="7"/><circle cx="260" cy="113" r="7"/>
+    </g>
+  </g>
+</svg>

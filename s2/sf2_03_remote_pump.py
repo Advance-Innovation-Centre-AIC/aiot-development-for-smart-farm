@@ -38,12 +38,24 @@ PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินา
 TANK_MIN = 10                          # น้ำในถังต่ำกว่านี้ ห้ามปั๊มทำงาน (ปั๊มแห้งพัง)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def knob_percent(i):
     # ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง
     return pots.read(i) * 100 // 4095
@@ -240,12 +252,12 @@ def act_on(w, raw, tank, now, pump_ms, pump_t0):
     elif do == "on":
         pump_ms, pump_t0 = arg * 1000, now
     elif do == "beep":
-        ui.tone(69, ui.WAVE_SQUARE, 90, 150)          # โน้ต MIDI ไม่ใช่ความถี่
+        beep("hit")                    # เจ้าของฟาร์มเรียก (โน้ต MIDI ไม่ใช่ความถี่ ดู TUNES)
     elif do == "say" and arg and not pump_ms:
         rgbmatrix.scroll(arg, rgbmatrix.PURPLE, 80)
-    sfx = {"deny": ui.SFX_UI_DENY, "off": ui.SFX_UI_BACK, "on": ui.SFX_UI_SELECT, "say": ui.SFX_UI_MOVE}.get(do)
-    if sfx is not None:
-        ui.sfx(sfx)                    # เสียงดังเฉพาะตอนมีคำสั่งเข้า ไม่ใช่ทุกรอบลูป
+    tune = {"deny": "bad", "off": "stop", "on": "start", "say": "tap"}.get(do)
+    if tune is not None:
+        beep(tune)                     # เสียงดังเฉพาะตอนมีคำสั่งเข้า ไม่ใช่ทุกรอบลูป
     if text:
         show_note(w, text, col)
     return pump_ms, pump_t0
@@ -270,7 +282,7 @@ def main():
         if stop_btn.pressed_now() and pump_ms:                      # SW5 ไม่ผ่านเน็ตเลย
             pump_ms = 0
             show_note(w, "หยุดฉุกเฉิน " + BTN_NAMES[0], COL_BAD)
-            ui.sfx(ui.SFX_UI_BACK)
+            beep("stop")
         soil, tank = knob_percent(0), knob_percent(3)
         msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
         if msg is not None:
@@ -281,7 +293,7 @@ def main():
         if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
             pump_ms = 0
             show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "ถังแห้ง ดับเอง", COL_INFO)
-            ui.sfx(ui.SFX_UI_BACK)
+            beep("stop")
         set_led(pump, pump_ms)
         sec_left = left // 1000 + 1 if pump_ms else 0
         if sec_left != shown:

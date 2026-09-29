@@ -41,12 +41,24 @@ COOLDOWN_MS = 60000                    # สั่งแล้วรอกี่
 STALE_MS = 15000                       # ไม่ได้ยินเกินนี้ = ค่านั้นเชื่อไม่ได้แล้ว
 SEND_MS, POLL_MS, DRAW_MS, RUN_MS = 5000, 100, 500, 1800000
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def led_named(name):
     # หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*
     try:
@@ -228,10 +240,10 @@ def on_plc(w, farm, body, now):
     was = farm.pump
     farm.pump, farm.left, farm.plc_ms, farm.lost = pump, body.get("left_s", 0), now, False
     if why == "blocked_tank":
-        ui.sfx(ui.SFX_UI_DENY)
+        beep("bad")
         show_note(w, "PLC: ถังต่ำ", COL_BAD)
     if pump != was and not (was is None and pump == 0):   # รู้ครั้งแรกว่า "หยุด" ไม่ใช่การเปลี่ยน
-        ui.sfx(ui.SFX_UI_START if pump else ui.SFX_UI_BACK)
+        beep("start" if pump else "stop")
         show_note(w, "ปั๊มเดิน" if pump else "ปั๊มหยุด", COL_OK)
         send("event", {"id": TEAM, "event": "pump", "pump": pump, "why": why})
 
@@ -259,7 +271,7 @@ def check_plc_alive(w, farm, now):
     # PLC เงียบเกิน STALE_MS: ไม่รู้แล้วว่าปั๊มเดินไหม ต้องบอกคนทันที (เสียง + ข้อความแดง + event)
     if farm.plc_ms is not None and not farm.lost and time.ticks_diff(now, farm.plc_ms) >= STALE_MS:
         farm.lost, farm.pump = True, None
-        ui.sfx(ui.SFX_UI_DENY)
+        beep("bad")
         show_note(w, "PLC หลุด!", COL_BAD)
         send("event", {"id": TEAM, "event": "plc_lost"})
 
@@ -272,7 +284,7 @@ def buttons_and_touch(w, farm, water, toggle):
     if toggle.pressed_now():
         farm.auto = not farm.auto
         w["auto"].value(1 if farm.auto else 0)
-        ui.sfx(ui.SFX_UI_MOVE)
+        beep("tap")
     return water.pressed_now()
 
 

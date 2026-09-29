@@ -40,12 +40,24 @@ READ_MS, SEND_MS, POLL_MS = 1000, 5000, 100
 RUN_MS = 1800000                      # ส่งนาน 30 นาที พอให้ชั่วโมงที่ 2 มีข้อมูลเข้าแอป
 SOUND = True                          # ทุกบอร์ดในห้องดังพร้อมกันหนวกหู ตั้ง False = ดังเฉพาะตอนกด SW5
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     t = h = p = None
@@ -107,7 +119,8 @@ def r1(x, digits=1):
 
 
 def build_payload(n, t, h, p, az, knobs, manual):
-    # รายงานหนึ่งใบ ลำดับคีย์ตามสัญญา MQTT ข้อ 3.1: มี id กับ n เสมอ ตัวไหนอ่านไม่ได้เป็น None
+    # รายงานหนึ่งใบ คีย์ครบตามสัญญา MQTT ข้อ 3.1: มี id กับ n เสมอ ตัวไหนอ่านไม่ได้เป็น None
+    # (ลำดับคีย์ในใบที่ส่งจริงอาจสลับกัน แอปจึงต้องอ่านด้วยชื่อคีย์ ไม่ใช่ตำแหน่ง)
     # sim บอกตรง ๆ ว่าคีย์ไหนมาจากลูกบิดจำลอง · by บอกว่าส่งเพราะครบเวลาหรือเพราะคนกด SW5
     body = {"id": TEAM, "n": n, "temp_c": r1(t), "rh": r1(h), "hpa": r1(p), "az": r1(az, 2)}
     body["soil"], body["light"], body["tank"] = knobs          # ลูกบิดจำลอง VR1 VR3 VR4
@@ -207,7 +220,7 @@ def on_sent(w, body, manual):
     w["sent"].text("ส่งแล้ว %d ใบ" % body["n"])
     rgbmatrix.score(body["n"], rgbmatrix.GREEN)       # เขียนจอไฟเฉพาะตอนเลขเปลี่ยน
     if SOUND or manual:
-        ui.sfx(ui.SFX_FLAPPY_SCORE)
+        beep("good")
     print("ส่ง:", json.dumps(body))
 
 
@@ -230,7 +243,7 @@ def main():
         if call_btn.pressed_now():                    # SW6 = "เหตุการณ์" ไม่ใช่รายงาน จึงส่งเข้าอีกหัวข้อ
             if publish_json(TOPIC_EVENT, {"id": TEAM, "event": "sw6", "msg": "call"}) == "lost":
                 stop(w, "สายหลุด ส่งไม่ออก")
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         if first or time.ticks_diff(now, t_read) >= READ_MS:   # นาฬิกาสามเรือน: ปุ่ม 0.1 วัด 1 ส่ง 5 วิ
             t_read = now
             t, h, p = read_climate()

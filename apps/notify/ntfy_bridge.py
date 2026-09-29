@@ -10,7 +10,7 @@
 #              python ntfy_bridge.py --team team05 --dry-run      พิมพ์ว่าจะส่งอะไร ไม่ส่งจริง
 # Telegram  : (ไม่บังคับ) export TELEGRAM_BOT_TOKEN=...  TELEGRAM_CHAT_ID=...  แล้วรันเหมือนเดิม ส่งทั้งสองทาง
 #
-# อ้างอิง API ของ ntfy (ตรวจจากเอกสารจริงเมื่อ 2026-09-28): https://docs.ntfy.sh/publish/
+# อ้างอิง API ของ ntfy (ตรวจกับเอกสารจริงแล้ว): https://docs.ntfy.sh/publish/
 #   - หัวข้อ "Publish as JSON": POST ข้อความ JSON ไปที่ราก https://ntfy.sh/ (ไม่ใช่ https://ntfy.sh/<topic>)
 #     ช่องที่ใช้: topic (จำเป็น), message, title, tags (array), priority (1-5), click
 #     ส่งเป็น JSON ใน body ภาษาไทยจึงไม่ต้องเข้ารหัสใน header (เอกสารบอกว่าบางไลบรารีส่ง UTF-8 ใน header ไม่ได้)
@@ -19,7 +19,7 @@
 #   - หัวข้อ "Limitations": ข้อความละไม่เกิน 4,096 ไบต์ · ขอได้ 60 ครั้งทันที แล้วเติมให้ 1 ครั้งทุก 5 วินาที
 #     · ntfy.sh ส่งได้วันละ 250 ข้อความต่อผู้ส่ง -> ไฟล์นี้จึงมีช่วงเว้น (cooldown) และเพดานต่อชั่วโมงของตัวเอง
 #   - "the topic is essentially a password": ไม่มีการสมัคร ใครรู้ชื่อหัวข้อก็อ่านได้ ตั้งชื่อยาวและเดายาก
-# อ้างอิง Telegram Bot API (ตรวจเมื่อ 2026-09-28): https://core.telegram.org/bots/api#sendmessage
+# อ้างอิง Telegram Bot API (ตรวจกับเอกสารจริงแล้ว): https://core.telegram.org/bots/api#sendmessage
 #   https://api.telegram.org/bot<token>/sendMessage รับ JSON {chat_id, text} ตอบ {"ok": true, ...}
 #   token อ่านจากตัวแปรแวดล้อมเท่านั้น ไม่พิมพ์ออกจอ ไม่เขียนลงไฟล์ (URL มี token อยู่ จึงไม่พิมพ์ URL ด้วย)
 #

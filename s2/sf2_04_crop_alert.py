@@ -58,6 +58,7 @@ CHART_MAX_C = 50                       # กราฟอุณหภูมิ 0-
 MX = (("OK", rgbmatrix.GREEN), ("WARN", rgbmatrix.YELLOW), ("ALERT", rgbmatrix.RED))
 BOX = (212, 90, 368, 150)              # กล่องเตือน (x, y, w, h) ลอยทับกลางจอโดยตั้งใจ จนกว่าจะมีคนรับทราบ
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
@@ -65,6 +66,17 @@ LEVEL_COLORS = (COL_OK, COL_WARN, COL_BAD)
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น) ตัวที่อ่านไม่ได้เป็น None
     # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
@@ -229,7 +241,7 @@ def on_command(w, s, raw):
         if isinstance(v, int) and s.lim[0] < v <= T_HI_MAX:
             s.lim[1], s.level, s.t = v, -1, None     # level -1 + t None = ตัดสินใหม่และแจ้งทันที
             show_crop(w, s)
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
     # >>> ภารกิจกลุ่ม: วาง elif สำหรับ "led"/"pump" จาก sf2_03 ตรงนี้ <<<
     return False
 
@@ -242,7 +254,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
                  "temp_c": round(t, 1), "rh": round(h, 1), "sun_c": sun}):
         stop(w, "สายหลุดตอนส่ง")
     rgbmatrix.scroll(MX[level][0], MX[level][1], 80)
-    ui.sfx((ui.SFX_FLAPPY_SCORE, ui.SFX_UI_MOVE, ui.SFX_GAME_OVER)[level])
+    beep(("good", "tap", "empty")[level])
     show_ack(w, s, "รอคนรับทราบ" if level == 2 else "ส่งแล้ว", COL_BAD if level == 2 else COL_DIM)
     close_box(w)
     if level == 2:                     # บรรทัดแรก = หัวกล่อง ที่เหลือ = เนื้อความ (รวมไม่เกิน 126 ไบต์)
@@ -294,7 +306,7 @@ def main():
             close_box(w)
             show_ack(w, s, "รับทราบแล้ว", COL_OK)
             rgbmatrix.scroll("ACK", rgbmatrix.CYAN, 80)
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         ui.poll()                      # ให้จอตอบสนอง (ไฟล์นี้ไม่มี widget ที่ต้องแตะ)
         if s.t is None or time.ticks_diff(now, t_read) >= READ_MS:
             t_read = now
@@ -302,7 +314,7 @@ def main():
                 t_beep = now
         if s.level == 2 and not s.acked and time.ticks_diff(now, t_beep) >= BEEP_MS:
             t_beep = now               # ร้องซ้ำทุก 5 วิ ไม่ใช่ทุกรอบลูป ห้องมีหลายบอร์ด
-            ui.tone(69, ui.WAVE_SQUARE, 90, 150)
+            beep("bad")
         time.sleep_ms(POLL_MS)
 
     stop(w, "จบรอบ", COL_DIM)

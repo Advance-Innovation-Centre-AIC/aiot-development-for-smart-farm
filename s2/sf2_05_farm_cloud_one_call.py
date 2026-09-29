@@ -41,12 +41,24 @@ N, GAP_MS = 6, 5000                    # ส่ง 6 ใบ ห่างกั�
 # port ในคลังคือค่าที่เก็บไว้ ไม่ใช่พอร์ตที่ connect() ใช้จริง พอร์ตจริงมาจาก tls_mode
 SHOW = ("device_id", "broker", "tls_mode", "port", "qos", "keepalive")
 
+VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+
+# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
+TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+
+
+def beep(name):
+    for n in TUNES[name]:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
+        time.sleep_ms(100)
+
 def read_climate():
     # คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
     # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
@@ -214,7 +226,7 @@ def show_online(w):
     w["led"].value(1)
     show_status(w, "ต่อแพลตฟอร์มติดแล้ว", COL_OK)
     rgbmatrix.scroll("CLOUD", rgbmatrix.CYAN, 80)
-    ui.sfx(ui.SFX_UI_START)
+    beep("start")
 
 
 def show_sent(w, i, sent, t, h, ok):
@@ -222,7 +234,7 @@ def show_sent(w, i, sent, t, h, ok):
     if ok:
         w["seg_sent"].text(str(sent))
         matrix_show(sent)
-        ui.sfx(ui.SFX_FLAPPY_SCORE)
+        beep("good")
         w["note"].color(COL_TEXT)
         w["note"].text("ใบที่ " + str(i) + " temp_c=" + str(t) + " rh=" + str(h))
     else:
