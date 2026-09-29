@@ -1,19 +1,12 @@
-# sf2_02_greenhouse_report.py - โรงเรือนรายงานตัวออกไปให้เจ้าของฟาร์มดูทุก 5 วินาที
+# sf2_02_greenhouse_report.py - โรงเรือนส่งรายงานทุก 5 วินาที
 #
-# ภารกิจ   : วัดอากาศ (SHT40 DPS368) ความเอียง (IMU) และลูกบิดจำลอง ดิน VR1 แสง VR3 ถังน้ำ VR4
-#            ทุก 1 วินาที แล้วส่งรายงานผ่าน MQTT ทุก 5 วินาที ให้หน้าเว็บและแอปของกลุ่มในชั่วโมงที่ 2
-#            เปิด farm_web.html?team=<เลขกลุ่ม> บนมือถือ แล้วดูค่าฟาร์มขึ้นเป็นการ์ด
-# ลองเล่น  : เป่าลมหายใจใส่บอร์ด หมุนลูกบิด ตะแคงบอร์ด แล้วดูว่ามือถือเห็นช้ากว่าจอบอร์ดกี่วินาที
-# ของบนบอร์ดที่ใช้ : SHT40 = อุณหภูมิ + ความชื้น · DPS368 = ความกดอากาศ · BMI270 = ความเอียง
-#            VR1 = ดิน · VR3 = แสง · VR4 = ถังน้ำ (สามตัวนี้เป็นค่าจำลอง จึงส่งคีย์ sim บอกคนรับ)
-#            SW5 (ปุ่มล่าง) = ส่งเดี๋ยวนี้ · SW6 (ปุ่มบน) = กดเรียกเจ้าของฟาร์ม (ส่งเข้าหัวข้อ event)
-#            จอไฟ RGB 16x8 = นับใบที่ส่ง · ลำโพงดังตอนส่งออก (ปิดได้ด้วย SOUND = False)
-# บนจอ     : ตัวเลขใหญ่ (Seg7), หลอดลูกบิด (Bar), กราฟบอร์ดกับคลาวด์ (Chart), ไฟออนไลน์ (Led),
-#            หลอดนับถอยหลังใบถัดไป (Bar)
-# แนวคิด AIoT: Sense -> Send  วัดถี่ได้ แต่ส่งห่าง ๆ เพราะการส่งกวน broker ของทั้งห้อง
-# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
-# ระวัง     : broker.hivemq.com พอร์ต 1883 ไม่เข้ารหัส ใครก็อ่านหัวข้อเราได้ ห้ามส่งของลับ
-#            "ทุก 5 วินาที" คือถามว่าถึงเวลาหรือยัง ไม่ใช่ time.sleep(5) · คีย์ทั้งหมดอยู่ใน app/MQTT_CONTRACT_th.md
+# ภารกิจ   : วัดอากาศทุก 1 วินาที ส่งรายงานผ่าน MQTT ทุก 5 วินาที
+# ลองเล่น  : เปิด farm_web.html?team=<เลขกลุ่ม> บนมือถือ แล้วเป่าลมใส่บอร์ด หมุนลูกบิด
+# บนจอ     : ตัวเลขใหญ่ (Seg7) หลอดลูกบิด (Bar) กราฟ (Chart) ไฟออนไลน์ (Led)
+# แนวคิด AIoT: วัดถี่ได้ แต่ส่งห่าง ๆ โดยถามว่าถึงเวลาหรือยัง ไม่ใช่ time.sleep(5)
+# บอร์ด     : TESAIoT Dev Kit และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
+# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM
+# ระวัง     : พอร์ต 1883 ไม่เข้ารหัส ใครก็อ่านหัวข้อเราได้ ห้ามส่งของลับ
 
 import buttons
 import json
@@ -29,19 +22,19 @@ import wifi
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 TEAM = "teamXX"                       # เลขกลุ่มที่ผู้สอนแจก เช่น team05 ห้ามซ้ำกลุ่มอื่น
-TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ แล้วใส่ค่าชดเชย เช่น -7.0 (ค่าเดียวกับคาบ 1)
+TEMP_OFFSET = 0.0    # ชดเชยความอุ่นจากชิป เช่น -7.0
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
+CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
-BTN_NAMES = ("SW5", "SW6")            # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
+BTN_NAMES = ("SW5", "SW6")
 READ_MS, SEND_MS, POLL_MS = 1000, 5000, 100
-RUN_MS = 1800000                      # ส่งนาน 30 นาที พอให้ชั่วโมงที่ 2 มีข้อมูลเข้าแอป
-SOUND = True                          # ทุกบอร์ดในห้องดังพร้อมกันหนวกหู ตั้ง False = ดังเฉพาะตอนกด SW5
+RUN_MS = 1800000                      # ส่งนาน 30 นาที
+SOUND = True                          # False = ดังเฉพาะตอนกด SW5
 
-SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
+SPEAKER = 40  # ลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป)
+VOLUME = 25   # ความดังเสียง 0-127
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
@@ -49,7 +42,6 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -60,7 +52,7 @@ def beep(name):
         time.sleep_ms(100)
 
 def read_climate():
-    # คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
+    # ตัวที่อ่านไม่ได้เป็น None
     t = h = p = None
     try:
         t, h = sensors.sht40.temperature() + TEMP_OFFSET, sensors.sht40.humidity()
@@ -74,7 +66,7 @@ def read_climate():
 
 
 def read_az():
-    # ค่าเร่งแกน z (m/s2) วางราบราว 9.8 ตะแคงแล้วลดลง = กระถางล้ม
+    # แกน z (m/s2) วางราบราว 9.8 ตะแคงแล้วลดลง
     try:
         return sensors.bmi270.motion()[2]
     except Exception:
@@ -82,13 +74,10 @@ def read_az():
 
 
 def knob_percent(i):
-    # ลูกบิด VR1-VR4 (i = 0-3) เป็น 0-100 %  บอร์ดไม่มี pots.percent() จึงคิดเอง
     return pots.read(i) * 100 // 4095
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
 
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
@@ -100,13 +89,13 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
+        # True ครั้งเดียวต่อการกด
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
+    # รอ ms แต่อ่านปุ่มทุก 20 ms ไม่ให้พลาดการแตะสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -130,17 +119,29 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 
 # ---- 4) เครือข่าย ----
+def connect_broker(w):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in (1, 2, 3):
+        if n > 1:
+            show_note(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            ui.poll()
+        try:
+            if mqtt.connect(BROKER, port=1883, keepalive=60,
+                            client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def connect_farm(w):
     # บันไดสามขั้น WiFi -> IP -> broker ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
-    return "" if linked else "broker ไม่ตอบ พอร์ต 1883?"
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
+    return "" if linked else "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
 
 
 def publish_json(topic, obj):
@@ -153,27 +154,23 @@ def publish_json(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
+    # LVGL ไม่วาดจุดกลมเมื่อจำนวนจุด >= ความกว้าง
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def show_link(w, ok):
-    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
     w["mq"].value(1 if ok else 0)
     w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("โรงเรือนรายงานตัว", x=12, y=6, color=COL_TEXT, value=24)
@@ -186,7 +183,7 @@ def build_screen():
     for i in range(3):
         w["bars"].append(ui.Bar(x=576, y=72 + i * 22, w=190, h=14))
     card(12, 152, 420, 186, "กราฟ C: ฟ้า = บอร์ด  เขียว = ส่งแล้ว")
-    # 15-40 C ไม่ใช่ 0-100 เพราะช่วงกว้างเกินทำให้เส้นแบนจนมองไม่เห็นว่าค่าขยับ
+    # 15-40 C เพราะช่วง 0-100 ทำให้เส้นแบน
     w["chart"] = line_chart(22, 178, 400, 152, 15, 40, COL_INFO)
     w["s_sent"] = w["chart"].add_series(COL_OK)
     card(442, 152, 338, 186, "az เทียบตอนเริ่ม")
@@ -194,7 +191,7 @@ def build_screen():
     ui.Label("ส่งใบถัดไปใน", x=456, y=266, color=COL_DIM, value=16)
     w["next"] = ui.Bar(x=456, y=294, w=300, h=18, max=SEND_MS)
     w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
@@ -210,7 +207,7 @@ def show_now(w, t, h, p, az, az0, knobs):
         w["segs"][i].text("--" if v is None else "%.1f" % v)     # Seg7 รับข้อความ ไม่ใช่ตัวเลข
     for i in range(3):
         w["bars"][i].value(knobs[i])
-    # บอร์ดวางเอียงอยู่แล้ว (az ราว 7.7 ไม่ใช่ 9.8) จอจึงโชว์ az ที่เปลี่ยนไปจากตอนเริ่ม ส่วนที่ส่งออกเป็นค่าจริง
+    # จอโชว์ az เทียบตอนเริ่ม ส่วนที่ส่งออกเป็นค่าจริง
     w["tilt"].text("--" if az is None or az0 is None else "%+.2f" % (az - az0))
 
 
@@ -231,21 +228,20 @@ def stop(w, msg):
 
 
 def on_sent(w, body, manual):
-    # ใบนี้ออกไปแล้ว: นับ จอไฟ เสียง (เรียกเฉพาะตอนส่งสำเร็จ ไม่ใช่ทุกรอบ)
     w["sent"].text("ส่งแล้ว %d ใบ" % body["n"])
-    rgbmatrix.score(body["n"], rgbmatrix.GREEN)       # เขียนจอไฟเฉพาะตอนเลขเปลี่ยน
+    rgbmatrix.score(body["n"], rgbmatrix.GREEN)
     if SOUND or manual:
         beep("good")
     print("ส่ง:", json.dumps(body))
 
 
 def main():
-    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
     if len(TEAM) != 6 or TEAM[:4] != "team" or not TEAM[4:].isdigit() or TEAM == "team00":
         stop(w, "แก้ TEAM เป็นเลขกลุ่มก่อน")
-    az0 = read_az()                    # ท่าที่บอร์ดวางอยู่ตอนเริ่ม = "ศูนย์" ของความเอียง
+    az0 = read_az()  # ท่าตอนเริ่ม = ศูนย์ของความเอียง
     problem = connect_farm(w)
     if problem:
         stop(w, problem)
@@ -269,7 +265,7 @@ def main():
             show_now(w, t, h, p, az, az0, knobs)
             if t is not None:
                 w["chart"].set_next(0, int(t))
-            if last_t is not None:                    # เส้นเขียว = ค่าที่ส่งล่าสุด จึงเป็นขั้นบันได
+            if last_t is not None:
                 w["chart"].set_next(w["s_sent"], int(last_t))
         if first or manual or time.ticks_diff(now, t_send) >= SEND_MS:
             first, t_send = False, now
@@ -298,11 +294,11 @@ except Stop:
     pass
 finally:
     try:
-        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+        mqtt.disconnect()              # ปิดทุกครั้ง แม้ถูกหยุดกลางทาง
     except Exception:
         pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) เพิ่มคีย์ "crop" ใน build_payload เป็นชื่อพืชภาษาอังกฤษ เช่น "tomato" แล้วดูว่าหน้าเว็บมีการ์ดใหม่
-# 2) ส่งเฉพาะเมื่ออุณหภูมิเปลี่ยนเกิน 0.3 C จากใบล่าสุด นับว่าจำนวนใบลดลงเท่าไร
-#    ใบ้: ฟาร์ม 1,000 แห่งส่งทุก 5 วิ = 200 ใบต่อวินาที เข้าระบบเดียว
+# 1) เพิ่มคีย์ "crop" ใน build_payload เช่น "tomato" หน้าเว็บมีการ์ดใหม่ไหม
+# 2) ส่งเฉพาะเมื่ออุณหภูมิเปลี่ยนเกิน 0.3 C นับว่าใบลดลงเท่าไร
+#    ใบ้: ฟาร์ม 1,000 แห่งส่งทุก 5 วิ = 200 ใบต่อวินาที

@@ -764,7 +764,7 @@ section li { margin: .05em 0; font-size: .86em; line-height: 1.26; }
 - **หัวข้อต้องไม่ซ้ำใคร** ผู้สอนแจก `TEAM` ให้แต่ละกลุ่มไม่ซ้ำกัน · ไฟล์บอร์ด **ไม่ยอมรัน** ถ้ายังเป็น `teamXX`
 - **ห้าม subscribe `#`** ข้อความของคนแปลกหน้าทั้งโลกจะไหลเข้ามา · แอปของกลุ่มฟัง `bento-aiot/<TEAM>/#` · หน้ารวมฟัง `bento-aiot/+/telemetry` กับ `/+/event`
 - **ห้ามส่งความลับ** ไม่ว่ารหัส Wi-Fi ชื่อจริง หรือเบอร์โทร
-- **client_id ชนกันได้กับทุกคนบนอินเทอร์เน็ต** ชนเมื่อไร broker เตะตัวเก่าออก · บอร์ดใช้ `bento-farm-<TEAM>-<สุ่ม>` (สุ่มใหม่ทุกครั้งที่รัน) · แอป Python ใช้ `farm-app-<TEAM>-<สุ่ม>` · หน้าเว็บสุ่มชื่อของตัวเอง (`farm-web-…` / `web-…`) จึงไม่เตะกัน
+- **client_id ชนกันได้กับทุกคนบนอินเทอร์เน็ต** ชนเมื่อไร broker เตะตัวเก่าออก · บอร์ดใช้ `bento-farm-<TEAM>-<สุ่ม>` (สุ่มใหม่ทุกครั้งที่ต่อ) · แอป Python ใช้ `farm-app-<TEAM>-<สุ่ม>` · หน้าเว็บสุ่มชื่อของตัวเอง (`farm-web-…` / `web-…`) จึงไม่เตะกัน
 
 </div>
 <div>
@@ -787,6 +787,7 @@ section li { margin: .05em 0; font-size: .86em; line-height: 1.26; }
 section pre { font-size: .56em; }
 section svg { max-height: 120px; }
 section p { font-size: .9em; }
+section li { font-size: .88em; }
 </style>
 
 <svg viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
@@ -815,19 +816,17 @@ def connect_farm(w):
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
-    return "" if linked else "broker ไม่ตอบ พอร์ต 1883?"
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
+    return "" if linked else "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
 ```
 
 </div>
 <div>
 
-- `connect_farm()` คืน `""` = ผ่านครบ หรือคืน **ข้อความบอกว่าพังขั้นไหน** แล้ว `main()` เอาขึ้นจอ
-- `mqtt.connect()` ใช้ชื่อ `username=` ไม่ใช่ `user=`
-- ตอนสายหลุด `publish()` **โยน `OSError`** ไม่ได้คืน `False` — จึงต้องครอบด้วย `try` (ข้างล่าง)
+- `connect_farm()` คืน `""` = ผ่าน · คืน **ข้อความบอกว่าพังขั้นไหน** ให้ `main()` ขึ้นจอ
+- `mqtt.connect()` ใช้ `username=` ไม่ใช่ `user=`
+- `connect_broker()` ลองได้ **3 ครั้ง** `client_id` ใหม่ทุกครั้ง — broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ
+- สายหลุด `publish()` **โยน `OSError`** ไม่คืน `False` — ครอบด้วย `try` (ข้างล่าง)
 
 </div>
 </div>
@@ -1365,12 +1364,9 @@ section pre { font-size: .56em; }
 <div class="c55">
 
 ```python
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
     if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
-        return "broker ไม่ตอบ พอร์ต 1883?"
+        return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 # ...
         soil, tank = knob_percent(0), knob_percent(3)
@@ -1879,13 +1875,13 @@ section blockquote { font-size: .8em; }
 | อาการ | สาเหตุที่แท้จริง | วิธีแก้ |
 |---|---|---|
 | จอนิ่งค้างนาน คิดว่าบอร์ดแฮงก์ | `wifi.connect()` บล็อกได้ถึงราว 85 วินาที | รอ **อย่ากดรีเซ็ต** · ป้าย + `ui.poll()` ต้องมาก่อนบรรทัดนั้น |
-| ได้ IP แต่ขึ้น "broker ไม่ตอบ …" | broker สาธารณะตอบช้าชั่วคราว · หรือ Wi-Fi ที่ต้อง login หน้าเว็บ / เน็ตกันพอร์ต 1883 | กด **Program to Device** อีกครั้ง · ถ้ายังไม่ได้ ใช้ Hotspot มือถือของกลุ่ม |
+| ได้ IP แต่ขึ้น "broker ไม่ตอบ …" | broker สาธารณะตอบช้าชั่วคราว · หรือ Wi-Fi ที่ต้อง login หน้าเว็บ / เน็ตกันพอร์ต 1883 | บอร์ดลองให้เองแล้ว 3 ครั้ง · รอ 1 นาทีแล้วกด **Program to Device** อีกครั้ง · ถ้ายังไม่ได้ ใช้ Hotspot มือถือของกลุ่ม |
 | "ได้ยินวงแต่ต่อไม่ผ่าน" | รหัสผ่านผิด | แก้ `WIFI_PASS` (อย่างน้อย 8 ตัว) |
 | "ไม่ได้ยินวง ..." | ชื่อผิด · Hotspot ปิด · เป็นคลื่น 5 GHz | iPhone เปิด Maximize Compatibility · Android เลือก 2.4 GHz |
 | โค้ดบอกว่าได้ IP แต่ส่งอะไรไม่ออก | เขียน `if wifi.ip():` — `"0.0.0.0"` ถือว่าจริง | เทียบตรง ๆ `wifi.ip() != "0.0.0.0"` |
 | "แก้ TEAM เป็นเลขกลุ่มก่อน" | ยังเป็น `teamXX` | แก้ `TEAM` ให้ตรงกับที่ผู้สอนแจก |
 | บอร์ดส่งแต่หน้าเว็บว่าง | `?team=` ไม่ตรง หรือเปิดหน้าเว็บหลังบอร์ดส่ง (ไม่มี retain) | ตรวจ TEAM สองที่ แล้วรอใบถัดไป 5 วินาที |
-| สองเครื่องผลัดกันหลุด | `client_id` ซ้ำ — broker เตะตัวเก่า | บอร์ดต่อท้ายตัวสุ่มเองทุกครั้งที่รัน · แอปต่อท้ายตัวสุ่มเสมอ |
+| สองเครื่องผลัดกันหลุด | `client_id` ซ้ำ — broker เตะตัวเก่า | บอร์ดต่อท้ายตัวสุ่มเองทุกครั้งที่ต่อ · แอปต่อท้ายตัวสุ่มเสมอ |
 | ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม | การเชื่อมต่อของรอบก่อนยังค้างอยู่ที่ broker | รอราว 1 นาที หรือกด **RESET** แล้วรันใหม่ |
 | ยิงคำสั่งสามใบ บอร์ดได้ใบเดียว | กล่องรับมีช่องเดียว ใบใหม่ทับใบเก่า | ส่งห่างอย่างน้อย 1 วินาที · กฎอัตโนมัติเว้น 60 วินาที |
 | `say` ภาษาไทยแล้วจอไฟไม่ขึ้น | จอไฟ RGB รับเฉพาะอักษรอังกฤษ ตัวเลข เครื่องหมาย | ใช้อังกฤษ ไม่เกิน 20 ตัว |

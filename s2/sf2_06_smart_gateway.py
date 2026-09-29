@@ -1,21 +1,8 @@
-# sf2_06_smart_gateway.py - บอร์ดของเราเป็น Smart IoT Gateway ของฟาร์ม: ฟังแปลง ตัดสินใจ สั่ง PLC
+# sf2_06_smart_gateway.py - Smart IoT Gateway: ฟังแปลง ตัดสินใจ สั่ง PLC
 #
-# ภาพฟาร์มจริง : กลางแปลงมีโหนดเซนเซอร์ไร้สายส่งความชื้นดินกับน้ำในถังขึ้น MQTT ที่โรงสูบมี PLC WiFi คุมปั๊ม
-#               บอร์ดของเราอยู่ตรงกลาง อ่านค่าทุกโหนด ตัดสินว่าต้องรดน้ำไหม แล้วสั่ง PLC พร้อมโชว์ทุกอย่างบนจอ
-# ภารกิจ   : ฟัง field/soil field/tank และ plc/state · ดินแห้งกว่า 30 % และน้ำพอ -> สั่ง PLC รดน้ำ 10 วิ
-#            (สั่งซ้ำได้ทุก 60 วิ) · ส่งสรุปเข้า telemetry ทุก 5 วิ และแจ้งเหตุการณ์เข้า event
-# ลองเล่น  : รัน app/field_sim.py บนโน้ตบุ๊ก (TEAM เดียวกัน) แล้วดูดินแห้งลงจน Gateway สั่งรดน้ำเอง
-#            แตะสวิตช์ "ออโต้" บนจอให้ปิด แล้วสั่งเองด้วยปุ่ม SW5 หรือปุ่มรดน้ำใน farm_web.html
-#            หรือจับคู่กับอีกกลุ่ม: บอร์ดเขารัน sf2_07_field_station.py เป็นแปลงให้ (ตั้ง TEAM เดียวกัน)
-# ของบนบอร์ดที่ใช้ : ไฟ RGB_BLUE = ปั๊มที่ PLC เดินอยู่จริง (ไม่ใช่ที่เราสั่ง)
-#            SW5 (ปุ่มล่าง) = รดน้ำเดี๋ยวนี้ · SW6 (ปุ่มบน) = สลับโหมดออโต้
-#            ลำโพงดังเฉพาะตอนปั๊มเปลี่ยน / PLC ปฏิเสธ / PLC หลุด
-# บนจอ     : วงแหวนความชื้นดิน (Arc), หลอดถังน้ำ (Bar), ไฟ PLC (Led), สวิตช์ออโต้ (Switch แตะได้),
-#            กราฟ (Chart): เส้นเขียว = ดิน, เส้นส้ม = ปั๊ม (สูง = เดิน)
-# แนวคิด AIoT: Sense (โหนด) -> Decide (Gateway) -> Act (PLC) -> Confirm (PLC บอกสถานะจริงกลับมา)
-#            คนสั่งไม่ใช่ความจริง ความจริงคือสิ่งที่ PLC รายงานกลับมา จอจึงโชว์ plc/state ไม่ใช่คำสั่งที่ส่งไป
-# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) · ใน BENTO Emulator รันได้แต่ MQTT เป็นแบบจำลอง จะไม่มีแปลงส่งค่ามา
-# สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5-3.8 และ 4.1-4.2
+# ภารกิจ   : ฟัง field/+ (โหนด) plc/state (PLC) cmd (แอป) · ดิน < 30 % และน้ำพอ -> ส่ง plc/cmd รดน้ำ 10 วิ
+# ลองเล่น  : รัน app/field_sim.py บนโน้ตบุ๊ก หรืออีกกลุ่มรัน sf2_07_field_station.py (TEAM เดียวกัน)
+# บนจอ     : ไฟ PLC กับ RGB_BLUE ตาม plc/state ที่ PLC รายงาน ไม่ใช่ที่เราสั่ง
 
 import buttons
 import gpio
@@ -28,29 +15,27 @@ import wifi
 # ---- 1) ตั้งค่า (แก้ได้) ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก (ต้องตรงกับ field_sim.py หรือบอร์ดแปลงของอีกกลุ่ม)
+TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก
 
-BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-gw-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
+BROKER = "broker.hivemq.com"
+CLIENT_ID = "bento-gw-" + TEAM         # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 BASE = "bento-aiot/" + TEAM + "/"
-BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
-SOIL_MIN = 30                          # ดินแห้งกว่านี้ (%) = ถึงเวลารดน้ำ
-PUMP_SEC, PUMP_MAX_S = 10, 30          # รดครั้งละกี่วินาที / เพดานที่ยอมส่งต่อให้ PLC
-TANK_MIN = 10                          # น้ำในถังต่ำกว่านี้ Gateway ไม่สั่ง (PLC ก็กันซ้ำอีกชั้น)
-COOLDOWN_MS = 60000                    # สั่งแล้วรอกี่ ms ก่อนสั่งออโต้ซ้ำ (ดินเพิ่งรดยังไม่ทันชื้น)
-STALE_MS = 15000                       # ไม่ได้ยินเกินนี้ = ค่านั้นเชื่อไม่ได้แล้ว
+BTN_NAMES = ("SW5", "SW6")
+SOIL_MIN = 30
+PUMP_SEC, PUMP_MAX_S = 10, 30          # รดกี่วิ / เพดานที่ส่งให้ PLC
+TANK_MIN = 10                          # ถังต่ำกว่านี้ไม่สั่ง (PLC กันซ้ำอีกชั้น)
+COOLDOWN_MS = 60000
+STALE_MS = 15000
 SEND_MS, POLL_MS, DRAW_MS, RUN_MS = 5000, 100, 500, 1800000
 
-SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
+SPEAKER = 40
+VOLUME = 25
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
-
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -61,7 +46,6 @@ def beep(name):
         time.sleep_ms(100)
 
 def led_named(name):
-    # หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -77,9 +61,6 @@ def set_led(led, on):
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
-
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
 
@@ -90,13 +71,11 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -104,9 +83,8 @@ def wait_ms(ms, btns):
         time.sleep_ms(20)
 
 
-# ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
+# ---- 3) สมอง (ตัดสินใจ) ----
 def parse_json(raw):
-    # bytes -> dict หรือ None  (ใครส่งอะไรมาก็ได้ ไม่ใช่ JSON object ก็ไม่ใช้)
     try:
         body = json.loads(raw.decode())
     except ValueError:
@@ -115,7 +93,6 @@ def parse_json(raw):
 
 
 def field_now(farm, name, now):
-    # ค่าล่าสุดของโหนด name (soil, tank, ...) ถ้าเงียบเกิน STALE_MS ถือว่าเชื่อไม่ได้ คืน None
     got = farm.field.get(name)
     return got[0] if got and time.ticks_diff(now, got[1]) < STALE_MS else None
 
@@ -143,23 +120,35 @@ def app_request(cmd, tank):
 
 
 # ---- 4) เครือข่าย ----
+def connect_broker(w):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in (1, 2, 3):
+        if n > 1:
+            show_note(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            ui.poll()
+        try:
+            if mqtt.connect(BROKER, port=1883, keepalive=60,
+                            client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def connect_gateway(w):
     # WiFi -> IP -> broker -> subscribe 3 หัวข้อ ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_note(w, "ต่อ WiFi...", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
-    try:
-        ok = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        ok = False
+    ok = connect_broker(w)
     for topic in ("field/+", "plc/state", "cmd"):
         ok = ok and mqtt.subscribe(BASE + topic)
-    return "" if ok else "broker ไม่ตอบ"
+    return "" if ok else "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
 
 
 def send(topic, obj):
-    # ส่ง JSON คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError ไม่ใช่คืน False)
+    # สายหลุด publish โยน OSError จึงคืน False แทน
     try:
         mqtt.publish(BASE + topic, json.dumps(obj))
         return True
@@ -169,46 +158,41 @@ def send(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def show_link(w, ok):
-    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
     w["mq"].value(1 if ok else 0)
     w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("Smart IoT Gateway", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
     card(12, 44, 240, 200, "ดิน % (field/soil)")
-    w["arc"] = ui.Arc(x=24, y=80, w=120, h=120)                # ค่าตั้งต้นของ Arc คือ 0-100 อยู่แล้ว
+    w["arc"] = ui.Arc(x=24, y=80, w=120, h=120)
     w["soil"] = ui.Label("--", x=160, y=120, color=COL_TEXT, value=28)
     card(262, 44, 518, 200, "ถังน้ำ + PLC")
     w["tank_bar"] = ui.Bar(x=276, y=80, w=380, h=24)
     w["tank"] = ui.Label("--", x=670, y=76, color=COL_TEXT)
-    w["led"] = ui.Led(x=276, y=124, w=40, h=40, color=COL_INFO)  # Led สร้างมาแบบหรี่ = ปั๊มหยุด
+    w["led"] = ui.Led(x=276, y=124, w=40, h=40, color=COL_INFO)
     w["plc"] = ui.Label("PLC: ?", x=330, y=132, color=COL_DIM)
     w["auto"] = ui.Switch(x=276, y=190, w=64, h=32, value=1)
     ui.Label("ออโต้: ดิน < %d%%" % SOIL_MIN, x=352, y=194, color=COL_TEXT, value=16)
-    w["chart"] = line_chart(12, 252, 400, 86, 0, 100, COL_OK)   # จุดละ 5 วิ 400 จุด = ย้อนหลัง 33 นาที
+    w["chart"] = line_chart(12, 252, 400, 86, 0, 100, COL_OK)
     w["s_pump"] = w["chart"].add_series(COL_WARN)
     ui.Label(BTN_NAMES[0] + "=รดน้ำ " + BTN_NAMES[1] + "=ออโต้", x=424, y=290, color=COL_DIM, value=14)
     w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
@@ -221,7 +205,6 @@ def show_note(w, text, col):
 
 
 def show_farm(w, soil, tank, farm):
-    # วาดค่าทั้งหมดใหม่ (ทุกครึ่งวินาที) ไฟ PLC ตามความจริงจาก plc/state เท่านั้น
     w["soil"].text("--" if soil is None else str(soil))
     w["arc"].value(soil or 0)
     w["arc"].color(COL_DIM if soil is None else (COL_BAD if soil < SOIL_MIN else COL_OK))
@@ -234,15 +217,12 @@ def show_farm(w, soil, tank, farm):
 
 # ---- 6) โปรแกรมหลัก ----
 class Farm:
-    # ทุกอย่างที่ Gateway รู้ตอนนี้: field = {ชื่อโหนด: (ค่า, เวลาที่ได้ยิน)} และสถานะ PLC ล่าสุด
-
     def __init__(self):
         self.field, self.pump, self.plc_ms = {}, None, None
         self.left, self.auto, self.lost = 0, True, False
 
 
 def on_plc(w, farm, body, now):
-    # สถานะใหม่จาก PLC (สัญญาข้อ 3.6): เสียง + event เฉพาะตอนปั๊มเปลี่ยน หรือ PLC ปฏิเสธ
     pump, why = body.get("pump"), str(body.get("why", ""))[:16]
     if pump not in (0, 1):
         return
@@ -251,16 +231,15 @@ def on_plc(w, farm, body, now):
     if why == "blocked_tank":
         beep("bad")
         show_note(w, "PLC: ถังต่ำ", COL_BAD)
-    if pump != was and not (was is None and pump == 0):   # รู้ครั้งแรกว่า "หยุด" ไม่ใช่การเปลี่ยน
+    if pump != was and not (was is None and pump == 0):
         beep("start" if pump else "stop")
         show_note(w, "ปั๊มเดิน" if pump else "ปั๊มหยุด", COL_OK)
         send("event", {"id": TEAM, "event": "pump", "pump": pump, "why": why})
 
 
 def on_message(w, farm, msg, now):
-    # แยกข้อความตามหัวข้อ แล้วส่งให้ตัวจัดการที่ถูกเรื่อง คืนคำสั่งที่ต้องส่ง PLC (หรือ None)
     topic, body = msg[0][len(BASE):], parse_json(msg[1])
-    if topic[:6] == "field/" and body:                  # โหนดไหนก็ได้ (สัญญาข้อ 3.5) รับค่า 0-100
+    if topic[:6] == "field/" and body:
         v = body.get("value")
         if isinstance(v, (int, float)) and 0 <= v <= 100:
             farm.field[topic[6:]] = (int(v), now)
@@ -286,7 +265,6 @@ def check_plc_alive(w, farm, now):
 
 
 def buttons_and_touch(w, farm, water, toggle):
-    # ปุ่มล่าง = อยากรดน้ำ (คืน True) · ปุ่มบนหรือแตะสวิตช์บนจอ = สลับโหมดออโต้
     for ev in ui.poll():
         if ev["handle"] == w["auto"].id() and ev["type"] == "toggled":
             farm.auto = bool(ev["value"])
@@ -298,7 +276,7 @@ def buttons_and_touch(w, farm, water, toggle):
 
 
 class Stop(Exception):
-    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    # SystemExit ทำให้บอร์ดเริ่มใหม่และอาจค้าง จึงใช้ Stop
     pass
 
 
@@ -311,10 +289,10 @@ def stop(w, led, msg):
 
 
 def main():
-    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
-    led = led_named("RGB_BLUE")        # ไฟฟ้าบนบอร์ด = ปั๊มที่ PLC บอกว่าเดินอยู่
+    led = led_named("RGB_BLUE")
     if len(TEAM) != 6 or not TEAM[4:].isdigit() or TEAM == "team00":
         stop(w, led, "แก้ TEAM ก่อน")
     problem = connect_gateway(w)
@@ -325,7 +303,7 @@ def main():
     farm, water, toggle = Farm(), Button(0), Button(1)
     n = 0
     t0 = t_send = t_draw = time.ticks_ms()
-    t_cmd = time.ticks_add(t0, -COOLDOWN_MS)            # เริ่มมาสั่งได้เลย ไม่ต้องรอ 60 วิ
+    t_cmd = time.ticks_add(t0, -COOLDOWN_MS)
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         now = time.ticks_ms()
         soil, tank = field_now(farm, "soil", now), field_now(farm, "tank", now)
@@ -349,7 +327,6 @@ def main():
             show_farm(w, soil, tank, farm)
         if time.ticks_diff(now, t_send) >= SEND_MS:
             t_send, n = now, n + 1
-            # สรุปของ Gateway (สัญญาข้อ 3.7)
             if not send("telemetry", {"id": TEAM, "n": n, "soil": soil, "tank": tank, "pump": farm.pump,
                                       "auto": 1 if farm.auto else 0, "by": "gateway"}):
                 stop(w, led, "สายหลุด")
@@ -367,13 +344,11 @@ except Stop:
     pass
 finally:
     try:
-        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+        mqtt.disconnect()
     except Exception:
         pass
 
-# ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) ปิด field_sim.py กลางคัน แล้วดูว่า Gateway รู้ตัวภายในกี่วินาที (ดู STALE_MS กับ check_plc_alive)
-#    ถ้าฟาร์มจริง PLC หลุดตอนปั๊มกำลังเดิน อะไรจะช่วยไม่ให้น้ำท่วมแปลง (ใบ้: PLC ดับปั๊มเองตาม sec)
-# 2) เพิ่มโหนดเซนเซอร์ตัวที่ 3 เช่น field/light ใน field_sim.py แล้วให้ Gateway ไม่รดน้ำตอนแดดจัด
-#    (on_message เก็บทุกโหนดให้อยู่แล้ว แค่อ่าน field_now(farm, "light", now) แล้วแก้ should_water)
-# 3) เปลี่ยน COOLDOWN_MS เป็น 5000 แล้วนับว่าใน 1 นาที Gateway สั่ง PLC กี่ครั้ง ทำไมฟาร์มจริงต้องรอ
+# ----- ตาคุณ -----
+# 1) ปิด field_sim.py แล้ว Gateway รู้ตัวในกี่วิ ถ้า PLC หลุดตอนปั๊มเดิน อะไรกันน้ำท่วม
+# 2) เพิ่มโหนด field/light ใน field_sim.py แล้วแก้ should_water ไม่ให้รดตอนแดดจัด
+# 3) ตั้ง COOLDOWN_MS = 5000 แล้ว 1 นาทีสั่ง PLC กี่ครั้ง ทำไมต้องรอ

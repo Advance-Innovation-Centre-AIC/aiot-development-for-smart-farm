@@ -1,21 +1,8 @@
-# sf2_04_crop_alert.py - พืชไม่สบายเมื่อไร มือถือเจ้าของฟาร์มรู้ทันที
+# sf2_04_crop_alert.py - พืชไม่สบาย มือถือรู้ทันที
 #
-# ภารกิจ   : ตัดสินทุกวินาทีว่าพืช "สบาย / เริ่มเครียด / แย่แล้ว" (กฎเดียวกับ sf1_02)
-#            ส่ง "แจ้งเตือน" ออกไปทันทีเฉพาะตอนที่สถานะเปลี่ยน ไม่ใช่ทุกวินาที
-#            ถ้าแย่แล้ว บอร์ดร้องซ้ำทุก 5 วิ และมีกล่องเตือนกลางจอ จนกว่าจะมีคนรับทราบ:
-#            {"cmd":"ack"} จากมือถือ หรือกด SW5 (ปุ่มล่าง) ที่ฟาร์ม
-#            แอปของกลุ่มเปลี่ยนเกณฑ์ร้อนได้จากที่ไกลด้วย {"cmd":"set","t_hi":28}
-# ลองเล่น  : หมุน VR3 (แดดจำลอง บวกอุณหภูมิ 0-10 C) จนแจ้งเตือนขึ้นบนมือถือ จอ และจอไฟ RGB 16x8
-#            แล้วส่ง {"cmd":"ack"} จากช่อง JSON ในหน้ารวม app/mqtt_dashboard.html ให้บอร์ดเงียบ
-# ของบนบอร์ดที่ใช้ : SHT40 = อุณหภูมิ + ความชื้น · VR3 = แดดจำลอง · SW5 (ปุ่มล่าง) = รับทราบที่ฟาร์ม
-#            จอไฟ RGB 16x8 = ตัววิ่ง OK / WARN / ALERT / ACK เฉพาะตอนเปลี่ยน · ลำโพงดังเฉพาะตอนเปลี่ยน
-# บนจอ     : ไฟสถานะ 3 ดวง (Led), ตัวนับแจ้งเตือน, กราฟอุณหภูมิเทียบช่วงที่พืชชอบ (Chart)
-#            และกล่องเตือน (MsgBox)
-# แนวคิด AIoT: Sense -> Decide -> Alert  ส่งเมื่อ "เปลี่ยน" คนรับจะได้ไม่ชินจนเมินแจ้งเตือน
-# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM, CROP และ TEMP_OFFSET (broker ตั้งไว้แล้ว ไม่ต้องแก้)
-# ภารกิจกลุ่ม: เติมคำสั่งเปิดปั๊มจาก sf2_03 ตรงจุด ">>> ภารกิจกลุ่ม" ในฟังก์ชัน on_command (ดูใบงาน)
-# สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.4 (แจ้งเตือนที่ส่ง) และข้อ 4 (ack, set ที่รับ)
+# ลองเล่น  : หมุน VR3 จนขึ้นแจ้งเตือน แล้วส่ง {"cmd":"ack"} หรือกด SW5
+# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM, CROP, TEMP_OFFSET
+# บนจอ     : ไฟสถานะ 3 ดวง กราฟอุณหภูมิ กล่องเตือน
 
 import buttons
 import json
@@ -27,39 +14,35 @@ import time
 import ui
 import wifi
 
-# ---- 1) ตั้งค่า (แก้ได้) ----
+# ---- 1) ตั้งค่า ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05
-CROP = "มะเขือเทศ"                     # พืชของกลุ่ม ต้องมีใน CROPS
-TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง แล้วใส่ค่าชดเชย เช่น -7.0
-                     # (ใช้ค่าเดียวกับที่กลุ่มหาได้ในคาบ 1) ไม่ตั้ง = พืชทุกชนิดจะ "ร้อนไป" เร็วกว่าจริง
-                     # ความชื้นที่บอร์ดอ่านจะต่ำกว่าห้องเล็กน้อยเพราะบอร์ดอุ่น (sf2_02 มีตัวแปลงให้ดู)
+TEAM = "teamXX"
+CROP = "มะเขือเทศ"
+TEMP_OFFSET = 0.0    # บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0
 
 BROKER = "broker.hivemq.com"
 ROOT = "bento-aiot"
-CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
-TOPIC_EVENT = ROOT + "/" + TEAM + "/event"   # หน้าเว็บโชว์หัวข้อนี้ในกล่อง event
+CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
+TOPIC_EVENT = ROOT + "/" + TEAM + "/event"
 TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
-BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
+BTN_NAMES = ("SW5", "SW6")
 
-# (ชื่อไทย, รหัสอังกฤษที่ส่งในแจ้งเตือน, T ต่ำ, T สูง, RH ต่ำ, RH สูง) ตัวเลขเพื่อการเรียน ไม่ใช่คำแนะนำเกษตร
-# เพิ่มพืชของกลุ่มต่อท้ายได้เลย
+# (ชื่อไทย, รหัสอังกฤษ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)
 CROPS = (
     ("มะเขือเทศ", "tomato", 20, 30, 60, 80),
     ("ผักสลัด", "lettuce", 15, 25, 50, 70),
     ("เห็ดนางฟ้า", "mushroom", 22, 28, 80, 95),
     ("กล้วยไม้", "orchid", 22, 32, 60, 80),
 )
-T_HI_MAX = 45                          # {"cmd":"set"} ตั้งเกณฑ์ร้อนได้ไม่เกินนี้
-READ_MS, BEEP_MS, POLL_MS, RUN_MS = 1000, 5000, 20, 600000   # POLL 20 ms: ปุ่มต้องอ่านบ่อยกว่า 50 ms
-CHART_MAX_C = 50                       # กราฟอุณหภูมิ 0-50 C
-# จอไฟ RGB 16x8 รับแต่อักษรอังกฤษกับตัวเลข สีมี OFF RED GREEN YELLOW BLUE PURPLE CYAN WHITE
+T_HI_MAX = 45
+READ_MS, BEEP_MS, POLL_MS, RUN_MS = 1000, 5000, 20, 600000
+CHART_MAX_C = 50
 MX = (("OK", rgbmatrix.GREEN), ("WARN", rgbmatrix.YELLOW), ("ALERT", rgbmatrix.RED))
-BOX = (212, 90, 368, 150)              # กล่องเตือน (x, y, w, h) ลอยทับกลางจอโดยตั้งใจ จนกว่าจะมีคนรับทราบ
+BOX = (212, 90, 368, 150)
 
-SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
+SPEAKER = 40
+VOLUME = 25
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
@@ -67,8 +50,6 @@ LEVEL_COLORS = (COL_OK, COL_WARN, COL_BAD)
 
 
 # ---- 2) ฮาร์ดแวร์ ----
-
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -79,8 +60,6 @@ def beep(name):
         time.sleep_ms(100)
 
 def read_climate():
-    # คืน (อุณหภูมิที่ชดเชยแล้ว, ความชื้น) ตัวที่อ่านไม่ได้เป็น None
-    # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
     try:
         t_raw = sensors.sht40.temperature()
         h = sensors.sht40.humidity()
@@ -89,14 +68,14 @@ def read_climate():
     return t_raw + TEMP_OFFSET, h
 
 
-# ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
+# ---- 3) สมอง ----
 def valid_team(team):
     return len(team) == 6 and team[:4] == "team" and team[4:].isdigit() and team != "team00"
 
 
 def judge(t, h, lim):
-    # คืน (ระดับ 0-2, ปัญหาภาษาไทยไว้ขึ้นจอ, รหัสอังกฤษไว้ส่งให้เครื่องอ่าน)
-    # lim = [T ต่ำ, T สูง, RH ต่ำ, RH สูง] ที่ใช้อยู่ · ระดับ 2 = หลุดไกล (เกิน 3 C หรือ 10 %RH)
+    # คืน (ระดับ 0-2, ข้อความไทย, รหัสอังกฤษ)
+    # ระดับ 2 = หลุดไกล (เกิน 3 C หรือ 10 %RH)
     t_lo, t_hi, h_lo, h_hi = lim
     p = []
     if t < t_lo:
@@ -114,23 +93,35 @@ def judge(t, h, lim):
 
 
 # ---- 4) เครือข่าย ----
+def connect_broker(w):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in (1, 2, 3):
+        if n > 1:
+            show_status(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            ui.poll()
+        try:
+            if mqtt.connect(BROKER, port=1883, keepalive=60,
+                            client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def connect_farm(w):
     # WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
     show_status(w, "ต่อ WiFi...", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "WiFi ไม่ติด: ตรวจชื่อ/รหัส"
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
     if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
-        return "broker ไม่ตอบ (1883)"
+        return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
 
 def send(obj):
-    # ส่ง JSON เข้า event คืน False ถ้าสายหลุด (publish ตอนสายหลุดโยน OSError ไม่ใช่คืน False)
+    # publish ตอนสายหลุดโยน OSError
     try:
         mqtt.publish(TOPIC_EVENT, json.dumps(obj))
         return True
@@ -140,19 +131,16 @@ def send(obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def show_link(w, ok):
-    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
     w["mq"].value(1 if ok else 0)
     w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("พืชไม่สบาย มือถือรู้ทันที", x=12, y=6, color=COL_TEXT, value=24)
@@ -161,27 +149,25 @@ def build_screen():
     w["crop"] = ui.Label("-", x=24, y=74, color=COL_INFO, value=16)
     w["th"] = ui.Label("-- C  -- %", x=24, y=100, color=COL_TEXT, value=24)
     w["mood"] = ui.Label("...", x=24, y=140, color=COL_WARN)
-    for i in range(3):                 # ไฟสถานะ 3 ดวง ติดทีละดวงเหมือนแผงควบคุมจริง
+    for i in range(3):
         x = 24 + i * 130
         w["leds"].append(ui.Led(x=x, y=198, w=20, h=20, color=LEVEL_COLORS[i]))
         ui.Label(("สบาย", "เครียด", "แย่")[i], x=x + 28, y=198, color=COL_DIM, value=14)
     card(522, 44, 258, 200, "แจ้งสถานะ")
     w["ack"] = ui.Label("-", x=534, y=80, color=COL_DIM)
-    # กราฟกว้าง 400 และ 400 จุด = เส้นเรียบไม่มีจุดกลม (จุดละวินาที = ย้อนหลังราว 6 นาที)
     w["chart"] = ui.Chart(x=12, y=252, w=400, h=86, color=COL_WARN, min=0, max=CHART_MAX_C)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
     ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[0] + " = รับทราบ",
              x=424, y=256, color=COL_DIM, value=14)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
 
 def show_status(w, msg, col):
-    # ไม่เรียก ui.poll() ในนี้ เพราะจะกินเหตุการณ์ปัดวงล้อที่ลูปหลักรออ่าน
     w["status"].color(col)
     w["status"].text(msg)
 
@@ -192,24 +178,21 @@ def show_ack(w, s, msg, col):
 
 
 def show_crop(w, s):
-    # ชื่อพืช + เกณฑ์ที่ใช้อยู่ (เปลี่ยนเมื่อแอปส่ง set มา)
     t_lo, t_hi, h_lo, h_hi = s.lim
     w["crop"].text("%s ชอบ %d-%d C, %d-%d %%" % (s.crop[0], t_lo, t_hi, h_lo, h_hi))
 
 
 def show_reading(w, s, t, h, sun, level, why_th):
-    # ค่าที่อ่านได้ + อารมณ์พืช + ไฟ 3 ดวง + กราฟ (ทุกวินาที)
     w["th"].text("%.1f C  %.1f %%  (แดด +%d)" % (t, h, sun))
     w["mood"].color(LEVEL_COLORS[level])
     w["mood"].text(("สบายดี :)", "เริ่มเครียด: ", "แย่แล้ว!: ")[level] + ("" if level == 0 else why_th))
     for i in range(3):
-        w["leds"][i].value(1 if i == level else 0)    # 0 = หรี่ (ไม่ดับมืด)
-    w["chart"].set_next(0, int(max(0, min(CHART_MAX_C, t))))   # กราฟรับเฉพาะจำนวนเต็ม
+        w["leds"][i].value(1 if i == level else 0)
+    w["chart"].set_next(0, int(max(0, min(CHART_MAX_C, t))))
     w["chart"].set_next(w["s_hi"], s.lim[1])
 
 
 def close_box(w):
-    # กล่องเตือนสร้างแบบไม่มีปุ่ม X (value=0) เราจึงปิดเองด้วย .delete() และมีได้ทีละกล่อง
     if w["box"] is not None:
         w["box"].delete()
         w["box"] = None
@@ -217,24 +200,20 @@ def close_box(w):
 
 # ---- 6) โปรแกรมหลัก ----
 class Watch:
-    # สิ่งที่บอร์ดจำระหว่างเฝ้า: พืช เกณฑ์ที่ใช้อยู่ ระดับล่าสุด รับทราบหรือยัง แจ้งไปกี่ครั้ง
-    # level -1 = ยังไม่รู้ รอบแรกจึงแจ้งเสมอ (บอกว่าฟาร์มออนไลน์) · t None = ต้องอ่านเดี๋ยวนี้
-
     def __init__(self, idx):
         self.level, self.acked, self.alerts, self.t = -1, True, 0, None
         self.crop = CROPS[idx]
-        self.lim = list(self.crop[2:])   # [T ต่ำ, T สูง, RH ต่ำ, RH สูง]  set แก้ T สูงได้
+        self.lim = list(self.crop[2:])
 
 
 class Stop(Exception):
-    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    # ไม่ใช้ SystemExit: บอร์ดอาจค้าง
     pass
 
 
 def stop(w, msg, col=COL_BAD):
-    # จบเพราะอะไรก็ตาม: หยุดตัววิ่ง ปิดกล่องเตือน แล้วบอกเหตุผล
     show_link(w, False)
-    rgbmatrix.scroll("")               # หยุดตัววิ่งก่อน ไม่งั้นมันวิ่งต่อหลังโปรแกรมจบ
+    rgbmatrix.scroll("")
     rgbmatrix.clear()
     close_box(w)
     show_status(w, msg, col)
@@ -272,7 +251,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
     beep(("good", "tap", "empty")[level])
     show_ack(w, s, "รอคนรับทราบ" if level == 2 else "ส่งแล้ว", COL_BAD if level == 2 else COL_DIM)
     close_box(w)
-    if level == 2:                     # บรรทัดแรก = หัวกล่อง ที่เหลือ = เนื้อความ (รวมไม่เกิน 126 ไบต์)
+    if level == 2:  # MsgBox รับไม่เกิน 126 ไบต์
         w["box"] = ui.MsgBox("แย่แล้ว!\n" + why_th + "\n" + BTN_NAMES[0] + " / ack = รับทราบ",
                              x=BOX[0], y=BOX[1], w=BOX[2], h=BOX[3], value=0)
 
@@ -294,11 +273,11 @@ def read_and_judge(w, s):
 
 
 def main():
-    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
     names = [c[0] for c in CROPS]
-    if CROP not in names:              # สะกดไม่ตรง = หยุด ไม่เดาให้ เพราะรหัสพืชจะถูกส่งออกไปผิดตัว
+    if CROP not in names:
         stop(w, "แก้ CROP ให้ตรงกับ CROPS")
     s = Watch(names.index(CROP))
     show_crop(w, s)
@@ -325,13 +304,13 @@ def main():
             show_ack(w, s, "รับทราบแล้ว", COL_OK)
             rgbmatrix.scroll("ACK", rgbmatrix.CYAN, 80)
             beep("tap")
-        ui.poll()                      # ให้จอตอบสนอง (ไฟล์นี้ไม่มี widget ที่ต้องแตะ)
+        ui.poll()
         if s.t is None or time.ticks_diff(now, t_read) >= READ_MS:
             t_read = now
             if read_and_judge(w, s):
                 t_beep = now
         if s.level == 2 and not s.acked and time.ticks_diff(now, t_beep) >= BEEP_MS:
-            t_beep = now               # ร้องซ้ำทุก 5 วิ ไม่ใช่ทุกรอบลูป ห้องมีหลายบอร์ด
+            t_beep = now
             beep("bad")
         time.sleep_ms(POLL_MS)
 
@@ -344,13 +323,11 @@ except Stop:
     pass
 finally:
     try:
-        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+        mqtt.disconnect()
     except Exception:
         pass
 
-# ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) หมุนแดดขึ้นลงเร็ว ๆ ข้ามเส้นไปมา นับว่าแจ้งเตือนรัวแค่ไหน (ดูการ์ดแจ้งสถานะ) แล้วแก้ให้ต้อง "แย่ติดกัน 5 วินาที"
-#    ก่อนแจ้ง (เก็บตัวนับไว้ใน Watch แล้วเช็กใน read_and_judge ก่อนเรียก on_level)
-# 2) แจ้งเตือนมี sun_c บอกว่าบวกแดดจำลองไปเท่าไร ถ้าไม่บอก ข้อมูลฟาร์มที่เก็บไว้จะเสียอย่างไร
-# 3) เพิ่มพืชของกลุ่มลงใน CROPS (ตั้งรหัสอังกฤษให้แอปอ่านได้) แล้วตั้ง CROP เป็นพืชนั้น
-#    ส่ง {"cmd":"set","t_hi":28} ระหว่างรัน แล้วดูเส้นแดงในกราฟขยับตาม
+# ---- ตาคุณ ----
+# 1) แจ้งเฉพาะเมื่อแย่ติดกัน 5 วินาที (นับใน Watch)
+# 2) ทำไมแจ้งเตือนต้องมี sun_c
+# 3) เพิ่มพืชใน CROPS แล้วส่ง {"cmd":"set","t_hi":28} ดูเส้นแดงขยับ

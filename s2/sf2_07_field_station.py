@@ -1,19 +1,12 @@
-# sf2_07_field_station.py - บอร์ดนี้เล่นเป็น "แปลงผัก" ให้กลุ่มเพื่อน: โหนดเซนเซอร์ไร้สาย + PLC คุมปั๊ม
+# sf2_07_field_station.py - บอร์ดนี้เล่นเป็น "แปลงผัก": โหนดเซนเซอร์ + PLC คุมปั๊ม
 #
-# ภาพฟาร์มจริง : กลางแปลงมีโหนดเซนเซอร์ไร้สาย ที่โรงสูบมี PLC WiFi ต่อรีเลย์คุมปั๊ม ทั้งสองคุยผ่าน MQTT
-#               บอร์ดนี้เล่นทั้งสองบทให้ ส่วนบอร์ดของกลุ่มเพื่อนรัน sf2_06_smart_gateway.py เป็น Gateway
-# ภารกิจ   : ส่งความชื้นดิน (VR1) เข้า field/soil และน้ำในถัง (VR4) เข้า field/tank ทุก 5 วิ
-#            ฟัง plc/cmd แล้วเปิด/ปิดรีเลย์ปั๊มตามสั่ง โดยตรวจด้วยกฎของ PLC เองก่อนเสมอ:
-#            เปิดครั้งละไม่เกิน 30 วิ · ถังต่ำกว่า 10 % ไม่เปิด · ส่ง plc/state ทุกครั้งที่เปลี่ยนและทุก 5 วิ
-# ลองเล่น  : จับคู่กับอีกกลุ่ม ตั้ง TEAM เป็นเลขเดียวกันทั้งสองบอร์ด (ใช้เลขของกลุ่มที่เป็น Gateway)
-#            หมุน VR1 ลงให้ดินแห้ง แล้วดูว่า Gateway ของเพื่อนสั่งปั๊มบอร์ดนี้เองไหม · หมุน VR4 ลงต่ำกว่า 10 %
-# ของบนบอร์ดที่ใช้ : VR1 = เซนเซอร์ความชื้นดิน · VR4 = ระดับน้ำในถัง · ไฟ RGB_BLUE = รีเลย์ปั๊ม
-#            SW5 (ปุ่มล่าง) = ปุ่มหยุดฉุกเฉินที่โรงสูบ (ไม่ต้องพึ่งเน็ต)
-#            ลำโพงดังเฉพาะตอนมีคำสั่งเข้าหรือปั๊มดับเอง
-# บนจอ     : หลอดดินกับถัง (Bar), ไฟรีเลย์ (Led), วงแหวนนับถอยหลัง (Arc) · เหตุผล (why) ใช้รหัสเดียวกับสัญญา MQTT
-# แนวคิด AIoT: PLC ไม่เชื่อใคร ตรวจทุกคำสั่งด้วยกฎความปลอดภัยของตัวเอง และบอกความจริงกลับทุกครั้ง
-# บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) · สัญญา MQTT: app/MQTT_CONTRACT_th.md ข้อ 3.5, 3.6, 4.2
-#            ไม่มีเพื่อนจับคู่ ใช้ app/field_sim.py บนโน้ตบุ๊กแทนบอร์ดนี้ได้ (ทำงานเหมือนกัน)
+# ภารกิจ   : ส่งดิน (VR1) เข้า field/soil ถัง (VR4) เข้า field/tank ทุก 5 วิ · ฟัง plc/cmd แล้วเปิด/ปิดปั๊ม
+#            ตามกฎ PLC (เปิดไม่เกิน 30 วิ · ถังต่ำกว่า 10 % ไม่เปิด) · ส่ง plc/state ตอนเปลี่ยนและทุก 5 วิ
+# ลองเล่น  : กลุ่มเพื่อนรัน sf2_06_smart_gateway.py · หมุน VR1 ให้ดินแห้ง ดูว่า Gateway สั่งปั๊มไหม
+# ของบนบอร์ด: ไฟ RGB_BLUE = รีเลย์ปั๊ม · SW5 (ปุ่มล่าง) = หยุดฉุกเฉิน
+# บนจอ     : หลอดดินกับถัง (Bar), ไฟรีเลย์ (Led), วงแหวนนับถอยหลัง (Arc)
+# แนวคิด AIoT: PLC ตรวจทุกคำสั่งด้วยกฎของตัวเอง และบอกความจริงกลับเสมอ
+# สัญญา MQTT: app/MQTT_CONTRACT_th.md
 
 import buttons
 import gpio
@@ -27,27 +20,25 @@ import wifi
 # ---- 1) ตั้งค่า (แก้ได้) ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                        # เลขของกลุ่มที่เป็น Gateway (ต้องตรงกันทั้งสองบอร์ด)
+TEAM = "teamXX"                        # เลขกลุ่มที่เป็น Gateway (ต้องตรงกันทั้งสองบอร์ด)
 
 BROKER = "broker.hivemq.com"
 ROOT = "bento-aiot"
-CLIENT_ID = "bento-field-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
+CLIENT_ID = "bento-field-" + TEAM      # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 T_BASE = ROOT + "/" + TEAM + "/"
-PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC: เวลาเปิดสูงสุด, ถังต่ำสุดที่ยอมเปิด
+PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC
 PLC_DEFAULT_S = 10
 SEND_MS, POLL_MS, RUN_MS = 5000, 100, 1800000
-BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
+BTN_NAMES = ("SW5", "SW6")
 
-SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
+SPEAKER = 40
+VOLUME = 25
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
-
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -63,8 +54,6 @@ def knob_percent(i):
 
 
 def led_named(name):
-    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -84,9 +73,7 @@ def set_relay(relay, on):
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
-
+    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms: อ่านบ่อย ๆ ใน wait_ms ไม่งั้นการกดแบบแตะหายไป
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
 
@@ -97,13 +84,11 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -111,7 +96,7 @@ def wait_ms(ms, btns):
         time.sleep_ms(20)
 
 
-# ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
+# ---- 3) สมอง (ตัดสินใจ) ----
 def valid_team(team):
     return len(team) == 6 and team[:4] == "team" and team[4:].isdigit() and team != "team00"
 
@@ -140,22 +125,34 @@ def node_message(sensor, value, n):
 
 
 def plc_message(left_ms, why, n):
-    # สถานะ PLC (สัญญาข้อ 3.6): left_s ปัดขึ้น เพื่อไม่ให้ขึ้น 0 ทั้งที่ปั๊มยังเดิน
+    # plc/state (สัญญาข้อ 3.6): left_s ปัดขึ้น ไม่ให้ขึ้น 0 ตอนปั๊มยังเดิน
     left = (left_ms + 999) // 1000 if left_ms > 0 else 0
     return {"pump": 1 if left else 0, "left_s": left, "why": why, "n": n}
 
 
 # ---- 4) เครือข่าย ----
+def connect_broker(w):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in (1, 2, 3):
+        if n > 1:
+            show_status(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            ui.poll()
+        try:
+            if mqtt.connect(BROKER, port=1883, keepalive=60,
+                            client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def connect_station(w):
     show_status(w, "กำลังต่อ WiFi จอจะนิ่งสักครู่", COL_WARN)
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้ ตรวจชื่อวงกับรหัส"
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
     if not linked or not mqtt.subscribe(T_BASE + "plc/cmd"):
-        return "broker ไม่ตอบ เน็ตกันพอร์ต 1883?"
+        return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
 
@@ -169,7 +166,6 @@ def send(topic, obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน) คืนป้ายหัวเรื่อง
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
@@ -202,7 +198,6 @@ def build_rules_card(w):
 
 
 def show_link(w, ok):
-    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
     w["mq"].value(1 if ok else 0)
     w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
 
@@ -216,7 +211,7 @@ def build_screen():
     build_plc_card(w)
     build_rules_card(w)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
@@ -241,12 +236,11 @@ def show_relay(w, sec_left, why):
     w["pump"].color(COL_OK if sec_left else COL_DIM)
     w["pump"].text("ปั๊มเดิน อีก " + str(sec_left) + " วิ" if sec_left else "ปั๊มหยุด")
     w["arc"].value(sec_left)
-    w["why"].text("why = " + why)          # รหัสเหตุผลตามสัญญา MQTT ข้อ 3.6 ตรง ๆ
+    w["why"].text("why = " + why)
 
 
 # ---- 6) โปรแกรมหลัก ----
 class Plc:
-    # สถานะของ PLC: ปั๊มเดินถึงเมื่อไร เหตุผลล่าสุด และตัวนับข้อความ
 
     def __init__(self):
         self.run_ms, self.t_on, self.why, self.n = 0, 0, "start", 0
@@ -256,13 +250,12 @@ class Plc:
 
 
 def report_plc(plc, now, why=None):
-    # ส่งสถานะ PLC ตามความจริงตอนนี้ (why = "tick" ตอนรายงานตามรอบ) คืน False ถ้าสายหลุด
     plc.n += 1
     return send(T_BASE + "plc/state", plc_message(plc.left(now), why or plc.why, plc.n))
 
 
 def on_command(w, plc, raw, tank, now, got):
-    # คำสั่งหนึ่งใบจาก Gateway: ตรวจ -> ทำ -> เสียง -> จด -> ตอบสถานะทันที
+    # คำสั่งจาก Gateway: ตรวจ -> ทำ -> เสียง -> ตอบสถานะทันที
     run_s, why = plc_decide(raw, tank)
     plc.why = why
     if run_s is not None:
@@ -274,7 +267,7 @@ def on_command(w, plc, raw, tank, now, got):
 
 
 class Stop(Exception):
-    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    # SystemExit ทำให้บอร์ดเริ่มใหม่และอาจค้าง จึงใช้ Stop
     pass
 
 
@@ -286,7 +279,7 @@ def stop(w, relay, msg, col=COL_BAD):
 
 
 def main():
-    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
     relay = led_named("RGB_BLUE")
@@ -322,7 +315,7 @@ def main():
             report_plc(plc, now)
         set_relay(relay, plc.run_ms > 0)
         sec_left = (left + 999) // 1000 if plc.run_ms else 0
-        if sec_left != shown or was_on != (plc.run_ms > 0):      # วาดใหม่เฉพาะตอนเลขหรือสถานะเปลี่ยน
+        if sec_left != shown or was_on != (plc.run_ms > 0):
             shown, was_on = sec_left, plc.run_ms > 0
             show_relay(w, sec_left, plc.why)
         show_knobs(w, soil, tank)
@@ -350,11 +343,11 @@ except Stop:
     pass
 finally:
     try:
-        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+        mqtt.disconnect()
     except Exception:
         pass
 
-# ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) ให้ Gateway ของเพื่อนสั่ง {"pump":1,"sec":999} แล้วดูว่าปั๊มเปิดกี่วินาที ใครเป็นคนตัดเหลือ 30
-# 2) หมุน VR4 ลงต่ำกว่า 10 % ระหว่างที่ปั๊มกำลังเดิน PLC ทำอะไร แล้ว Gateway ของเพื่อนรู้ได้อย่างไร
-# 3) เพิ่มโหนดเซนเซอร์ตัวที่ 3: VR3 = แสงแดด ส่งเข้า field/light (ใช้ node_message ตัวเดิม)
+# ----- ตาคุณ -----
+# 1) ให้ Gateway ของเพื่อนสั่ง {"pump":1,"sec":999} ปั๊มเปิดกี่วิ ใครตัดเหลือ 30
+# 2) หมุน VR4 ต่ำกว่า 10 % ตอนปั๊มเดิน PLC ทำอะไร แล้ว Gateway รู้ได้อย่างไร
+# 3) เพิ่มโหนดตัวที่ 3: VR3 = แสงแดด ส่งเข้า field/light (ใช้ node_message ตัวเดิม)

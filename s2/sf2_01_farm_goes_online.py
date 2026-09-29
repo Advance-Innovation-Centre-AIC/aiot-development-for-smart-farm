@@ -1,19 +1,11 @@
-# sf2_01_farm_goes_online.py - พาโรงเรือนของเราขึ้นอินเทอร์เน็ตครั้งแรก
+# sf2_01_farm_goes_online.py - พาโรงเรือนขึ้นอินเทอร์เน็ตครั้งแรก
 #
-# ภารกิจ   : ต่อ WiFi ให้บอร์ดโรงเรือน แล้วขึ้น "ป้ายประจำฟาร์ม" บอกเลข IP กับเวลาที่ใช้ต่อ
-#            จากนั้นเฝ้าดูหนึ่งนาทีว่าฟาร์มออนไลน์อยู่กี่ % ของเวลา และหลุดกี่ครั้ง
-# ลองเล่น  : จับเวลาด้วยมือถือตอนจอนิ่ง เทียบกับเลข ms บนจอ แล้วระหว่างเฝ้าดู
-#            ปิด Hotspot สัก 10 วินาทีแล้วเปิดใหม่ ดูวงแหวน ไฟ และกราฟว่าเห็นอะไร
-# ของบนบอร์ดที่ใช้ : ไฟ RGB_GREEN บนบอร์ด = ฟาร์มออนไลน์อยู่ · SHT40 = อากาศในโรงเรือน
-#            จอไฟ RGB 16x8 วิ่งคำว่า WIFI / ONLINE / OFFLINE · ลำโพงดังเฉพาะตอนสถานะเปลี่ยน
-# บนจอ     : เวลาที่ใช้ต่อ (Seg7), วงแหวนออนไลน์ % (Arc),
-#            ไฟออนไลน์ (Led), กราฟลิงก์กับความแรงสัญญาณทุกวินาที (Chart)
-# แนวคิด AIoT: ก่อนจะส่งข้อมูลฟาร์มออกไปได้ บอร์ดต้องมี "ที่อยู่" (IP) บนเครือข่ายก่อน
-#            และ "ต่อติดครั้งหนึ่ง" ไม่ได้แปลว่า "ออนไลน์ตลอด" ต้องเฝ้าดูลิงก์เสมอ
+# ภารกิจ   : ต่อ WiFi โชว์ IP กับเวลาที่ใช้ต่อ แล้วเฝ้าดูลิงก์หนึ่งนาที
+# ลองเล่น  : ระหว่างเฝ้าดู ปิด Hotspot สัก 10 วินาทีแล้วเปิดใหม่
+# บนจอ     : เวลาต่อ (Seg7) ออนไลน์ % (Arc) ไฟ (Led) กราฟลิงก์ (Chart)
 # บอร์ด     : TESAIoT Dev Kit (firmware เวอร์ชันล่าสุด) และ BENTO Emulator
-# ต้องแก้ก่อนรัน: WIFI_SSID กับ WIFI_PASS (ไฟล์นี้ยังไม่ใช้ broker)
-# กับดัก    : wifi.connect() บล็อกได้นานถึงราว 85 วินาที ป้ายบนจอจะนิ่ง อย่ากดรีเซ็ต
-#            ป้าย "กำลังต่อ" กับ ui.poll() จึงต้องมาก่อนบรรทัดนั้น ไม่ใช่หลัง
+# ต้องแก้ก่อนรัน: WIFI_SSID กับ WIFI_PASS
+# กับดัก    : wifi.connect() บล็อกได้ราว 85 วินาที จอจะนิ่ง อย่ากดรีเซ็ต
 
 import gpio
 import math
@@ -24,20 +16,19 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-# แก้สองบรรทัดนี้ให้ตรงกับ Hotspot มือถือของกลุ่ม (WiFi ของสถานที่ที่ต้อง login ผ่านเว็บ บอร์ดใช้ไม่ได้)
+# ใช้ Hotspot มือถือ (WiFi ที่ต้อง login ผ่านเว็บ บอร์ดใช้ไม่ได้)
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 
-FARM_NAME = "โรงเรือนกลุ่ม XX"          # ชื่อฟาร์มบนจอ แก้เป็นของกลุ่มคุณ
-RUN_MS = 60000                        # เฝ้าดูลิงก์นานเท่าไรหลังต่อติด
-TICK_MS = 1000                        # ถามลิงก์ทุกกี่ ms
-IP_TRIES, IP_WAIT_MS = 15, 200        # ต่อติดแล้วรอ IP อีกได้ 15 x 200 ms
-TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง แล้วใส่ค่าชดเชย เช่น -7.0
-                     # (ใช้ค่าเดียวกับที่กลุ่มหาได้ในคาบ 1) ตั้งแล้วความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย
-HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์แล้วสูงเกินจริง ให้ตั้ง False
+FARM_NAME = "โรงเรือนกลุ่ม XX"  # ชื่อบนจอ
+RUN_MS = 60000                # เฝ้าดูลิงก์กี่ ms
+TICK_MS = 1000                # ถามลิงก์ทุกกี่ ms
+IP_TRIES, IP_WAIT_MS = 15, 200
+TEMP_OFFSET = 0.0    # ชดเชยความอุ่นจากชิป เช่น -7.0
+HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (สูงเกินจริงให้ตั้ง False)
 
-SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25                            # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
+SPEAKER = 40  # ลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป)
+VOLUME = 25   # ความดังเสียง 0-127
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
@@ -45,7 +36,6 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 # ---- 2) ฮาร์ดแวร์ ----
 
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -56,8 +46,7 @@ def beep(name):
         time.sleep_ms(100)
 
 def read_climate():
-    # คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
-    # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
+    # ตัวที่อ่านไม่ได้เป็น None
     t_raw = h = p = None
     try:
         t_raw = sensors.sht40.temperature()
@@ -75,7 +64,7 @@ def read_climate():
 
 
 def led_named(name):
-    # หา LED ด้วยชื่อ ไม่ใช่เลข: ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM มองไม่เห็น ดวงที่เห็นคือ RGB_*
+    # หา LED ด้วยชื่อ ไม่ใช่เลข
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -91,20 +80,17 @@ def set_led(led, on):
 
 
 def marquee(text, color):
-    # ตัววิ่งบนจอ LED: สั่งครั้งเดียว แล้วเฟิร์มแวร์วิ่งให้เอง ("" = หยุด)
-    # ลองดูว่ามันยังวิ่งไหมตอนป้ายบนจอหลักนิ่งเพราะ wifi.connect()
+    # สั่งครั้งเดียว เฟิร์มแวร์วิ่งให้เอง ("" = หยุด)
     rgbmatrix.scroll(text, color, 80)
 
 
 # ---- 3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต ----
 def sat_pressure(t):
-    # ความดันไอน้ำอิ่มตัว (hPa) ที่อุณหภูมิ t C (สูตร Magnus)
+    # สูตร Magnus (hPa)
     return 6.112 * math.exp(17.62 * t / (243.12 + t))
 
 
 def room_humidity(h_raw, t_raw, t_room):
-    # อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
-    # ไอน้ำในอากาศเท่าเดิม แต่ห้องเย็นกว่า จึงแปลงกลับด้วยอัตราส่วนความดันไออิ่มตัว
     return min(100.0, h_raw * sat_pressure(t_raw) / sat_pressure(t_room))
 
 
@@ -117,14 +103,13 @@ def ssid_heard(nets, ssid):
 
 
 def signal_level(rssi):
-    # rssi (dBm ราว -100 ถึง -30) -> 0-100 สำหรับกราฟ  0 = ไม่ได้วัด คืน None ไม่วาดมั่ว
+    # rssi 0 = ไม่ได้วัด คืน None
     if not isinstance(rssi, int) or rssi >= 0:
         return None
     return max(0, min(100, rssi + 100))
 
 
 def pct_color(pct):
-    # ออนไลน์ 90 % ขึ้นไป = เขียว, 60-89 = ส้ม, ต่ำกว่านั้น = แดง
     return COL_OK if pct >= 90 else (COL_WARN if pct >= 60 else COL_BAD)
 
 
@@ -164,7 +149,7 @@ def wait_for_ip():
 
 
 def read_signal():
-    # ความแรงสัญญาณ 0-100 หรือ None  (เฟิร์มแวร์ 2.4.1 ยังตอบ rssi = 0 เสมอ เส้นฟ้าจึงขึ้นแค่ใน Emulator)
+    # firmware 2.4.1 ตอบ rssi = 0 เส้นฟ้าจึงขึ้นแค่ใน Emulator
     try:
         return signal_level(wifi.status()["rssi"])
     except Exception:
@@ -173,21 +158,18 @@ def read_signal():
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
+    # LVGL ไม่วาดจุดกลมเมื่อจำนวนจุด >= ความกว้าง
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ฟาร์มต่ออินเทอร์เน็ต", x=12, y=6, color=COL_TEXT, value=24)
@@ -198,9 +180,9 @@ def build_screen():
     w["ip"] = ui.Label("-", x=190, y=92, color=COL_TEXT, value=20)
     w["state"] = ui.Label("กำลังจะเริ่มต่อ", x=24, y=148, color=COL_WARN, value=20)
     card(402, 44, 378, 150, "ออนไลน์กี่ % ของเวลา")
-    w["arc"] = ui.Arc(x=414, y=72, w=116, h=116)              # ค่าตั้งต้นของ Arc คือ 0-100 อยู่แล้ว
+    w["arc"] = ui.Arc(x=414, y=72, w=116, h=116)
     w["pct"] = ui.Label("--", x=546, y=78, color=COL_TEXT, value=28)
-    w["led"] = ui.Led(x=546, y=124, w=24, h=24, color=COL_OK)  # Led สร้างมาแบบหรี่ = ยังไม่ออนไลน์
+    w["led"] = ui.Led(x=546, y=124, w=24, h=24, color=COL_OK)
     w["drops"] = ui.Label("หลุด 0 ครั้ง", x=580, y=126, color=COL_DIM, value=16)
     card(12, 202, 400, 136, "เขียว=ลิงก์ ฟ้า=สัญญาณ (ถ้าวัดได้)")
     w["chart"] = line_chart(24, 230, 376, 100, 0, 100, COL_OK)
@@ -214,7 +196,7 @@ def build_screen():
 
 
 def show_note(w, text, col):
-    # ไม่เรียก ui.poll() ในนี้ ให้คนเรียกตัดสินเองว่าจะขึ้นจอเมื่อไร
+    # ไม่เรียก ui.poll() ในนี้ คนเรียกเลือกเอง
     w["note"].color(col)
     w["note"].text(text)
 
@@ -225,11 +207,10 @@ def show_state(w, text, col):
 
 
 def show_link(w, online, pct, drops):
-    # วาดสถานะลิงก์ทุกวินาที: วงแหวน % ไฟออนไลน์ จำนวนครั้งที่หลุด
     w["arc"].value(pct)
     w["arc"].color(pct_color(pct))
     w["pct"].text(str(pct) + " %")
-    w["led"].value(1 if online else 0)             # Led: 1 = สว่าง, 0 = หรี่ (ไม่ดับมืด)
+    w["led"].value(1 if online else 0)  # 1 = สว่าง, 0 = หรี่
     w["drops"].text("หลุด " + str(drops) + " ครั้ง")
     show_state(w, "ออนไลน์อยู่" if online else "หลุด! ฟาร์มขาดการติดต่อ", COL_OK if online else COL_BAD)
 
@@ -242,7 +223,7 @@ def show_air(w, t, h):
 
 
 def plot(w, online, signal):
-    # 1 วินาที = หลายจุด (60 วิ x 6 = 360 จาก 400 จุด) กราฟหนึ่งนาทีจึงเต็มความกว้างพอดี
+    # วินาทีละหลายจุด หนึ่งนาทีจึงเต็มกราฟพอดี
     for _ in range(max(1, 400 * TICK_MS // RUN_MS)):
         w["chart"].set_next(0, 90 if online else 10)
         if signal is not None:
@@ -256,7 +237,7 @@ class Stop(Exception):
 
 
 def stop(w, led, msg, col):
-    # จบเพราะอะไรก็ตาม: ดับไฟ หยุดตัววิ่ง (ไม่งั้นมันวิ่งค้างต่อ) แล้วบอกเหตุผลบนจอ
+    # หยุดตัววิ่งด้วย ไม่งั้นมันวิ่งค้างต่อ
     set_led(led, False)
     marquee("", rgbmatrix.WHITE)
     rgbmatrix.clear()
@@ -286,7 +267,6 @@ def link_changed(online, sec):
 
 def watch_link(w, led):
     # connect() ตอบว่า "ตอนนั้นต่อสำเร็จ" ส่วน is_connected() ตอบว่า "ตอนนี้ยังต่ออยู่ไหม"
-    # ถามทุกวินาทีจนครบ RUN_MS แล้วคืน (วินาทีที่ออนไลน์, วินาทีทั้งหมด, หลุดกี่ครั้ง)
     up = total = drops = 0
     was = True
     t0 = time.ticks_ms()
@@ -309,10 +289,10 @@ def watch_link(w, led):
 
 
 def main():
-    if hasattr(ui, "volume"):          # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
-    led = led_named("RGB_GREEN")       # ไฟเขียวบนบอร์ด = ฟาร์มออนไลน์อยู่
+    led = led_named("RGB_GREEN")
     ok, took = connect_wifi(w)
     if not ok:
         failed(w, led, took)
@@ -336,7 +316,6 @@ except Stop:
     pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) ใส่รหัสผ่านผิดไปหนึ่งตัว แล้วจับเวลาว่ากว่าจอจะบอกว่าผิดใช้กี่ ms เทียบกับตอนรหัสถูก
-#    แล้วลองสะกดชื่อวงผิด ข้อความเตือนเปลี่ยนไปไหม (ดู heard_on_air กับ ssid_heard)
-# 2) เปลี่ยนเกณฑ์สีใน pct_color ให้ "ฟาร์มจริง" เข้มขึ้น เช่น ต่ำกว่า 99 % = ส้ม แล้วปิด Hotspot 1 วินาทีดู
-# 3) ถ้าฟาร์มจริงอยู่ไกลบ้าน 2 กม. กลุ่มคุณจะเอาเน็ตจากไหนมาให้บอร์ด ลองเขียนคำตอบลงใบงาน
+# 1) ใส่รหัสผิดหนึ่งตัว จอบอกว่าผิดในกี่ ms แล้วลองสะกดชื่อวงผิด ข้อความเปลี่ยนไหม
+# 2) แก้ pct_color ให้ต่ำกว่า 99 % = ส้ม แล้วปิด Hotspot 1 วินาทีดู
+# 3) ฟาร์มจริงอยู่ไกลบ้าน 2 กม. จะหาเน็ตจากไหนให้บอร์ด
