@@ -215,6 +215,7 @@ section table { font-size: .62em; }
 | `bento-aiot/<TEAM>/field/<เซนเซอร์>` | โหนดเซนเซอร์ → Gateway | `field/soil` · `field/tank` |
 | `bento-aiot/<TEAM>/plc/cmd` | Gateway → PLC | สั่งปั๊ม |
 | `bento-aiot/<TEAM>/plc/state` | PLC → Gateway | ปั๊มทำอะไรอยู่ **จริง** |
+| `bento-aiot/<TEAM>/ai` | บอร์ด → แอป | ผล AI บนบอร์ด (`sf3_06` คาบ 3): ชื่อโมเดล · ป้าย · ความมั่นใจ % |
 
 ฟังทุกหัวข้อของกลุ่มในทีเดียว: `bento-aiot/<TEAM>/#` · ทุกโหนดในแปลง: `bento-aiot/<TEAM>/field/+`
 
