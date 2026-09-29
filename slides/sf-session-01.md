@@ -87,7 +87,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <div class="timeline">
 <div style="flex:10;background:#546e7a"><b>0:00</b>เปิดคาบ<br>AIoT<br>ในฟาร์ม</div>
-<div style="flex:20;background:#5e35b1"><b>0:10</b>ติดตั้ง<br>Programmer<br>+ แฟลช v2.4.1</div>
+<div style="flex:20;background:#5e35b1"><b>0:10</b>ติดตั้ง<br>Programmer<br>+ แฟลชเฟิร์มแวร์</div>
 <div style="flex:30;background:#1e88e5"><b>0:30</b>กิจกรรม 1<br>โรงเรือนของเรา<br>ตอนนี้</div>
 <div style="flex:30;background:#43a047"><b>1:00</b>กิจกรรม 2<br>พืชของเรา<br>สบายดีไหม</div>
 <div style="flex:10;background:#ff9f1c"><b>1:30</b>พัก</div>
@@ -398,7 +398,7 @@ section table { font-size: .7em; }
 | 🎛️ ลูกบิด **VR1–VR4** | `pots.read(0)` … `pots.read(3)` | แทนเซนเซอร์ที่ยังไม่มี: ความชื้นดิน น้ำในถัง | 3 · ภารกิจ |
 | 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(0)`, `buttons.pressed(1)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | 1 · 3 · 4 · ภารกิจ |
 | 💡 ไฟ LED สีบนโมดูล SoM (RGB_RED / RGB_BLUE) | `gpio.led(...)` | ไฟแดง = พืช/แท็งก์มีปัญหา · ไฟฟ้า = ปั๊มเดิน (คนละอย่างกับจอไฟ RGB 16×8) | 2 · 3 · 4 · ภารกิจ |
-| 🔊 ลำโพง | `beep("tap")` → `ui.tone(...)` ตั้งความดังที่ `VOLUME` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
+| 🔊 ลำโพง | `beep("tap")` → `ui.tone(...)` ตั้งความดังรวมที่ `SPEAKER` (0-100%) และความดังแต่ละเสียงที่ `VOLUME` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
 | 🖥️ จอสัมผัส | `ui` | แผงหน้าปัดฟาร์ม | ทุกกิจกรรม |
 
 <div class="src">SW5 (ปุ่มล่าง) = P17.5 · SW6 (ปุ่มบน) = P17.7 · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
@@ -461,7 +461,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 ---
 
-## Remote Flash v2.4.1 — ทีมละ 1 บอร์ด
+## Remote Flash เฟิร์มแวร์ล่าสุด — ทีมละ 1 บอร์ด
 
 <style scoped>
 .step { display:flex; gap:14px; align-items:flex-start; margin:.3em 0; }
@@ -480,13 +480,13 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 <div class="step"><span class="num">5</span><div>
 
-**I'm ready →** จับคู่กับ Programmer → ตรวจว่าเป็น **v2.4.1** → **Flash** แล้วรอจนเสร็จ
+**I'm ready →** จับคู่กับ Programmer → ตรวจว่าเป็น **v2.4.2** หรือใหม่กว่า → **Flash** แล้วรอจนเสร็จ
 
 </div></div>
 
 <div class="step"><span class="num">6</span><div>
 
-จอบอร์ดขึ้น **v2.4.1** → กด **Connect** ใน IDE ✅
+จอบอร์ดขึ้น **v2.4.2** หรือใหม่กว่า → กด **Connect** ใน IDE ✅
 
 </div></div>
 
@@ -594,7 +594,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
   </g>
 </svg>
 
-<div class="cap">ภาพวาดประกอบแนวคิดของหน้าเมนู ไม่ใช่ภาพถ่ายจอจริง — หน้าจริงอยู่ในเฟิร์มแวร์ TESAIoT Dev Kit v2.4.1</div>
+<div class="cap">ภาพวาดประกอบแนวคิดของหน้าเมนู ไม่ใช่ภาพถ่ายจอจริง — หน้าจริงอยู่ในเฟิร์มแวร์ TESAIoT Dev Kit</div>
 
 </div>
 </div>
@@ -831,7 +831,7 @@ section li { font-size: .9em; }
 <div class="c45">
 
 <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
-  <text x="280" y="26" text-anchor="middle" font-size="19" fill="#37474f">วัดจริงบน TESAIoT Dev Kit (firmware 2.4.1) เช้าวันนี้</text>
+  <text x="280" y="26" text-anchor="middle" font-size="19" fill="#37474f">วัดจริงบน TESAIoT Dev Kit (firmware 2.4.1)</text>
   <line x1="60" y1="240" x2="520" y2="240" stroke="#90a4ae" stroke-width="2"/>
   <rect x="90" y="84" width="110" height="156" fill="#ff8a65"/>
   <text x="145" y="74" text-anchor="middle" font-size="22" font-weight="700" fill="#d84315">35.4→36.0 °C</text>

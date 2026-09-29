@@ -25,6 +25,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 SAFE_DEG = 20        # เอียงเกินกี่องศาถือว่าอันตราย
 BUMP_G = 1.8         # แรงรวมเกินกี่เท่าของแรงโน้มถ่วงถือว่า "กระแทก"
@@ -331,6 +332,8 @@ def finish(w, alarm, rec):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     alarm = led_named("RGB_RED")       # ไฟแดงบนบอร์ด = เอียงอันตราย
     sw5, sw6 = Button(0), Button(1)   # SW5 = ปุ่มล่าง, SW6 = ปุ่มบน

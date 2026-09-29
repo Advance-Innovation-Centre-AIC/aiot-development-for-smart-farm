@@ -21,6 +21,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 HYST = 5             # ช่องกันกระพือ (%) ปั๊มปิดเมื่อชื้นเกิน เกณฑ์ + HYST
 TANK_MIN = 10        # น้ำในถังต่ำกว่านี้ (%) ห้ามเดินปั๊ม
@@ -319,6 +320,8 @@ def finish(w, pump, runs, water_l):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     if not self_test():
         return
     w = build_screen()

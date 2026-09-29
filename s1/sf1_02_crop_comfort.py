@@ -21,6 +21,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 # ช่วงที่พืชชอบ (ตัวเลขตั้งต้นสำหรับการเรียน ไม่ใช่คำแนะนำทางเกษตรกรรม)
 # แต่ละบรรทัด = (ชื่อ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)  เพิ่มพืชของกลุ่มต่อท้ายได้เลย
@@ -304,6 +305,8 @@ def finish(w, led, name, good, total):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     idx = find_crop(START_CROP)
     if CROPS[idx][0] != START_CROP:
         print("ไม่รู้จักพืช", START_CROP, "- ใช้", CROPS[idx][0], "แทน (สะกดให้ตรงกับใน CROPS)")

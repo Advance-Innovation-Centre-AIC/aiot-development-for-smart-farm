@@ -21,6 +21,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 RUN_MS = 120000      # เดินนานเท่าไร (2 นาที)
 TICK_MS = 500        # อ่านเซนเซอร์ทุกกี่ ms
@@ -317,6 +318,8 @@ def finish(w, temp_rec, hum_rec):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     sw5 = Button(0)
     temp_rec, hum_rec = MinMax(), MinMax()
