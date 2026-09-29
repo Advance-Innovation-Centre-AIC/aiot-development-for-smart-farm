@@ -246,7 +246,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
   <rect x="730" y="40" width="250" height="170" rx="22" fill="#e8f5e9" stroke="#2e7d32" stroke-width="4"/>
   <text x="855" y="84" text-anchor="middle" font-size="30" font-weight="700" fill="#1b5e20">③ ลงมือ · Act</text>
   <text x="855" y="122" text-anchor="middle" font-size="20" fill="#37474f">จอไฟ RGB เป็นสีเหลือง</text>
-  <text x="855" y="150" text-anchor="middle" font-size="20" fill="#37474f">ลำโพงเตือน ui.sfx</text>
+  <text x="855" y="150" text-anchor="middle" font-size="20" fill="#37474f">ลำโพงเตือน beep()</text>
   <text x="855" y="178" text-anchor="middle" font-size="20" fill="#37474f">LED = ปั๊มน้ำเปิด</text>
   <line x1="275" y1="125" x2="368" y2="125" stroke="#546e7a" stroke-width="5" marker-end="url(#ar)"/>
   <line x1="630" y1="125" x2="723" y2="125" stroke="#546e7a" stroke-width="5" marker-end="url(#ar)"/>
@@ -310,7 +310,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
     <text x="498" y="166" fill="#37474f">ลูกบิด VR1–VR4</text><text x="498" y="190" fill="#37474f">ปุ่ม SW5 / SW6</text>
     <rect x="605" y="70" width="176" height="150" rx="12" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
     <text x="693" y="104" font-size="34">🔊</text><text x="693" y="140" font-weight="700" fill="#6a1b9a">4. เสียง</text>
-    <text x="693" y="166" fill="#37474f">ui.sfx 21 แบบ</text><text x="693" y="190" fill="#37474f">ui.tone แต่งเอง</text>
+    <text x="693" y="166" fill="#37474f">beep() ดัง 20%</text><text x="693" y="190" fill="#37474f">ui.tone แต่งเอง</text>
     <rect x="800" y="70" width="176" height="150" rx="12" fill="#eceff1" stroke="#546e7a" stroke-width="3" stroke-dasharray="8 5"/>
     <text x="888" y="104" font-size="34">📡</text><text x="888" y="140" font-weight="700" fill="#37474f">5. MQTT + แอป</text>
     <text x="888" y="166" fill="#37474f">ส่งค่า/รับคำสั่ง</text><text x="888" y="190" fill="#37474f">(คาบ 2–3)</text>
@@ -398,7 +398,7 @@ section table { font-size: .7em; }
 | 🎛️ ลูกบิด **VR1–VR4** | `pots.read(0)` … `pots.read(3)` | แทนเซนเซอร์ที่ยังไม่มี: ความชื้นดิน น้ำในถัง | 3 · ภารกิจ |
 | 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(0)`, `buttons.pressed(1)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | 1 · 3 · 4 · ภารกิจ |
 | 💡 ไฟ LED สีบนโมดูล SoM (RGB_RED / RGB_BLUE) | `gpio.led(...)` | ไฟแดง = พืช/แท็งก์มีปัญหา · ไฟฟ้า = ปั๊มเดิน (คนละอย่างกับจอไฟ RGB 16×8) | 2 · 3 · 4 · ภารกิจ |
-| 🔊 ลำโพง | `ui.sfx(...)`, `ui.tone(...)` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
+| 🔊 ลำโพง | `beep("tap")` → `ui.tone(...)` ตั้งความดังที่ `VOLUME` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
 | 🖥️ จอสัมผัส | `ui` | แผงหน้าปัดฟาร์ม | ทุกกิจกรรม |
 
 <div class="src">SW5 (ปุ่มล่าง) = P17.5 · SW6 (ปุ่มบน) = P17.7 · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
@@ -922,7 +922,7 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
         if sw5.pressed_now():                             # 2) SW5 (ปุ่มล่าง) = เริ่มแข่งใหม่
             temp_rec.reset()
             hum_rec.reset()
-            ui.sfx(ui.SFX_UI_SELECT)
+            beep("tap")
         if t is not None:
             temp_rec.add(t)
             shown = matrix_show(t, shown)                # 3) ทำ: จอไฟ RGB
