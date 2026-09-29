@@ -8,7 +8,10 @@
 # Boards: TESAIoT Dev Kit (firmware 2.4.2+), Eva Kit, BENTO Emulator (built-in models only)
 # No sound on purpose: the speaker would leak into the mic models.
 
-import buttons
+try:
+    import buttons                   # the Eva Kit has no buttons module
+except ImportError:
+    buttons = None
 import edge_ai
 import time
 import ui
@@ -31,6 +34,8 @@ class Button:
         self.index, self.down, self.clicked = index, False, False
 
     def sample(self):
+        if buttons is None:
+            return
         now = buttons.pressed(self.index)
         if now and not self.down:
             self.clicked = True
