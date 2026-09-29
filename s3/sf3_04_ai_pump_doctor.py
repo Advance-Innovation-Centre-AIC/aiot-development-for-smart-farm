@@ -2,7 +2,7 @@
 #
 # ภารกิจ   : ใช้โมเดล AI บนบอร์ด (จาก Edge AI Store หรือที่ติดมากับบอร์ด) อ่านการเคลื่อนไหวจาก IMU
 #            แล้วตอบว่าเครื่อง "นิ่ง / หมุนเป็นจังหวะ / สั่นผิดปกติ" พร้อมคะแนนทุกคลาส
-#            คลาสอันตรายชนะด้วยความมั่นใจสูงติดกันหลายครั้ง -> เตือน (เสียง + ไฟแดง)
+#            คลาสอันตรายชนะด้วยความมั่นใจสูงอย่างน้อย 3 ใน 5 ผลล่าสุด -> เตือน (เสียง + ไฟแดง)
 # ลองเล่น  : วางบอร์ดนิ่ง -> ถือบอร์ดวาดวงกลมในอากาศช้า ๆ -> เขย่าแรง ๆ
 #            ดูวงแหวนความมั่นใจ แถบคะแนนแต่ละคลาส เวลาที่ AI ใช้คิด กราฟ และจอไฟ RGB
 #            (ใน Emulator เป็นผลจำลอง: ปุ่ม Shake = shaking, เอียงบอร์ด = circle)
@@ -31,7 +31,8 @@ SPEAKER = 40             # ความดังลำโพงรวม 0-100% 
 MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
                          # ลองเปลี่ยนเป็น ("Cough",) ("Alarm",) ("Siren",) (ฟังเสียง) หรือ ("Push",)
 CONF_MIN = 60            # มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุการณ์
-CONFIRM_N = 3            # คลาสอันตรายต้องชนะติดกันกี่ครั้งถึงจะเตือน
+CONFIRM_N = 3            # คลาสอันตรายต้องชนะอย่างน้อยกี่ครั้ง ใน WINDOW_N ผลล่าสุด ถึงจะเตือน
+WINDOW_N = 5             # ดูผลย้อนหลังกี่ครั้ง (ต้องไม่น้อยกว่า CONFIRM_N)
 STALL_MS = 8000          # ไม่มีคำตอบใหม่นานเท่านี้ = บอกบนจอ
 MUTE_MS = 800            # โมเดลที่ฟังไมค์: ไม่เชื่อผลช่วงนี้หลังบอร์ดส่งเสียงเอง
 MATRIX_MS = 3000         # ส่งภาพจอไฟ RGB ซ้ำทุกกี่ ms (กันภาพหล่นหาย)
@@ -153,13 +154,13 @@ def is_danger(label, conf):
     return label in DANGER and conf >= CONF_MIN
 
 
-def alert_rule(streak, alerting, danger):
-    # เตือนเมื่ออันตรายชนะติดกัน CONFIRM_N ครั้ง (กันเตือนมั่วจากคำตอบเดียว)
-    # หายเตือนเมื่อคำตอบกลับมาปลอดภัย
-    streak = streak + 1 if danger else 0
-    if streak >= CONFIRM_N:
-        return streak, True
-    return streak, alerting and streak > 0
+def alert_rule(hist, alerting, danger):
+    # จำผล WINDOW_N ครั้งล่าสุด (1 = อันตราย) · เตือนเมื่ออันตรายอย่างน้อย CONFIRM_N ครั้งในนั้น
+    # ขณะเครื่องสั่น AI ตอบสลับ anomaly กับ unlabeled ไปมา จึงนับ "ในหน้าต่าง" ไม่ใช่ "ติดกัน"
+    # หายเตือนเมื่อผลทั้งหน้าต่างกลับมาปลอดภัยหมด (กันไฟเตือนกะพริบ)
+    hist = (hist + [int(danger)])[-WINDOW_N:]
+    hits = sum(hist)
+    return hist, hits >= CONFIRM_N or (alerting and hits > 0)
 
 
 def score_frame(scores, top, alerting):
@@ -212,7 +213,7 @@ def build_screen():
     w["s_min"] = w["chart"].add_series(COL_BAD)
     card(422, 244, 358, 94, "สมองของ AI")
     w["lat"] = ui.Label("ใช้เวลาคิด - ms", x=434, y=274, color=COL_DIM, value=16)
-    w["streak"] = ui.Label("อันตรายติดกัน 0", x=434, y=304, color=COL_DIM, value=16)
+    w["streak"] = ui.Label(" ", x=434, y=304, color=COL_DIM, value=16)
     w["status"] = ui.Label("กำลังหาโมเดล...", x=12, y=352, color=COL_WARN, value=16)
     ui.poll()
     return w
@@ -229,7 +230,7 @@ def show_model(w, name, labels, mic):
         lb.text(labels[i] if i < len(labels) else " ")
 
 
-def show_result(w, r, conf, alerting, streak, alerts):
+def show_result(w, r, conf, alerting, hist, alerts):
     lab = r["label"] or "-"
     w["verdict"].text(lab)
     w["meaning"].text(MEANING.get(lab, lab))
@@ -244,7 +245,7 @@ def show_result(w, r, conf, alerting, streak, alerts):
             bar.value(int(r["scores"][i] * 100))
             bar.color(hot if i == r["top"] else COL_DIM)
     w["lat"].text("ใช้เวลาคิด %.1f ms" % r["latency_ms"])
-    w["streak"].text("อันตรายติดกัน %d/%d  เตือนแล้ว %d ครั้ง" % (min(streak, CONFIRM_N), CONFIRM_N, alerts))
+    w["streak"].text("อันตราย %d/%d  เตือนแล้ว %d ครั้ง" % (sum(hist), len(hist), alerts))   # 2/5 = อันตราย 2 ใน 5 ผลล่าสุด
     w["chart"].set_next(0, conf)
     w["chart"].set_next(w["s_min"], CONF_MIN)
 
@@ -259,7 +260,7 @@ def announce(alerting, mic):
 # ---- 5) โปรแกรมหลัก ----
 def watch(w, mic, alarm):
     # วนอ่านคำตอบของ AI จนครบ RUN_MS แล้วคืนจำนวนครั้งที่เตือน
-    last_seq, streak, alerts, alerting, stalled = None, 0, 0, False, False
+    last_seq, hist, alerts, alerting, stalled = None, [], 0, False, False
     frame = drawn = None
     t0 = last_new = quiet_at = sent_at = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
@@ -273,14 +274,14 @@ def watch(w, mic, alarm):
             if time.ticks_diff(now, quiet_at) >= 0:               # ไม่ใช่ช่วงที่บอร์ดเพิ่งส่งเสียง
                 conf = int(r["conf"] * 100)
                 was = alerting                                    # 2) ตัดสิน
-                streak, alerting = alert_rule(streak, alerting, is_danger(r["label"], conf))
+                hist, alerting = alert_rule(hist, alerting, is_danger(r["label"], conf))
                 if alerting != was:                               # 3) ทำ
                     quiet_at = announce(alerting, mic)
                     set_led(alarm, alerting)
                     if alerting:
                         alerts += 1
                         print("AI เตือน:", r["label"], "มั่นใจ", conf, "%")
-                show_result(w, r, conf, alerting, streak, alerts)  # 4) โชว์
+                show_result(w, r, conf, alerting, hist, alerts)    # 4) โชว์
                 frame = score_frame(r["scores"], r["top"], alerting)
         elif not stalled and time.ticks_diff(now, last_new) > STALL_MS:
             stalled = True

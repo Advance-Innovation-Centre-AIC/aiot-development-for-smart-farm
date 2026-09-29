@@ -28,6 +28,7 @@ WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้ง�
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
 TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05 (ต้องตรงกับแอป)
 BROKER = "broker.hivemq.com"
+CLIENT_ID = "bento-ai-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/ai"
 MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
 DANGER = ("anomaly", "shaking")        # ป้ายที่ถือว่าอันตราย (ดังเสียง + ไฟแดง)
@@ -89,7 +90,7 @@ def go_online(w):
     try:
         if wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0":
             step = "broker"
-            if mqtt.connect(BROKER, port=1883, client_id="bento-ai-" + TEAM, keepalive=60):
+            if mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60):
                 note(w, "ออนไลน์ " + TOPIC, COL_OK)
                 return True
     except OSError:

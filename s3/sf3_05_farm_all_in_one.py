@@ -11,7 +11,7 @@
 #            4) MQTT ฝั่งบอร์ด  ส่ง .../telemetry ทุก 5 วิ · ส่ง .../event ตอนคอกเปลี่ยน · ฟัง .../cmd
 #            5) แอปของกลุ่ม    s2/app/farm_monitor.py หรือ s2/app/farm_web.html ใส่ TEAM เดียวกัน
 #               สั่งกลับมาได้: {"cmd":"pump","on":1,"sec":10} {"cmd":"pump","on":0} {"cmd":"beep"}
-#               {"cmd":"ack"} (หรือ {"cmd":"silence"}) = รับทราบผู้บุกรุก
+#               {"cmd":"ack"} = รับทราบผู้บุกรุก
 # ลองเล่น  : หมุน VR2 ลง (ดินแห้ง) · หมุน VR3 ลง (ให้พัดลมเปิด) · เดินเข้าหาบอร์ด แล้วกด SW6
 #            กดปุ่ม "รดน้ำ 10 วินาที" ในหน้าเว็บ แล้วดูไฟปั๊มบนจอ · แตะ "ส่งรายงานเลย" แล้วดูบรรทัดล่างสุด
 # ของบนบอร์ดที่ใช้ : SHT40 (อากาศ) DPS368 (ความกดอากาศ) เรดาร์ (ระยะคนที่คอก) ลูกบิด VR2-VR4
@@ -46,6 +46,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05 (ต้องตรงกับแอป)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
+CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 BASE = "bento-aiot/" + TEAM + "/"      # ชื่อนำหน้าเดียวกับคาบ 2 แอปของกลุ่มฟังชื่อนี้
 BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
 TEMP_OFFSET = 0.0   # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง แล้วใส่ค่าชดเชย เช่น -7.0
@@ -182,8 +183,6 @@ def app_request(raw):
         act = cmd.get("cmd")            # 5, null, [] ก็เป็น JSON ได้ แต่ไม่มี .get -> ไม่ใช่คำสั่ง
     except (ValueError, AttributeError):
         return None, 0
-    if act == "silence":                # ชื่อเดิมของ ack (ปุ่มรับทราบใน farm_web.html ส่ง ack)
-        act = "ack"
     if act == "pump" and cmd.get("on", 1):
         sec = cmd.get("sec", 10)
         return act, min(sec, 30) if isinstance(sec, int) and sec > 0 else 10   # ไม่เกิน 30 วิ
@@ -204,7 +203,7 @@ def go_online(w):
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     try:
         ok = (wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0"
-              and mqtt.connect(BROKER, port=1883, client_id="bento-farm-" + TEAM, keepalive=60)
+              and mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
               and mqtt.subscribe(BASE + "cmd"))
     except OSError:
         ok = False

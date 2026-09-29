@@ -786,7 +786,7 @@ def classify(vib, base):
 
 <div class="lead">เทียบกฎที่เขียนเอง กับ Edge AI บนโจทย์เดียวกัน ด้วยตัวเลขที่วัดเอง</div>
 
-<div class="flow"><b>ส่งโมเดลจาก Edge AI Store</b><i>→</i><b>IMU</b><i>→</i><b>โมเดล AI บนบอร์ด (เรียกด้วยชื่อ)</b><i>→</i><b>มั่นใจพอไหม · ชนะติดกันไหม</b><i>→</i><b>เสียง + LED แดง + จอไฟ RGB</b></div>
+<div class="flow"><b>ส่งโมเดลจาก Edge AI Store</b><i>→</i><b>IMU</b><i>→</i><b>โมเดล AI บนบอร์ด (เรียกด้วยชื่อ)</b><i>→</i><b>มั่นใจพอไหม · อันตราย 3 ใน 5 ไหม</b><i>→</i><b>เสียง + LED แดง + จอไฟ RGB</b></div>
 
 <div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://edgeai-store.tesaiot.dev">edgeai-store.tesaiot.dev</a> <span>— Edge AI model catalog: Deploy AnomalousVibration ลงบอร์ด</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> <span>— ให้ AI บนบอร์ดตัดสินแทนกฎ</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py">sf3_06_ai_to_mqtt.py</a> <span>— ส่งผล AI ขึ้น MQTT ให้แอปของทีม</span></div></div></div>
 
@@ -809,7 +809,7 @@ def classify(vib, base):
     <text x="540" y="88" fill="#37474f" font-size="14">idle 0.05</text><text x="540" y="108" fill="#37474f" font-size="14">circle 0.10</text><text x="540" y="128" fill="#c62828" font-size="14" font-weight="700">shaking 0.85</text>
     <rect x="680" y="30" width="170" height="110" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
     <text x="765" y="62" font-weight="700" fill="#1b5e20">กฎของเรา</text>
-    <text x="765" y="88" fill="#37474f" font-size="14">มั่นใจ ≥ 60 %</text><text x="765" y="110" fill="#37474f" font-size="14">ชนะติดกัน 3 ครั้ง</text>
+    <text x="765" y="88" fill="#37474f" font-size="14">มั่นใจ ≥ 60 %</text><text x="765" y="110" fill="#37474f" font-size="14">อันตราย 3 ใน 5 ผล</text>
     <rect x="880" y="30" width="110" height="110" rx="12" fill="#ffebee" stroke="#e53935" stroke-width="3"/>
     <text x="935" y="78" font-size="30">🚨</text><text x="935" y="112" font-weight="700" fill="#c62828">เตือน</text>
   </g>
@@ -880,8 +880,7 @@ section table { font-size: .66em; }
 |---|---|---|
 | IMU | **AnomalousVibration** ★ | unlabeled · anomaly |
 | IMU | **HumanActivity** ☆ | unlabeled · standing · running · walking · sitting · jumping |
-| IMU | DrillMaterialIMU | ชนิดวัสดุที่สว่านเจาะ |
-| IMU | FallDetection ⚠ ผลบน Dev Kit ยังไม่น่าเชื่อถือ | unlabeled · fall |
+| IMU | DrillMaterialIMU · FallDetection ⚠ **อย่าใช้** ผลบนบอร์ดยังผิด | — |
 | ไมค์ | **SurfaceMic** ☆ · **HomeSounds** ☆ · DrillMaterialMic · SirenDetection | ดูในหน้า Store |
 
 <div class="src">★ ใช้วันนี้ ทดสอบผลบน Dev Kit แล้ว · ☆ น่าลองในโปรเจกต์ ติดตั้งได้ แต่ผลบน Dev Kit ยังไม่ได้วัด — ลองแล้วจดผลเอง · ทุกตัว: Infineon Technologies AG / Imagimob DEEPCRAFT Studio accelerators · <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> — ใช้เรียนได้ ห้ามใช้เชิงพาณิชย์ และต้องให้เครดิตในงานของทีม</div>
@@ -960,14 +959,14 @@ section table { font-size: .66em; }
 
 ![w:200](img/s3_ai_doctor_shaking_matrix.png)
 
-<div class="cap">ภาพจาก BENTO Emulator — <b>ผล AI ใน Emulator เป็นผลจำลอง ไม่ใช่โมเดลจริง</b> และเวลาคิดไม่ใช่ของบอร์ดจริง · ซ้าย วางนิ่ง → idle มั่นใจ 96 % · ขวา กด Shake → shaking ชนะแต่มั่นใจแค่ 50 % ต่ำกว่า CONF_MIN 60 จึง <b>ยังไม่นับ</b> (อันตรายติดกัน 0/3) · ล่าง จอไฟ RGB แท่งละคลาส แท่งที่ชนะเป็นสีเขียว</div>
+<div class="cap">ภาพจาก BENTO Emulator — <b>ผล AI ใน Emulator เป็นผลจำลอง ไม่ใช่โมเดลจริง</b> และเวลาคิดไม่ใช่ของบอร์ดจริง · ซ้าย วางนิ่ง → idle มั่นใจ 96 % · ขวา กด Shake → shaking ชนะแต่มั่นใจแค่ 47 % ต่ำกว่า CONF_MIN 60 จึง <b>ยังไม่นับ</b> (ป้าย "อันตราย 0/5") · ล่าง จอไฟ RGB แท่งละคลาส แท่งที่ชนะเป็นสีเขียว</div>
 
 </div>
 </div>
 
 ---
 
-## Edge AI — หัวใจของโค้ด: หาด้วยชื่อ · มั่นใจพอไหม · ชนะติดกันไหม
+## Edge AI — หัวใจของโค้ด: หาด้วยชื่อ · มั่นใจพอไหม · 3 ใน 5 ไหม
 
 <style scoped>
 section .cols li, section .cols p { font-size: .8em; }
@@ -996,22 +995,22 @@ def is_danger(label, conf):
     return label in DANGER and conf >= CONF_MIN
 
 
-def alert_rule(streak, alerting, danger):
-    # เตือนเมื่ออันตรายชนะติดกัน CONFIRM_N ครั้ง (กันเตือนมั่วจากคำตอบเดียว)
-    # หายเตือนเมื่อคำตอบกลับมาปลอดภัย
-    streak = streak + 1 if danger else 0
-    if streak >= CONFIRM_N:
-        return streak, True
-    return streak, alerting and streak > 0
+def alert_rule(hist, alerting, danger):
+    # จำผล WINDOW_N ครั้งล่าสุด (1 = อันตราย) · เตือนเมื่ออันตรายอย่างน้อย CONFIRM_N ครั้งในนั้น
+    # ขณะเครื่องสั่น AI ตอบสลับ anomaly กับ unlabeled ไปมา จึงนับ "ในหน้าต่าง" ไม่ใช่ "ติดกัน"
+    # หายเตือนเมื่อผลทั้งหน้าต่างกลับมาปลอดภัยหมด (กันไฟเตือนกะพริบ)
+    hist = (hist + [int(danger)])[-WINDOW_N:]
+    hits = sum(hist)
+    return hist, hits >= CONFIRM_N or (alerting and hits > 0)
 ```
 <div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> · is_danger() และ alert_rule() ในส่วน "3) สมอง"</div>
 
 </div>
 <div>
 
-**ค่าตั้งบนหัวไฟล์:** `MODEL_KEYS = ("AnomalousVibration", "Motion")` · `CONF_MIN = 60` (%) · `CONFIRM_N = 3`
+**ค่าตั้งบนหัวไฟล์:** `MODEL_KEYS = ("AnomalousVibration", "Motion")` · `CONF_MIN = 60` (%) · `CONFIRM_N = 3` · `WINDOW_N = 5`
 
-- AI ไม่ได้ตัดสิน "คนเดียว" — คำตอบของมันผ่าน **กฎของเราอีกชั้น**: **ความมั่นใจขั้นต่ำ** (ตัวกันเตือนผิดอีกแบบ) + ชนะติดกัน
+- AI ไม่ได้ตัดสิน "คนเดียว" — คำตอบของมันผ่าน **กฎของเราอีกชั้น**: **ความมั่นใจขั้นต่ำ** (ตัวกันเตือนผิดอีกแบบ) + **อันตราย 3 ใน 5 ผลล่าสุด** (เขย่าจริง AI ตอบสลับไปมา)
 - เรียกโมเดลด้วย **ชื่อ** เสมอ · **ห้ามพิมพ์ทั้งแถวของ `edge_ai.models()`** เก็บแค่ชื่อ ลำดับ และคลาส
 - โมเดลที่ฟังไมค์: ไม่เชื่อผล `MUTE_MS` หลังบอร์ดส่งเสียงเอง (ลำโพงบอร์ดเข้าไมค์)
 
@@ -1108,7 +1107,7 @@ def should_send(changed, since_ms):
 </div>
 </div>
 
-<div class="src">ใน BENTO Emulator MQTT เป็นแบบจำลอง · broker สาธารณะใช้ร่วมกันทั้งห้อง ไฟล์จึงไม่ส่งถี่กว่า 200 ms</div>
+<div class="src">ใน BENTO Emulator MQTT เป็นแบบจำลอง · broker สาธารณะใช้ร่วมกันทั้งห้อง ไฟล์จึงไม่ส่งถี่กว่า 200 ms · ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม: รอราว 1 นาที หรือกด <b>RESET</b> แล้วรันใหม่</div>
 
 ---
 
@@ -1210,7 +1209,7 @@ section table { font-size: .68em; }
 
 <div class="warn">
 
-**ยังไม่แก้ `TEAM` (หรือไม่ใช่ team01–team99) = ไม่ต่อเน็ตเลย** ทำงานออฟไลน์ และจอบอก "แก้ TEAM ก่อน" — ถ้าหลายกลุ่มลืมแก้ client id จะชนกัน แล้ว broker เตะกันหลุด · broker สาธารณะไม่เข้ารหัส **ห้ามส่งของลับ**
+**ยังไม่แก้ `TEAM` (หรือไม่ใช่ team01–team99) = ไม่ต่อเน็ตเลย** ทำงานออฟไลน์ และจอบอก "แก้ TEAM ก่อน" — ถ้าหลายกลุ่มลืมแก้ client id จะชนกัน แล้ว broker เตะกันหลุด · broker สาธารณะไม่เข้ารหัส **ห้ามส่งของลับ** · ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม: รอราว 1 นาที หรือกด **RESET** แล้วรันใหม่
 
 </div>
 
