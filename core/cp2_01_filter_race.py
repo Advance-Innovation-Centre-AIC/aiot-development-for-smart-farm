@@ -31,6 +31,7 @@ KAL_Q = 0.1          # Kalman1D: ค่าจริงเปลี่ยนไ�
 KAL_R = 4.0          # Kalman1D: เซนเซอร์สั่นแค่ไหน (มาก = เชื่อค่าใหม่น้อย เส้นนิ่งกว่า)
 TICK_MS = 500        # เก็บ 1 ตัวอย่างและอัปเดตจอทุกกี่ ms
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -138,6 +139,8 @@ def show(w, outs, got, spikes, step):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     med = dsp.Median(window=MED_WIN)                       # constructor ของ dsp รับแบบมีชื่อเท่านั้น
     kal = dsp.Kalman1D(q=KAL_Q, r=KAL_R)

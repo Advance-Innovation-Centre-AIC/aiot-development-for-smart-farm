@@ -32,6 +32,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 TEAM = "teamXX"                       # เลขกลุ่มที่ผู้สอนแจก เช่น team05
 SEND_MS = 5000       # ส่งค่าทุกกี่ ms
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
@@ -123,6 +124,8 @@ def show(w, key, text, col):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen(read_config())
     problem = connect_plain(w) if WIFI_SSID[0] != "<" else "ยังไม่ตั้ง WiFi: ไม่ส่ง"
     show(w, "s1", problem or TOPIC, COL_WARN if problem else COL_OK)

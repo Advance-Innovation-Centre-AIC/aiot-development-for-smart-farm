@@ -29,6 +29,7 @@ import ui
 UNIT_ID = 1          # เลขเครื่องของ PLC (unit id) ใน MBAP
 SAMPLE_MS = 20       # อ่านปุ่มทุกกี่ ms (เฟิร์มแวร์กรองสั่นทุกครั้งที่อ่าน จึงต้องอ่านถี่)
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -108,6 +109,8 @@ def build_screen():
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     self_test()                           # ตรวจ fc06_write() ก่อน ไม่ผ่าน = หยุดตรงนี้
     w = build_screen()
     beep("good")

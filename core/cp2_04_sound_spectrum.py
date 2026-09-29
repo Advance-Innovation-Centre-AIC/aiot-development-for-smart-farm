@@ -38,6 +38,7 @@ POINTS = 32          # จุดบนกราฟสเปกตรัม (1 �
 SAMPLE_MS = 20       # พักระหว่างการฟังแต่ละครั้ง
 TICK_MS = 500        # สรุปผลขึ้นจอทุกกี่ ms
 RUN_MS = 120000      # เล่นนาน 2 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -194,6 +195,8 @@ def check_buttons(w, down):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     mic.start(sens=SENS, samples=N)   # start() ทิ้งเสียงสองชุดแรกให้เอง
     down, drawn, hold, heard = [False, False], None, None, 0

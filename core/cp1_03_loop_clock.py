@@ -28,6 +28,7 @@ SCREEN_MS = 500      # อัปเดตตารางบนจอทุก 50
 LATE_MS = 10         # เริ่มช้ากว่าเป้าเกินเท่านี้ = นับ "ช้า" 1 ครั้ง
 TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบเทอร์โมมิเตอร์ในห้องแล้วใส่ค่าชดเชย เช่น -9.5
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -191,6 +192,8 @@ def show_all(w, tasks, a, t):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     now = time.ticks_ms()
     tasks = (Task(IMU_MS, now), Task(CLIMATE_MS, now), Task(SCREEN_MS, now))

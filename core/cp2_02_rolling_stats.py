@@ -30,6 +30,7 @@ TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของต
 TICK_MS = 500        # เก็บ 1 ค่าและอัปเดตจอทุกกี่ ms
 SAMPLE_MS = 20       # อ่านปุ่มทุกกี่ ms (ระหว่างรอ)
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -164,6 +165,8 @@ def show_stats(w, src, x, win, mean, sd, z):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     src, win, alarm, last = 0, [], False, False
     base = read_value(1) or 0.0          # ค่าอุณหภูมิตอนเริ่ม = กลางกราฟเมื่อสลับไป SHT40

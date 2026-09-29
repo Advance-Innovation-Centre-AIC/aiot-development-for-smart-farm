@@ -31,6 +31,7 @@ TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของต
 A, B = 17.27, 237.7  # ค่าคงที่สูตร Magnus ชุดเดียวกับที่ dsp.dew_point ใช้ในเฟิร์มแวร์
 TICK_MS = 1000       # อ่าน SHT40 และอัปเดตจอทุก 1 วินาที
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -150,6 +151,8 @@ def show(w, t_raw, rh_raw, t, td, rh, risk):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     show_matrix(False)
     risk, fails = None, 0

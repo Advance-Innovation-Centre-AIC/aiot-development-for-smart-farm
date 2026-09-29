@@ -32,6 +32,7 @@ MAX_CLASSES = 4          # แสดงคะแนนได้กี่คล�
 ASK_MS = 100             # ถามคำตอบจาก AI ทุกกี่ ms (ถี่พอจะไม่พลาดคำตอบใหม่)
 TICK_MS = 500            # อัปเดตจอทุกกี่ ms
 RUN_MS = 180000          # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -181,6 +182,8 @@ def watch(w):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     found = find_model(MODEL_KEY)
     if found is None:

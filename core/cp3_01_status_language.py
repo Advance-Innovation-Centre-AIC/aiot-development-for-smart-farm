@@ -37,6 +37,7 @@ HYST = 3             # กันสถานะกระพือตอนลู
 SAMPLE_MS = 20       # อ่านปุ่มและลูกบิดทุกกี่ ms (ปุ่มกรองสั่นทุกครั้งที่อ่าน จึงต้องอ่านถี่)
 TICK_MS = 1000       # อัปเดตตัวนับถอยหลังบนจอทุกกี่ ms (เลขเปลี่ยนวินาทีละครั้ง จึงไม่ต้องถี่กว่านี้)
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -146,6 +147,8 @@ def show_state(w, state):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     leds = {n: led_named(n) for n in ("RGB_RED", "RGB_GREEN", "RGB_BLUE")}
     state, acked, lit, was = -1, False, True, False

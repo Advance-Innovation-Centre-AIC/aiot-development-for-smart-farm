@@ -39,6 +39,7 @@ DEADBAND = 3         # ส่งเมื่อค่าต่างจากใ
 HEARTBEAT_S = 30     # ค่าไม่เปลี่ยนเลย ก็ส่งใบ "ยังอยู่" ทุกกี่วินาที
 SAMPLE_MS = 1000     # วัดทุกกี่ ms (ถ้าส่งทุกครั้งที่วัด = ส่งถี่เท่านี้)
 RUN_MS = 300000      # ส่งนาน 5 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
@@ -142,6 +143,8 @@ def stop(w, msg):
 
 
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     if len(TEAM) != 6 or TEAM[:4] != "team" or not TEAM[4:].isdigit() or TEAM == "team00":
         stop(w, "แก้ TEAM เป็นเลขกลุ่มก่อน")

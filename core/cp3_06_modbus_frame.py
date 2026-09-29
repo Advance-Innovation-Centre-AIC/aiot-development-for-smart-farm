@@ -44,6 +44,7 @@ UNIT_ID = 1          # เลขเครื่องของ PLC (unit id) ใ
 RESP_MS = 3000       # รอคำตอบจาก gateway นานเท่านี้ (gateway เองรอ PLC 2 วิ)
 SAMPLE_MS = 20       # อ่านปุ่มและกล่องรับทุกกี่ ms (ปุ่มกรองสั่นทุกครั้งที่อ่าน กล่องรับมีช่องเดียว)
 RUN_MS = 300000      # เล่นนาน 5 นาทีแล้วจบเอง
+SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
 
@@ -137,6 +138,8 @@ def show(w, key, text, col):
 
 # ---- 6) โปรแกรมหลัก ----
 def main():
+    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+        ui.volume(SPEAKER)
     w = build_screen()
     problem = connect_farm(w) if WIFI_SSID[0] != "<" else "โหมดดูกรอบ"   # ยังไม่ตั้ง WiFi = โหมดดูกรอบ
     online = not problem                                  # ต่อไม่ติด = เหลือโหมดดูกรอบ (บอกบนจอ ไม่เงียบ)
