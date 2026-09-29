@@ -1,17 +1,9 @@
 # sf1_02_crop_comfort.py - พืชของเรา "สบายดี" ไหม
-#
-# ภารกิจ   : ตั้งช่วงอุณหภูมิและความชื้นที่พืชชอบ แล้วให้บอร์ดตัดสินทุกวินาทีว่า
-#            พืช "สบาย / เริ่มเครียด / แย่แล้ว" พร้อมไฟสีบนบอร์ดบอกสถานะ
-# ลองเล่น  : ปัดวงล้อด้านซ้ายของจอเพื่อเลือกพืชของกลุ่ม แล้วเป่าลม/จับบอร์ดให้หลุดช่วง
-#            ดูว่าไฟสถานะ หน้าพืช และกราฟเปลี่ยนตอนไหน
-#            (ตั้ง TEMP_OFFSET ให้ตรงกับห้องก่อน ไม่งั้นพืชทุกชนิดจะ "ร้อนไป" ตลอด)
-# ของบนบอร์ดที่ใช้ : SHT40 = อุณหภูมิ + ความชื้น, ไฟ RGB_RED บนบอร์ด = พืชมีปัญหา
-#            จอไฟ RGB 16x8 = "หน้าพืช": ยิ้มเขียว / หน้าเฉยเหลือง / หน้าเศร้าแดง
-#            ลำโพงส่งเสียงเฉพาะตอนสถานะเปลี่ยน (แย่ลง = เสียงเตือน, ดีขึ้น = เสียงเย้)
-# บนจอ     : วงล้อเลือกพืช (Roller), วงแหวนคะแนน (Arc), ไฟสถานะ 3 ดวง (Led),
-#            กราฟอุณหภูมิเทียบช่วงที่พืชชอบ (Chart)
-# แนวคิด AIoT: Sense (อ่าน) -> Decide (ตัดสินด้วยกฎ) -> Act (ไฟ/จอ/เสียง)
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
+# ภารกิจ : ตั้งช่วงอุณหภูมิ/ความชื้นที่พืชชอบ บอร์ดตัดสินทุกวินาที: สบาย / เริ่มเครียด / แย่แล้ว
+# ลองเล่น : ปัดวงล้อเลือกพืช แล้วเป่าลม/จับบอร์ดให้หลุดช่วง (ตั้ง TEMP_OFFSET ก่อน)
+# ของบนบอร์ดที่ใช้ : SHT40, ไฟ RGB_RED, จอไฟ RGB = หน้าพืช, ลำโพง (เฉพาะตอนสถานะเปลี่ยน)
+# แนวคิด AIoT: Sense (อ่าน) -> Decide (กฎ) -> Act (ไฟ/จอ/เสียง)
+# บอร์ด : TESAIoT Dev Kit fw 2.4.1+ และ BENTO Emulator
 
 import gpio
 import math
@@ -21,25 +13,22 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-# ช่วงที่พืชชอบ (ตัวเลขตั้งต้นสำหรับการเรียน ไม่ใช่คำแนะนำทางเกษตรกรรม)
-# แต่ละบรรทัด = (ชื่อ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)  เพิ่มพืชของกลุ่มต่อท้ายได้เลย
+SPEAKER = 40  # ความดังลำโพงรวม 0-100% (fw 2.4.2+)
+VOLUME = 25  # ความดังเสียง 0-127
+# ช่วงที่พืชชอบ (ตัวเลขเพื่อการเรียน): (ชื่อ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)
 CROPS = (
     ("มะเขือเทศ", 20, 30, 60, 80),
     ("ผักสลัด", 15, 25, 50, 70),
     ("เห็ดนางฟ้า", 22, 28, 80, 95),
     ("กล้วยไม้", 22, 32, 60, 80),
 )
-START_CROP = "มะเขือเทศ"   # พืชที่เลือกไว้ตอนเริ่ม (เปลี่ยนระหว่างรันได้ด้วยวงล้อบนจอ)
+START_CROP = "มะเขือเทศ"  # พืชตอนเริ่ม (เปลี่ยนด้วยวงล้อบนจอ)
 RUN_MS = 120000
 TICK_MS = 1000
-TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
-                     # (ห้องแอร์ปกติ ~25-28 C)
-                     # ตั้งแล้ว ความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย (ดู room_humidity)
-HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์ในห้องแล้วสูงเกินจริง ให้ตั้ง False
-CHART_MAX_C = 50     # กราฟอุณหภูมิ 0-50 C
-SOUND_GAP_MS = 3000  # เสียงเตือนห่างกันอย่างน้อย 3 วินาที (ค่าอยู่ตรงขอบช่วงจะได้ไม่ร้องรัว)
+TEMP_OFFSET = 0.0  # ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5
+HUM_FIX = True  # แปลงความชื้นเป็นของห้อง (สูงเกินจริง = False)
+CHART_MAX_C = 50
+SOUND_GAP_MS = 3000  # เสียงเตือนห่างกันอย่างน้อยเท่านี้
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -50,7 +39,6 @@ MOODS = ("สบายดี :)", "เริ่มเครียด", "แย�
 
 # ---- 2) ฮาร์ดแวร์ ----
 
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -61,8 +49,8 @@ def beep(name):
         time.sleep_ms(100)
 
 def read_climate():
-    # คืน (อุณหภูมิ, ความชื้น) ของห้อง (ชดเชยแล้ว) ถ้าอ่านไม่ได้คืน (None, None)
-    for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
+    # คืน (อุณหภูมิ, ความชื้น) ของห้อง หรือ (None, None)
+    for _ in range(3):
         try:
             t_raw = sensors.sht40.temperature()
             h = sensors.sht40.humidity()
@@ -78,8 +66,7 @@ def read_climate():
 
 
 def led_named(name):
-    # หา LED ด้วยชื่อ ไม่ใช่เลข: บน Dev Kit ดวง LED1/LED2 (เลข 0, 1) อยู่บน SoM
-    # มองไม่เห็น ดวงที่เห็นคือ RGB_RED / RGB_GREEN / RGB_BLUE
+    # หา LED ด้วยชื่อ: ดวงที่มองเห็นคือ RGB_*
     try:
         names = gpio.board_info()["led_names"]
         led = gpio.led(names.index(name) if name in names else 0)
@@ -90,7 +77,6 @@ def led_named(name):
 
 
 def show_led(led, level, tick):
-    # ไฟบนบอร์ด: สบาย = ดับ, เครียด = กะพริบ, แย่ = ติดค้าง
     if led is None:
         return
     if level == 0:
@@ -101,20 +87,19 @@ def show_led(led, level, tick):
         led.on()
 
 
-# หน้าพืช 8x8 จุด วางกลางจอไฟ RGB (16x8)  "#" = จุดติด
+# หน้าพืช 8x8 กลางจอไฟ RGB ("#" = จุดติด)
 FACES = (
     ("..####..", ".#....#.", "#.#..#.#", "#......#",
-     "#.#..#.#", "#..##..#", ".#....#.", "..####.."),     # 0 สบาย (ยิ้ม)
+     "#.#..#.#", "#..##..#", ".#....#.", "..####.."),
     ("..####..", ".#....#.", "#.#..#.#", "#......#",
-     "#......#", "#.####.#", ".#....#.", "..####.."),     # 1 เครียด (หน้าเฉย)
+     "#......#", "#.####.#", ".#....#.", "..####.."),
     ("..####..", ".#....#.", "#.#..#.#", "#......#",
-     "#..##..#", "#.#..#.#", ".#....#.", "..####.."),     # 2 แย่ (หน้าเศร้า)
+     "#..##..#", "#.#..#.#", ".#....#.", "..####.."),
 )
 FACE_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)
 
 
 def draw_face(level):
-    # วาดทั้งจอไฟ RGB ในคำสั่งเดียว (blit: 64 ไบต์ จุดละ 4 บิต)
     buf = bytearray(64)
     color = FACE_COLORS[level]
     for y, row in enumerate(FACES[level]):
@@ -125,12 +110,11 @@ def draw_face(level):
     try:
         rgbmatrix.blit(buf)
     except OSError:
-        pass                    # จอไฟ RGB ตอบไม่ทัน: ข้ามภาพนี้ไป ไม่ให้โปรแกรมหยุด
+        pass
 
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def find_crop(name):
-    # คืนลำดับของพืชใน CROPS ถ้าสะกดไม่ตรง คืน 0 (พืชตัวแรก) แทนการพัง
     for i in range(len(CROPS)):
         if CROPS[i][0] == name:
             return i
@@ -138,7 +122,7 @@ def find_crop(name):
 
 
 def judge(t, h, crop):
-    # คืน (ระดับ, เหตุผล)  0 = สบาย, 1 = เริ่มเครียด, 2 = แย่แล้ว (หลุดช่วงไปไกล)
+    # คืน (ระดับ, เหตุผล): 0 = สบาย, 1 = เริ่มเครียด, 2 = แย่แล้ว
     name, t_lo, t_hi, h_lo, h_hi = crop
     problems = []
     if t < t_lo:
@@ -156,18 +140,17 @@ def judge(t, h, crop):
 
 
 def sat_pressure(t):
-    # ความดันไอน้ำอิ่มตัว (hPa) ที่อุณหภูมิ t C (สูตร Magnus)
+    # ความดันไอน้ำอิ่มตัว (hPa) สูตร Magnus
     return 6.112 * math.exp(17.62 * t / (243.12 + t))
 
 
 def room_humidity(h_raw, t_raw, t_room):
-    # อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
-    # ไอน้ำในอากาศเท่าเดิม แต่ห้องเย็นกว่า จึงแปลงกลับด้วยอัตราส่วนความดันไออิ่มตัว
+    # รอบเซนเซอร์อุ่นกว่าห้อง %RH จึงต่ำกว่า แปลงกลับด้วยอัตราส่วนความดันไออิ่มตัว
     return min(100.0, h_raw * sat_pressure(t_raw) / sat_pressure(t_room))
 
 
 def comfort_score(good, total):
-    # คะแนนความสบาย 0-100 = สัดส่วนครั้งที่ "สบาย" จากทุกครั้งที่อ่าน
+    # คะแนน 0-100 = สัดส่วนครั้งที่ "สบาย"
     return good * 100 // max(1, total)
 
 
@@ -181,14 +164,11 @@ def score_color(score):
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
@@ -202,7 +182,7 @@ def crop_text(crop):
 
 def build_picker(w, idx):
     card(12, 64, 196, 276, "เลือกพืช (ปัด)")
-    # ไม่ตั้ง value= ตอนสร้าง Roller: value= ของมันคือขนาดฟอนต์ด้วย เลือกแถวด้วย .value() ทีหลัง
+    # Roller: value= ตอนสร้างคือขนาดฟอนต์ เลือกแถวด้วย .value() ทีหลัง
     roller = ui.Roller(x=24, y=94, w=172, h=236, color=COL_TEXT)
     for crop in CROPS:
         roller.add_option(crop[0])
@@ -225,7 +205,7 @@ def build_score_card(w):
     w["score"] = ui.Label("100", x=660, y=118, color=COL_TEXT, value=28)
     w["leds"] = []
     names = ("สบาย", "เครียด", "แย่")
-    for i in range(3):          # ไฟสถานะ 3 ดวง ติดทีละดวงเหมือนแผงควบคุมจริง
+    for i in range(3):  # ไฟสถานะ 3 ดวง ติดทีละดวง
         x = 540 + i * 80
         w["leds"].append(ui.Led(x=x, y=202, w=20, h=20, color=LEVEL_COLORS[i], value=0))
         ui.Label(names[i], x=x + 26, y=202, color=COL_DIM, value=14)
@@ -233,7 +213,7 @@ def build_score_card(w):
 
 
 def build_chart(w):
-    # กราฟ: เส้นส้ม = อุณหภูมิ, เส้นเขียว 2 เส้น = ขอบล่าง/บนของช่วงที่พืชชอบ
+    # กราฟ: เส้นส้ม = อุณหภูมิ, เส้นเขียว = ขอบช่วงที่พืชชอบ
     w["chart"] = line_chart(218, 262, 380, 76, 0, CHART_MAX_C, COL_WARN)
     w["s_temp"] = 0
     w["s_lo"] = w["chart"].add_series(COL_OK)
@@ -243,7 +223,6 @@ def build_chart(w):
 
 
 def build_screen(idx):
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("พืชของเราสบายดีไหม", x=12, y=6, color=COL_TEXT, value=24)
@@ -259,8 +238,7 @@ def build_screen(idx):
 
 
 def picked_crop(w, idx):
-    # อ่านเหตุการณ์จากจอ: ถ้าปัดวงล้อเลือกพืชใหม่ คืนลำดับใหม่ ไม่งั้นคืนลำดับเดิม
-    # (Roller ส่ง value_changed พร้อมลำดับแถว เริ่มที่ 0)
+    # ปัดวงล้อเลือกพืชใหม่ = คืนลำดับใหม่ (Roller ส่ง value_changed)
     for ev in ui.poll():
         if ev["handle"] == w["roller"].id() and ev["type"] == "value_changed":
             if 0 <= ev["value"] < len(CROPS):
@@ -278,9 +256,9 @@ def show(w, t, h, level, why, score, crop):
     w["arc"].color(score_color(score))
     w["score"].text(str(score))
     for i in range(3):
-        w["leds"][i].value(1 if i == level else 0)    # 0 = หรี่ (ไม่ดับมืด)
+        w["leds"][i].value(1 if i == level else 0)
     w["chart"].set_next(w["s_temp"], int(max(0, min(CHART_MAX_C, t))))
-    w["chart"].set_next(w["s_lo"], int(crop[1]))   # กราฟรับเฉพาะจำนวนเต็ม
+    w["chart"].set_next(w["s_lo"], int(crop[1]))
     w["chart"].set_next(w["s_hi"], int(crop[2]))
 
 
@@ -291,7 +269,6 @@ def show_sensor_error(w):
 
 # ---- 5) โปรแกรมหลัก ----
 def finish(w, led, name, good, total):
-    # จบรอบ: ดับไฟ ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์คะแนนลง Console
     if led is not None:
         led.off()
     try:
@@ -305,13 +282,13 @@ def finish(w, led, name, good, total):
 
 
 def main():
-    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     idx = find_crop(START_CROP)
     if CROPS[idx][0] != START_CROP:
         print("ไม่รู้จักพืช", START_CROP, "- ใช้", CROPS[idx][0], "แทน (สะกดให้ตรงกับใน CROPS)")
     w = build_screen(idx)
-    led = led_named("RGB_RED")     # ไฟแดงบนบอร์ด = พืชมีปัญหา
+    led = led_named("RGB_RED")
     good = total = 0
     last_level = None
     last_sound = time.ticks_ms()
@@ -320,7 +297,7 @@ def main():
         new_idx = picked_crop(w, idx)                   # 0) ผู้ใช้เปลี่ยนพืชไหม
         if new_idx != idx:
             idx = new_idx
-            good = total = 0                           # พืชใหม่ = เริ่มนับคะแนนใหม่
+            good = total = 0
             w["crop"].text(crop_text(CROPS[idx]))
             beep("tap")
         t, h = read_climate()                           # 1) อ่าน

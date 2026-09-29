@@ -1,17 +1,9 @@
 # sf1_01_greenhouse_hello.py - โรงเรือนของเราตอนนี้เป็นยังไง
-#
-# ภารกิจ   : อ่านอุณหภูมิ ความชื้นอากาศ และความกดอากาศ จากเซนเซอร์จริงบนบอร์ด
-#            แล้วโชว์เป็นแผงหน้าปัดโรงเรือนบนจอ อัปเดตทุกครึ่งวินาที
-# ลองเล่น  : 0) ตั้งค่าชดเชยก่อน: บอร์ดอุ่นจากชิปของตัวเอง จึงอ่านได้สูงกว่าห้อง
-#               เทียบเลข "ดิบ" กับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ผลต่างใน TEMP_OFFSET
-#            1) เป่าลมหายใจใส่บอร์ดเบา ๆ -> ความชื้นพุ่ง (ดูเส้นฟ้าในกราฟ) แล้วค่อย ๆ ลดลง
-#            2) เอานิ้วจับบอร์ดตรงเซนเซอร์ค้างไว้ -> เข็มอุณหภูมิขยับขึ้นช้า ๆ
-#            3) จดค่าต่ำสุด/สูงสุดที่ทำได้ แข่งกับกลุ่มข้าง ๆ  (SW5 (ปุ่มล่าง) = ล้างสถิติ เริ่มแข่งใหม่)
-# ของบนบอร์ดที่ใช้ : SHT40 = อุณหภูมิ + ความชื้น, DPS368 = ความกดอากาศ (hPa)
-#            จอไฟ RGB 16x8 บนฐานบอร์ด = อุณหภูมิตัวใหญ่ เขียว/เหลือง/แดง, ปุ่ม SW5 (ปุ่มล่าง)
-# บนจอ     : หน้าปัดมีเข็ม (Scale), วงแหวน (Arc), ตัวเลข 7 ส่วน (Seg7),
-#            ไฟกะพริบ (Led) และกราฟย้อนหลัง (Chart)
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.1 ขึ้นไป) และ BENTO Emulator
+# ภารกิจ : อ่านอุณหภูมิ ความชื้น ความกดอากาศจากเซนเซอร์จริง โชว์เป็นแผงหน้าปัดโรงเรือน
+# ลองเล่น : 0) ตั้ง TEMP_OFFSET ก่อน (บอร์ดอุ่นจากชิปเอง เทียบกับเทอร์โมมิเตอร์ในห้อง)
+#   1) เป่าลมใส่บอร์ด = ความชื้นพุ่ง  2) จับเซนเซอร์ค้าง = อุณหภูมิขึ้น  3) แข่งค่าต่ำ/สูงสุด (SW5 = เริ่มใหม่)
+# ของบนบอร์ดที่ใช้ : SHT40, DPS368, จอไฟ RGB 16x8, SW5 (ปุ่มล่าง)
+# บอร์ด : TESAIoT Dev Kit fw 2.4.1+ และ BENTO Emulator
 
 import buttons
 import math
@@ -21,18 +13,16 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-RUN_MS = 120000      # เดินนานเท่าไร (2 นาที)
-TICK_MS = 500        # อ่านเซนเซอร์ทุกกี่ ms
-TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ในห้อง (หรืออุณหภูมิที่ผู้สอนประกาศ) แล้วใส่ค่าชดเชย เช่น -9.5
-                     # (ห้องแอร์ปกติ ~25-28 C)
-                     # ตั้งแล้ว ความชื้นจะถูกแปลงเป็นของห้องให้เองด้วย (ดู room_humidity)
-HUM_FIX = True       # แปลงความชื้นเป็นของห้อง (ดู room_humidity) ถ้าเทียบไฮโกรมิเตอร์ในห้องแล้วสูงเกินจริง ให้ตั้ง False
-T_WARM = 30          # อุ่นกว่านี้ = สีเหลือง
-T_HOT = 35           # ร้อนกว่านี้ = สีแดง
-T_GAUGE_MAX = 50     # หน้าปัดอุณหภูมิ 0-50 C
-NEEDLE_LEN = 32      # ความยาวเข็มหน้าปัด (พิกเซล) สั้นกว่าวงตัวเลข จะได้ไม่บังเลข
+SPEAKER = 40  # ความดังลำโพงรวม 0-100% (fw 2.4.2+)
+VOLUME = 25  # ความดังเสียง 0-127
+RUN_MS = 120000
+TICK_MS = 500
+TEMP_OFFSET = 0.0  # ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5
+HUM_FIX = True  # แปลงความชื้นเป็นของห้อง (สูงเกินจริง = False)
+T_WARM = 30  # อุ่นกว่านี้ = เหลือง
+T_HOT = 35  # ร้อนกว่านี้ = แดง
+T_GAUGE_MAX = 50
+NEEDLE_LEN = 32
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -43,7 +33,6 @@ MATRIX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)  # บนจ�
 
 # ---- 2) ฮาร์ดแวร์ ----
 
-# เสียงเตือนใช้ ui.tone เพราะปรับความดังได้ (ui.sfx ในเฟิร์มแวร์นี้ปรับความดังไม่ได้)
 TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
@@ -54,10 +43,9 @@ def beep(name):
         time.sleep_ms(100)
 
 def read_climate():
-    # คืน (อุณหภูมิที่ชดเชยแล้ว, อุณหภูมิดิบ, ความชื้น, ความกด) ตัวที่อ่านไม่ได้เป็น None
-    # ชดเชยตรงนี้ที่เดียว ส่วนอื่นของโปรแกรมจึงได้ค่าที่แก้แล้วเสมอ
+    # คืน (อุณหภูมิชดเชยแล้ว, ดิบ, ความชื้น, ความกด) อ่านไม่ได้ = None
     t_raw = h = p = None
-    for _ in range(3):                  # อ่านพลาดได้บางจังหวะ (บัสไม่ว่าง) จึงลองซ้ำ
+    for _ in range(3):  # อ่านพลาดได้บางจังหวะ จึงลองซ้ำ
         try:
             t_raw = sensors.sht40.temperature()
             h = sensors.sht40.humidity()
@@ -75,15 +63,13 @@ def read_climate():
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 (ปุ่มล่าง), 1 = SW6 (ปุ่มบน)) ที่ไม่พลาดการกดสั้น ๆ
-    # เฟิร์มแวร์กรองสัญญาณสั่น: ต้องอ่านเห็น "กด" สองครั้งห่างกันเกิน 50 ms จึงนับว่ากดจริง
-    # ถ้าอ่านรอบละครั้ง (ทุกครึ่งวินาที) การกดแบบแตะจะหายไปเฉย ๆ
-    # เราจึงอ่านปุ่มบ่อย ๆ ระหว่างรอ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด"
+    # ปุ่มบนฐาน (0 = SW5 ล่าง, 1 = SW6 บน) ที่ไม่พลาดการกดสั้น ๆ
+    # เฟิร์มแวร์กรองสั่น 50 ms จึงต้องอ่านบ่อย ๆ ระหว่างรอ (wait_ms)
 
     def __init__(self, index):
         self.index = index
-        self.down = False       # ตอนนี้กดค้างอยู่ไหม
-        self.clicked = False    # ถูกกดลงมาใหม่ ตั้งแต่ถามครั้งก่อนไหม
+        self.down = False
+        self.clicked = False
 
     def sample(self):
         now_down = buttons.pressed(self.index)
@@ -92,14 +78,12 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
         fired = self.clicked
         self.clicked = False
         return fired
 
 
 def wait_ms(ms, btns):
-    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while True:
         for b in btns:
@@ -111,25 +95,22 @@ def wait_ms(ms, btns):
 
 
 def matrix_show(t, shown):
-    # จอไฟ RGB: อุณหภูมิเป็นเลขจำนวนเต็มตัวใหญ่ สีตามระดับความร้อน
-    # วาดใหม่เฉพาะตอนเลขหรือสีเปลี่ยน (สั่งจอไฟทุกรอบทั้งที่ภาพเดิม = เปลืองเวลาเปล่า ๆ)
+    # จอไฟ RGB: อุณหภูมิตัวใหญ่ สีตามระดับ วาดใหม่เฉพาะตอนเปลี่ยน
     want = (int(t + 0.5), heat_level(t))
     if want != shown:
         try:
             rgbmatrix.score(want[0], MATRIX_COLORS[want[1]])
         except OSError:
-            pass                # จอไฟ RGB ตอบไม่ทัน: ข้ามภาพนี้ไป ไม่ให้โปรแกรมหยุด
+            pass
     return want
 
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def clamp(v, lo, hi):
-    # บีบค่าให้อยู่ในช่วง lo..hi
     return max(lo, min(hi, v))
 
 
 def heat_level(t):
-    # 0 = สบาย, 1 = อุ่น, 2 = ร้อน
     if t > T_HOT:
         return 2
     if t > T_WARM:
@@ -138,33 +119,28 @@ def heat_level(t):
 
 
 def fmt(v, digits=1):
-    # ตัวเลขเป็นข้อความ ถ้ายังไม่มีค่า (None) ให้เป็น "--"
-    # ใช้ None เท่านั้นเป็นสัญญาณ "ยังไม่มีค่า" ห้ามดูจากขนาดตัวเลข
-    # เพราะความกดอากาศจริงก็ราว 1010 อยู่แล้ว
+    # ใช้ None เป็นสัญญาณ "ยังไม่มีค่า" (ความกดจริงก็ราว 1010)
     if v is None:
         return "--"
     return ("%." + str(digits) + "f") % v
 
 
 def signed(v):
-    # ตัวเลขมีเครื่องหมายนำหน้าเสมอ เช่น +0.3 หรือ -1.2
     return ("+" if v >= 0 else "") + ("%.1f" % v)
 
 
 def sat_pressure(t):
-    # ความดันไอน้ำอิ่มตัว (hPa) ที่อุณหภูมิ t C (สูตร Magnus)
+    # ความดันไอน้ำอิ่มตัว (hPa) สูตร Magnus
     return 6.112 * math.exp(17.62 * t / (243.12 + t))
 
 
 def room_humidity(h_raw, t_raw, t_room):
-    # อากาศอุ่นขึ้นรอบเซนเซอร์ ความชื้นสัมพัทธ์จึงอ่านได้ต่ำกว่าห้อง
-    # ไอน้ำในอากาศเท่าเดิม แต่ห้องเย็นกว่า จึงแปลงกลับด้วยอัตราส่วนความดันไออิ่มตัว
+    # รอบเซนเซอร์อุ่นกว่าห้อง %RH จึงต่ำกว่า แปลงกลับด้วยอัตราส่วนความดันไออิ่มตัว
     return min(100.0, h_raw * sat_pressure(t_raw) / sat_pressure(t_room))
 
 
 class MinMax:
-    # จำค่าต่ำสุด/สูงสุดที่เคยเห็น เริ่มจาก None ซึ่งแปลว่า "ยังไม่เคยเห็น"
-    # (ค่าจริงตัวแรกจะเป็นทั้งต่ำสุดและสูงสุดทันที)
+    # จำค่าต่ำสุด/สูงสุด (None = ยังไม่เคยเห็น)
 
     def __init__(self):
         self.reset()
@@ -183,37 +159,32 @@ class MinMax:
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทั้ง 5 ไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def calibration_hint():
-    # บรรทัดใต้หัวเรื่อง: เตือนให้ชดเชยก่อน ถ้ายังไม่ได้ตั้ง TEMP_OFFSET
     if TEMP_OFFSET == 0:
         return "ยังไม่ชดเชย: แก้ TEMP_OFFSET ก่อน (ดูใบงาน กิจกรรม 1)", COL_WARN
     return "ชดเชยแล้ว - ลองเป่าลมใส่บอร์ดดูสิ", COL_DIM
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
 
 
 def set_needle(scale, value):
-    # Scale วาดแค่ขีดกับตัวเลข ไม่มีเข็มในตัว เราสั่งเข็มเอง:
-    # ความยาวเข็มอยู่ 16 บิตบน ค่าที่ชี้อยู่ 16 บิตล่าง
+    # Scale ไม่มีเข็มในตัว: ความยาวเข็ม 16 บิตบน ค่าที่ชี้ 16 บิตล่าง
     scale.prop(ui.PROP_SCALE_NEEDLE, (NEEDLE_LEN << 16) | (int(value) & 0xFFFF))
 
 
 def build_temp_card(w):
     card(12, 64, 252, 208, "อุณหภูมิ (C)")
     gauge = ui.Scale(x=24, y=92, w=120, h=120, color=COL_TEXT, min=0, max=T_GAUGE_MAX)
-    gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)   # หน้าปัดกลม ตัวเลขอยู่ด้านใน
-    gauge.ticks(11, 2)                # 11 ขีด มีเลขทุก 2 ขีด = 0 10 20 30 40 50
+    gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)
+    gauge.ticks(11, 2)
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
     w["gauge"] = gauge
     w["seg_t"] = ui.Seg7(text="--", x=156, y=104, w=100, h=40, color=COL_OK)
@@ -241,7 +212,7 @@ def build_pressure_card(w):
 
 
 def build_trend(w):
-    # กราฟย้อนหลัง: เส้นฟ้า (ชุด 0) = ความชื้น %, เส้นส้ม (ชุดที่เพิ่ม) = อุณหภูมิ C
+    # กราฟ: เส้นฟ้า = ความชื้น %, เส้นส้ม = อุณหภูมิ C
     w["chart"] = line_chart(12, 280, 400, 62, 0, 100, COL_INFO)
     w["s_hum"] = 0
     w["s_temp"] = w["chart"].add_series(COL_WARN)
@@ -250,7 +221,6 @@ def build_trend(w):
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("โรงเรือนของเราตอนนี้", x=12, y=6, color=COL_TEXT, value=24)
@@ -294,7 +264,7 @@ def show_pressure(w, p, p_start):
 
 
 def show_status(w, ok, rounds):
-    w["live"].value(rounds % 2 if ok else 0)      # Led: 1 = สว่าง, 0 = หรี่ (ไม่ดับมืด)
+    w["live"].value(rounds % 2 if ok else 0)
     if ok:
         w["status"].color(COL_OK)
         w["status"].text("อ่านไปแล้ว " + str(rounds) + " รอบ - ลองเป่าลมใส่บอร์ดดูสิ")
@@ -305,7 +275,6 @@ def show_status(w, ok, rounds):
 
 # ---- 5) โปรแกรมหลัก ----
 def finish(w, temp_rec, hum_rec):
-    # จบรอบ: ดับจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console
     try:
         rgbmatrix.clear()
     except OSError:
@@ -318,19 +287,19 @@ def finish(w, temp_rec, hum_rec):
 
 
 def main():
-    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
     sw5 = Button(0)
     temp_rec, hum_rec = MinMax(), MinMax()
     p_start = None
-    shown = None            # เลข+สีที่จอไฟ RGB โชว์อยู่
+    shown = None
     rounds = 0
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         t, t_raw, h, p = read_climate()                  # 1) อ่าน
         rounds += 1
-        if sw5.pressed_now():                             # 2) SW5 (ปุ่มล่าง) = เริ่มแข่งใหม่
+        if sw5.pressed_now():  # 2) SW5 = เริ่มแข่งใหม่
             temp_rec.reset()
             hum_rec.reset()
             beep("tap")
@@ -340,13 +309,13 @@ def main():
         if h is not None:
             hum_rec.add(h)
         if p is not None and p_start is None:
-            p_start = p                                  # จำความกดตอนเริ่มไว้เทียบ
+            p_start = p
         show_temp(w, t, t_raw, temp_rec)                 # 4) โชว์บนจอ
         show_humid(w, h, hum_rec)
         show_pressure(w, p, p_start)
         show_status(w, t is not None or h is not None, rounds)
         ui.poll()
-        wait_ms(TICK_MS, (sw5,))          # รอ แต่ยังคอยฟังปุ่ม
+        wait_ms(TICK_MS, (sw5,))
 
     finish(w, temp_rec, hum_rec)
 
