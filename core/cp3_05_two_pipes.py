@@ -36,7 +36,7 @@ SPEAKER = 40             # ความดังลำโพงรวม 0-100% 
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-pipe-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
+CLIENT_ID = "bento-pipe-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/core/pipes"
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
@@ -74,6 +74,20 @@ def read_config():
         return "--", "--", "--"
 
 
+def connect_broker(w):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in (1, 2, 3):
+        if n > 1:
+            show(w, "s1", "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+        try:
+            if mqtt.connect(BROKER, port=1883, keepalive=60,
+                            client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
+                return True
+        except OSError:
+            pass
+    return False
+
+
 def connect_plain(w):
     # ท่อ 1: WiFi -> IP -> broker พอร์ต 1883 คืน "" ถ้าผ่าน ไม่งั้นบอกว่าพังตรงไหน
     if not TEAM[4:].isdigit():                    # TEAM ยังเป็น teamXX = ไม่ต่อ ไม่ส่งอะไรออกไปเลย
@@ -81,10 +95,7 @@ def connect_plain(w):
     show(w, "s1", "ต่อ WiFi...", COL_WARN)       # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก (show เรียก ui.poll ให้)
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
-    try:
-        linked = mqtt.connect(BROKER, port=1883, client_id=CLIENT_ID, keepalive=60)
-    except OSError:
-        linked = False
+    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
     return "" if linked else "broker ไม่ตอบ"
 
 
