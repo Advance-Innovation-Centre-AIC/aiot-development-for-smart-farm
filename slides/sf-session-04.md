@@ -544,18 +544,18 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 </div>
 
+<div class="warn">
+
+ตัวเลขเวลาใน Emulator **ไม่ใช่** เวลาของบอร์ด (เบราว์เซอร์มีจังหวะของตัวเอง) — จะสรุปว่าช้าเร็วเท่าไร ต้องดูจากบอร์ดจริง
+
+</div>
+
 </div>
 <div class="shot">
 
 ![w:430](img/emu/cp1_03_loop_clock__ticks.png)
 
 ![w:430](img/emu/cp1_03_loop_clock__naive.png)
-
-<div class="warn">
-
-ตัวเลขเวลาใน Emulator **ไม่ใช่** เวลาของบอร์ด (เบราว์เซอร์มีจังหวะของตัวเอง) — จะสรุปว่าช้าเร็วเท่าไร ต้องดูจากบอร์ดจริง
-
-</div>
 
 </div>
 </div>
@@ -836,13 +836,6 @@ def zscore(x, mean, sd, sd_min):
 
 </div>
 
-</div>
-<div class="shot">
-
-![w:430](img/emu/cp2_02_rolling_stats__vr1_jump_z.png)
-
-![w:430](img/emu/cp2_02_rolling_stats__breath_z.png)
-
 <div class="try">
 
 1. รอเก็บครบ 30 ค่า (15 วินาที)
@@ -851,6 +844,13 @@ def zscore(x, mean, sd, sd_min):
 4. กด **SW5** สลับเป็น SHT40 แล้วเป่าลมหายใจใส่เซนเซอร์
 
 </div>
+
+</div>
+<div class="shot">
+
+![w:430](img/emu/cp2_02_rolling_stats__vr1_jump_z.png)
+
+![w:430](img/emu/cp2_02_rolling_stats__breath_z.png)
 
 </div>
 </div>
@@ -1163,7 +1163,7 @@ def next_state(state, over, ack, t_s):
 
 ## เสียงทั้งคอร์ส: 7 ทำนอง ผ่านทางเดียว เบาเท่ากันทุกไฟล์
 
-![w:760](img/core/p3_sound_patterns.svg)
+![w:640](img/core/p3_sound_patterns.svg)
 
 <div class="cols">
 <div class="c60">
@@ -1625,6 +1625,12 @@ def fc06_write(tid, unit, addr, value):
 
 </div>
 
+<div class="no">
+
+**Emulator ยังทำไม่ได้:** `enable()/disable()` — ปุ่มใน Emulator จึงไม่เป็นสีเทา ไฟล์ดัก `AttributeError` ไว้ และเช็กถังซ้ำใน `pump_allowed()` ก่อนสั่ง ปั๊มจึงไม่เดินตอนถังต่ำทั้งบนบอร์ดและใน Emulator
+
+</div>
+
 </div>
 <div class="shot">
 
@@ -1633,12 +1639,6 @@ def fc06_write(tid, unit, addr, value):
 ![w:430](img/emu/cp4_02_style_at_runtime__tank_low_locked.png)
 
 <div class="cap">ภาพจาก BENTO Emulator · VR1 และ VR2 หมุนจากแผงจำลอง</div>
-
-<div class="no">
-
-**Emulator ยังทำไม่ได้:** `enable()/disable()` — ปุ่มใน Emulator จึงไม่เป็นสีเทา ไฟล์ดัก `AttributeError` ไว้ และเช็กถังซ้ำใน `pump_allowed()` ก่อนสั่ง ปั๊มจึงไม่เดินตอนถังต่ำทั้งบนบอร์ดและใน Emulator
-
-</div>
 
 </div>
 </div>
@@ -1754,6 +1754,10 @@ def fc06_write(tid, unit, addr, value):
 
 ## เล่น ④ หน้า HMI: แถบสถานะ · แท็บ · กล่องยืนยัน · บันทึก
 
+<style scoped>
+section .c40 { font-size: .94em; }
+</style>
+
 <div class="cols">
 <div class="c40">
 
@@ -1773,6 +1777,12 @@ def fc06_write(tid, unit, addr, value):
 
 </div>
 
+<div class="no">
+
+**ยังทำไม่ได้:** ปุ่มที่เติมใน MsgBox ด้วย `add_button()` ไม่ส่งเหตุการณ์กลับมาให้ Python (ทั้งบนบอร์ดและ Emulator) → ไฟล์วาง `ui.Button` จริงสองปุ่มทับกล่องไว้เป็นคำตอบ · กล่องไม่ล็อกทั้งจอ แท็บและ "หยุด" ยังแตะได้
+
+</div>
+
 </div>
 <div class="shot">
 
@@ -1781,12 +1791,6 @@ def fc06_write(tid, unit, addr, value):
 ![w:430](img/emu/cp4_05_hmi_page_pattern__log_tab.png)
 
 <div class="cap">ภาพจาก BENTO Emulator · VR2 หมุนจากแผงจำลอง · แตะแท็บและปุ่มด้วยเมาส์</div>
-
-<div class="no">
-
-**ยังทำไม่ได้:** ปุ่มที่เติมใน MsgBox ด้วย `add_button()` ไม่ส่งเหตุการณ์กลับมาให้ Python (ทั้งบนบอร์ดและ Emulator) → ไฟล์วาง `ui.Button` จริงสองปุ่มทับกล่องไว้เป็นคำตอบ · กล่องไม่ล็อกทั้งจอ แท็บและ "หยุด" ยังแตะได้
-
-</div>
 
 </div>
 </div>
