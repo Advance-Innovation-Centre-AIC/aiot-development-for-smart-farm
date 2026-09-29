@@ -104,8 +104,9 @@ def self_test():
         got = next_state(c[0], c[1], c[2], c[3])
         if got != c[4]:
             print("ยังไม่ถูก: next_state", c[:4], "ควรได้", c[4], "แต่ได้", got)
-            raise SystemExit
+            return False
     print("ผ่าน! เครื่องสถานะถูกทั้ง 8 กรณี")
+    return True
 
 
 # ---- 4) เครือข่าย (ไฟล์นี้ไม่ใช้) ----
@@ -158,7 +159,8 @@ def show(w, i, on, n, st):
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
-    self_test()                           # ตรวจ next_state() ก่อน ไม่ผ่าน = หยุดตรงนี้
+    if not self_test():                    # ตรวจ next_state() ก่อน ไม่ผ่าน = หยุดตรงนี้
+        return
     w = build_screen()
     on = [False] * 4                      # ผลของแต่ละวิธี (วิธี 4: ติด = อยู่ใน ALARM)
     n = [0] * 4                           # สลับติด/ดับไปกี่ครั้ง

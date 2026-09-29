@@ -86,8 +86,9 @@ def self_test():
             got = None                     # หารด้วยศูนย์ = ความกว้างช่วงเข้าผิด (ดูช่อง B)
         if got is None or abs(got - want) > 0.01:
             print("ยังไม่ถูก:", "map_range" if f is map_range else "clamp", a, "ควรได้", want, "แต่ได้", got)
-            raise SystemExit
+            return False
     print("ผ่าน! map_range และ clamp ถูกทั้ง 6 กรณี")
+    return True
 
 
 def to_unit(raw, k):
@@ -163,7 +164,8 @@ def show_value(c, k, v):
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
-    self_test()                            # ตรวจ map_range() และ clamp() ก่อน ไม่ผ่าน = หยุดตรงนี้
+    if not self_test():                     # ตรวจ map_range() และ clamp() ก่อน ไม่ผ่าน = หยุดตรงนี้
+        return
     w = build_screen()
     band = DEADBAND
     show_band(w, band)

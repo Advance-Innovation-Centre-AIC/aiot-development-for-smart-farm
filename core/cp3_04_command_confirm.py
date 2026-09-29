@@ -153,7 +153,7 @@ def main():
     if problem:
         show(w, "res", problem, COL_BAD)
         beep("bad")
-        raise SystemExit
+        return                 # จบแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
     show_link(w, True)
     show(w, "res", "พร้อม", COL_OK)
     beep("start")

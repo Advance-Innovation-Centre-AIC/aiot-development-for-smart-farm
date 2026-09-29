@@ -72,8 +72,9 @@ def self_test():
         got = "%02x" * len(c[1]) % tuple(c[1])        # ไบต์เป็นเลขฐานสิบหก ตัวละ 2 หลัก
         if got != c[2]:
             print("ยังไม่ถูก:", c[0], "ควรได้", c[2], "(12 ไบต์) แต่ได้", got, "(%d ไบต์)" % len(c[1]))
-            raise SystemExit
+            return False
     print("ผ่าน! fc06_write สร้างกรอบ Modbus TCP ถูกทุกไบต์")
+    return True
 
 
 # ---- 4) เครือข่าย (ไฟล์นี้ไม่ใช้) ----
@@ -111,7 +112,8 @@ def build_screen():
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
-    self_test()                           # ตรวจ fc06_write() ก่อน ไม่ผ่าน = หยุดตรงนี้
+    if not self_test():                    # ตรวจ fc06_write() ก่อน ไม่ผ่าน = หยุดตรงนี้
+        return
     w = build_screen()
     beep("good")
     want, n = 1, 0                        # ค่าที่ SW6 จะเขียนครั้งหน้า (สลับ 1/0), n = tid

@@ -131,8 +131,9 @@ def self_test():
         note = dispatch(r, s, {"handle": c[0], "type": c[1], "value": 1})
         if (s["pump"], note is not None, s["auto"]) != c[2:]:
             print("ยังไม่ถูก:", c[:2], "ควรได้", c[2:])
-            raise SystemExit
+            return False
     print("ผ่าน! ครบ 5 กรณี")
+    return True
 
 
 # ---- 4) เครือข่าย (ไฟล์นี้ไม่ใช้) ----
@@ -179,7 +180,8 @@ def show_pump(w, s, was):
 def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
-    self_test()                           # ตรวจตารางก่อน ไม่ผ่าน = หยุดตรงนี้
+    if not self_test():                    # ตรวจตารางก่อน ไม่ผ่าน = หยุดตรงนี้
+        return
     w = build_screen()
     ids = {}
     for k in ("pump", "stop", "th", "mode", "auto"):

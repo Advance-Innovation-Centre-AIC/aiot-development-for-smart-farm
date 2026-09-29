@@ -144,11 +144,15 @@ def note(w, text, col):
 
 
 # ---- 6) โปรแกรมหลัก ----
+class Stop(Exception):   # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, msg):
     show_link(w, False)
     note(w, msg, COL_BAD)
     beep("bad")
-    raise SystemExit
+    raise Stop
 
 
 def main():
@@ -202,7 +206,10 @@ def main():
     beep("good")
 
 
-main()
+try:
+    main()
+except Stop:
+    pass                 # stop() บอกเหตุบนจอแล้ว จบเงียบ ๆ
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) เดาก่อนรัน: ค่าที่วัดได้ 40, 40.5, 41, 43, 43.2, 46 ตามลำดับ DEADBAND = 2 จะส่งกี่ใบ (ไม่นับ heartbeat)
