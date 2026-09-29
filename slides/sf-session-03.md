@@ -106,16 +106,14 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <div class="timeline">
 <div style="flex:10;background:#546e7a"><b>0:00</b>เปิด<br>ทวน S1–S2<br>แจกโจทย์</div>
-<div style="flex:15;background:#1e88e5"><b>0:10</b>กิจกรรม 1<br>ยามเฝ้าคอก<br>(เรดาร์)</div>
-<div style="flex:15;background:#43a047"><b>0:25</b>กิจกรรม 2<br>หูฟังเล้าไก่<br>(ไมค์)</div>
-<div style="flex:12;background:#8e24aa"><b>0:40</b>กิจกรรม 3<br>หมอฟัง<br>ปั๊มน้ำ</div>
-<div style="flex:13;background:#3949ab"><b>0:52</b>Edge AI<br>บนบอร์ด</div>
-<div style="flex:10;background:#00897b"><b>1:05</b>กิจกรรม 4<br>Gateway<br>ครบวงจร</div>
-<div style="flex:10;background:#ff9f1c"><b>1:15</b>พัก</div>
-<div style="flex:15;background:#5e35b1"><b>1:25</b>Sprint 0<br>Project<br>Canvas</div>
-<div style="flex:35;background:#e53935"><b>1:40</b>Sprint 1<br>MVP บนบอร์ด</div>
-<div style="flex:25;background:#c2185b"><b>2:15</b>Sprint 2<br>แอป + ทดสอบ</div>
-<div style="flex:10;background:#6d4c41"><b>2:40</b>ซ้อม<br>พูด</div>
+<div style="flex:20;background:#1e88e5"><b>0:10</b>กิจกรรม 1<br>ยามเฝ้าคอก<br>(เรดาร์)</div>
+<div style="flex:30;background:#43a047"><b>0:30</b>กิจกรรม 2<br>หูฟังเล้าไก่<br>(ไมค์)</div>
+<div style="flex:15;background:#8e24aa"><b>1:00</b>กิจกรรม 3<br>หมอฟัง<br>ปั๊มน้ำ</div>
+<div style="flex:25;background:#3949ab"><b>1:15</b>กิจกรรม 4<br>Edge AI<br>+ Store</div>
+<div style="flex:10;background:#ff9f1c"><b>1:40</b>พัก</div>
+<div style="flex:15;background:#00897b"><b>1:50</b>กิจกรรม 5<br>Gateway<br>ครบวงจร</div>
+<div style="flex:15;background:#5e35b1"><b>2:05</b>Sprint 0<br>Project<br>Canvas</div>
+<div style="flex:30;background:#e53935"><b>2:20</b>Sprint 1<br>MVP บนบอร์ด<br>เสา 1–4</div>
 <div style="flex:10;background:#37474f"><b>2:50</b>Stand-up<br>+ Exit</div></div>
 
 <div class="cols">
@@ -198,7 +196,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
     <line x1="40" y1="124" x2="296" y2="124" stroke="#e53935" stroke-width="2.5" stroke-dasharray="7 5"/>
     <path d="M40 72 L80 92 L120 120 L148 130 L176 120 L206 106 L236 98 L266 92 L296 88" fill="none" stroke="#1e88e5" stroke-width="3.5"/>
     <text x="168" y="164" fill="#37474f">เปิดที่เส้นหนึ่ง ปิดอีกเส้น</text>
-    <text x="168" y="192" fill="#546e7a" font-size="16">Session 1 · ปั๊ม/พัดลมในกิจกรรม 4</text>
+    <text x="168" y="192" fill="#546e7a" font-size="16">Session 1 · ปั๊ม/พัดลมในกิจกรรม 5</text>
     <text x="168" y="224" fill="#2e7d32" font-size="16">กันเครื่อง "เปิด-ปิดรัว"</text>
     <rect x="342" y="10" width="316" height="230" rx="14" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
     <text x="500" y="44" font-weight="700" fill="#1565c0">② ยืนยัน N ครั้ง</text>
@@ -209,7 +207,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
     </g>
     <text x="596" y="110" font-size="26">✅</text>
     <text x="500" y="164" fill="#37474f">เห็นซ้ำติดกันถึงเชื่อ</text>
-    <text x="500" y="192" fill="#546e7a" font-size="16">เรดาร์ (กิจกรรม 1, 4) · ปั๊มสั่น (กิจกรรม 3)</text>
+    <text x="500" y="192" fill="#546e7a" font-size="16">เรดาร์ (กิจกรรม 1, 5) · ปั๊มสั่น (กิจกรรม 3, 4)</text>
     <text x="500" y="224" fill="#1565c0" font-size="16">กันคลื่นหรือแรงกระแทก "วูบเดียว"</text>
     <rect x="674" y="10" width="316" height="230" rx="14" fill="#f3e5f5" stroke="#8e24aa" stroke-width="3"/>
     <text x="832" y="44" font-weight="700" fill="#6a1b9a">③ นับในช่วงเวลา</text>
@@ -235,12 +233,12 @@ section table { font-size: .66em; }
 
 | ของบนบอร์ด | ในโค้ด | ในฟาร์มใช้ทำอะไร | กิจกรรม |
 |---|---|---|---|
-| 📡 **เรดาร์** | `sensors.radar()` · `sensors.radar_range()` · `sensors.radar_config(dB)` | คน/สัตว์เข้าเขตคอก ระยะเป้า | 1 · 4 |
+| 📡 **เรดาร์** | `sensors.radar()` · `sensors.radar_range()` · `sensors.radar_config(dB)` | คน/สัตว์เข้าเขตคอก ระยะเป้า | 1 · 5 |
 | 🎙️ **ไมโครโฟน** | `mic.start()` · `mic.stats()` · `mic.level()` · `mic.stop()` | เสียงดังฉับพลันในเล้า | 2 |
-| 📐 **IMU** (ความเร่ง 3 แกน) | `sensors.bmi270.motion()` | การสั่นของปั๊ม/พัดลม | 3 |
-| 🌡️ อุณหภูมิ ความชื้น ความกดอากาศ | `sensors.sht40` · `sensors.dps368` | อากาศในโรงเรือน | 4 |
-| 🎛️ ลูกบิด **VR2–VR4** | `pots.read(1)` … `pots.read(3)` ค่า 0–4095 | เขตเตือน · เกณฑ์เสียง · เกณฑ์พัดลม · ดิน (จำลอง) | 1 · 2 · 4 |
-| 🔘 ปุ่ม **SW5 (ล่าง)** / **SW6 (บน)** | `buttons.pressed(0)` / `buttons.pressed(1)` | เปิด/ปิดระบบเฝ้า · เรียนรู้ใหม่ · รดน้ำเอง · รับทราบ | 1 · 3 · 4 |
+| 📐 **IMU** (ความเร่ง 3 แกน) | `sensors.bmi270.motion()` | การสั่นของปั๊ม/พัดลม | 3 · 4 |
+| 🌡️ อุณหภูมิ ความชื้น ความกดอากาศ | `sensors.sht40` · `sensors.dps368` | อากาศในโรงเรือน | 5 |
+| 🎛️ ลูกบิด **VR2–VR4** | `pots.read(1)` … `pots.read(3)` ค่า 0–4095 | เขตเตือน · เกณฑ์เสียง · เกณฑ์พัดลม · ดิน (จำลอง) | 1 · 2 · 5 |
+| 🔘 ปุ่ม **SW5 (ล่าง)** / **SW6 (บน)** | `buttons.pressed(0)` / `buttons.pressed(1)` | เปิด/ปิดระบบเฝ้า · เรียนรู้ใหม่ · รดน้ำเอง · รับทราบ | 1 · 3 · 5 |
 | 🟩 **จอไฟ RGB 16×8** | `rgbmatrix.scroll()` · `score()` · `bar()` · `fill()` · `blit()` | INTRUDER · PANIC · แถบคะแนน · สีสถานะ | ทุกกิจกรรม |
 | 🔊 ลำโพง | `beep(...)` = `ui.tone(...)` เบา ๆ (`VOLUME` ≈20%) · ลำโพงรวม `SPEAKER = 40` % ด้วย `ui.volume()` (firmware 2.4.2+) | ไซเรน เสียงเตือน — **เฉพาะตอนเกิดเหตุ** | ทุกกิจกรรม |
 
@@ -254,7 +252,7 @@ section table { font-size: .66em; }
 
 <!-- _class: sec -->
 
-<div class="when">0:10 – 0:25 · 15 นาที</div>
+<div class="when">0:10 – 0:30 · 20 นาที</div>
 
 # กิจกรรม 1 — ยามเฝ้าคอก (เรดาร์)
 
@@ -470,7 +468,7 @@ def confirm(inside, streak, near):
 
 <!-- _class: sec -->
 
-<div class="when">0:25 – 0:40 · 15 นาที</div>
+<div class="when">0:30 – 1:00 · 30 นาที</div>
 
 # กิจกรรม 2 — หูฟังเล้าไก่ (ไมค์)
 
@@ -626,7 +624,7 @@ def forget_old(events, now):
 
 <!-- _class: sec -->
 
-<div class="when">0:40 – 0:52 · 12 นาที</div>
+<div class="when">1:00 – 1:15 · 15 นาที</div>
 
 # กิจกรรม 3 — หมอฟังปั๊มน้ำ (การสั่นผิดปกติ)
 
@@ -782,9 +780,9 @@ def classify(vib, base):
 
 <!-- _class: sec -->
 
-<div class="when">0:52 – 1:05 · 13 นาที</div>
+<div class="when">1:15 – 1:40 · 25 นาที</div>
 
-# Edge AI — AI หมอเครื่องจักร
+# กิจกรรม 4 — Edge AI: AI หมอเครื่องจักร
 
 <div class="lead">เทียบกฎที่เขียนเอง กับ Edge AI บนโจทย์เดียวกัน ด้วยตัวเลขที่วัดเอง</div>
 
@@ -1114,11 +1112,21 @@ def should_send(changed, since_ms):
 
 ---
 
+<!-- _class: brk -->
+
+# ☕ พัก 10 นาที
+
+<div class="big">1:40 – 1:50</div>
+
+**ระหว่างพัก:** เปิด [`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md) อ่านไอเดียตั้งต้น 8 เรื่อง แล้วคุยกันว่า **ทีมเราอยากแก้ปัญหาของใคร**
+
+---
+
 <!-- _class: sec -->
 
-<div class="when">1:05 – 1:15 · 10 นาที</div>
+<div class="when">1:50 – 2:05 · 15 นาที</div>
 
-# กิจกรรม 4 — Smart IoT Gateway ฟาร์มครบวงจร
+# กิจกรรม 5 — Smart IoT Gateway ฟาร์มครบวงจร
 
 <div class="lead">แม่แบบโปรเจกต์: ครบห้าเสาในไฟล์เดียว และเน็ตหลุดฟาร์มไม่หยุด</div>
 
@@ -1169,7 +1177,7 @@ def should_send(changed, since_ms):
 
 ---
 
-## กิจกรรม 4 — ห้าเสาในไฟล์เดียว
+## กิจกรรม 5 — ห้าเสาในไฟล์เดียว
 
 <style scoped>
 section table { font-size: .68em; }
@@ -1211,7 +1219,7 @@ section table { font-size: .68em; }
 
 ---
 
-## กิจกรรม 4 — ลองทำ
+## กิจกรรม 5 — ลองทำ
 
 <div class="cols">
 <div class="c40">
@@ -1239,7 +1247,7 @@ section table { font-size: .68em; }
 
 ---
 
-## กิจกรรม 4 — หัวใจของโค้ด: กฎทั้งฟาร์มในที่เดียว
+## กิจกรรม 5 — หัวใจของโค้ด: กฎทั้งฟาร์มในที่เดียว
 
 ```python
 def decide(f, near):
@@ -1277,27 +1285,17 @@ def decide(f, near):
 
 ---
 
-<!-- _class: brk -->
-
-# ☕ พัก 10 นาที
-
-<div class="big">1:15 – 1:25</div>
-
-**ระหว่างพัก:** เปิด [`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md) อ่านไอเดียตั้งต้น 8 เรื่อง แล้วคุยกันว่า **ทีมเราอยากแก้ปัญหาของใคร**
-
----
-
 <!-- _class: sec -->
 
-<div class="when">1:25 – 2:50 · 85 นาที</div>
+<div class="when">2:05 – 3:00 · 55 นาที</div>
 
 # โปรเจกต์ทีม — Smart HMI สำหรับฟาร์มและโลจิสติกส์เกษตร
 
 <div class="lead">เริ่มจาก "ปัญหา" ไม่ใช่ "เซนเซอร์" — แล้วนำเสนอบนบอร์ดจริงใน Project Showcase</div>
 
-<div class="flow"><b>Sprint 0 · Canvas</b><i>→</i><b>Sprint 1 · MVP บนบอร์ด</b><i>→</i><b>Sprint 2 · แอป + ทดสอบ</b><i>→</i><b>ซ้อมพูด</b></div>
+<div class="flow"><b>Sprint 0 · Canvas</b><i>→</i><b>Sprint 1 · MVP เสา 1–4</b><i>→</i><b>Stand-up + บัตรออก</b><i>→</i><b>หลังคาบ: เสา 5 + ทดสอบ + ซ้อม</b></div>
 
-<div class="budget"><span>📝 Sprint 0 <b>15</b> นาที</span><span>🛠️ Sprint 1 <b>35</b> นาที</span><span>📡 Sprint 2 <b>25</b> นาที</span><span>🎤 ซ้อมพูด <b>10</b> นาที</span></div>
+<div class="budget"><span>📝 Sprint 0 <b>15</b> นาที</span><span>🛠️ Sprint 1 <b>30</b> นาที</span><span>🗣️ Stand-up <b>10</b> นาที</span><span>🏠 เสา 5 + ทดสอบ <b>หลังคาบ</b></span></div>
 
 <div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md">PROJECT_BRIEF_th.md</a> <span>— โจทย์ เกณฑ์ให้คะแนน และการนำเสนอ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py">sf3_05_farm_all_in_one.py</a> <span>— แม่แบบ: คัดลอกแล้วแก้เป็นเรื่องของทีม</span></div></div></div>
 
@@ -1455,28 +1453,28 @@ Canvas ต้อง **ผ่านการตรวจของทีมข้�
 
 ---
 
-## Sprint 1–2 — MVP บนบอร์ด · แอปของทีม · ทดสอบ
+## Sprint 1 ในคาบ + งานหลังคาบ — MVP บนบอร์ด · แอปของทีม · ทดสอบ
 
 <div class="cols">
 <div>
 
-**Sprint 1 (35 นาที)**
+**Sprint 1 ในคาบ (30 นาที) — MVP เสา 1–4**
 - ☐ หัวไฟล์เป็นของทีม (ภารกิจ · ลองเล่น · แนวคิด · บอร์ด) + "ต่อยอดจาก `sfX_XX`"
 - ☐ **เสา 1** หน้าจอเป็นเรื่องของทีม อ่านออกจากหนึ่งเมตร
 - ☐ **เสา 2** อ่านเซนเซอร์ที่เลือกได้ · เกณฑ์เป็นค่าคงที่บนหัวไฟล์ · มีตัวกันเตือนผิด ≥ 1 อย่าง
 - ☐ **เสา 3** ค่าตั้งจาก VR ≥ 1 ตัว · ปุ่ม SW ≥ 1 ปุ่ม (จับขอบกด)
 - ☐ **เสา 4** เสียงเฉพาะตอนเกิดเหตุ · จอไฟ RGB วาดเฉพาะตอนสถานะเปลี่ยน
-- ☐ **เสา 5 (ฝั่งบอร์ด)** telemetry + ฟัง `cmd` ≥ 1 คำสั่ง · เน็ตหลุดบอร์ดยังทำงาน
+- ☐ **ทดสอบ 3 กรณี** (มี "ไม่ควรเตือน" ≥ 1) แล้วให้ทีมข้าง ๆ ลองใช้ 30 วิ โดยเราไม่อธิบาย
 
 </div>
 <div>
 
-**Sprint 2 (25 นาที)**
-- ☐ **เสา 5 (ฝั่งแอป)** เพิ่ม ≥ 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป · ปุ่มสั่งกลับ · กราฟ
+**หลังคาบ (ก่อน Project Showcase)** — ใบงานข้อ 11
+- ☐ **เสา 5 ฝั่งบอร์ด** telemetry + event + ฟัง `cmd` ≥ 1 คำสั่ง · เน็ตหลุดบอร์ดยังทำงาน
+- ☐ **เสา 5 ฝั่งแอป** เพิ่ม ≥ 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป · ปุ่มสั่งกลับ · กราฟ
 - ☐ **ตารางทดสอบ ≥ 5 กรณี** — มีกรณี **"ไม่ควรเตือน" ≥ 2** และ **"เน็ตหลุด" 1** (ปิด Hotspot กลางทาง → บอร์ดยังเตือนได้ · แอปรู้ว่าบอร์ดเงียบ)
 - ☐ คลิป 30–60 วิ เห็น **จอบอร์ด + จอไฟ RGB + แอป** ในเฟรมเดียว (สำรองวันนำเสนอ)
-
-**ซ้อมพูด 1 นาที (2:40–2:50)** กับทีมข้าง ๆ: ปัญหา → ทางแก้ → โชว์
+- ☐ **ซ้อมจับเวลาจริง ≥ 2 รอบ** สาธิตไม่เกิน 6 นาที: ปัญหา → ทางแก้ → โชว์
 
 <div class="warn">
 
