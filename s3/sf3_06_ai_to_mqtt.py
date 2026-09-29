@@ -23,9 +23,9 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-WIFI_SSID = "bento-teamXX"             # ชื่อ Hotspot ของกลุ่ม
-WIFI_PASS = "<รหัส WiFi>"              # อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                        # เลขทีมของกลุ่ม เช่น team05 (ต้องตรงกับแอป)
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
+TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05 (ต้องตรงกับแอป)
 BROKER = "broker.hivemq.com"
 TOPIC = "bento-aiot/" + TEAM + "/ai"
 MODEL_KEYS = ("AnomalousVibration", "Motion")   # หาตามลำดับ: โมเดลจาก Store ก่อน ไม่มีค่อยใช้โมเดลในตัว
