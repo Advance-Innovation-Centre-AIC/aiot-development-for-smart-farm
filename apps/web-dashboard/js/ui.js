@@ -162,8 +162,8 @@ export class Cards {
 }
 
 // ---- บันทึกเหตุการณ์ ----
-const KIND_TH = { event: "บอร์ด", out: "เราสั่ง", cmd: "คนอื่นสั่ง", plc: "PLC", alert: "เตือน", sys: "ระบบ" };
-const FILTERS = { all: null, event: ["event", "plc"], cmd: ["out", "cmd"], alert: ["alert"], sys: ["sys"] };
+const KIND_TH = { event: "บอร์ด", out: "เราสั่ง", cmd: "คนอื่นสั่ง", plc: "PLC", ai: "AI", alert: "เตือน", sys: "ระบบ" };
+const FILTERS = { all: null, event: ["event", "plc", "ai"], cmd: ["out", "cmd"], alert: ["alert"], sys: ["sys"] };
 
 export class EventLog {
   constructor(list, chips) {

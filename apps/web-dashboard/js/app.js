@@ -24,7 +24,7 @@ const S = {
   lastN: null,
   lost: 0,
   crop: null,
-  counts: { telemetry: 0, event: 0, field: 0, plc_state: 0, plc_cmd: 0, cmd_echo: 0, cmd_other: 0, bad: 0, sent: 0 },
+  counts: { telemetry: 0, event: 0, field: 0, plc_state: 0, plc_cmd: 0, ai: 0, cmd_echo: 0, cmd_other: 0, bad: 0, sent: 0 },
   sent: [],                  // คำสั่งที่เราส่ง { t, text }
 };
 
@@ -91,6 +91,7 @@ function onMessage(topic, text) {
   else if (sub === "event") onEvent(obj, t, text);
   else if (sub === "plc/state") onPlcState(obj, t, text);
   else if (sub === "plc/cmd") onPlcCmd(obj, t, text);
+  else if (sub === "ai") onAi(obj, t, text);
   else if (sub.startsWith("field/") && /^[A-Za-z0-9_-]{1,24}$/.test(sub.slice(6))) onField(sub.slice(6), obj, t);
 }
 
@@ -156,6 +157,19 @@ function onEvent(d, t, text) {
   map.onEvent(d, t);
   records.add("event", "event", d);
   alerts.check("event", d, t);
+}
+
+// ผล AI จากบอร์ด (สัญญาข้อ 3.9): ลงบันทึกเฉพาะตอนป้ายเปลี่ยน เพราะ heartbeat มาทุก 2 วินาที
+function onAi(d, t, text) {
+  S.counts.ai += 1;
+  S.lastSeen.ai = t;
+  records.add("ai", "ai", d);
+  alerts.check("ai", d, t);
+  if (d.label !== S.lastAiLabel) {
+    S.lastAiLabel = d.label;
+    log.add({ t, kind: "ai", title: "AI: " + short(d.label ?? "-", 20) + " · " + (Number.isFinite(d.conf) ? d.conf + " %" : "-") + " · " + short(d.model ?? "", 24),
+      raw: text, level: d.label === "anomaly" || d.label === "shaking" ? "warn" : "info" });
+  }
 }
 
 function onPlcState(d, t, text) {

@@ -26,6 +26,7 @@ export function topics(team) {
     field: base + "field/",          // + ชื่อเซนเซอร์ เช่น field/soil (3.5)
     plcCmd: base + "plc/cmd",        // Gateway -> PLC (4.2) แอปฟังได้ แต่ไม่ส่งเอง
     plcState: base + "plc/state",    // PLC -> Gateway (3.6)
+    ai: base + "ai",                 // บอร์ด -> แอป ผล AI จาก sf3_06 (3.9)
   };
 }
 
@@ -80,6 +81,7 @@ export const DEFAULT_RULES = [
   { name: "PLC หลุด (Gateway แจ้ง)", src: "event", key: "event", op: "==", val: "plc_lost", cool: 30, level: "crit" },
   { name: "PLC ไม่ยอมเปิด ถังต่ำ", src: "plc/state", key: "why", op: "==", val: "blocked_tank", cool: 60, level: "warn" },
   { name: "บอร์ดเงียบเกิน 15 วิ", src: "silence", key: "telemetry", op: ">", val: 15, cool: 60, level: "crit" },
+  { name: "AI พบความผิดปกติ (sf3_06)", src: "ai", key: "label", op: "==", val: "anomaly", cool: 30, level: "crit" },
 ];
 
 // ---- คำสั่ง (สัญญาข้อ 4, 4.1) : ไฟล์บนบอร์ดที่ฟังคำสั่งนั้น ----

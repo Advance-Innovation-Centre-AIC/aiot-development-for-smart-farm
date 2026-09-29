@@ -14,7 +14,7 @@ import { load, save } from "./storage.js";
 import { el, icon, $, short } from "./ui.js";
 
 const OPS = ["<", "<=", ">", ">=", "==", "!="];
-const SRCS = ["telemetry", "event", "plc/state", "field/soil", "field/tank", "silence"];
+const SRCS = ["telemetry", "event", "plc/state", "field/soil", "field/tank", "ai", "silence"];
 const LEVELS = { info: "แจ้งให้รู้", warn: "ระวัง", crit: "ด่วน" };
 const LEVEL_PRIORITY = { info: 0, warn: 1, crit: 2 };
 
