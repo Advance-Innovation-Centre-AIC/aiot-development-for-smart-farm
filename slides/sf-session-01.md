@@ -66,6 +66,25 @@ section.brk { background: linear-gradient(135deg,#ff9f1c 0%,#ffbf69 60%,#ffe8c2 
 .kbd { display:inline-block; border:2px solid #455a64; border-bottom-width:4px; border-radius:6px; padding:0 7px; font-weight:700; }
 .big { font-size:1.35em; font-weight:700; }
 .src { font-size:.48em; color:#78909c; }
+/* ---- หน้าเปิดส่วน/กิจกรรม: หลักการ · ขั้นตอน · เวลา · ไฟล์ (รูปแบบเดียวกันทุกคาบ) ---- */
+section.sec .when { font-weight:700; }
+.lead { background:rgba(255,255,255,.15); border-left:6px solid #ffd54f; border-radius:10px; padding:.22em .8em; margin:.15em 0 .5em; font-size:1.02em; font-weight:700; line-height:1.35; color:#fff; }
+.flow { display:flex; align-items:center; gap:8px; margin:.15em 0 .5em; }
+.flow b { flex:1 1 0; min-width:0; background:#fff; color:#1b5e20; border-radius:10px; padding:.32em .45em; text-align:center; font-size:.68em; line-height:1.25; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.flow i { flex:0 0 auto; font-style:normal; font-weight:700; color:#ffd54f; font-size:.95em; }
+.budget { display:flex; flex-wrap:wrap; gap:8px; margin:.1em 0 .45em; }
+.budget span { background:rgba(0,0,0,.28); color:#fff; border-radius:999px; padding:.08em .8em; font-size:.66em; white-space:nowrap; }
+.budget b { color:#ffd54f; }
+.files { display:grid; grid-template-columns:1fr 1fr; gap:4px 28px; background:#fff; color:#263238; border:2px solid #cfe3c9; border-radius:12px; padding:.45em .95em .55em; margin:.3em 0 .2em; font-size:.66em; line-height:1.5; box-shadow:0 3px 12px rgba(0,0,0,.18); }
+.files.one { grid-template-columns:1fr; }
+.files.page { font-size:.7em; line-height:1.6; padding:.6em 1.1em .7em; }
+.files .fh { font-weight:700; color:#1b5e20; border-bottom:2px solid #cfe3c9; margin-bottom:.2em; }
+.files .fh.hw { color:#8d6e63; border-color:#eadfd6; }
+.files .fh.lap { color:#37474f; border-color:#dfe5e8; margin-top:.45em; }
+.files .f span { color:#607d8b; }
+section .files a, section.sec .files a { color:#1b5e20; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:700; text-decoration:none; }
+section .files .hw ~ .f a { color:#6d4c41; }
+.tip { background:#f1f8e9; border-left:6px solid #7cb342; border-radius:8px; padding:.25em .7em; margin:.3em 0; font-size:.8em; color:#33691e; }
 </style>
 
 ![bg](img/cover_sf01.svg)
@@ -109,14 +128,16 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 </div>
 <div>
 
-**ทำงานเป็นคู่ สลับบทบาททุกกิจกรรม**
+**ทุกกิจกรรมทำแบบเดียวกัน**
 
-| บทบาท | ทำอะไร |
+| ขั้น | ทำอะไร |
 |---|---|
-| 🚜 **คนขับ** | คุมบอร์ด กด Program to Device |
-| 🧭 **ผู้นำทาง** | อ่านใบงาน ลองไฟล์เดียวกันใน **Emulator** ก่อน แล้วจดผล |
+| ▶️ **รัน** | กด Program to Device บนบอร์ด (หรือรันใน **Emulator**) |
+| 📝 **จด** | อ่านใบงาน ทำตามขั้น แล้วจดผลลงตาราง |
 
 ใบงาน: `sf-s1-th` (ทีมละ 1 ชุด)
+
+<div class="tip">💡 ถ้าใช้บอร์ดร่วมกันหลายคน ให้ผลัดกันคุมบอร์ดทุกกิจกรรม และอีกคนอ่านใบงาน/ลองใน Emulator</div>
 
 </div>
 </div>
@@ -125,11 +146,16 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <!-- _class: sec -->
 
-<div class="when">0:00 – 0:30 · เปิดคาบ 10 นาที + ติดตั้ง/แฟลช 20 นาที</div>
+<div class="when">0:00 – 0:30 · 30 นาที</div>
 
 # เปิดคาบ: AIoT ในฟาร์มจริง
 
-เกษตรกรไม่ได้อยากได้ "เซนเซอร์" — เขาอยากได้ **ผักที่ไม่เน่า น้ำที่ไม่หมด และของที่ส่งถึงมือลูกค้าในสภาพดี**
+<div class="lead">เกษตรกรไม่ได้อยากได้ "เซนเซอร์" — เขาอยากได้ผักไม่เน่า น้ำไม่หมด และของถึงมือลูกค้าในสภาพดี</div>
+
+<div class="flow"><b>AIoT ในฟาร์มจริง</b><i>→</i><b>รู้จักบอร์ด</b><i>→</i><b>ติดตั้ง Programmer</b><i>→</i><b>แฟลชเฟิร์มแวร์</b><i>→</i><b>BENTO Emulator</b></div>
+
+<div class="budget"><span>🌾 เปิดคาบ <b>10</b> นาที</span><span>🔧 ติดตั้ง + แฟลช <b>20</b> นาที</span></div>
+
 
 ---
 
@@ -153,7 +179,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 <b class="t">ห่วงโซ่ความเย็น</b>
 <span class="chip s">วัด</span> อุณหภูมิในรถ/ห้องเย็น แรงกระแทก
 <span class="chip d">ตัดสิน</span> อุ่นเกินกี่นาทีแล้ว?
-<span class="chip a">ทำ</span> แจ้งคนขับ บันทึกหลักฐานคุณภาพ
+<span class="chip a">ทำ</span> แจ้งผู้ขับรถ บันทึกหลักฐานคุณภาพ
 
 </div>
 <div class="tile">
@@ -201,7 +227,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
   <circle cx="600" cy="108" r="9" fill="#e53935"><animate attributeName="r" values="7;13;7" dur="1.4s" repeatCount="indefinite"/></circle>
   <rect x="612" y="88" width="330" height="46" rx="10" fill="#ffebee" stroke="#e53935" stroke-width="2"/>
   <text x="777" y="108" text-anchor="middle" font-size="16" font-weight="700" fill="#b71c1c">⚠ เปิดประตูรถนาน → 12 °C นาน 25 นาที</text>
-  <text x="777" y="127" text-anchor="middle" font-size="15" fill="#b71c1c">เซนเซอร์เตือนคนขับ + บันทึกเป็นหลักฐาน</text>
+  <text x="777" y="127" text-anchor="middle" font-size="15" fill="#b71c1c">เซนเซอร์เตือนผู้ขับรถ + บันทึกเป็นหลักฐาน</text>
   <text x="60" y="112" font-size="15" fill="#e53935">อุณหภูมิผักจริง</text>
   <g font-size="16" fill="#263238">
     <text x="40" y="250"><tspan font-weight="700" fill="#1e88e5">วัด</tspan> อุณหภูมิ ความชื้น แรงกระแทก ตำแหน่ง ทุกช่วงของการขนส่ง</text>
@@ -512,7 +538,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 > โปรแกรมแต่ละไฟล์เดิน 2–5 นาทีแล้ว **จบเอง** อยากเล่นต่อ กด Program to Device อีกครั้ง
 ---
 
-## BENTO Emulator — บอร์ดจำลองของผู้นำทาง (และการบ้าน)
+## BENTO Emulator — บอร์ดจำลองสำหรับลองก่อน (และการบ้าน)
 
 <div class="cols">
 <div class="c55 shot">
@@ -668,7 +694,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 **ติดขัด? บันไดช่วยเหลือ 5 ขั้น**
 1. **คำใบ้ 3 ขั้น** ท้ายใบงาน — เปิดทีละขั้น ขั้นละ −1 แต้ม
 2. **อ่านข้อความ error** ด้วยตารางในใบงาน
-3. **สลับคนขับกับคนนำทาง** · ถามเพื่อน 3 คนก่อนถามผู้สอน
+3. **ถามเพื่อน 3 คนก่อนถามผู้สอน** (ในทีมหรือทีมข้าง ๆ)
 4. **ทางออกฉุกเฉิน:** รันไฟล์ตัวอย่างเต็มเพื่อไปต่อก่อน แล้วค่อยเทียบ
 5. **เฉลย:** โจทย์หลักอยู่ใน `s1/practise/solutions/` · ทุกข้ออธิบายต้นคาบ 2
 
@@ -679,11 +705,15 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 <!-- _class: sec -->
 
-<div class="when">0:30 – 1:00 · คนขับ = คนที่ 1</div>
+<div class="when">0:30 – 1:00 · 30 นาที</div>
 
 # กิจกรรม 1 — โรงเรือนของเราตอนนี้
 
-[`sf1_01_greenhouse_hello.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py) · เซนเซอร์ SHT40 + DPS368 · จอไฟ RGB โชว์อุณหภูมิ
+<div class="lead">ตัวเลขจากเซนเซอร์ต้องสอบเทียบกับของจริงก่อนเชื่อ</div>
+
+<div class="flow"><b>SHT40 + DPS368</b><i>→</i><b>ชดเชย TEMP_OFFSET</b><i>→</i><b>หน้าปัด วงแหวน กราฟ</b><i>→</i><b>จอไฟ RGB โชว์อุณหภูมิ</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py">sf1_01_greenhouse_hello.py</a> <span>— อ่านอากาศในโรงเรือน แล้วโชว์บนจอ</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> กลุ่มไหนทำ <b>ความชื้นได้สูงสุด</b> ในห้อง — และใครทำ <b>อุณหภูมิขึ้น</b> ได้มากที่สุดด้วยมือเปล่า?</div>
 
@@ -971,11 +1001,15 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
 
 <!-- _class: sec -->
 
-<div class="when">1:00 – 1:30 · คนขับ = คนที่ 2</div>
+<div class="when">1:00 – 1:30 · 30 นาที</div>
 
 # กิจกรรม 2 — พืชของเราสบายดีไหม
 
-[`sf1_02_crop_comfort.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py) · กฎ "สบาย / เครียด / แย่แล้ว" · หน้าพืชบนจอไฟ RGB · เสียง · LED
+<div class="lead">พืชแต่ละชนิดมีช่วงที่สบายของตัวเอง — ตัดสินจากช่วงนั้น</div>
+
+<div class="flow"><b>อุณหภูมิ + ความชื้น</b><i>→</i><b>เทียบช่วงของพืช</b><i>→</i><b>สบาย / เริ่มเครียด / แย่แล้ว</b><i>→</i><b>หน้าพืช · เสียง · LED</b></div>
+
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py">sf1_02_crop_comfort.py</a> <span>— ตัดสินทุกวินาทีว่าพืชสบายดีไหม</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/practise/sf1_02_practise.py">sf1_02_practise.py</a> <span>— Code Quest ระดับ 3 · เติม judge()</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ทำให้พืชบนจอไฟ <b>หน้าเศร้า</b> ให้ได้ — แล้ว <b>ช่วยให้กลับมายิ้ม</b> เร็วที่สุด!</div>
 
@@ -1200,11 +1234,15 @@ def judge(t, h, crop):
 
 <!-- _class: sec -->
 
-<div class="when">1:40 – 2:10 · คนขับ = คนที่ 1</div>
+<div class="when">1:40 – 2:10 · 30 นาที</div>
 
 # กิจกรรม 3 — รดน้ำอัตโนมัติ
 
-[`sf1_03_auto_irrigation.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py) · ลูกบิด 3 ตัว + ปุ่ม 2 ตัว · ช่องกันกระพือ (hysteresis)
+<div class="lead">ปั๊มต้องมีช่องกันกระพือ และหยุดเองเมื่อน้ำในถังใกล้หมด</div>
+
+<div class="flow"><b>VR1 ความชื้นดิน</b><i>→</i><b>เทียบเกณฑ์ VR2 + ช่องกันกระพือ</b><i>→</i><b>VR3 น้ำในถังพอไหม</b><i>→</i><b>เปิด / ปิดปั๊ม</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py">sf1_03_auto_irrigation.py</a> <span>— ระบบรดน้ำอัตโนมัติ (จำลอง)</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/practise/sf1_03_practise.py">sf1_03_practise.py</a> <span>— Code Quest ระดับ 3 · เติมกฎปั๊ม</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> รดน้ำให้ดินชื้นพอ <b>โดยปั๊มเปิดน้อยครั้งที่สุด</b> และ <b>ห้ามถังแห้ง</b> เด็ดขาด</div>
 
@@ -1428,11 +1466,15 @@ def should_run(auto_wants, manual, tank_ok):
 
 <!-- _class: sec -->
 
-<div class="when">2:10 – 2:30 · คนขับ = คนที่ 2</div>
+<div class="when">2:10 – 2:30 · 20 นาที</div>
 
 # กิจกรรม 4 — แท็งก์น้ำ/รถไถเอียงเกินไหม
 
-[`sf1_04_tank_tilt.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py) · IMU BMI270 · bubble level บนจอไฟ RGB · นับแรงกระแทก
+<div class="lead">มุมเอียงคำนวณจากแรงโน้มถ่วง — ตั้งศูนย์ก่อนวัดเสมอ</div>
+
+<div class="flow"><b>IMU BMI270</b><i>→</i><b>ตั้งศูนย์ตอนเริ่ม</b><i>→</i><b>มุมเอียง + นับแรงกระแทก</b><i>→</i><b>bubble level บนจอไฟ RGB</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py">sf1_04_tank_tilt.py</a> <span>— เตือนเมื่อเอียงเกินมุมปลอดภัย</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> เกม <b>ประคองแท็งก์</b> — ถือบอร์ดเดินรอบโต๊ะ 1 รอบ ให้จุดบนจอไฟ RGB อยู่ใน <b>เป้าสีฟ้า</b> (เอียงไม่เกิน 3°) นานที่สุด · ระวังสาย USB!</div>
 
@@ -1599,11 +1641,15 @@ def tilt_angles(ax, ay, az):
 
 <!-- _class: sec -->
 
-<div class="when">2:30 – 2:50 · สลับกันขับ</div>
+<div class="when">2:30 – 2:50 · 20 นาที</div>
 
 # ภารกิจกลุ่ม — แผงควบคุมฟาร์มของเรา
 
-[`sf1_05_my_farm_dashboard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_05_my_farm_dashboard.py) · รวมทุกอย่างที่ทำมาเป็นแผงเดียว · แก้ทุก `TODO`
+<div class="lead">รวมทุกกิจกรรมเป็นแผงเดียว แล้วแต่งให้เป็นฟาร์มของกลุ่ม</div>
+
+<div class="flow"><b>อากาศ + ดิน</b><i>→</i><b>คะแนนสุขภาพฟาร์ม</b><i>→</i><b>ปั๊มอัตโนมัติ</b><i>→</i><b>แท็บภาพรวม · กราฟ</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_05_my_farm_dashboard.py">sf1_05_my_farm_dashboard.py</a> <span>— แผงควบคุมฟาร์ม · แก้ทุก TODO</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ฟาร์มไหนได้ <b>คะแนนสุขภาพ 100</b> ก่อน — แล้วใครทำให้ <b>ต่ำกว่า 50</b> ได้ด้วยวิธีที่แปลกที่สุด?</div>
 
@@ -1716,9 +1762,16 @@ def health(t, h, soil):
 
 <!-- _class: sec -->
 
-<div class="when">2:50 – 3:00</div>
+<div class="when">2:50 – 3:00 · 10 นาที</div>
 
 # ไอเดียโปรเจกต์ + Exit ticket
+
+<div class="lead">เริ่มจากปัญหาจริงของฟาร์ม แล้วเขียนเป็น วัด → ตัดสิน → ทำ</div>
+
+<div class="flow"><b>เขียน 3 ปัญหา</b><i>→</i><b>เซนเซอร์ที่ใช้</b><i>→</i><b>บอร์ดตัดสินอะไร ทำอะไร</b><i>→</i><b>เลือก 1 ข้อไปต่อ</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf-s1-th.worksheet.md">sf-s1-th.worksheet.md</a> <span>— ใบงานข้อ 9 ไอเดียโปรเจกต์ · ข้อ 10 Exit ticket</span></div></div></div>
+
 
 ---
 
@@ -1767,20 +1820,20 @@ def health(t, h, soil):
 
 ---
 
-## Exit ticket (คนละ 1 ข้อ) + เกณฑ์ผ่านคาบ
+## Exit ticket (ทุกคนตอบ 1 ข้อ) + เกณฑ์ผ่านคาบ
 
 <div class="cols">
 <div>
 
 <div class="goal">
 
-**คนที่ 1:** สิ่งที่ **ประหลาดใจที่สุด** วันนี้คือ …
+**ข้อ 1:** สิ่งที่ **ประหลาดใจที่สุด** วันนี้คือ …
 
 </div>
 
 <div class="goal" style="border-color:#1e88e5;background:#e3f2fd">
 
-**คนที่ 2:** ถ้าต่ออินเทอร์เน็ตได้ อยากให้ฟาร์ม **ส่งอะไรบอกเจ้าของ** …
+**ข้อ 2:** ถ้าต่ออินเทอร์เน็ตได้ อยากให้ฟาร์ม **ส่งอะไรบอกเจ้าของ** …
 
 </div>
 

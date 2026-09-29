@@ -66,6 +66,25 @@ section.brk { background: linear-gradient(135deg,#ff9f1c 0%,#ffbf69 60%,#ffe8c2 
 .kbd { display:inline-block; border:2px solid #455a64; border-bottom-width:4px; border-radius:6px; padding:0 7px; font-weight:700; }
 .big { font-size:1.35em; font-weight:700; }
 .src { font-size:.48em; color:#78909c; }
+/* ---- หน้าเปิดส่วน/กิจกรรม: หลักการ · ขั้นตอน · เวลา · ไฟล์ (รูปแบบเดียวกันทุกคาบ) ---- */
+section.sec .when { font-weight:700; }
+.lead { background:rgba(255,255,255,.15); border-left:6px solid #ffd54f; border-radius:10px; padding:.22em .8em; margin:.15em 0 .5em; font-size:1.02em; font-weight:700; line-height:1.35; color:#fff; }
+.flow { display:flex; align-items:center; gap:8px; margin:.15em 0 .5em; }
+.flow b { flex:1 1 0; min-width:0; background:#fff; color:#1b5e20; border-radius:10px; padding:.32em .45em; text-align:center; font-size:.68em; line-height:1.25; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.flow i { flex:0 0 auto; font-style:normal; font-weight:700; color:#ffd54f; font-size:.95em; }
+.budget { display:flex; flex-wrap:wrap; gap:8px; margin:.1em 0 .45em; }
+.budget span { background:rgba(0,0,0,.28); color:#fff; border-radius:999px; padding:.08em .8em; font-size:.66em; white-space:nowrap; }
+.budget b { color:#ffd54f; }
+.files { display:grid; grid-template-columns:1fr 1fr; gap:4px 28px; background:#fff; color:#263238; border:2px solid #cfe3c9; border-radius:12px; padding:.45em .95em .55em; margin:.3em 0 .2em; font-size:.66em; line-height:1.5; box-shadow:0 3px 12px rgba(0,0,0,.18); }
+.files.one { grid-template-columns:1fr; }
+.files.page { font-size:.7em; line-height:1.6; padding:.6em 1.1em .7em; }
+.files .fh { font-weight:700; color:#1b5e20; border-bottom:2px solid #cfe3c9; margin-bottom:.2em; }
+.files .fh.hw { color:#8d6e63; border-color:#eadfd6; }
+.files .fh.lap { color:#37474f; border-color:#dfe5e8; margin-top:.45em; }
+.files .f span { color:#607d8b; }
+section .files a, section.sec .files a { color:#1b5e20; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:700; text-decoration:none; }
+section .files .hw ~ .f a { color:#6d4c41; }
+.tip { background:#f1f8e9; border-left:6px solid #7cb342; border-radius:8px; padding:.25em .7em; margin:.3em 0; font-size:.8em; color:#33691e; }
 </style>
 
 ![bg](img/cover_sf02.svg)
@@ -109,15 +128,17 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
 </div>
 <div>
 
-**กลุ่มละ 2 คน สลับบทบาททุกชั่วโมง**
+**งานแต่ละชั่วโมง**
 
-| ชั่วโมง | คนที่ 1 | คนที่ 2 |
-|---|---|---|
-| 1 · บอร์ดส่งค่า | 🚜 **คนขับ** บอร์ด | 🧭 **ผู้นำทาง** มือถือ + จดตาราง |
-| 2 · แอปของเรา | 🧭 จดตาราง ตรวจ CSV | 🚜 **คนขับ** แอป แก้ TODO |
-| 3 · สั่งกลับ | 🚜 บอร์ด + ปุ่ม SW5 | 🚜 แอป + กฎ (สลับก่อนภารกิจ) |
+| ชั่วโมง | ทำอะไร |
+|---|---|
+| 1 · บอร์ดส่งค่า | รันบอร์ด · เปิดหน้าอ่านค่าบนมือถือ + จดตาราง |
+| 2 · แอปของเรา | แก้ TODO ในแอป · ตรวจ CSV |
+| 3 · สั่งกลับ | บอร์ด + ปุ่ม SW5 · แอป + กฎ |
 
-ใบงาน: [`sf-s2-th.worksheet.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf-s2-th.worksheet.md) (กลุ่มละ 1 ชุด)
+ใบงาน: [`sf-s2-th.worksheet.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf-s2-th.worksheet.md) (ทีมละ 1 ชุด)
+
+<div class="tip">💡 ถ้าใช้บอร์ดร่วมกันหลายคน ให้ผลัดกันคุมบอร์ดและแอปทุกกิจกรรม และอีกคนอ่านใบงาน/จดตาราง</div>
 
 </div>
 </div>
@@ -126,13 +147,16 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
 
 <!-- _class: sec -->
 
-<div class="when">0:00 – 0:10 · อุ่นเครื่อง</div>
+<div class="when">0:00 – 0:10 · อุ่นเครื่อง 10 นาที</div>
 
 # ฟาร์มพูดกับแอปที่เราเขียนเอง
 
-เปิด Hotspot มือถือ · รับเลขกลุ่ม (TEAM) จากผู้สอน · ทวนว่าพืชของกลุ่มคืออะไร
+<div class="lead">ค่าออกจากโรงเรือน แอปของเราฟัง แล้วสั่งกลับ</div>
+
+<div class="flow"><b>เปิด Hotspot มือถือ</b><i>→</i><b>รับเลขกลุ่ม (TEAM) จากผู้สอน</b><i>→</i><b>ทวนว่าพืชของกลุ่มคืออะไร</b></div>
 
 <div class="chal">🏆 <b>ทายก่อน:</b> ค่าจากโต๊ะนี้ไปถึงมือถือของเรา <b>ช้ากว่ากี่วินาที</b>? เขียนคำทายลงใบงาน แล้วเฉลยในกิจกรรม 2</div>
+
 
 ---
 
@@ -394,7 +418,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 **ติดขัด? บันไดช่วยเหลือ 5 ขั้น**
 1. **คำใบ้ 3 ขั้น** ท้ายใบงาน — เปิดทีละขั้น ขั้นละ −1 แต้ม
 2. **อ่านข้อความ error** — `NameError: name '____'` = ยังมีช่องที่ไม่ได้เติม
-3. **สลับคนขับกับผู้นำทาง** · ถามเพื่อน 3 คนก่อนถามผู้สอน
+3. **ถามเพื่อน 3 คนก่อนถามผู้สอน** (ในทีมหรือทีมข้าง ๆ)
 4. **ทางออกฉุกเฉิน:** รันไฟล์ตัวอย่างเต็มเพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบ
 5. **เฉลย:** โจทย์หลักอยู่ใน `s2/practise/solutions/` · ทุกข้ออธิบายต้นคาบหน้า
 
@@ -405,13 +429,18 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 
 <!-- _class: sec -->
 
-<div class="when">0:10 – 0:25 · คนขับ = คนที่ 1</div>
+<div class="when">0:10 – 0:25 · 15 นาที</div>
 
 # กิจกรรม 1 — ฟาร์มขึ้นเน็ตครั้งแรก
 
-[`sf2_01_farm_goes_online.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_01_farm_goes_online.py) · `wifi.connect()` · เลข IP · เฝ้าลิงก์ 1 นาที
+<div class="lead">"ต่อติดแล้ว" ไม่ได้แปลว่า "ออนไลน์ตลอด" — ต้องเฝ้าลิงก์</div>
+
+<div class="flow"><b>wifi.connect()</b><i>→</i><b>ได้เลข IP ที่ไม่ใช่ 0.0.0.0</b><i>→</i><b>เฝ้าลิงก์ 1 นาที</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_01_farm_goes_online.py">sf2_01_farm_goes_online.py</a> <span>— พาโรงเรือนขึ้นอินเทอร์เน็ตครั้งแรก</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> กลุ่มไหน <b>ต่อ Wi-Fi ได้เร็วที่สุด</b> (เลข ms บนจอ = เวลาของ <code>wifi.connect()</code>) — แล้ว <b>รหัสผิดหนึ่งตัว</b> ใช้เวลาต่างไปแค่ไหน?</div>
+
 
 ---
 
@@ -651,13 +680,18 @@ def link_changed(online, sec):
 
 <!-- _class: sec -->
 
-<div class="when">0:25 – 0:55 · คนขับ = คนที่ 1 · ผู้นำทางถือมือถือ</div>
+<div class="when">0:25 – 0:55 · 30 นาที</div>
 
 # กิจกรรม 2 — โรงเรือนรายงานตัวทุก 5 วินาที
 
-[`sf2_02_greenhouse_report.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py) · SHT40 + DPS368 + BMI270 + ลูกบิดจำลอง → JSON → มือถือ
+<div class="lead">ส่งค่าจริงทุก 5 วินาที และบอกตรง ๆ ว่าค่าไหนจำลอง</div>
+
+<div class="flow"><b>เซนเซอร์ + ลูกบิดจำลอง</b><i>→</i><b>JSON</b><i>→</i><b>broker (MQTT)</b><i>→</i><b>มือถือ</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py">sf2_02_greenhouse_report.py</a> <span>— วัดทุก 1 วินาที ส่งรายงานทุก 5 วินาที</span></div><div class="fh lap">📱 เปิดบนมือถือ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/my_first_reader.html">my_first_reader.html</a> <span>— หน้าอ่านค่า เปิดบนมือถือ ต่อท้าย ?team=</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> เป่าลมใส่บอร์ด แล้ว <b>จับเวลาว่ามือถือเห็นช้ากว่าจอบอร์ดกี่วินาที</b> — กลุ่มไหนอธิบายตัวเลขนั้นได้ถูกที่สุด?</div>
+
 
 ---
 
@@ -869,7 +903,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 **ลองทำ**
 1. แก้ `WIFI_SSID` `WIFI_PASS` และ `TEAM` แล้วรัน (ส่งนาน 30 นาที)
-2. ผู้นำทางเปิดหน้าอ่านค่าบนมือถือ (สไลด์ถัดไป) ต่อท้าย `?team=` ด้วยเลขกลุ่ม
+2. เปิดหน้าอ่านค่าบนมือถือ (สไลด์ถัดไป) ต่อท้าย `?team=` ด้วยเลขกลุ่ม
 3. จด 3 ใบจากหน้าเว็บ · **เป่าลมใส่บอร์ด** จับเวลาว่ามือถือช้ากว่ากี่วินาที
 4. กด **SW5** (ปุ่มล่าง) = ส่งทันที `by = sw5` · กด **SW6** (ปุ่มบน) = เหตุการณ์ `"event": "sw6"`
 5. ห้องเสียงดังไป? ตั้ง `SOUND = False`
@@ -984,13 +1018,18 @@ section pre { font-size: .54em; }
 
 <!-- _class: sec -->
 
-<div class="when">1:05 – 1:50 · คนขับ = คนที่ 2 (แอป)</div>
+<div class="when">1:05 – 1:50 · 45 นาที</div>
 
 # กิจกรรม 3 — แอปเฝ้าฟาร์มของกลุ่ม
 
-[`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py) (Python บนโน้ตบุ๊ก) หรือ [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html) (เบราว์เซอร์) · ตารางสด + CSV + กฎหนึ่งข้อ
+<div class="lead">บอร์ดกับแอปคุยกันด้วย "สัญญา MQTT" หน้าเดียว</div>
+
+<div class="flow"><b>ได้ข้อความ</b><i>→</i><b>จด CSV</b><i>→</i><b>กฎหนึ่งข้อ</b><i>→</i><b>เว้น 60 วินาที</b></div>
+
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div><div class="fh lap">💻 แอปของกลุ่ม (เลือกหนึ่ง)</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> <span>— Python บนโน้ตบุ๊ก: ตารางสด + CSV</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— แอปในเบราว์เซอร์ ไม่ต้องติดตั้ง</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.py">fake_board.py</a> <span>— บอร์ดจำลอง ทดสอบแอปตอนไม่มีบอร์ด</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> แอปของกลุ่มไหน <b>จด CSV ครบทุกใบ โดยเลข <code>n</code> ไม่ขาดเลย</b> ใน 10 นาที — แล้วทำกราฟใน Excel ได้ก่อน?</div>
+
 
 ---
 
@@ -1299,13 +1338,18 @@ python fake_board.py
 
 <!-- _class: sec -->
 
-<div class="when">1:50 – 2:15 · คนที่ 1 = บอร์ด + SW5 · คนที่ 2 = แอป</div>
+<div class="when">1:50 – 2:15 · 25 นาที</div>
 
 # กิจกรรม 4 — ปั๊มน้ำสั่งจากที่ไกล
 
-[`sf2_03_remote_pump.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py) · Command → Check → Act · ไฟสีฟ้าบนบอร์ด = ปั๊ม · SW5 = หยุดฉุกเฉิน
+<div class="lead">ไม่เชื่อคนส่ง — ตรวจทุกคำสั่งก่อนแตะของจริง</div>
+
+<div class="flow"><b>Command: คำสั่งจากแอป</b><i>→</i><b>Check: ตรวจก่อน</b><i>→</i><b>Act: ไฟสีฟ้า = ปั๊ม</b><i>→</i><b>SW5 = หยุดฉุกเฉิน</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— เปิด/ปิดปั๊มตามคำสั่ง ดับเองเมื่อครบเวลา</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/practise/sf2_03_practise.py">sf2_03_practise.py</a> <span>— Code Quest ระดับ 3 · ตรวจคำสั่งปั๊ม</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ทายก่อนส่ง <code>{"cmd":"pump","on":1,"sec":9999}</code> — <b>ปั๊มจะเปิดจริงกี่วินาที?</b> ใครทายถูกและชี้บรรทัดที่ตัดได้ ชนะ</div>
+
 
 ---
 
@@ -1504,13 +1548,18 @@ section pre { font-size: .56em; }
 
 <!-- _class: sec -->
 
-<div class="when">2:15 – 2:30 · สลับกันขับ</div>
+<div class="when">2:15 – 2:30 · 15 นาที</div>
 
 # กิจกรรม 5 — พืชไม่สบาย มือถือรู้ทันที
 
-[`sf2_04_crop_alert.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py) · กฎเดียวกับ `sf1_02` · ส่งแจ้งเตือนเมื่อ "เปลี่ยน" · รับทราบจากมือถือหรือ SW5 · ตั้งเกณฑ์จากที่ไกล
+<div class="lead">ส่งเมื่อ "เปลี่ยน" ไม่ใช่ทุกวินาที — คนรับจะได้ไม่ชินจนเมิน</div>
+
+<div class="flow"><b>กฎเดียวกับ sf1_02</b><i>→</i><b>สถานะเปลี่ยน</b><i>→</i><b>ส่งแจ้งเตือน</b><i>→</i><b>รับทราบจากมือถือ หรือ SW5</b></div>
+
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py">sf2_04_crop_alert.py</a> <span>— แจ้งเตือนเมื่อพืชเปลี่ยนสถานะ · ตั้งเกณฑ์จากที่ไกล</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/practise/sf2_04_practise.py">sf2_04_practise.py</a> <span>— Code Quest ระดับ 3 · เติม judge()</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> พอบอร์ดร้อง "แย่แล้ว!" กลุ่มไหน <b>รับทราบจากมือถือได้เร็วที่สุด</b> — ภายในกี่วินาที?</div>
+
 
 ---
 
@@ -1659,13 +1708,18 @@ def on_command(w, s, raw):
 
 <!-- _class: sec -->
 
-<div class="when">2:30 – 2:50 · ทั้งกลุ่ม</div>
+<div class="when">2:30 – 2:50 · 20 นาที</div>
 
 # ภารกิจกลุ่ม — ปิดวงจรฟาร์ม
 
-บอร์ดรัน [`sf2_03_remote_pump.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py) · แอปรัน [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py) · **ไม่มีใครกดปุ่มสั่งปั๊มเอง**
+<div class="lead">ไม่มีใครกดปุ่มสั่งปั๊มเอง — ระบบปิดวงจรเอง</div>
+
+<div class="flow"><b>ดินแห้ง</b><i>→</i><b>แอปตัดสิน</b><i>→</i><b>ปั๊มเปิด</b><i>→</i><b>CSV เป็นหลักฐาน</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— บอร์ด: รับคำสั่งปั๊ม ตรวจก่อนทำ</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> <span>— แอป: กฎดินแห้ง + จด CSV</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> วัดเวลา <b>"ดินแห้งจนปั๊มเปิด" จาก CSV</b> — กลุ่มไหนได้ตัวเลขสั้นที่สุด และอธิบายได้ว่าเวลานั้นมาจากไหนบ้าง?</div>
+
 
 ---
 
@@ -1842,13 +1896,18 @@ section blockquote { font-size: .8em; }
 
 <!-- _class: sec -->
 
-<div class="when">ต่อยอด · กลุ่มที่เสร็จเร็ว + โปรเจกต์</div>
+<div class="when">ต่อยอด · ทีมที่เสร็จเร็ว + โปรเจกต์</div>
 
 # บอร์ดของเราคือ Smart IoT Gateway
 
-[`sf2_06_smart_gateway.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py) + [`field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py) หรือจับคู่กับอีกกลุ่มด้วย [`sf2_07_field_station.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py)
+<div class="lead">Gateway ตัดสินใจ แต่ความจริงคือสิ่งที่ PLC รายงาน</div>
+
+<div class="flow"><b>โหนดเซนเซอร์ในแปลง</b><i>→</i><b>Gateway ตัดสิน</b><i>→</i><b>PLC คุมปั๊ม</b><i>→</i><b>PLC รายงานกลับ</b></div>
+
+<div class="files"><div><div class="fh hw">☆ ทางที่ 1 · บอร์ดเดียว + โน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway ของฟาร์ม</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py">field_sim.py</a> <span>— แปลงผักจำลองบนโน้ตบุ๊ก</span></div></div><div><div class="fh hw">☆ ทางที่ 2 · สองบอร์ด ร่วมกับทีมข้าง ๆ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py">sf2_07_field_station.py</a> <span>— บอร์ดทีมข้าง ๆ เล่นเป็นแปลงผัก</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ปิด <code>field_sim.py</code> กลางคัน แล้ว <b>จับเวลาว่า Gateway ขึ้น "PLC หลุด!" ภายในกี่วินาที</b> — ตรงกับค่าไหนในโค้ด?</div>
+
 
 ---
 
@@ -2111,13 +2170,18 @@ def wait_platform(w):
 
 <!-- _class: sec -->
 
-<div class="when">2:50 – 3:00</div>
+<div class="when">2:50 – 3:00 · 10 นาที</div>
 
 # Exit ticket + ต่อยอดโปรเจกต์
 
+<div class="lead">ทวนว่าบอร์ด "ส่ง" อะไร "ฟัง" อะไร และ "ไม่เชื่อ" อะไร แล้ววางแผนโปรเจกต์</div>
+
+<div class="flow"><b>Exit ticket</b><i>→</i><b>แผน "ทางออก" + "ทางกลับ" ของโปรเจกต์</b><i>→</i><b>คาบหน้า: เซนเซอร์และ AI</b></div>
+
+
 ---
 
-## Exit ticket (คนละใบ) + แผนโปรเจกต์ของกลุ่ม
+## Exit ticket (ทุกคนตอบ 1 ข้อ) + แผนโปรเจกต์ของกลุ่ม
 
 <style scoped>
 section table { font-size: .62em; }
@@ -2126,6 +2190,8 @@ section li { font-size: .86em; }
 
 <div class="cols">
 <div>
+
+เลือกตอบ **1 ข้อ** จากข้อ 1–3 · ทุกคนตอบข้อ 4
 
 <div class="goal">
 

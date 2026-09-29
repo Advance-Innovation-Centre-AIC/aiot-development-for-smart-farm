@@ -77,6 +77,25 @@ section.brk { background: linear-gradient(135deg,#ff9f1c 0%,#ffbf69 60%,#ffe8c2 
 .card b { display:block; font-size:1.3em; margin-bottom:.2em; }
 .card a { color:#fff; text-decoration:underline; }
 .no { background:#eceff1; border-left:6px solid #78909c; border-radius:8px; padding:.25em .7em; margin:.25em 0; font-size:.82em; color:#455a64; }
+/* ---- หน้าเปิดส่วน/กิจกรรม: หลักการ · ขั้นตอน · เวลา · ไฟล์ (รูปแบบเดียวกันทุกคาบ) ---- */
+section.sec .when { font-weight:700; }
+.lead { background:rgba(255,255,255,.15); border-left:6px solid #ffd54f; border-radius:10px; padding:.22em .8em; margin:.15em 0 .5em; font-size:1.02em; font-weight:700; line-height:1.35; color:#fff; }
+.flow { display:flex; align-items:center; gap:8px; margin:.15em 0 .5em; }
+.flow b { flex:1 1 0; min-width:0; background:#fff; color:#1b5e20; border-radius:10px; padding:.32em .45em; text-align:center; font-size:.68em; line-height:1.25; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.flow i { flex:0 0 auto; font-style:normal; font-weight:700; color:#ffd54f; font-size:.95em; }
+.budget { display:flex; flex-wrap:wrap; gap:8px; margin:.1em 0 .45em; }
+.budget span { background:rgba(0,0,0,.28); color:#fff; border-radius:999px; padding:.08em .8em; font-size:.66em; white-space:nowrap; }
+.budget b { color:#ffd54f; }
+.files { display:grid; grid-template-columns:1fr 1fr; gap:4px 28px; background:#fff; color:#263238; border:2px solid #cfe3c9; border-radius:12px; padding:.45em .95em .55em; margin:.3em 0 .2em; font-size:.66em; line-height:1.5; box-shadow:0 3px 12px rgba(0,0,0,.18); }
+.files.one { grid-template-columns:1fr; }
+.files.page { font-size:.7em; line-height:1.6; padding:.6em 1.1em .7em; }
+.files .fh { font-weight:700; color:#1b5e20; border-bottom:2px solid #cfe3c9; margin-bottom:.2em; }
+.files .fh.hw { color:#8d6e63; border-color:#eadfd6; }
+.files .fh.lap { color:#37474f; border-color:#dfe5e8; margin-top:.45em; }
+.files .f span { color:#607d8b; }
+section .files a, section.sec .files a { color:#1b5e20; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:700; text-decoration:none; }
+section .files .hw ~ .f a { color:#6d4c41; }
+.tip { background:#f1f8e9; border-left:6px solid #7cb342; border-radius:8px; padding:.25em .7em; margin:.3em 0; font-size:.8em; color:#33691e; }
 </style>
 ![bg](img/cover_sf04.svg)
 
@@ -130,7 +149,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 | 🤔 **เดา/แก้** | Code Quest |
 | 📌 **กฎหนึ่งบรรทัด** | เก็บไว้ใช้กับโปรเจกต์ |
 
-คู่ละ 1 บอร์ด · **คนขับ** สลับทุกส่วน · **ผู้นำทาง** ลองใน Emulator ก่อน
+<div class="tip">💡 ถ้าใช้บอร์ดร่วมกันหลายคน ให้ผลัดกันคุมบอร์ดทุกส่วน และอีกคนอ่านใบงาน/ลองใน Emulator</div>
 
 **หลัง Session 3 ก่อนวันนำเสนอผลงาน** · ทุกกฎโยงกับ 5 เสาหลัก
 
@@ -276,7 +295,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 **ติดขัด? บันไดช่วยเหลือ 5 ขั้น**
 1. **คำใบ้ 3 ขั้น** ท้ายใบงาน (ขั้นละ −1 แต้ม)
 2. **อ่านข้อความ error** ด้วยตารางในใบงาน
-3. **สลับคนขับกับผู้นำทาง** · ถามเพื่อน 3 คนก่อนถามผู้สอน
+3. **ถามเพื่อน 3 คนก่อนถามผู้สอน** (ในทีมหรือทีมข้าง ๆ)
 4. **ทางออกฉุกเฉิน:** รันไฟล์ตัวอย่างเต็มเพื่อไปต่อก่อน
 5. **เฉลย** โจทย์หลักเปิดได้ในคาบ
 
@@ -289,17 +308,26 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <!-- _class: sec -->
 
-<div class="when">0:10 – 0:45 · คนขับ = คนที่ 1</div>
+<div class="when">0:10 – 0:45 · 35 นาที</div>
 
 # Part 1 — วัด (Sense)
 
-## ตัวเลขทุกตัวมีที่มา
+<div class="lead">ตัวเลขทุกตัวมีที่มา</div>
 
-ของจริง → สัญญาณ → เลขดิบ → หน่วย → สอบเทียบ → เวลา · 👀 เห็น 8 นาที · 🎮 เล่น 20 นาที · 🤔 Code Quest 5 นาที · 📌 กฎ 2 นาที
+<div class="flow"><b>ของจริง</b><i>→</i><b>เลขดิบ</b><i>→</i><b>หน่วย</b><i>→</i><b>สอบเทียบ</b><i>→</i><b>เวลา</b></div>
 
-★ [`cp1_01_button_patterns.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_01_button_patterns.py) · ★ [`cp1_02_knob_scaling.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_02_knob_scaling.py) · ★ [`cp1_03_loop_clock.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_03_loop_clock.py) · ★ [`cp1_04_calibrate.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_04_calibrate.py)
+<div class="budget"><span>👀 เห็น <b>8</b> นาที</span><span>🎮 เล่น <b>20</b> นาที</span><span>🤔 Code Quest <b>5</b> นาที</span><span>📌 กฎ <b>2</b> นาที</span></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ใคร <b>ดับเบิลคลิกได้ 10 ครั้งติด</b> โดยบอร์ดไม่นับพลาดเป็นคลิกเดี่ยวเลย — และใครหมุนลูกบิดให้ได้ <b>ความชื้นดิน 50 %</b> เป๊ะเร็วที่สุด?</div>
+
+
+---
+
+## Part 1 — ไฟล์ของส่วนนี้
+
+<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_01_button_patterns.py">cp1_01_button_patterns.py</a> <span>— ปุ่มเดียว อ่านได้ 3 แบบ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_02_knob_scaling.py">cp1_02_knob_scaling.py</a> <span>— เลขดิบ 0–4095 → ค่าที่มีหน่วย</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_03_loop_clock.py">cp1_03_loop_clock.py</a> <span>— ลูปเดียว สามจังหวะ ไม่รอกัน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_04_calibrate.py">cp1_04_calibrate.py</a> <span>— สอบเทียบ: ชดเชย ตั้งศูนย์ สองจุด</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp1_02_practise.py">cp1_02_practise.py</a> <span>— Code Quest ระดับ 3 · เติม map_range()</span></div></div></div>
+
+<div class="cap">★ = เล่นบนบอร์ดในคาบ · ☆ = การบ้าน รันใน BENTO Emulator ได้ · ทุกไฟล์อยู่ในโฟลเดอร์ core/</div>
 
 ---
 
@@ -663,18 +691,26 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <!-- _class: sec -->
 
-<div class="when">0:45 – 1:30 · คนขับ = คนที่ 2</div>
+<div class="when">0:45 – 1:30 · 45 นาที</div>
 
 # Part 2 — ประมวลผล & ตัดสิน
 
-## เลือกขั้นบันไดที่ต่ำที่สุดที่ได้ผล
+<div class="lead">เลือกขั้นบันไดที่ต่ำที่สุดที่ได้ผล</div>
 
-ค่าดิบ → กรองให้สะอาด → หาฟีเจอร์ → ตัดสิน · 👀 เห็น 8 นาที · 🎮 เล่น 23 นาที · 🤔 Code Quest 12 นาที · 📌 กฎ 2 นาที
+<div class="flow"><b>ค่าดิบ</b><i>→</i><b>กรองให้สะอาด</b><i>→</i><b>หาฟีเจอร์</b><i>→</i><b>ตัดสิน</b></div>
 
-★ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_01_filter_race.py" style="color:#fff">cp2_01_filter_race.py</a> · ★ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_03_decision_ladder.py" style="color:#fff">cp2_03_decision_ladder.py</a> · ★ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_04_sound_spectrum.py" style="color:#fff">cp2_04_sound_spectrum.py</a> · ★ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_06_ai_confidence_gate.py" style="color:#fff">cp2_06_ai_confidence_gate.py</a><br>
-☆ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py" style="color:#fff">cp2_02_rolling_stats.py</a> · ☆ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py" style="color:#fff">cp2_05_dew_point_guard.py</a> (ถ้ามีเวลา หรือการบ้านใน Emulator)
+<div class="budget"><span>👀 เห็น <b>8</b> นาที</span><span>🎮 เล่น <b>23</b> นาที</span><span>🤔 Code Quest <b>12</b> นาที</span><span>📌 กฎ <b>2</b> นาที</span></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ใครทำให้ไฟเตือน <b>กระพือน้อยที่สุด</b> แต่ยัง <b>เตือนทันทุกครั้งที่ร้อนจริง</b>?</div>
+
+
+---
+
+## Part 2 — ไฟล์ของส่วนนี้
+
+<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_01_filter_race.py">cp2_01_filter_race.py</a> <span>— แข่งกรอง: ดิบ EMA Median Kalman</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_03_decision_ladder.py">cp2_03_decision_ladder.py</a> <span>— บันไดตัดสิน: ค่าเดียว 4 วิธี</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_04_sound_spectrum.py">cp2_04_sound_spectrum.py</a> <span>— เสียงเดียวกัน ดูตามความถี่</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_06_ai_confidence_gate.py">cp2_06_ai_confidence_gate.py</a> <span>— AI ตอบว่า "ไม่แน่ใจ" ได้</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp2_03_practise.py">cp2_03_practise.py</a> <span>— Code Quest ระดับ 3 · เติมเครื่องสถานะ</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py">cp2_02_rolling_stats.py</a> <span>— ค่าล่าสุดแปลกแค่ไหน (z)</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py">cp2_05_dew_point_guard.py</a> <span>— จุดน้ำค้าง เตือนก่อนน้ำเกาะ</span></div></div></div>
+
+<div class="cap">★ = เล่นบนบอร์ดในคาบ · ☆ = ถ้ามีเวลา หรือการบ้านใน BENTO Emulator · ทุกไฟล์อยู่ในโฟลเดอร์ core/</div>
 
 ---
 
@@ -966,11 +1002,11 @@ def zscore(x, mean, sd, sd_min):
 | **2 แก้** | **cp2_03:** ตั้ง `HOLD_S = 0` แล้วเทียบตัวนับขั้น 3 กับขั้น 1 · **cp2_06:** ตั้ง `CONF_MIN = 0.95` แล้วจดสัดส่วน ลงมือ : ไม่แน่ใจ | โจทย์หลัก (มีเฉลยในคาบ) |
 | **3 เติม** | [`cp2_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp2_03_practise.py) เติมช่อง A B C ใน `next_state()` ให้ผ่านการตรวจ 8 กรณี | **โจทย์หลัก (มีเฉลยในคาบ)** · 10 นาที |
 | **4 สร้าง** | เพิ่มวิธีตัดสินที่ 5 "\|z\| > 3" ลงใน cp2_03 · หรือเพิ่มไฟ "ไม่แน่ใจ" ใน cp2_06 | โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า) |
-| ☆ การบ้าน | [`cp2_02_rolling_stats.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py) ทำข้อ "ตาคุณ" ท้ายไฟล์ · [`cp2_05_dew_point_guard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py) จุดน้ำค้าง ดัชนีความร้อน ความเสี่ยงไอน้ำเกาะ (รันใน Emulator ได้) | โจทย์เพิ่ม |
+| ☆ การบ้าน | [`cp2_02_rolling_stats.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py) — ทำข้อ "ตาคุณ" ท้ายไฟล์<br>[`cp2_05_dew_point_guard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py) — จุดน้ำค้าง ดัชนีความร้อน ความเสี่ยงไอน้ำเกาะ | โจทย์เพิ่ม (รันใน Emulator ได้) |
 
 <div class="goal">
 
-ระดับ 1–2 ทำระหว่างช่วง "เล่น" · ระดับ 3 ทุกคู่ทำพร้อมกัน **10 นาที** แล้วเฉลยในคาบ
+ระดับ 1–2 ทำระหว่างช่วง "เล่น" · ระดับ 3 ทุกทีมทำพร้อมกัน **10 นาที** แล้วเฉลยในคาบ
 
 </div>
 
@@ -1082,19 +1118,26 @@ def next_state(state, over, ack, t_s):
 
 <!-- _class: sec -->
 
-<div class="when">1:40 – 2:15 · คนขับ = คนที่ 1</div>
+<div class="when">1:40 – 2:15 · 35 นาที</div>
 
 # Part 3 — ทำ (Act & Report)
 
-## สั่งให้ชัด รายงานเท่าที่จำเป็น ปลอดภัยเมื่อพัง
+<div class="lead">สั่งให้ชัด รายงานเท่าที่จำเป็น ปลอดภัยเมื่อพัง</div>
 
-บอก → รายงาน → สั่ง → ยืนยัน · 👀 เห็น 10 นาที · 🎮 เล่น 16 นาที · 🤔 Code Quest 7 นาที · 📌 กฎ 2 นาที
+<div class="flow"><b>บอก</b><i>→</i><b>รายงาน</b><i>→</i><b>สั่ง</b><i>→</i><b>ยืนยัน</b></div>
 
-★ [`cp3_01_status_language.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py) · ★ [`cp3_03_report_by_exception.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py) · ★ [`cp3_06_modbus_frame.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py) · 💻 [`modbus_plc_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py) · 💻 [`modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)
-
-☆ [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) · ☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) · ☆ [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) (การบ้าน)
+<div class="budget"><span>👀 เห็น <b>10</b> นาที</span><span>🎮 เล่น <b>16</b> นาที</span><span>🤔 Code Quest <b>7</b> นาที</span><span>📌 กฎ <b>2</b> นาที</span></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ก่อนเปิด cp3_06 เขียนคำสั่ง <b>"เปิดปั๊ม"</b> ของ Modbus TCP ลงกระดาษให้ครบ <b>12 ไบต์</b> — ใครถูกมากไบต์ที่สุด?</div>
+
+
+---
+
+## Part 3 — ไฟล์ของส่วนนี้
+
+<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py">cp3_01_status_language.py</a> <span>— ภาษาสถานะ: สี จังหวะ เสียง</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py">cp3_03_report_by_exception.py</a> <span>— ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py">cp3_06_modbus_frame.py</a> <span>— กรอบ Modbus TCP 12 ไบต์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py">cp3_06_practise.py</a> <span>— Code Quest ระดับ 3 · เติม fc06_write()</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก (ผู้สอนสาธิต)</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py">modbus_plc_sim.py</a> <span>— PLC จำลองที่พูด Modbus TCP</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py">modbus_bridge.py</a> <span>— เกตเวย์ MQTT ↔ Modbus TCP</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py">cp3_02_matrix_toolkit.py</a> <span>— จอไฟ 16×8 เป็นจอเล็ก 4 แบบ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py">cp3_04_command_confirm.py</a> <span>— คำสั่งต้องมีคำยืนยันและทางถอย</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py">cp3_05_two_pipes.py</a> <span>— ค่าเดียว สองท่อ: MQTT กับ MQTTS</span></div></div></div>
+
+<div class="cap">★ = เล่นบนบอร์ดในคาบ · 💻 = รันบนโน้ตบุ๊กด้วย Python 3 · ☆ = การบ้าน รันใน BENTO Emulator ได้</div>
 
 ---
 
@@ -1368,11 +1411,11 @@ python modbus_bridge.py       # 2: แก้ TEAM ให้ตรงบอร์
 | **2 แก้** | **cp3_03:** ตั้ง `HEARTBEAT_S = 10` ปล่อย VR1 นิ่ง ๆ แล้วดู % ประหยัด คุ้มไหมกับการรู้เร็วขึ้นว่าบอร์ดตาย · **cp3_01:** ตั้ง `REPEAT_S = 3` ค้างที่ "อันตราย" ครึ่งนาที รำคาญหรือยัง? | โจทย์หลัก (มีเฉลยในคาบ) |
 | **3 เติม** | [`cp3_06_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py) เติม 2 ช่องใน `fc06_write()`: **A** รูปแบบ `struct` ของ PDU · **B** ค่า len ใน MBAP → ต้องได้ `00 01 00 00 00 06 01 06 00 00 00 01` | **โจทย์หลัก (มีเฉลยในคาบ)** · 7 นาที |
 | **4 สร้าง** | สร้างกรอบ **FC16** (เขียนหลายช่องในกรอบเดียว) โชว์บนจอบอร์ด — เกตเวย์และ PLC จำลองของเรารับแค่ FC03/FC06 อยากส่งจริงต้องแก้สองฝั่ง · หรือใน cp3_01 **ยกระดับเตือน** เมื่อ "อันตราย" ไม่มีใครกดรับทราบเกิน 60 วิ | โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า) |
-| ☆ การบ้าน | [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) จอไฟ 16×8 เป็นจอเล็ก 4 แบบ: กราฟเส้น หลอด ตัวเลข ตัววิ่ง (7 สี + ดับ · ตัววิ่งรู้จักแค่ 0-9 A-Z a-z) รันใน Emulator ได้ · [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) สั่ง-ยืนยัน-ถอย กับ field_sim.py บนโน้ตบุ๊ก · [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) ค่าเดียวกัน สองท่อ | โจทย์เพิ่ม |
+| ☆ การบ้าน | [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) — จอไฟ 16×8 เป็นจอเล็ก 4 แบบ: กราฟเส้น หลอด ตัวเลข ตัววิ่ง<br>[`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) — สั่ง-ยืนยัน-ถอย กับ field_sim.py บนโน้ตบุ๊ก<br>[`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) — ค่าเดียวกัน สองท่อ | โจทย์เพิ่ม (รันใน Emulator ได้) |
 
 <div class="goal">
 
-ระดับ 1–2 ทำระหว่างช่วง "เล่น" แล้วเฉลยในคาบ · ระดับ 3 ผู้สอนเติมช่องแรกให้ดูสด แล้วทุกคู่เติมที่เหลือ · ระดับ 4 เป็นการบ้าน
+ระดับ 1–2 ทำระหว่างช่วง "เล่น" แล้วเฉลยในคาบ · ระดับ 3 ผู้สอนเติมช่องแรกให้ดูสด แล้วทุกทีมเติมที่เหลือ · ระดับ 4 เป็นการบ้าน
 
 </div>
 
@@ -1401,7 +1444,7 @@ def fc06_write(tid, unit, addr, value):
 <div class="try">
 
 1. ดู `fc03_read()` เป็น **ตัวอย่าง** คู่กับภาพกรอบ 12 ไบต์: ช่อง 2 ไบต์ = `H` · ช่อง 1 ไบต์ = `B` · `>` = big-endian
-2. ผู้สอนเติม **ช่อง A** (รูปแบบของ PDU 5 ไบต์) ให้ดูสด → ทุกคู่เติม **ช่อง B** (len = นับไบต์ที่ตามหลังช่องนี้)
+2. ผู้สอนเติม **ช่อง A** (รูปแบบของ PDU 5 ไบต์) ให้ดูสด → ทุกทีมเติม **ช่อง B** (len = นับไบต์ที่ตามหลังช่องนี้)
 3. รัน → ไฟล์ตรวจ **3 กรอบ** ก่อนเปิดจอ · ผ่านครบ = Console ขึ้น **"ผ่าน!"** แล้วกด SW5 / SW6 ดูกรอบบนจอ
 
 </div>
@@ -1473,19 +1516,26 @@ def fc06_write(tid, unit, addr, value):
 
 <!-- _class: sec -->
 
-<div class="when">2:15 – 2:50 · คนขับ = คนที่ 2</div>
+<div class="when">2:15 – 2:50 · 35 นาที</div>
 
 # Part 4 — โชว์ (LVGL UI บนบอร์ด)
 
-## สร้างครั้งเดียว อัปเดตเฉพาะที่เปลี่ยน ฟังเหตุการณ์ทุกรอบ
+<div class="lead">สร้างครั้งเดียว อัปเดตเฉพาะที่เปลี่ยน ฟังเหตุการณ์ทุกรอบ</div>
 
-สองสมอง → เลือกวิดเจ็ต → แต่งหน้าตาตอนรัน → ฟังเหตุการณ์ → หน้า HMI · 👀 เห็น 7 นาที · 🎮 เล่น 22 นาที · 🤔 Code Quest 4 นาที · 📌 กฎ 2 นาที
+<div class="flow"><b>สองสมอง</b><i>→</i><b>เลือกวิดเจ็ต</b><i>→</i><b>แต่งหน้าตาตอนรัน</b><i>→</i><b>ฟังเหตุการณ์</b><i>→</i><b>หน้า HMI</b></div>
 
-★ [`cp4_01_one_value_many_faces.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_01_one_value_many_faces.py) · ★ [`cp4_02_style_at_runtime.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_02_style_at_runtime.py) · ★ [`cp4_03_event_router.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_03_event_router.py) · ★ [`cp4_05_hmi_page_pattern.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_05_hmi_page_pattern.py)
-
-☆ การบ้านใน Emulator: [`cp4_04_draw_on_screen.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_04_draw_on_screen.py) — วาดด้วย `ui.Line` และ `ui.DotMatrix` (ไม่มี Canvas)
+<div class="budget"><span>👀 เห็น <b>7</b> นาที</span><span>🎮 เล่น <b>22</b> นาที</span><span>🤔 Code Quest <b>4</b> นาที</span><span>📌 กฎ <b>2</b> นาที</span></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ใน cp4_03 ปั๊มควรเปิดได้เฉพาะตอน <b>กดค้าง</b> — ใครหา <b>อีกทางหนึ่ง</b> ที่ทำให้ปั๊มเปิดได้โดยไม่ต้องกดค้างเจอก่อน และตัดสินได้ว่าทางนั้นควรต้องยืนยันด้วยไหม?</div>
+
+
+---
+
+## Part 4 — ไฟล์ของส่วนนี้
+
+<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_01_one_value_many_faces.py">cp4_01_one_value_many_faces.py</a> <span>— ค่าเดียว 7 หน้าตา</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_02_style_at_runtime.py">cp4_02_style_at_runtime.py</a> <span>— แต่งหน้าตาตอนรัน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_03_event_router.py">cp4_03_event_router.py</a> <span>— ส่งต่อเหตุการณ์ด้วยตาราง</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_05_hmi_page_pattern.py">cp4_05_hmi_page_pattern.py</a> <span>— แถบสถานะ แท็บ กล่องยืนยัน</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_04_draw_on_screen.py">cp4_04_draw_on_screen.py</a> <span>— วาดด้วย ui.Line และ ui.DotMatrix</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp4_03_practise.py">cp4_03_practise.py</a> <span>— Code Quest ระดับ 3 · เติมตาราง</span></div></div></div>
+
+<div class="cap">★ = เล่นบนบอร์ดในคาบ · ☆ = การบ้าน รันใน BENTO Emulator ได้ · ทุกไฟล์อยู่ในโฟลเดอร์ core/</div>
 
 ---
 
@@ -1801,11 +1851,15 @@ def fc06_write(tid, unit, addr, value):
 
 <!-- _class: sec -->
 
-<div class="when">2:50 – 3:00 · ทั้งคู่</div>
+<div class="when">2:50 – 3:00 · 10 นาที</div>
 
 # ปิดคาบ — การ์ดออกแบบของกลุ่ม
 
-กฎหนึ่งบรรทัด 4 ใบ ประกอบกลับเป็นหัวใจของ **โปรเจกต์ของกลุ่มเอง**
+<div class="lead">กฎหนึ่งบรรทัด 4 ใบ ประกอบกลับเป็นหัวใจของโปรเจกต์ของกลุ่มเอง</div>
+
+<div class="flow"><b>วัด</b><i>→</i><b>ตัดสิน</b><i>→</i><b>ทำ</b><i>→</i><b>โชว์</b><i>→</i><b>การ์ดออกแบบของกลุ่ม</b></div>
+
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/sf-core-th.worksheet.md">sf-core-th.worksheet.md</a> <span>— ใบงานข้อ 8 การ์ดออกแบบ · ข้อ 9 Exit ticket</span></div></div></div>
 
 ---
 
@@ -1896,20 +1950,20 @@ section table { font-size: .6em; }
 
 ---
 
-## Exit ticket (คนละ 1 ข้อ) + เกณฑ์ผ่านคาบ
+## Exit ticket (ทุกคนตอบ 1 ข้อ) + เกณฑ์ผ่านคาบ
 
 <div class="cols">
 <div>
 
 <div class="goal">
 
-**คนที่ 1:** กฎหนึ่งบรรทัดข้อไหนที่โปรเจกต์ของกลุ่ม **ยังขาด** และจะเติมตรงไหน …
+**ข้อ 1:** กฎหนึ่งบรรทัดข้อไหนที่โปรเจกต์ของกลุ่ม **ยังขาด** และจะเติมตรงไหน …
 
 </div>
 
 <div class="goal" style="border-color:#1e88e5;background:#e3f2fd">
 
-**คนที่ 2:** ในโปรเจกต์ของกลุ่ม จุดไหนควรให้ระบบตอบว่า **"ไม่แน่ใจ"** แทนการเดา …
+**ข้อ 2:** ในโปรเจกต์ของกลุ่ม จุดไหนควรให้ระบบตอบว่า **"ไม่แน่ใจ"** แทนการเดา …
 
 </div>
 
