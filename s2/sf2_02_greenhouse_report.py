@@ -215,6 +215,11 @@ def show_now(w, t, h, p, az, az0, knobs):
 
 
 # ---- 6) โปรแกรมหลัก ----
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, msg):
     show_link(w, False)
     rgbmatrix.clear()
@@ -222,7 +227,7 @@ def stop(w, msg):
     show_note(w, msg, COL_BAD)
     ui.poll()
     print("หยุดที่:", msg)
-    raise SystemExit
+    raise Stop
 
 
 def on_sent(w, body, manual):
@@ -289,6 +294,8 @@ def main():
 
 try:
     main()
+except Stop:
+    pass
 finally:
     try:
         mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง

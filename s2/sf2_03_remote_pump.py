@@ -243,6 +243,11 @@ def show_knobs(w, soil, tank):
 
 
 # ---- 6) โปรแกรมหลัก ----
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, pump, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม ปั๊มต้องดับก่อน แล้วค่อยบอกเหตุผล
     show_link(w, False)
@@ -251,7 +256,7 @@ def stop(w, pump, msg, col=COL_BAD):
     rgbmatrix.clear()
     show_note(w, msg, col)
     ui.poll()
-    raise SystemExit
+    raise Stop
 
 
 def act_on(w, raw, tank, now, pump_ms, pump_t0):
@@ -326,6 +331,8 @@ def main():
 
 try:
     main()
+except Stop:
+    pass
 finally:
     try:
         mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง

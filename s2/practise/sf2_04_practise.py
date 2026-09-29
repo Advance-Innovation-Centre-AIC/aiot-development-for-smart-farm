@@ -11,7 +11,7 @@
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยต้นคาบหน้า
 # ต้องแก้ก่อนรันบนบอร์ด: WIFI_SSID, WIFI_PASS, TEAM, CROP (ตรวจกฎผ่านได้โดยไม่ต้องต่อเน็ต)
 #
-# (ทำจาก sf2_04_crop_alert.py 018151238237)
+# (ทำจาก sf2_04_crop_alert.py 28402a14d02e)
 
 import buttons
 import json
@@ -237,6 +237,11 @@ class Watch:
         self.lim = list(self.crop[2:])   # [T ต่ำ, T สูง, RH ต่ำ, RH สูง]  set แก้ T สูงได้
 
 
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม: หยุดตัววิ่ง ปิดกล่องเตือน แล้วบอกเหตุผล
     show_link(w, False)
@@ -245,7 +250,7 @@ def stop(w, msg, col=COL_BAD):
     close_box(w)
     show_status(w, msg, col)
     ui.poll()
-    raise SystemExit
+    raise Stop
 
 
 def on_command(w, s, raw):
@@ -348,6 +353,8 @@ def main():
 
 try:
     main()
+except Stop:
+    pass
 finally:
     try:
         mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง

@@ -245,13 +245,18 @@ def show_sent(w, i, sent, t, h, ok):
 
 
 # ---- 6) โปรแกรมหลัก ----
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม: ล้างจอไฟ RGB ดับไฟ "ต่อติด" แล้วบอกเหตุผลทั้งบนจอและคอนโซล
     matrix_show(0)
     w["led"].value(0)
     show_status(w, msg, col)
     print("หยุดที่:", msg)
-    raise SystemExit
+    raise Stop
 
 
 def send_all(w):
@@ -294,7 +299,10 @@ def main():
     show_status(w, "จบ ส่งได้ " + str(sent) + " ใบ จาก " + str(N), COL_OK)
 
 
-main()
+try:
+    main()
+except Stop:
+    pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) ถอดสาย USB เสียบใหม่ แล้วพิมพ์ใน Playground: import tesaiot; print(tesaiot.config()["broker"])

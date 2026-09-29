@@ -250,6 +250,11 @@ def plot(w, online, signal):
 
 
 # ---- 6) โปรแกรมหลัก ----
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, led, msg, col):
     # จบเพราะอะไรก็ตาม: ดับไฟ หยุดตัววิ่ง (ไม่งั้นมันวิ่งค้างต่อ) แล้วบอกเหตุผลบนจอ
     set_led(led, False)
@@ -268,7 +273,7 @@ def failed(w, led, took):
     rgbmatrix.fill(rgbmatrix.RED)
     beep("bad")
     print("ต่อไม่สำเร็จใน", took, "ms | ได้ยินวงนี้:", heard)
-    raise SystemExit
+    raise Stop
 
 
 def link_changed(online, sec):
@@ -325,7 +330,10 @@ def main():
     print("ออนไลน์", up * 100 // max(1, total), "% จาก", total, "วินาที | หลุด", drops, "ครั้ง")
 
 
-main()
+try:
+    main()
+except Stop:
+    pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) ใส่รหัสผ่านผิดไปหนึ่งตัว แล้วจับเวลาว่ากว่าจอจะบอกว่าผิดใช้กี่ ms เทียบกับตอนรหัสถูก

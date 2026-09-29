@@ -297,12 +297,17 @@ def buttons_and_touch(w, farm, water, toggle):
     return water.pressed_now()
 
 
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, led, msg):
     show_link(w, False)
     set_led(led, False)
     show_note(w, msg, COL_BAD)
     ui.poll()
-    raise SystemExit
+    raise Stop
 
 
 def main():
@@ -358,6 +363,8 @@ def main():
 
 try:
     main()
+except Stop:
+    pass
 finally:
     try:
         mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง

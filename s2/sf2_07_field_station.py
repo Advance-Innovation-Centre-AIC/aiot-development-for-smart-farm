@@ -273,11 +273,16 @@ def on_command(w, plc, raw, tank, now, got):
     return report_plc(plc, now)
 
 
+class Stop(Exception):
+    # จบโปรแกรมแบบปกติ (SystemExit ทำให้บอร์ดเริ่มระบบใหม่ และอาจค้างจนต้องถอดสาย)
+    pass
+
+
 def stop(w, relay, msg, col=COL_BAD):
     show_link(w, False)
     set_relay(relay, False)
     show_status(w, msg, col)
-    raise SystemExit
+    raise Stop
 
 
 def main():
@@ -341,6 +346,8 @@ def main():
 
 try:
     main()
+except Stop:
+    pass
 finally:
     try:
         mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
