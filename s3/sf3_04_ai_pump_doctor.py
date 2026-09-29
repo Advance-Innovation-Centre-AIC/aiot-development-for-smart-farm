@@ -15,7 +15,7 @@
 #            เร็ว ประหยัดเน็ต และข้อมูลฟาร์มไม่ออกนอกฟาร์ม - เทียบกับ sf3_03 ที่ใช้กฎเขียนเอง
 #            โมเดลตัวอย่างไม่ได้ฝึกจากปั๊มในฟาร์มจริง เราใช้เป็นตัวแทนเพื่อเรียนแนวคิดเท่านั้น
 # โมเดล    : หาด้วย "ชื่อ" ตามลำดับใน MODEL_KEYS: AnomalousVibration (ส่งลงบอร์ดจาก Local Edge AI Store)
-#            ก่อน ถ้าบอร์ดไม่มีจึงใช้ Motion ที่ติดมากับบอร์ด · จอบอกว่าใช้ตัวไหนอยู่
+#            ก่อน ถ้าบอร์ดไม่มีหรือเลือกไม่สำเร็จจึงใช้ Motion ที่ติดมากับบอร์ด · จอบอกว่าใช้ตัวไหนอยู่
 #            ถ้าผลไม่ขยับนาน จอจะบอกให้ลองรีเซ็ตบอร์ด
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) และ BENTO Emulator
 
@@ -28,7 +28,7 @@ import ui
 # ---- 1) ตั้งค่า (แก้ได้) ----
 VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-MODEL_KEYS = ("AnomalousVibration", "Motion")   # หาตามลำดับ: โมเดลจาก Store ก่อน ไม่มีค่อยใช้โมเดลในตัว
+MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
                          # ลองเปลี่ยนเป็น ("Cough",) ("Alarm",) ("Siren",) (ฟังเสียง) หรือ ("Push",)
 CONF_MIN = 60            # มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุการณ์
 CONFIRM_N = 3            # คลาสอันตรายต้องชนะติดกันกี่ครั้งถึงจะเตือน
@@ -63,18 +63,14 @@ def beep(*notes):
         time.sleep_ms(120)
 
 
-def find_model(keys):
+def find_models(keys):
     # หาโมเดลจาก "ชื่อ" ตามลำดับใน keys เพราะลำดับบนแต่ละบอร์ดไม่เหมือนกัน (เปลี่ยนได้หลังรีบูต)
-    # เก็บแค่ ลำดับ ชื่อ และชื่อคลาส ไม่เก็บทั้งแถว
+    # คืนรายการ (ลำดับ, ชื่อ, ชื่อคลาส) ทุกตัวที่ชื่อตรง ตัวแรกเลือกไม่สำเร็จ main() จะลองตัวถัดไป
     try:
         ms = edge_ai.models()
     except Exception:
-        return None             # แกน AI ไม่ตอบ = ถือว่าไม่พบ
-    for key in keys:
-        for m in ms:
-            if key.lower() in m["name"].lower():
-                return m["index"], m["name"], m["labels"]
-    return None
+        return []               # แกน AI ไม่ตอบ = ถือว่าไม่พบ
+    return [(m["index"], m["name"], m["labels"]) for key in keys for m in ms if key.lower() in m["name"].lower()]
 
 
 def uses_mic(index):
@@ -310,21 +306,22 @@ def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
     w = build_screen()
-    found = find_model(MODEL_KEYS)
-    if found is None:
+    found = find_models(MODEL_KEYS)
+    if not found:
         msg = "ไม่พบโมเดล " + " / ".join(MODEL_KEYS) + " บนบอร์ดนี้"
         say(w, msg, COL_BAD)
         ui.poll()
         print(msg, "- ใช้ sf3_03 แทน")      # sf3_03 = กฎที่เขียนเอง ไม่ต้องใช้โมเดล
         return
-    index, name, labels = found
-    mic = uses_mic(index)
-    show_model(w, name, labels, mic)
     alarm = led_named("RGB_RED")
     alerts = None
     try:
-        if start(w, index):
-            alerts = watch(w, mic, alarm)
+        for index, name, labels in found:      # ตัวนี้เลือกไม่สำเร็จ ลองตัวถัดไป (เช่น Motion ในตัว)
+            mic = uses_mic(index)
+            show_model(w, name, labels, mic)
+            if start(w, index):
+                alerts = watch(w, mic, alarm)
+                break
     finally:                                   # หยุดกลางทางก็ปล่อยแกน AI และดับไฟเสมอ
         stop_ai()
         set_led(alarm, False)

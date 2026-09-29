@@ -337,22 +337,24 @@ def main():
     g, sw5 = Guard(), Button(0)            # Button(0) = SW5 (ปุ่มล่าง)
     every = TICK_MS // SAMPLE_MS   # อัปเดตจอทุกกี่รอบอ่าน (TICK_MS ต้องไม่น้อยกว่า SAMPLE_MS)
     tick, t0 = 0, time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        on_arm(w, g, sw5)                                  # 0) ปุ่ม / สวิตช์บนจอ
-        got = read_radar()                                 # 1) อ่าน
-        on_radar(w, g, got is not None)
-        if got is not None:
-            raw, moving, energy = got
-            cm = None if raw is None else smooth(g.hist, raw)
-            alert_cm = zone_cm()
-            near = decide(w, g, cm, alert_cm)          # 2) ตัดสิน + 3) ทำ
-            if tick % every == 0:                          # 4) โชว์
-                show_gate(w, g, near, cm, moving)
-                show_zone(w, alert_cm, cm, energy)
-        matrix_tick(g)
-        tick += 1
-        wait_ms(SAMPLE_MS, (sw5,))         # รอ แต่ยังคอยฟังปุ่ม
-    finish(w, g.count)
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            on_arm(w, g, sw5)                              # 0) ปุ่ม / สวิตช์บนจอ
+            got = read_radar()                             # 1) อ่าน
+            on_radar(w, g, got is not None)
+            if got is not None:
+                raw, moving, energy = got
+                cm = None if raw is None else smooth(g.hist, raw)
+                alert_cm = zone_cm()
+                near = decide(w, g, cm, alert_cm)          # 2) ตัดสิน + 3) ทำ
+                if tick % every == 0:                      # 4) โชว์
+                    show_gate(w, g, near, cm, moving)
+                    show_zone(w, alert_cm, cm, energy)
+            matrix_tick(g)
+            tick += 1
+            wait_ms(SAMPLE_MS, (sw5,))     # รอ แต่ยังคอยฟังปุ่ม
+    finally:                               # หยุดกลางทาง (Stop) ก็ล้างจอไฟ RGB และสรุปเสมอ
+        finish(w, g.count)
 
 
 main()

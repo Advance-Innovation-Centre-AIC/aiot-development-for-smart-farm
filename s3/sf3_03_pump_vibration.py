@@ -324,22 +324,23 @@ def main():
     sw5 = Button(0)                     # SW5 (ปุ่มล่าง) = เรียนรู้ค่าปกติใหม่
     t0 = t_draw = time.ticks_ms()
     st, mx, fails = Watch(t0), [None, t0], 0
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        now = time.ticks_ms()
-        m = magnitude()                                 # 1) อ่าน
-        fails = 0 if m is not None else fails + 1
-        if m is not None and st.push(m, now):
-            think(w, st, now)                           # 2) ตัดสิน
-        if sw5.pressed_now():
-            st.relearn(now)
-            w["learn"].color(COL_WARN)
-            beep(72, 79)
-        if time.ticks_diff(now, t_draw) >= TICK_MS:     # 3) โชว์ ทุก TICK_MS
-            t_draw = now
-            refresh(w, st, now, mx, fails)
-        wait_ms(SAMPLE_MS, (sw5,))                      # รอ แต่ยังคอยฟังปุ่ม
-
-    finish(w, st)
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            now = time.ticks_ms()
+            m = magnitude()                             # 1) อ่าน
+            fails = 0 if m is not None else fails + 1
+            if m is not None and st.push(m, now):
+                think(w, st, now)                       # 2) ตัดสิน
+            if sw5.pressed_now():
+                st.relearn(now)
+                w["learn"].color(COL_WARN)
+                beep(72, 79)
+            if time.ticks_diff(now, t_draw) >= TICK_MS:  # 3) โชว์ ทุก TICK_MS
+                t_draw = now
+                refresh(w, st, now, mx, fails)
+            wait_ms(SAMPLE_MS, (sw5,))                  # รอ แต่ยังคอยฟังปุ่ม
+    finally:                                            # หยุดกลางทาง (Stop) ก็ล้างจอไฟ RGB และสรุปเสมอ
+        finish(w, st)
 
 
 main()

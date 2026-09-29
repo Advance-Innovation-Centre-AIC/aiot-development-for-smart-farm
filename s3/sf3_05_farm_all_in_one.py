@@ -101,14 +101,17 @@ def wait_ms(ms, btns):
 def read_air():
     # คืน (อุณหภูมิ, ความชื้น, ความกดอากาศ) ของห้อง ปัดทศนิยม 1 ตำแหน่ง (จอกับ JSON เห็นเลขเดียวกัน)
     # ตัวไหนอ่านไม่ได้รอบนี้เป็น None รอบหน้าอ่านใหม่
-    try:
-        t_raw, h = sensors.sht40.temperature(), sensors.sht40.humidity()
-        t = t_raw + TEMP_OFFSET
-        if TEMP_OFFSET:                 # ชดเชยอุณหภูมิแล้ว ความชื้นต้องแปลงเป็นของห้องด้วย
-            h = room_humidity(h, t_raw, t)
-        t, h = round(t, 1), round(h, 1)
-    except Exception:
-        t = h = None
+    t = h = None
+    for _ in range(3):                  # บัสไม่ว่างบางจังหวะ จึงลองอ่านได้ถึง 3 ครั้ง
+        try:
+            t_raw, h = sensors.sht40.temperature(), sensors.sht40.humidity()
+            t = t_raw + TEMP_OFFSET
+            if TEMP_OFFSET:             # ชดเชยอุณหภูมิแล้ว ความชื้นต้องแปลงเป็นของห้องด้วย
+                h = room_humidity(h, t_raw, t)
+            t, h = round(t, 1), round(h, 1)
+            break
+        except Exception:               # พังที่บรรทัดอ่าน t กับ h จึงยังเป็น None อยู่
+            time.sleep_ms(20)
     try:
         p = round(sensors.dps368.pressure(), 1)
     except Exception:
@@ -194,7 +197,7 @@ OFFLINE = "ออฟไลน์ (ทำงานต่อ)"          # เน�
 def go_online(w):
     # WiFi -> broker -> ฟัง cmd · ขั้นไหนพังคืน False แล้วฟาร์มทำงานต่อแบบออฟไลน์
     # client id สร้างจาก TEAM: ถ้าหลายกลุ่มลืมแก้ teamXX จะชนกันแล้ว broker เตะกันหลุด จึงไม่ต่อเลย
-    if not TEAM[4:].isdigit():
+    if not (len(TEAM) == 6 and TEAM[:4] == "team" and TEAM[4:].isdigit() and TEAM != "team00"):
         show_note(w, "แก้ TEAM ก่อน: " + OFFLINE, COL_WARN)
         return False
     show_note(w, "ต่อ WiFi...", COL_WARN)
@@ -234,7 +237,8 @@ def led(x, y, col):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    label(title, x + 12, y + 6, COL_INFO)
+    if title:                           # None = กล่องเปล่า ไม่มีหัวเรื่อง
+        label(title, x + 12, y + 6, COL_INFO)
 
 
 def build_screen():
@@ -257,7 +261,7 @@ def build_screen():
     w["guard"] = label(" ", 546, 124)
     w["siren"] = led(546, 176, COL_BAD)
     w["pen"] = label("ถอยห่างบอร์ด", 592, 184)       # เรดาร์กำลังจำฉากนิ่ง
-    ui.Panel(x=12, y=278, w=668, h=62, color=COL_CARD, min=COL_DIM, max=12, value=1)  # เว้นมุมปุ่ม Console
+    card(12, 278, 668, 62, None)        # แถบล่าง · เว้นมุมขวาไว้ให้ปุ่ม Console
     w["note"] = label(" ", 24, 286)
     w["cmd"] = label("แอป: -", 24, 312, COL_INFO)
     w["send"] = ui.Button("ส่งรายงานเลย", x=520, y=286, w=150, h=46).id()
@@ -305,11 +309,12 @@ def tick(w, f, down, now):
     f.fan_at = FAN_LO + pots.read(2) * FAN_SPAN / 4095
     f.guard = GUARD_LO + pots.read(3) * GUARD_SPAN // 4095
     f.cm = read_cm()
-    f.remote = max(0, f.remote - TICK_MS)       # เวลาที่แอปสั่งรดน้ำ นับถอยหลังจนหยุดเอง
+    # f.remote > 0 = แอปสั่งรดอีกกี่ ms · < 0 = แอปสั่งปิด งดรดอัตโนมัติอีกกี่ ms
+    f.remote -= max(-TICK_MS, min(TICK_MS, f.remote))   # ขยับเข้าหา 0 ทีละไม่เกิน TICK_MS ทั้งสองทาง
     if decide(f, f.cm is not None and f.cm < f.guard):     # เสียง + event เฉพาะตอนคอกเปลี่ยน
         beep(84, 76) if f.inside else beep(79, 84)
         send(f, "event", {"id": TEAM, "event": "intruder" if f.inside else "clear", "cm": f.cm})
-    f.pump = f.auto or down or f.remote > 0
+    f.pump = (f.auto and f.remote >= 0) or down or f.remote > 0   # กด SW5 ค้างยังรดได้เสมอ
     show_farm(w, f)
     mode = 2 if f.inside and not f.silenced else int(f.fan or f.pump)
     if mode != f.shown or time.ticks_diff(now, f.t_mx) >= 3000:     # ส่งซ้ำทุก 3 วิ เผื่อเฟรมหล่น
@@ -326,7 +331,7 @@ def check_net(w, f):
     if msg:
         act, sec = app_request(msg[1])
         if act == "pump":
-            f.remote = sec * 1000               # 0 = แอปสั่งปิด
+            f.remote = sec * 1000 if sec else -30000   # แอปสั่งปิด = ปิดทันที และงดรดอัตโนมัติ 30 วิ
         f.silenced = f.silenced or act == "ack"
         if act == "beep":
             beep(69)                    # โน้ต MIDI ไม่ใช่เฮิรตซ์ = เรียกเจ้าของ
@@ -356,25 +361,27 @@ def main():
     beep(72, 79)
     water, ack = Button(0), Button(1)
     t0 = t_tick = t_rep = time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        wait_ms(100, (water, ack))              # ถามกล่องคำสั่งทุก 0.1 วิ (กล่องมีช่องเดียว)
-        now = time.ticks_ms()
-        force = False
-        for ev in ui.poll():                    # ปุ่มบนจอสัมผัส (อ่านที่นี่ที่เดียว)
-            force = force or ev["handle"] == w["send"]
-        check_net(w, f)
-        if ack.pressed_now() and f.inside:
-            f.silenced = True                   # SW6 = รับทราบ ไซเรนเงียบจนคอกเปลี่ยนอีกครั้ง
-            beep(76)
-        if time.ticks_diff(now, t_tick) >= TICK_MS:
-            t_tick = now
-            tick(w, f, water.down, now)
-        if force or time.ticks_diff(now, t_rep) >= REPORT_MS:
-            t_rep = now
-            report(w, f, "touch" if force else "timer")
-    matrix(-1)
-    if f.online:
-        mqtt.disconnect()
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            wait_ms(100, (water, ack))          # ถามกล่องคำสั่งทุก 0.1 วิ (กล่องมีช่องเดียว)
+            now = time.ticks_ms()
+            force = False
+            for ev in ui.poll():                # ปุ่มบนจอสัมผัส (อ่านที่นี่ที่เดียว)
+                force = force or ev["handle"] == w["send"]
+            check_net(w, f)
+            if ack.pressed_now() and f.inside:
+                f.silenced = True               # SW6 = รับทราบ ไซเรนเงียบจนคอกเปลี่ยนอีกครั้ง
+                beep(76)
+            if time.ticks_diff(now, t_tick) >= TICK_MS:
+                t_tick = now
+                tick(w, f, water.down, now)
+            if force or time.ticks_diff(now, t_rep) >= REPORT_MS:
+                t_rep = now
+                report(w, f, "touch" if force else "timer")
+    finally:                                    # หยุดกลางทางก็ดับจอไฟ RGB และตัดสาย broker ให้เรียบร้อย
+        matrix(-1)
+        if f.online:
+            mqtt.disconnect()
     show_note(w, "จบรอบ", COL_DIM)
 
 

@@ -10,7 +10,7 @@
 #            sf3_01_pen_guard.py เพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบกับของตัวเอง
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยคาบหน้า · ทำที่บ้านใน BENTO Emulator ได้
 #
-# (ทำจาก sf3_01_pen_guard.py c7ae401ff97d)
+# (ทำจาก sf3_01_pen_guard.py e78ff894e963)
 
 import buttons
 import pots
@@ -157,9 +157,9 @@ def confirm(inside, streak, near):
 
 
 def self_test():
-    # ตรวจ confirm() 7 กรณีก่อนเปิดจอ (ใช้ได้เมื่อ CONFIRM_N ตั้งแต่ 2 ขึ้นไป)
+    # ตรวจ confirm() 7 กรณีก่อนเปิดจอ · ตั้ง CONFIRM_N = 1 (ข้อ 1 ท้ายไฟล์) ก็ตรวจได้: เห็นครั้งเดียวเชื่อเลย
     n = CONFIRM_N
-    for a, want in (((False, 0, False), (False, 0)), ((False, 0, True), (False, 1)),
+    for a, want in (((False, 0, False), (False, 0)), ((False, 0, True), (False, 1) if n > 1 else (True, 0)),
                     ((False, n - 2, True), (False, n - 1)), ((False, n - 1, True), (True, 0)),
                     ((True, 1, True), (True, 0)), ((True, n - 1, False), (False, 0)),
                     ((False, 1, False), (False, 0))):
@@ -349,22 +349,24 @@ def main():
     g, sw5 = Guard(), Button(0)            # Button(0) = SW5 (ปุ่มล่าง)
     every = TICK_MS // SAMPLE_MS   # อัปเดตจอทุกกี่รอบอ่าน (TICK_MS ต้องไม่น้อยกว่า SAMPLE_MS)
     tick, t0 = 0, time.ticks_ms()
-    while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-        on_arm(w, g, sw5)                                  # 0) ปุ่ม / สวิตช์บนจอ
-        got = read_radar()                                 # 1) อ่าน
-        on_radar(w, g, got is not None)
-        if got is not None:
-            raw, moving, energy = got
-            cm = None if raw is None else smooth(g.hist, raw)
-            alert_cm = zone_cm()
-            near = decide(w, g, cm, alert_cm)          # 2) ตัดสิน + 3) ทำ
-            if tick % every == 0:                          # 4) โชว์
-                show_gate(w, g, near, cm, moving)
-                show_zone(w, alert_cm, cm, energy)
-        matrix_tick(g)
-        tick += 1
-        wait_ms(SAMPLE_MS, (sw5,))         # รอ แต่ยังคอยฟังปุ่ม
-    finish(w, g.count)
+    try:
+        while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
+            on_arm(w, g, sw5)                              # 0) ปุ่ม / สวิตช์บนจอ
+            got = read_radar()                             # 1) อ่าน
+            on_radar(w, g, got is not None)
+            if got is not None:
+                raw, moving, energy = got
+                cm = None if raw is None else smooth(g.hist, raw)
+                alert_cm = zone_cm()
+                near = decide(w, g, cm, alert_cm)          # 2) ตัดสิน + 3) ทำ
+                if tick % every == 0:                      # 4) โชว์
+                    show_gate(w, g, near, cm, moving)
+                    show_zone(w, alert_cm, cm, energy)
+            matrix_tick(g)
+            tick += 1
+            wait_ms(SAMPLE_MS, (sw5,))     # รอ แต่ยังคอยฟังปุ่ม
+    finally:                               # หยุดกลางทาง (Stop) ก็ล้างจอไฟ RGB และสรุปเสมอ
+        finish(w, g.count)
 
 
 main()

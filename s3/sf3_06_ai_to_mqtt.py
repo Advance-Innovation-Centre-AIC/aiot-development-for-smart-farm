@@ -2,7 +2,8 @@
 #
 # ภารกิจ   : รันโมเดล AI บนบอร์ด (หาด้วยชื่อ) แล้วส่ง "ผลที่ AI สรุปแล้ว" ขึ้น bento-aiot/<TEAM>/ai
 #            ส่งเมื่อมีผลใหม่ที่ป้ายเปลี่ยน และส่งซ้ำทุก 2 วินาทีเป็นสัญญาณชีพ (heartbeat)
-# ลองเล่น  : แก้ WIFI_SSID WIFI_PASS TEAM แล้วรัน · เปิดแอปของกลุ่ม (s2/app/) หรือพิมพ์บนเครื่องตัวเอง
+# ลองเล่น  : แก้ WIFI_SSID WIFI_PASS TEAM แล้วรัน · เปิดหน้า apps/web-dashboard/ (แสดง .../ai และเตือนเมื่อ anomaly)
+#            หรือพิมพ์บนเครื่องตัวเอง
 #            mosquitto_sub -h broker.hivemq.com -t 'bento-aiot/<TEAM>/ai' -v
 #            วางบอร์ดนิ่ง แล้วเขย่า ดูว่าข้อความเปลี่ยนตอนไหน และ heartbeat มาทุกกี่วินาที
 # ของบนบอร์ดที่ใช้ : แกน AI บนชิป (edge_ai) + IMU, WiFi + MQTT, ลำโพง (ดังตอนป้ายเพิ่งเป็นอันตราย)
@@ -10,7 +11,7 @@
 # แนวคิด AIoT: ส่ง "ผลสรุป" ไม่ใช่ข้อมูลดิบ = ประหยัดเน็ต และข้อมูลดิบไม่ออกนอกฟาร์ม
 #            ส่งเฉพาะตอนมีความหมาย (ป้ายเปลี่ยน) + heartbeat ให้แอปรู้ว่าบอร์ดยังอยู่ · ห่างกันอย่างน้อย 200 ms
 # โมเดล    : หาด้วยชื่อตามลำดับ MODEL_KEYS: AnomalousVibration (จาก Local Edge AI Store) ก่อน
-#            ถ้าบอร์ดไม่มีจึงใช้ Motion ที่ติดมากับบอร์ด · ข้อความส่งแค่ "ชื่อ" โมเดล ไม่ส่งรหัสโมเดล
+#            ถ้าบอร์ดไม่มีหรือเลือกไม่สำเร็จจึงใช้ Motion ที่ติดมากับบอร์ด · ข้อความส่งแค่ "ชื่อ" โมเดล ไม่ส่งรหัสโมเดล
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) · ใน Emulator MQTT เป็นแบบจำลอง
 # สัญญา MQTT: หัวข้อ .../ai = {"id": ทีม, "n": ลำดับข้อความ, "model": ชื่อโมเดล, "label": ป้าย, "conf": ความมั่นใจ %}
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM · ยังไม่แก้ TEAM = ทำงานออฟไลน์ (พิมพ์ผลลง Console แทน)
@@ -28,7 +29,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05 (ต้องตรงกับแอป)
 BROKER = "broker.hivemq.com"
 TOPIC = "bento-aiot/" + TEAM + "/ai"
-MODEL_KEYS = ("AnomalousVibration", "Motion")   # หาตามลำดับ: โมเดลจาก Store ก่อน ไม่มีค่อยใช้โมเดลในตัว
+MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
 DANGER = ("anomaly", "shaking")        # ป้ายที่ถือว่าอันตราย (ดังเสียง + ไฟแดง)
 HEARTBEAT_MS = 2000                    # ป้ายไม่เปลี่ยน ก็ยังส่งซ้ำทุกเท่านี้
 GAP_MS = 200                           # ห้ามส่งถี่กว่านี้ (broker สาธารณะ ใช้ร่วมกันหลายกลุ่ม)
@@ -49,17 +50,13 @@ def beep(*notes):
         time.sleep_ms(120)
 
 
-def find_model(keys):
-    # หาโมเดลจากชื่อตามลำดับ (ลำดับบนบอร์ดเปลี่ยนได้หลังรีบูต) เก็บแค่ ลำดับ กับ ชื่อ
+def find_models(keys):
+    # โมเดลที่ชื่อตรงกับ keys เรียงตามลำดับที่อยากใช้ (ลำดับบนบอร์ดเปลี่ยนได้หลังรีบูต) เก็บแค่ ลำดับ กับ ชื่อ
     try:
         ms = edge_ai.models()
     except Exception:
-        return None
-    for key in keys:
-        for m in ms:
-            if key.lower() in m["name"].lower():
-                return m["index"], m["name"]
-    return None
+        return []
+    return [(m["index"], m["name"]) for key in keys for m in ms if key.lower() in m["name"].lower()]
 
 
 def read_result():
@@ -71,29 +68,34 @@ def read_result():
 
 
 # ---- 3) สมอง (ตัดสินใจ) ----
-def should_send(new, changed, since_ms):
-    # ส่งเมื่อ: ห่างครั้งก่อนพอ และ (ผลใหม่ที่ป้ายเปลี่ยน หรือ ถึงเวลา heartbeat)
+def should_send(changed, since_ms):
+    # ส่งเมื่อ: ห่างครั้งก่อนพอ และ (ป้ายต่างจากที่ส่งไปล่าสุด หรือ ถึงเวลา heartbeat)
+    # ป้ายที่เปลี่ยนระหว่างรอช่วงห่าง 200 ms จะค้างไว้ แล้วส่งทันทีที่ครบช่วง ไม่หล่นหาย
     if since_ms < GAP_MS:
         return False
-    return (new and changed) or since_ms >= HEARTBEAT_MS
+    return changed or since_ms >= HEARTBEAT_MS
 
 
 # ---- 4) เครือข่าย ----
 def go_online(w):
     # WiFi -> broker · ขั้นไหนพังคืน False แล้วทำงานต่อแบบออฟไลน์ (พิมพ์ผลลง Console)
     # client id สร้างจาก TEAM: ถ้าหลายกลุ่มลืมแก้ teamXX จะชนกันแล้ว broker เตะกันหลุด จึงไม่ต่อเลย
-    if not TEAM[4:].isdigit():
-        note(w, "แก้ TEAM ก่อน: ออฟไลน์", COL_WARN)
+    if not (len(TEAM) == 6 and TEAM[:4] == "team" and TEAM[4:].isdigit() and TEAM != "team00"):
+        note(w, "แก้ TEAM ก่อน (team01-team99): ออฟไลน์", COL_WARN)
         return False
     note(w, "ต่อ WiFi...", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    step = "WiFi"                      # บอกให้ชัดว่าพังขั้นไหน: WiFi หรือ broker
     try:
-        ok = (wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0"
-              and mqtt.connect(BROKER, port=1883, client_id="bento-ai-" + TEAM, keepalive=60))
+        if wifi.connect(WIFI_SSID, WIFI_PASS) and wifi.ip() != "0.0.0.0":
+            step = "broker"
+            if mqtt.connect(BROKER, port=1883, client_id="bento-ai-" + TEAM, keepalive=60):
+                note(w, "ออนไลน์ " + TOPIC, COL_OK)
+                return True
     except OSError:
-        ok = False
-    note(w, ("ออนไลน์ " + TOPIC) if ok else "ออฟไลน์ (ทำงานต่อ)", COL_OK if ok else COL_WARN)
-    return bool(ok)
+        pass
+    note(w, "ต่อ " + step + " ไม่ได้: ออฟไลน์ (ทำงานต่อ)", COL_WARN)
+    return False
 
 
 def send(online, obj):
@@ -102,8 +104,7 @@ def send(online, obj):
     print(line)
     if online:
         try:
-            mqtt.publish(TOPIC, line)
-            return True
+            return bool(mqtt.publish(TOPIC, line))
         except OSError:
             pass
     return False
@@ -151,17 +152,18 @@ def main():
     if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
         ui.volume(SPEAKER)
     w = build_screen()
-    found = find_model(MODEL_KEYS)
-    if found is None:
-        note(w, "ไม่พบโมเดล " + " / ".join(MODEL_KEYS), COL_BAD)
+    name = None
+    for idx, nm in find_models(MODEL_KEYS):   # ตัวแรกเลือกไม่สำเร็จ ก็ลองตัวถัดไป (เช่น โมเดลในตัว)
+        try:
+            edge_ai.select(idx)
+            name = nm
+            break
+        except OSError:
+            pass
+    if name is None:
+        note(w, "ไม่พบหรือโหลดโมเดลไม่ได้: " + " / ".join(MODEL_KEYS), COL_BAD)
         return
-    idx, name = found
     w["model"].text("โมเดล: " + name)
-    try:
-        edge_ai.select(idx)
-    except OSError:
-        note(w, "โหลดโมเดลไม่สำเร็จ", COL_BAD)
-        return
     online = go_online(w)
     seq, lab, conf, sent_lab, n = -1, None, 0, None, 0
     t0 = t_sent = time.ticks_ms()
@@ -176,7 +178,7 @@ def main():
                 show_result(w, lab, conf)
                 if lab in DANGER and lab != old:
                     beep(84, 76)                           # เพิ่งเป็นอันตราย: ดังครั้งเดียว
-            if lab is not None and should_send(new, lab != sent_lab, time.ticks_diff(now, t_sent)):
+            if lab is not None and should_send(lab != sent_lab, time.ticks_diff(now, t_sent)):
                 n += 1                                     # 2) ส่งเมื่อมีความหมาย หรือถึง heartbeat
                 ok = send(online, {"id": TEAM, "n": n, "model": name, "label": lab, "conf": conf})
                 t_sent, sent_lab = now, lab
@@ -188,7 +190,10 @@ def main():
             ui.poll()
             time.sleep_ms(TICK_MS)
     finally:
-        edge_ai.stop()                                     # หยุดโมเดลเสมอ แม้โปรแกรมถูกหยุดกลางทาง
+        try:
+            edge_ai.stop()                                 # หยุดโมเดลเสมอ แม้โปรแกรมถูกหยุดกลางทาง
+        except OSError:
+            pass
         if online:
             mqtt.disconnect()
 
