@@ -297,7 +297,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 
 <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
   <rect x="10" y="10" width="980" height="44" rx="10" fill="#1b5e20"/>
-  <text x="500" y="41" text-anchor="middle" font-size="24" font-weight="700" fill="#fff">โปรเจกต์กลุ่ม — นำเสนอบนบอร์ดจริง 26 ต.ค.</text>
+  <text x="500" y="41" text-anchor="middle" font-size="24" font-weight="700" fill="#fff">โปรเจกต์กลุ่ม — นำเสนอบนบอร์ดจริงวัน Project Showcase</text>
   <g font-size="19" text-anchor="middle">
     <rect x="20" y="70" width="176" height="150" rx="12" fill="#e3f2fd" stroke="#1e88e5" stroke-width="3"/>
     <text x="108" y="104" font-size="34">🖥️</text><text x="108" y="140" font-weight="700" fill="#1565c0">1. Smart HMI</text>
@@ -504,7 +504,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 
 ![w:600](img/ide/ide_welcome_devkit.png)
 
-<div class="cap">หน้าจอจริงของ BENTO IDE — หน้า Welcome เลือก TESAIoT Dev Kit แล้วกด "Flash this board →" (ภาพถ่ายเมื่อ 28 ก.ย. 2569)</div>
+<div class="cap">หน้าจอจริงของ BENTO IDE — หน้า Welcome เลือก TESAIoT Dev Kit แล้วกด "Flash this board →"</div>
 
 </div>
 </div>
@@ -1905,7 +1905,7 @@ section table { font-size: .9em; }
 
 **อีโมจิ:** Twemoji — Twitter, Inc. และผู้ร่วมพัฒนา (jdecked/twemoji) — CC BY 4.0 · สูตรคณิตศาสตร์แสดงด้วย KaTeX
 
-**ข้อมูลฮาร์ดแวร์:** TESAIoT Dev Kit SDK — <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/> · ค่าที่วัดบนบอร์ดจริง (อุณหภูมิ 35.4–36.0 °C, ชิป IMU 37.2 °C, 1010.95 hPa, IMU เอียง ~39°) วัดบนบอร์ด TESAIoT Dev Kit ของผู้สอน firmware 2.4.1 เช้าวันที่ 28 ก.ย. 2569 · ค่าไอน้ำอิ่มตัวจากตารางมาตรฐานทางอุตุนิยมวิทยา
+**ข้อมูลฮาร์ดแวร์:** TESAIoT Dev Kit SDK — <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/> · ค่าที่วัดบนบอร์ดจริง (อุณหภูมิ 35.4–36.0 °C, ชิป IMU 37.2 °C, 1010.95 hPa, IMU เอียง ~39°) วัดบนบอร์ด TESAIoT Dev Kit ของผู้สอน firmware 2.4.1 · ค่าไอน้ำอิ่มตัวจากตารางมาตรฐานทางอุตุนิยมวิทยา
 
 ---
 
