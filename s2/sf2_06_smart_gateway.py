@@ -31,7 +31,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก (ต้องตรงกับ field_sim.py หรือบอร์ดแปลงของอีกกลุ่ม)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-gw-" + TEAM         # ไม่ซ้ำกับบอร์ดแปลง (bento-field-...) หรือแอป
+CLIENT_ID = "bento-gw-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 BASE = "bento-aiot/" + TEAM + "/"
 BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
 SOIL_MIN = 30                          # ดินแห้งกว่านี้ (%) = ถึงเวลารดน้ำ
@@ -182,6 +182,12 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
     return ch
 
 
+def show_link(w, ok):
+    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
+    w["mq"].value(1 if ok else 0)
+    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+
+
 def build_screen():
     # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
@@ -202,6 +208,8 @@ def build_screen():
     w["s_pump"] = w["chart"].add_series(COL_WARN)
     ui.Label(BTN_NAMES[0] + "=รดน้ำ " + BTN_NAMES[1] + "=ออโต้", x=424, y=290, color=COL_DIM, value=14)
     w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
@@ -290,6 +298,7 @@ def buttons_and_touch(w, farm, water, toggle):
 
 
 def stop(w, led, msg):
+    show_link(w, False)
     set_led(led, False)
     show_note(w, msg, COL_BAD)
     ui.poll()
@@ -306,6 +315,7 @@ def main():
     problem = connect_gateway(w)
     if problem:
         stop(w, led, problem)
+    show_link(w, True)
     show_note(w, "ออนไลน์ " + TEAM, COL_OK)
     farm, water, toggle = Farm(), Button(0), Button(1)
     n = 0
@@ -346,7 +356,13 @@ def main():
     stop(w, led, "จบรอบ")
 
 
-main()
+try:
+    main()
+finally:
+    try:
+        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+    except Exception:
+        pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) ปิด field_sim.py กลางคัน แล้วดูว่า Gateway รู้ตัวภายในกี่วินาที (ดู STALE_MS กับ check_plc_alive)

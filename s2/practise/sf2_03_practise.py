@@ -12,7 +12,7 @@
 #            (ลองเองก่อน แล้วค่อยเปิดดูเมื่อจำเป็น)
 # ต้องแก้ก่อนรันบนบอร์ด: WIFI_SSID, WIFI_PASS, TEAM (ตรวจกฎผ่านได้โดยไม่ต้องต่อเน็ต)
 #
-# (ทำจาก sf2_03_remote_pump.py bf4d242bca37)
+# (ทำจาก sf2_03_remote_pump.py 987fa1296dcb)
 
 import buttons
 import gpio
@@ -30,7 +30,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 TEAM = "teamXX"                        # เลขกลุ่มที่ผู้สอนแจก เช่น team05 (team00 = บอร์ดผู้สอนหน้าห้อง)
 
 BROKER = "broker.hivemq.com"           # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-farm-" + TEAM       # ต้องไม่ซ้ำกับใครบน broker (แอปจึงต่อท้ายด้วยตัวสุ่ม)
+CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd"
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
@@ -211,6 +211,12 @@ def card(x, y, w, h, title):
     return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
+def show_link(w, ok):
+    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
+    w["mq"].value(1 if ok else 0)
+    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+
+
 def build_screen():
     # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
@@ -230,6 +236,8 @@ def build_screen():
     w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
     ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
@@ -256,6 +264,7 @@ def show_knobs(w, soil, tank):
 # ---- 6) โปรแกรมหลัก ----
 def stop(w, pump, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม ปั๊มต้องดับก่อน แล้วค่อยบอกเหตุผล
+    show_link(w, False)
     set_led(pump, False)
     rgbmatrix.scroll("")
     rgbmatrix.clear()
@@ -296,6 +305,7 @@ def main():
     problem = connect_farm(w)
     if problem:
         stop(w, pump, problem)
+    show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
     stop_btn = Button(0)
     got = n = pump_ms = pump_t0 = 0
@@ -335,7 +345,13 @@ def main():
     stop(w, pump, "เลิกฟัง ได้รับ %d คำสั่ง" % got, COL_DIM)   # ดับปั๊มก่อนจบเสมอ
 
 
-main()
+try:
+    main()
+finally:
+    try:
+        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+    except Exception:
+        pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) ส่ง {"cmd":"pump","on":1,"sec":9999} จากช่อง JSON ใน app/mqtt_dashboard.html (ใส่เลขกลุ่มในช่องทีม)

@@ -69,8 +69,12 @@ export class Alerts {
   check(src, data, now = Date.now()) {
     for (const r of this.rules) {
       if (!r.on || r.src !== src || !(r.key in data)) continue;
-      const hit = compare(data[r.key], r.op, r.val);
+      let hit = compare(data[r.key], r.op, r.val);
       const st = this.state[r.id] || (this.state[r.id] = { active: false, last: 0 });
+      if (r.win > 1) {                 // เตือนเมื่อจริงอย่างน้อย need ใน win ข้อความล่าสุด (กันป้ายที่สลับไปมา)
+        st.hist = (st.hist || []).concat(hit).slice(-r.win);
+        hit = st.hist.filter(Boolean).length >= (r.need || r.win);
+      }
       if (src === "event") {
         if (hit) this.maybeFire(r, st, data[r.key], now);
       } else {
@@ -180,7 +184,7 @@ export class Alerts {
     const paint = () => {
       title.textContent = r.name;
       cond.textContent = r.src === "silence" ? r.key + " เงียบเกิน " + r.val + " วิ" :
-        r.src + " · " + r.key + " " + r.op + " " + r.val;
+        r.src + " · " + r.key + " " + r.op + " " + r.val + (r.win > 1 ? " · " + (r.need || r.win) + " ใน " + r.win + " ใบล่าสุด" : "");
       cond.textContent += " · เว้น " + r.cool + " วิ · " + LEVELS[r.level];
       row.dataset.level = r.level;
     };

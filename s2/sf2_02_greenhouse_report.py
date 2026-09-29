@@ -32,7 +32,7 @@ TEAM = "teamXX"                       # เลขกลุ่มที่ผู�
 TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของตัวเอง: เทียบกับเทอร์โมมิเตอร์ แล้วใส่ค่าชดเชย เช่น -7.0 (ค่าเดียวกับคาบ 1)
 
 BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ
-CLIENT_ID = "bento-farm-" + TEAM      # ต้องไม่ซ้ำกับใครบน broker ทั้งโลก
+CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
 BTN_NAMES = ("SW5", "SW6")            # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
@@ -166,6 +166,12 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
     return ch
 
 
+def show_link(w, ok):
+    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
+    w["mq"].value(1 if ok else 0)
+    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+
+
 def build_screen():
     # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
@@ -188,6 +194,8 @@ def build_screen():
     ui.Label("ส่งใบถัดไปใน", x=456, y=266, color=COL_DIM, value=16)
     w["next"] = ui.Bar(x=456, y=294, w=300, h=18, max=SEND_MS)
     w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
@@ -208,6 +216,7 @@ def show_now(w, t, h, p, az, az0, knobs):
 
 # ---- 6) โปรแกรมหลัก ----
 def stop(w, msg):
+    show_link(w, False)
     rgbmatrix.clear()
     w["led"].value(0)
     show_note(w, msg, COL_BAD)
@@ -235,6 +244,7 @@ def main():
     problem = connect_farm(w)
     if problem:
         stop(w, problem)
+    show_link(w, True)
     w["led"].value(1)
     show_note(w, "ส่งเข้า " + TOPIC, COL_OK)
     send_btn, call_btn = Button(0), Button(1)
@@ -277,7 +287,13 @@ def main():
     show_note(w, "จบ ส่งไป %d ใบ" % sent, COL_DIM)
 
 
-main()
+try:
+    main()
+finally:
+    try:
+        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+    except Exception:
+        pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) เพิ่มคีย์ "crop" ใน build_payload เป็นชื่อพืชภาษาอังกฤษ เช่น "tomato" แล้วดูว่าหน้าเว็บมีการ์ดใหม่

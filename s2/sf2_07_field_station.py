@@ -31,7 +31,7 @@ TEAM = "teamXX"                        # เลขของกลุ่มที
 
 BROKER = "broker.hivemq.com"
 ROOT = "bento-aiot"
-CLIENT_ID = "bento-field-" + TEAM      # ไม่ซ้ำกับบอร์ด Gateway (bento-gw-...)
+CLIENT_ID = "bento-field-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 T_BASE = ROOT + "/" + TEAM + "/"
 PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC: เวลาเปิดสูงสุด, ถังต่ำสุดที่ยอมเปิด
 PLC_DEFAULT_S = 10
@@ -201,6 +201,12 @@ def build_rules_card(w):
     w["got"] = ui.Label("รับคำสั่งแล้ว 0", x=414, y=120, color=COL_DIM, value=16)
 
 
+def show_link(w, ok):
+    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
+    w["mq"].value(1 if ok else 0)
+    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+
+
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
@@ -210,6 +216,8 @@ def build_screen():
     build_plc_card(w)
     build_rules_card(w)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
@@ -266,6 +274,7 @@ def on_command(w, plc, raw, tank, now, got):
 
 
 def stop(w, relay, msg, col=COL_BAD):
+    show_link(w, False)
     set_relay(relay, False)
     show_status(w, msg, col)
     raise SystemExit
@@ -281,6 +290,7 @@ def main():
     problem = connect_station(w)
     if problem:
         stop(w, relay, problem)
+    show_link(w, True)
     show_status(w, "แปลงของ " + TEAM + " ออนไลน์", COL_OK)
     plc, stop_btn, got = Plc(), Button(0), 0
     counts, shown, was_on = {"soil": 0, "tank": 0}, -1, False
@@ -329,7 +339,13 @@ def main():
     stop(w, relay, "จบรอบแปลง", COL_DIM)
 
 
-main()
+try:
+    main()
+finally:
+    try:
+        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+    except Exception:
+        pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) ให้ Gateway ของเพื่อนสั่ง {"pump":1,"sec":999} แล้วดูว่าปั๊มเปิดกี่วินาที ใครเป็นคนตัดเหลือ 30

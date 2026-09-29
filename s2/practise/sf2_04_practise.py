@@ -11,7 +11,7 @@
 # เฉลย     : โจทย์เพิ่ม (โบนัส) เฉลยต้นคาบหน้า
 # ต้องแก้ก่อนรันบนบอร์ด: WIFI_SSID, WIFI_PASS, TEAM, CROP (ตรวจกฎผ่านได้โดยไม่ต้องต่อเน็ต)
 #
-# (ทำจาก sf2_04_crop_alert.py e23a52936809)
+# (ทำจาก sf2_04_crop_alert.py 018151238237)
 
 import buttons
 import json
@@ -34,7 +34,7 @@ TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของต
 
 BROKER = "broker.hivemq.com"
 ROOT = "bento-aiot"
-CLIENT_ID = "bento-farm-" + TEAM
+CLIENT_ID = "bento-farm-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 TOPIC_EVENT = ROOT + "/" + TEAM + "/event"   # หน้าเว็บโชว์หัวข้อนี้ในกล่อง event
 TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
 BTN_NAMES = ("SW5", "SW6")             # ปุ่มล่าง = pressed(0), ปุ่มบน = pressed(1) ตามตัวอักษรบนแผง
@@ -156,6 +156,12 @@ def card(x, y, w, h, title):
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
+def show_link(w, ok):
+    # ไฟ MQTT มุมขวาบน: เขียว = เชื่อมต่อแล้ว · หรี่ = ออฟไลน์ (อัปเดตตอนต่อติด และตอนสายหลุด/จบ)
+    w["mq"].value(1 if ok else 0)
+    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+
+
 def build_screen():
     # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
@@ -179,6 +185,8 @@ def build_screen():
     ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[0] + " = รับทราบ",
              x=424, y=256, color=COL_DIM, value=14)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)      # ไฟ MQTT (value 0 = หรี่)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
 
@@ -231,6 +239,7 @@ class Watch:
 
 def stop(w, msg, col=COL_BAD):
     # จบเพราะอะไรก็ตาม: หยุดตัววิ่ง ปิดกล่องเตือน แล้วบอกเหตุผล
+    show_link(w, False)
     rgbmatrix.scroll("")               # หยุดตัววิ่งก่อน ไม่งั้นมันวิ่งต่อหลังโปรแกรมจบ
     rgbmatrix.clear()
     close_box(w)
@@ -306,6 +315,7 @@ def main():
     problem = connect_farm(w)
     if problem:
         stop(w, problem)
+    show_link(w, True)
     show_status(w, "เฝ้าอยู่", COL_OK)
     was_down = False
     t_read = t_beep = t0 = time.ticks_ms()
@@ -336,7 +346,13 @@ def main():
     stop(w, "จบรอบ", COL_DIM)
 
 
-main()
+try:
+    main()
+finally:
+    try:
+        mqtt.disconnect()              # ปิดการเชื่อมต่อทุกครั้ง แม้โปรแกรมถูกหยุดกลางทาง
+    except Exception:
+        pass
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) หมุนแดดขึ้นลงเร็ว ๆ ข้ามเส้นไปมา นับว่าแจ้งเตือนรัวแค่ไหน (ดูการ์ดแจ้งสถานะ) แล้วแก้ให้ต้อง "แย่ติดกัน 5 วินาที"
