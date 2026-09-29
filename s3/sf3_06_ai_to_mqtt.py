@@ -7,10 +7,10 @@
 #            mosquitto_sub -h broker.hivemq.com -t 'bento-aiot/<TEAM>/ai' -v
 #            วางบอร์ดนิ่ง แล้วเขย่า ดูว่าข้อความเปลี่ยนตอนไหน และ heartbeat มาทุกกี่วินาที
 # ของบนบอร์ดที่ใช้ : แกน AI บนชิป (edge_ai) + IMU, WiFi + MQTT, ลำโพง (ดังตอนป้ายเพิ่งเป็นอันตราย)
-# บนจอ     : ชื่อโมเดลที่ใช้, ป้ายผลตัวใหญ่, วงแหวนความมั่นใจ (Arc), ไฟอันตราย (Led), ข้อความที่ส่ง
+# บนจอ     : ชื่อโมเดลที่ใช้, ป้ายผลตัวใหญ่, วงแหวนความมั่นใจ (Arc), ไฟอันตราย (Led), ไฟ MQTT (Led), ข้อความที่ส่ง
 # แนวคิด AIoT: ส่ง "ผลสรุป" ไม่ใช่ข้อมูลดิบ = ประหยัดเน็ต และข้อมูลดิบไม่ออกนอกฟาร์ม
 #            ส่งเฉพาะตอนมีความหมาย (ป้ายเปลี่ยน) + heartbeat ให้แอปรู้ว่าบอร์ดยังอยู่ · ห่างกันอย่างน้อย 200 ms
-# โมเดล    : หาด้วยชื่อตามลำดับ MODEL_KEYS: AnomalousVibration (จากหน้า Playground ของ Edge AI Store) ก่อน
+# โมเดล    : หาด้วยชื่อตามลำดับ MODEL_KEYS: AnomalousVibration (ส่งลงบอร์ดจาก Edge AI Store) ก่อน
 #            ถ้าบอร์ดไม่มีหรือเลือกไม่สำเร็จจึงใช้ Motion ที่ติดมากับบอร์ด · ข้อความส่งแค่ "ชื่อ" โมเดล ไม่ส่งรหัสโมเดล
 # บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) · ใน Emulator MQTT เป็นแบบจำลอง
 # สัญญา MQTT: หัวข้อ .../ai = {"id": ทีม, "n": ลำดับข้อความ, "model": ชื่อโมเดล, "label": ป้าย, "conf": ความมั่นใจ %}
@@ -131,11 +131,21 @@ def build_screen():
     w["label"] = label("-", 220, 116, COL_TEXT, 28)
     w["led"] = ui.Led(x=220, y=170, w=36, h=36, color=COL_BAD, value=0)
     label("ไฟแดง = ป้ายอันตราย", 268, 178)
+    label("MQTT", 560, 90)
+    w["mqtt"] = ui.Led(x=560, y=116, w=36, h=36, color=COL_OK, value=0)
+    w["mqtt_txt"] = label("ยังไม่ได้ต่อ", 606, 124, COL_DIM)
     w["sent"] = label("ยังไม่ได้ส่ง", 220, 230)
     w["json"] = label(" ", 12, 300, COL_TEXT, 14)
     w["note"] = label(" ", 12, 352, COL_WARN, 16)
     ui.poll()
     return w
+
+
+def show_link(w, online):
+    # ไฟ MQTT: ติดเขียว = ต่อ broker อยู่ ข้อความขึ้นแอปได้ · ดับ = ออฟไลน์ ผลพิมพ์ลง Console แทน
+    w["mqtt"].value(1 if online else 0)
+    w["mqtt_txt"].color(COL_OK if online else COL_BAD)
+    w["mqtt_txt"].text("เชื่อมต่อแล้ว" if online else "ออฟไลน์")
 
 
 def show_result(w, lab, conf):
@@ -165,6 +175,7 @@ def main():
         return
     w["model"].text("โมเดล: " + name)
     online = go_online(w)
+    show_link(w, online)
     seq, lab, conf, sent_lab, n = -1, None, 0, None, 0
     t0 = t_sent = time.ticks_ms()
     try:
@@ -186,6 +197,7 @@ def main():
                 w["json"].text("%s %d%% n=%d" % (lab, conf, n))
             if online and not mqtt.is_connected():
                 online = False
+                show_link(w, False)
                 note(w, "เน็ตหลุด ทำงานต่อแบบออฟไลน์", COL_WARN)
             ui.poll()
             time.sleep_ms(TICK_MS)

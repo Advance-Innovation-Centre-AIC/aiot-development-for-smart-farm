@@ -788,7 +788,7 @@ def classify(vib, base):
 
 <div class="flow"><b>ส่งโมเดลจาก Edge AI Store</b><i>→</i><b>IMU</b><i>→</i><b>โมเดล AI บนบอร์ด (เรียกด้วยชื่อ)</b><i>→</i><b>มั่นใจพอไหม · ชนะติดกันไหม</b><i>→</i><b>เสียง + LED แดง + จอไฟ RGB</b></div>
 
-<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://edgeai-store.tesaiot.dev">edgeai-store.tesaiot.dev</a> <span>— Playground ส่ง AnomalousVibration ลงบอร์ด</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> <span>— ให้ AI บนบอร์ดตัดสินแทนกฎ</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py">sf3_06_ai_to_mqtt.py</a> <span>— ส่งผล AI ขึ้น MQTT ให้แอปของทีม</span></div></div></div>
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://edgeai-store.tesaiot.dev">edgeai-store.tesaiot.dev</a> <span>— Edge AI model catalog: Deploy AnomalousVibration ลงบอร์ด</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> <span>— ให้ AI บนบอร์ดตัดสินแทนกฎ</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py">sf3_06_ai_to_mqtt.py</a> <span>— ส่งผล AI ขึ้น MQTT ให้แอปของทีม</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ห้าท่าเดียวกัน — <b>กฎที่เราเขียน</b> หรือ <b>AI</b> ตอบถูกมากกว่ากัน?</div>
 
@@ -858,8 +858,8 @@ section table { font-size: .66em; }
 
 **ส่ง AnomalousVibration ลงบอร์ด** · ทีม 1–10 ก่อน ทีม 11–20 รอผู้สอนเรียก
 1. เมนู Edge AI บนบอร์ดต้องขึ้น **STOPPED** · ใน BENTO IDE กด **Disconnect** — พอร์ตของบอร์ดใช้ได้ทีละโปรแกรม
-2. เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ [edgeai-store.tesaiot.dev](https://edgeai-store.tesaiot.dev) แล้วเปิดหน้า **Playground**
-3. กดติดตั้ง (**Deploy**) ที่โมเดล **AnomalousVibration** · ถ้า Chrome ถามพอร์ต เลือกพอร์ตของบอร์ด · ห้ามถอดสาย USB ระหว่างส่ง
+2. เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ [edgeai-store.tesaiot.dev](https://edgeai-store.tesaiot.dev) (หน้า **Edge AI model catalog**) แล้วกด **Connect a board** เลือกพอร์ตของบอร์ด
+3. กด **Deploy** ที่โมเดล **AnomalousVibration** · ห้ามถอดสาย USB ระหว่างส่ง
 4. รอจนหน้าต่างขึ้น **"Loaded onto the board"** และ **"Saved to the board and loaded"** แล้วกด **Close**
 5. **ปิดแท็บ Store** ก่อนกลับไปต่อ BENTO IDE
 

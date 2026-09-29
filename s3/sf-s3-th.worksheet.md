@@ -220,8 +220,8 @@ _______________________________________________________________
 **6.1 ส่งโมเดลลงบอร์ดจาก Edge AI Store** (ทีม 1–10 ก่อน ทีม 11–20 รอผู้สอนเรียก · ระหว่างรอทำข้อ 6.2 กับ Motion Detection ไปก่อน)
 
 - [ ] เมนู Edge AI บนบอร์ดต้องขึ้น **STOPPED** (ถ้ายังรันอยู่ กด Stop) · ใน BENTO IDE กด **Disconnect** (พอร์ตของบอร์ดใช้ได้ทีละโปรแกรม)
-- [ ] เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ `edgeai-store.tesaiot.dev` แล้วเปิดหน้า **Playground** (ไม่ใช่ `edgeai.tesaiot.dev` ซึ่งเป็นคนละระบบ)
-- [ ] กดติดตั้ง (**Deploy**) ที่โมเดล **AnomalousVibration** (IMU · คลาส `unlabeled` `anomaly`) · ถ้า Chrome ถามพอร์ต เลือกพอร์ตของบอร์ด · ห้ามถอดสาย USB ระหว่างส่ง
+- [ ] เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ `edgeai-store.tesaiot.dev` (หน้า **Edge AI model catalog** · ไม่ใช่ `edgeai.tesaiot.dev` ซึ่งเป็นคนละระบบ) แล้วกด **Connect a board** เลือกพอร์ตของบอร์ด
+- [ ] กด **Deploy** ที่โมเดล **AnomalousVibration** (IMU · คลาส `unlabeled` `anomaly`) · ห้ามถอดสาย USB ระหว่างส่ง
 - [ ] หน้าต่างขึ้น **"Loaded onto the board"** และ **"Saved to the board and loaded"** ☐ แล้วกด **Close**
 - [ ] **ปิดแท็บ Store** ก่อนกลับไปต่อ BENTO IDE · โมเดลถูกบันทึกลงบอร์ด ถอดปลั๊กแล้วยังอยู่ (ทดสอบบน Dev Kit เฟิร์มแวร์ 2.4.2 แล้ว)
 
