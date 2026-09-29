@@ -2,7 +2,7 @@
 #
 # วิธีเล่น  : ไฟล์นี้เหมือน sf3_02_coop_ears.py ทุกอย่าง ยกเว้นฟังก์ชัน is_event() ในส่วน "3) สมอง"
 #            ที่เว้นช่อง ____ (ขีดล่างสี่ตัว) ไว้ 3 ช่อง: A, B, C
-#            เติมให้ครบแล้วรัน โปรแกรมจะตรวจ is_event() 7 กรณีก่อนเปิดจอ (self_test)
+#            เติมให้ครบแล้วรัน โปรแกรมจะตรวจ is_event() 5 กรณีก่อนเปิดจอ (self_test)
 #            ผ่านครบ = Console ขึ้น "ผ่าน!" แล้วเล่นต่อได้เหมือนไฟล์ตัวอย่าง
 #            ยังไม่ถูก = Console บอกว่ากรณีไหนผิด แล้วหยุด (ยังไม่เปิดจอ)
 # ไฟล์นี้  : เฉลยที่เติมครบแล้ว (ช่อง A B C มีป้าย "เฉลย") ใช้เทียบกับของตัวเอง
@@ -10,9 +10,8 @@
 #            sf3_02_coop_ears.py เพื่อไปต่อก่อน แล้วค่อยกลับมาเทียบกับของตัวเอง
 # เฉลย     : โจทย์หลัก มีเฉลยในคาบ อยู่ที่ practise/solutions/sf3_02_practise_solution.py (ลองเองก่อน)
 #
-# (ทำจาก sf3_02_coop_ears.py 8c7ad7735690)
+# (ทำจาก sf3_02_coop_ears.py 773923f08128)
 
-import gc
 import mic
 import pots
 import rgbmatrix
@@ -20,6 +19,7 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
+VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 SENS = 3             # ความไวไมค์ 1-5
 PEAK_MIN, PEAK_SPAN = 3000, 27000   # VR3 ตั้งเกณฑ์ยอดเสียงได้ 3000-30000
 PEAK_FULL = 32768    # ยอดเสียงดิบเต็มสเกล (ไมค์ 16 บิต) ใช้เป็นสเกลของแถบและกราฟ
@@ -40,6 +40,13 @@ COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
 
 
 # ---- 2) ฮาร์ดแวร์ ----
+def beep(*notes):
+    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
+    for n in notes:
+        ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
+        time.sleep_ms(120)
+
+
 def read_threshold():
     return PEAK_MIN + pots.read(2) * PEAK_SPAN // 4095    # VR3 -> เกณฑ์ยอดเสียงดิบ
 
@@ -112,17 +119,14 @@ def is_event(peak, th, now, last, mute_until):
 
 
 def self_test():
-    # ตรวจ is_event() 7 กรณีก่อนเปิดไมค์ (เกณฑ์ยอดเสียง 5000)
-    now, g = 100000, EVENT_GAP_MS
-    for peak, last, mute, want in ((6000, now - 1000, now - 1, True), (4000, now - 1000, now - 1, False),
-                                   (5000, now - 1000, now - 1, True), (6000, now - g + 1, now - 1, False),
-                                   (6000, now - g, now - 1, True), (6000, now - 1000, now + 100, False),
-                                   (6000, now - 1000, now, True)):
-        got = is_event(peak, 5000, now, last, mute)
-        if got != want:
-            print("ยังไม่ถูก: ยอด", peak, "ห่าง", now - last, "ms ปิดหูถึง", mute - now, "ควรได้", want, "แต่ได้", got)
+    # ตรวจ is_event() 5 กรณี (เกณฑ์ 5000) · กรณีแรกอยู่ตรงขอบทุกอย่าง: ยอดเท่าเกณฑ์ ห่างเท่า EVENT_GAP_MS ปิดหูเพิ่งหมด
+    t, g = 100000, EVENT_GAP_MS
+    for p, last, mute, ok in ((5000, t - g, t, 1), (4999, t - g, t - 1, 0), (6000, t - g + 1, t - 1, 0),
+                              (6000, t - 1000, t + 1, 0), (6000, t - 1000, t - 1, 1)):
+        if is_event(p, 5000, t, last, mute) != ok:
+            print("ยังไม่ถูก: ยอด", p, "ห่าง", t - last, "ปิดหูอีก", mute - t, "ควรได้", bool(ok))
             return False
-    print("ผ่าน! is_event() ถูกทั้ง 7 กรณี")
+    print("ผ่าน! is_event() ถูกทั้ง 5 กรณี")
     return True
 
 
@@ -159,12 +163,6 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
     return ch
 
 
-def meter_bytes(level):
-    # ความดัง 0-100 -> จุด 8x8 บนจอ ไต่จากแถวล่างขึ้นบน (หนึ่งแถว = หนึ่งไบต์)
-    lit = min(8, level * 8 // 100)
-    return b"\x00" * (8 - lit) + b"\xff" * lit
-
-
 def build_level_card(w):
     card(12, 44, 250, 150, "ความดัง (สเกลหู 0-100)")
     w["seg_lv"] = ui.Seg7(text="0", x=24, y=72, w=120, h=56, color=COL_OK)
@@ -194,11 +192,9 @@ def build_bottom(w):
     ui.Label("ฟ้า = ยอดเสียงดิบ   แดง = เกณฑ์ (VR3)", x=12, y=204, color=COL_DIM, value=14)
     w["chart"] = line_chart(12, 226, 400, 112, 0, PEAK_FULL, COL_INFO)
     w["s_th"] = w["chart"].add_series(COL_BAD)
-    card(422, 204, 358, 134, "ความดังเป็นจุด + ไมค์")
-    w["dots"] = ui.DotMatrix(x=434, y=230, w=100, h=100, cols=8, rows=8)
+    card(422, 204, 358, 134, "ไมค์")          # ไฟล์ฝึกตัดจุด 8x8 ออก ให้พอหน่วยความจำ
     w["led"] = ui.Led(x=548, y=236, w=24, h=24, color=COL_OK, value=0)
     w["ear"] = ui.Label("กำลังเปิดไมค์", x=580, y=238, color=COL_DIM, value=16)
-    w["lag"] = ui.Label("คิวค้าง 0 ms", x=548, y=276, color=COL_DIM, value=14)
 
 
 def build_screen():
@@ -222,7 +218,6 @@ def show_level(w, lv, avg, panic):
     w["bar_lv"].value(lv)
     w["bar_lv"].color(level_color(lv))
     w["avg"].text("เฉลี่ย %d" % avg)
-    w["dots"].set_pixels(meter_bytes(lv))
     text, col = mood(panic, avg)
     w["mood"].text(text)
     w["mood"].color(col)
@@ -247,7 +242,6 @@ def show_count(w, ears, alarms, panic, lag):
     on = ears.listening()
     w["led"].value(1 if on else 0)
     w["ear"].text("กำลังฟัง" if on else "ปิดหูชั่วคราว")
-    w["lag"].text("คิวค้าง %d ms" % lag)
 
 
 # ---- 5) โปรแกรมหลัก ----
@@ -261,7 +255,6 @@ def finish(w, total, alarms):
 def main():
     if not self_test():
         return
-    gc.collect()                  # เก็บขยะจากการตรวจก่อน ไมค์ต้องจองหน่วยความจำก้อนใหญ่ (8 KB)
     w = build_screen()
     mx(rgbmatrix.clear)
     mic.start(sens=SENS)          # start() ทิ้งเสียงสองชุดแรกให้เอง เพราะยังไม่นิ่ง
@@ -279,7 +272,7 @@ def main():
             forget_old(ears.events, now)             # 2) ตัดสิน
             was, panic = panic, len(ears.events) >= ALARM_EVENTS
             if panic != was:                         # 3) ทำ: เสียงเฉพาะตอนสถานะเปลี่ยน
-                ui.sfx(ui.SFX_UI_DENY if panic else ui.SFX_PONG_WIN)
+                beep(84, 76) if panic else beep(79, 84)
                 ears.mute()                          # ทุกครั้งที่ลำโพงดัง = ปิดหู MUTE_MS
                 if panic:
                     alarms += 1
