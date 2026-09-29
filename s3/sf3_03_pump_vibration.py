@@ -1,19 +1,10 @@
 # sf3_03_pump_vibration.py - หมอฟังปั๊มน้ำ: เครื่องจักรสั่นผิดปกติ
-#
-# ภารกิจ   : วางบอร์ดบนปั๊มน้ำ/พัดลมโรงเรือน ให้มัน "เรียนรู้ค่าสั่นปกติ" 5 วินาทีแรก
-#            จากนั้นให้คะแนนการสั่น 0-100 ถ้าสั่นแรงกว่าปกติหลายเท่า = ผิดปกติ (ลูกปืนเริ่มพัง?)
-# ลองเล่น  : ช่วงเรียนรู้วางบอร์ดนิ่ง ๆ หลังจากนั้นเคาะโต๊ะเบา ๆ แล้วเขย่าบอร์ดแรง ๆ
-#            ดูวงแหวนคะแนนกับกราฟ: เส้นฟ้าข้ามเส้นส้ม = เฝ้าระวัง, ข้ามเส้นแดง = ผิดปกติ
-#            กด SW5 (ปุ่มล่าง) หนึ่งครั้ง = เรียนรู้ค่าปกติใหม่
-# ของบนบอร์ดที่ใช้ : IMU BMI270 (ความเร่ง 3 แกน), ปุ่ม SW5 (ปุ่มล่าง) = เรียนรู้ใหม่
-#            จอไฟ RGB: ตัวเลข = จำนวนครั้งที่ผิดปกติ, แถวล่าง = แถบคะแนนการสั่น (สีตามระดับ)
-#            ลำโพงดังเฉพาะตอนกด SW5, ตอนเรียนรู้เสร็จ, ตอนเริ่มผิดปกติ และตอนหายผิดปกติ
-# บนจอ     : วงแหวนคะแนน (Arc), ไฟระดับ 3 ดวง (Led), แถบความคืบหน้าการเรียนรู้ (Bar),
-#            ตัวเลขนับครั้งผิดปกติ (Seg7), กราฟค่าสั่นเทียบเส้นเตือนสองเส้น (Chart)
-# แนวคิด AIoT: นี่คือ anomaly detection แบบไม่ใช้ AI - จำ "ปกติ" แล้วจับสิ่งที่ต่างไปจากปกติ
-#            ซ่อมก่อนพัง (predictive maintenance) ถูกกว่าปั๊มดับกลางฤดูแล้งเสมอ
-#            เราใช้ "ขนาด" ของความเร่งรวมสามแกน จึงไม่สนว่าบอร์ดวางเอียงแค่ไหน สนแค่ว่ามันแกว่งแค่ไหน
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) และ BENTO Emulator (กดปุ่ม Shake = เครื่องสั่น)
+# ภารกิจ   : เรียนรู้ค่าสั่นปกติ 5 วิแรก แล้วให้คะแนนการสั่น 0-100 (สั่นกว่าปกติหลายเท่า = ผิดปกติ)
+# ลองเล่น  : วางนิ่งช่วงเรียนรู้ แล้วเคาะโต๊ะ / เขย่าแรง ๆ · SW5 (ปุ่มล่าง) = เรียนรู้ใหม่
+# ของบนบอร์ดที่ใช้ : IMU BMI270, ปุ่ม SW5, ลำโพง, จอไฟ RGB (เลข = ครั้งผิดปกติ)
+# บนจอ     : วงแหวนคะแนน, ไฟระดับ, แถบเรียนรู้, ตัวนับ, กราฟเทียบเส้นเตือน
+# แนวคิด AIoT: anomaly detection ไม่ใช้ AI - จำ "ปกติ" แล้วจับสิ่งที่ต่างไป (ซ่อมก่อนพัง)
+# บอร์ด     : TESAIoT Dev Kit (fw 2.4.2+ · 2.4.1 ก็รันได้) / BENTO Emulator (ปุ่ม Shake)
 
 import buttons
 import math
@@ -23,20 +14,21 @@ import time
 import ui
 
 # ---- 1) ตั้งค่า (แก้ได้) ----
-VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
-SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
-LEARN_MS = 5000      # เรียนรู้ค่าปกติกี่มิลลิวินาที
-SAMPLE_MS = 50       # อ่าน IMU ทุก 50 ms (การสั่นเร็ว อ่านห่างกว่านี้จะมองไม่เห็นการแกว่ง)
-WIN = 20             # ค่าสั่นคิดจาก 20 ตัวอย่างล่าสุด (20 x 50 ms = 1 วินาที)
-K_WARN, K_BAD = 3.0, 6.0   # สั่นกว่าปกติกี่เท่าถึง "เฝ้าระวัง" / "ผิดปกติ"
-MIN_BASE = 0.05      # ค่าปกติต่ำสุด (m/s^2) กันบอร์ดที่นิ่งสนิทได้ค่าปกติเป็นศูนย์
-CONFIRM_N = 10       # ระดับใหม่ต้องค้าง 10 ตัวอย่าง (0.5 วินาที) ถึงจะเชื่อ
-RUN_MS = 120000
-TICK_MS = 500        # วาดจอทุก 500 ms (อ่านเซนเซอร์ถี่กว่านั้น แต่จอไม่ต้องถี่ตาม)
-MATRIX_MS = 3000     # ส่งภาพจอไฟ RGB ซ้ำทุก 3 วินาที เผื่อภาพก่อนหน้าหล่นหายระหว่างทาง
-CHART_MAX = 300      # กราฟรับจำนวนเต็ม จึงคูณค่าสั่นด้วย 100
-BTN_NAMES = ("SW5", "SW6")   # ชื่อที่พิมพ์บนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน
+VOLUME = 25          # เสียงเตือน 0-127
+SPEAKER = 40         # ลำโพงรวม 0-100% (fw 2.4.2+)
+LEARN_MS = 5000      # เวลาเรียนรู้ (ms)
+SAMPLE_MS = 50       # อ่าน IMU ทุกกี่ ms
+WIN = 20             # คิดค่าสั่นจากกี่ตัวอย่างล่าสุด
+K_WARN, K_BAD = 3.0, 6.0   # กี่เท่าของปกติ = เฝ้าระวัง / ผิดปกติ
+MIN_BASE = 0.05      # ค่าปกติต่ำสุด (m/s^2)
+CONFIRM_N = 10       # ค้างกี่ตัวอย่างถึงเชื่อ
+RUN_MS = 120000      # เวลาเล่น (ms)
+TICK_MS = 500        # วาดจอทุกกี่ ms
+MATRIX_MS = 3000     # ส่งจอไฟ RGB ซ้ำทุกกี่ ms
+CHART_MAX = 300      # เพดานกราฟ (ค่าสั่น x100)
+BTN_NAMES = ("SW5", "SW6")   # ล่าง, บน
 
+# สี (0xRRGGBB) ชื่อ และสีของระดับ 0/1/2
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
 COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
@@ -47,7 +39,6 @@ MX_COLORS = (rgbmatrix.GREEN, rgbmatrix.YELLOW, rgbmatrix.RED)
 
 # ---- 2) ฮาร์ดแวร์ ----
 def beep(*notes):
-    # เสียงเบา ๆ แทน ui.sfx (ui.sfx ดังคงที่ ปรับเบาไม่ได้) · เล่นโน้ต MIDI ทีละตัว ห่างกัน 120 ms
     for n in notes:
         ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
         time.sleep_ms(120)
@@ -65,9 +56,7 @@ def magnitude():
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
-    # เฟิร์มแวร์กรองสัญญาณสั่น 50 ms ถ้าอ่านรอบละครั้งการกดแบบแตะจะหายไป จึงอ่านบ่อย ๆ ใน wait_ms
-
+    # 0 = SW5, 1 = SW6 · อ่านใน wait_ms จึงไม่พลาดการกดสั้น ๆ
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
 
@@ -78,13 +67,12 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        # True ครั้งเดียวต่อการกดหนึ่งครั้ง (กดค้างไว้ก็ไม่นับซ้ำ)
+        # True ครั้งเดียวต่อการกด
         fired, self.clicked = self.clicked, False
         return fired
 
 
 def wait_ms(ms, btns):
-    # รอ ms มิลลิวินาที แต่ระหว่างรอก็อ่านปุ่มทุก 20 ms เพื่อไม่พลาดการกดสั้น ๆ
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
         for b in btns:
@@ -93,8 +81,6 @@ def wait_ms(ms, btns):
 
 
 def draw_matrix(key):
-    # จอไฟ RGB: ตัวเลข = ครั้งที่ผิดปกติ, แถวล่าง = แถบคะแนน 0-8 ช่อง (ทุกคำสั่ง = เขียนบัสจอหนึ่งครั้ง)
-    # กันพังแยกทีละคำสั่ง: คำสั่งแรกตอบไม่ทัน คำสั่งที่สองยังได้ไป และโปรแกรมไม่หยุด
     count, level, step = key
     try:
         rgbmatrix.score(count, MX_COLORS[level])
@@ -108,7 +94,7 @@ def draw_matrix(key):
 
 # ---- 3) สมอง (ตัดสินใจ) ----
 def spread(xs):
-    # ส่วนเบี่ยงเบนมาตรฐาน = ค่าสั่น ยิ่งแกว่งรอบค่าเฉลี่ยมาก ยิ่งสั่นมาก
+    # ส่วนเบี่ยงเบนมาตรฐาน = ค่าสั่น
     m = sum(xs) / len(xs)
     return math.sqrt(sum((x - m) * (x - m) for x in xs) / len(xs))
 
@@ -119,20 +105,18 @@ def classify(vib, base):
 
 
 class Watch:
-    # ความจำของหมอฟังปั๊ม: ตัวอย่างล่าสุด ค่าปกติ ระดับ และตัวนับ (ไม่แตะฮาร์ดแวร์ ไม่แตะจอ)
-
+    # ความจำ ไม่แตะฮาร์ดแวร์ ไม่แตะจอ
     def __init__(self, now):
         self.buf, self.vib, self.dt, self.t_last = [], 0.0, 0, now
         self.bad_count, self.bad_ms = 0, 0
         self.relearn(now)
 
     def relearn(self, now):
-        # ลืมค่าปกติเดิมแล้วเริ่มเรียนใหม่ (ตัวนับครั้งผิดปกติยังเก็บไว้)
         self.base, self.total, self.n, self.t_learn = None, 0.0, 0, now
         self.level = self.cand = self.streak = 0
 
     def push(self, m, now):
-        # เก็บตัวอย่างล่าสุด WIN ตัว คืน True เมื่อครบแล้วและได้ค่าสั่นใหม่ใน self.vib
+        # True เมื่อครบ WIN ตัว และได้ self.vib ใหม่
         self.dt, self.t_last = time.ticks_diff(now, self.t_last), now
         self.buf.append(m)
         if len(self.buf) > WIN:
@@ -143,7 +127,7 @@ class Watch:
         return True
 
     def learn(self, now):
-        # ช่วงเรียนรู้: สะสมค่าสั่นไว้ ครบ LEARN_MS แล้วเฉลี่ยเป็น "ค่าปกติ" (คืน True ครั้งเดียวตอนครบ)
+        # ครบ LEARN_MS = ได้ค่าปกติ (True ครั้งเดียว)
         self.total += self.vib
         self.n += 1
         if time.ticks_diff(now, self.t_learn) < LEARN_MS:
@@ -153,7 +137,7 @@ class Watch:
 
     def judge(self):
         # ระดับใหม่ต้องค้าง CONFIRM_N ตัวอย่างติดกันถึงจะเชื่อ (เคาะทีเดียวไม่ถือว่าเครื่องเสีย)
-        # คืนระดับก่อนหน้า ให้ผู้เรียกรู้ว่าระดับเพิ่งเปลี่ยนไหม
+        # คืนระดับก่อนหน้า
         new, old = classify(self.vib, self.base), self.level
         self.streak = self.streak + 1 if new == self.cand else 1
         self.cand = new
@@ -162,20 +146,18 @@ class Watch:
             if new == 2:
                 self.bad_count += 1
         if self.level == 2:
-            self.bad_ms += self.dt      # เวลาจริงที่ผ่านไป ไม่ใช่ SAMPLE_MS
+            self.bad_ms += self.dt  # เวลาจริง ไม่ใช่ SAMPLE_MS
         return old
 
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า (ทุกไฟล์ใช้แบบเดียวกัน)
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
     ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    # กราฟเส้นเรียบ ไม่มีจุดกลม: LVGL ไม่วาดจุดเมื่อจำนวนจุด >= ความกว้างกราฟ
-    # เราจึงให้กว้างไม่เกิน 400 และตั้ง 400 จุด (เฟิร์มแวร์รับได้ 10-400)
+    # จุด >= ความกว้าง: LVGL ไม่วาดจุดกลม
     ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
     ch.prop(ui.PROP_CHART_POINTS, 400)
     return ch
@@ -188,7 +170,7 @@ def build_score_card(w):
     w["score"] = ui.Label("0", x=180, y=94, color=COL_TEXT, value=28)
     w["verdict"] = ui.Label("...", x=180, y=134, color=COL_DIM, value=28)
     w["leds"] = []
-    for i in range(3):          # ไฟระดับ 3 ดวง ติดทีละดวงเหมือนแผงควบคุมจริง
+    for i in range(3):
         x = 180 + i * 66
         w["leds"].append(ui.Led(x=x, y=196, w=20, h=20, color=COLORS[i], value=0))
         ui.Label(("ปกติ", "ระวัง", "ผิดปกติ")[i], x=x + 26, y=198, color=COL_DIM, value=14)
@@ -199,14 +181,13 @@ def build_vib_card(w):
     w["vib"] = ui.Label("ตอนนี้ -", x=414, y=92, color=COL_TEXT, value=20)
     w["base"] = ui.Label("ปกติที่เรียนมา -", x=414, y=120, color=COL_INFO, value=16)
     w["learn"] = ui.Bar(x=414, y=146, w=354, h=12, min=0, max=100, value=0)
-    w["learn"].color(COL_WARN)      # แถบเรียนรู้: ส้ม = กำลังเรียน, เขียว = ได้ค่าปกติแล้ว
+    w["learn"].color(COL_WARN)
     ui.Label("ผิดปกติ (ครั้ง)", x=414, y=166, color=COL_DIM, value=14)
     w["seg"] = ui.Seg7(text="0", x=414, y=186, w=110, h=58, color=COL_BAD)
     w["time"] = ui.Label("รวม 0.0 วิ", x=540, y=204, color=COL_DIM, value=20)
 
 
 def build_chart(w):
-    # กราฟ: ฟ้า (ชุด 0) = ค่าสั่นตอนนี้, ส้ม = เส้นเฝ้าระวัง, แดง = เส้นผิดปกติ
     w["chart"] = line_chart(12, 262, 400, 76, 0, CHART_MAX, COL_INFO)
     w["s_warn"] = w["chart"].add_series(COL_WARN)
     w["s_bad"] = w["chart"].add_series(COL_BAD)
@@ -216,7 +197,6 @@ def build_chart(w):
 
 
 def build_screen():
-    # สร้างทุกอย่างบนจอครั้งเดียว แล้วคืน dict ของ widget ที่ต้องอัปเดตภายหลัง
     ui.screen()
     time.sleep_ms(200)
     ui.Label("หมอฟังปั๊มน้ำ", x=12, y=6, color=COL_TEXT, value=24)
@@ -236,14 +216,12 @@ def show_note(w, text, col):
 
 
 def show_learning(w, st, now):
-    # ช่วงเรียนรู้: นับถอยหลัง + แถบความคืบหน้า
     left = max(0, LEARN_MS - time.ticks_diff(now, st.t_learn))
     show_note(w, "วางบอร์ดนิ่ง ๆ เรียนรู้ค่าปกติ อีก %d วิ" % (left // 1000 + 1), COL_WARN)
     w["learn"].value(100 - left * 100 // LEARN_MS)
 
 
 def show_learned(w, st):
-    # เรียกครั้งเดียวต่อการเรียนรู้หนึ่งรอบ ตอนได้ค่าปกติ
     w["base"].text("ปกติที่เรียนมา %.3f" % st.base)
     w["learn"].value(100)
     w["learn"].color(COL_OK)
@@ -257,7 +235,7 @@ def show_watch(w, st, score):
     w["verdict"].color(col)
     w["verdict"].text(NAMES[st.level])
     for i in range(3):
-        w["leds"][i].value(1 if i == st.level else 0)    # 0 = หรี่ (ไม่ดับมืด)
+        w["leds"][i].value(1 if i == st.level else 0)  # 0 = หรี่
     w["vib"].text("ตอนนี้ %.3f" % st.vib)
     w["seg"].text(str(st.bad_count))
     w["time"].text("รวม %.1f วิ" % (st.bad_ms / 1000))
@@ -269,8 +247,7 @@ def show_watch(w, st, score):
 
 # ---- 5) โปรแกรมหลัก ----
 def think(w, st, now):
-    # ได้ค่าสั่นใหม่: ช่วงเรียนรู้ = เก็บค่าปกติ, หลังจากนั้น = จัดระดับ
-    # เสียงดังเฉพาะตอนเหตุการณ์เกิด (ระดับเปลี่ยน) ไม่ใช่ทุกรอบ
+    # ดังเฉพาะตอนระดับเปลี่ยน
     if st.base is None:
         if st.learn(now):
             show_learned(w, st)
@@ -283,19 +260,18 @@ def think(w, st, now):
         beep(84, 76)
         print("ผิดปกติครั้งที่", st.bad_count, "ค่าสั่น %.3f" % st.vib)
     elif old == 2:
-        beep(79, 84)                    # หายผิดปกติแล้ว
+        beep(79, 84)  # หายผิดปกติ
 
 
 def refresh(w, st, now, mx, fails):
-    # วาดจอ (ทุก TICK_MS) แล้วส่งภาพจอไฟ RGB เมื่อภาพเปลี่ยน หรือครบ MATRIX_MS
-    # mx = [ภาพที่ส่งล่าสุด, เวลาที่ส่ง]
+    # mx = [ภาพจอไฟ RGB ล่าสุด, เวลาที่ส่ง]
     score = 0
     if fails >= WIN:
         show_note(w, "อ่าน IMU ไม่ได้", COL_BAD)
     elif st.base is None:
         show_learning(w, st, now)
     else:
-        score = min(100, int(st.vib * 100 / (st.base * K_BAD)))   # 100 = สั่นถึงเส้น "ผิดปกติ" แล้ว
+        score = min(100, int(st.vib * 100 / (st.base * K_BAD)))  # 100 = ถึงเส้นผิดปกติ
         show_watch(w, st, score)
         show_note(w, "เฝ้าเครื่องแล้ว ลองเคาะหรือเขย่าบอร์ด", COL_OK)
     ui.poll()
@@ -306,7 +282,6 @@ def refresh(w, st, now, mx, fails):
 
 
 def finish(w, st):
-    # จบรอบ: ล้างจอไฟ RGB บอกวิธีเล่นใหม่ และพิมพ์สรุปลง Console
     try:
         rgbmatrix.clear()
     except OSError:
@@ -318,37 +293,34 @@ def finish(w, st):
 
 
 def main():
-    if hasattr(ui, "volume"):    # บอร์ดที่ยังเป็น 2.4.1 ข้ามบรรทัดนี้
+    if hasattr(ui, "volume"):  # 2.4.1 ไม่มี
         ui.volume(SPEAKER)
     w = build_screen()
-    sw5 = Button(0)                     # SW5 (ปุ่มล่าง) = เรียนรู้ค่าปกติใหม่
+    sw5 = Button(0)
     t0 = t_draw = time.ticks_ms()
     st, mx, fails = Watch(t0), [None, t0], 0
     try:
         while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
             now = time.ticks_ms()
-            m = magnitude()                             # 1) อ่าน
+            m = magnitude()  # 1) อ่าน
             fails = 0 if m is not None else fails + 1
             if m is not None and st.push(m, now):
-                think(w, st, now)                       # 2) ตัดสิน
+                think(w, st, now)  # 2) ตัดสิน
             if sw5.pressed_now():
                 st.relearn(now)
                 w["learn"].color(COL_WARN)
                 beep(72, 79)
-            if time.ticks_diff(now, t_draw) >= TICK_MS:  # 3) โชว์ ทุก TICK_MS
+            if time.ticks_diff(now, t_draw) >= TICK_MS:  # 3) โชว์
                 t_draw = now
                 refresh(w, st, now, mx, fails)
-            wait_ms(SAMPLE_MS, (sw5,))                  # รอ แต่ยังคอยฟังปุ่ม
-    finally:                                            # หยุดกลางทาง (Stop) ก็ล้างจอไฟ RGB และสรุปเสมอ
+            wait_ms(SAMPLE_MS, (sw5,))
+    finally:  # กด Stop ก็ล้างจอไฟ RGB และสรุป
         finish(w, st)
 
 
 main()
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) กด SW5 (ปุ่มล่าง) แล้วให้เพื่อนเคาะโต๊ะเบา ๆ ตลอด 5 วินาที (สอน "ปกติ" ผิด ๆ) แล้วดูว่า
-#    หลังจากนั้นเขย่าแรงแค่ไหนถึงจะเตือน - ข้อมูลตอนสอนสำคัญกับทั้งกฎและ AI
-# 2) เพิ่มกฎ "ผิดปกติรวมเกิน 10 วินาที = สั่งหยุดปั๊ม" เขียนเป็นฟังก์ชันในส่วน 3) ที่รับ st.bad_ms
-#    แล้วโชว์ข้อความตัวใหญ่บนจอด้วย show_note()
-# 3) ให้ SW6 (ปุ่มบน) = Button(1) ล้างตัวนับครั้งผิดปกติ (st.bad_count และ st.bad_ms)
-#    อย่าลืมใส่ปุ่มใหม่ลงใน wait_ms(SAMPLE_MS, (sw5, sw6)) ด้วย ไม่งั้นการกดสั้น ๆ จะหาย
+# 1) กด SW5 ขณะเพื่อนเคาะโต๊ะ 5 วิ (สอนปกติผิด ๆ) ต้องเขย่าแรงแค่ไหนถึงเตือน?
+# 2) กฎ "ผิดปกติรวมเกิน 10 วิ = หยุดปั๊ม" ในส่วน 3) ใช้ st.bad_ms โชว์ด้วย show_note()
+# 3) SW6 = Button(1) ล้าง st.bad_count, st.bad_ms · ใส่ใน wait_ms(SAMPLE_MS, (sw5, sw6))
