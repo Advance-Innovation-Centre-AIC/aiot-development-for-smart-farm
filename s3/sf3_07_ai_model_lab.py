@@ -5,7 +5,7 @@
 #             "AI says" follows the strongest event class (not unlabeled) against its Hearing at / Confirm at
 #             SW5 (lower button) = next model, SW6 (upper button) = Run/Stop
 # Everything is read from the board: model list, classes, sensor, thresholds.
-# Boards: TESAIoT Dev Kit (firmware 2.4.2+), Eva Kit, BENTO Emulator (built-in models only)
+# Boards: TESAIoT Dev Kit (firmware 2.4.2+), BENTO Emulator (built-in models only). Eva Kit: written for it, not yet tested on a board.
 # No sound on purpose: the speaker would leak into the mic models.
 
 try:
