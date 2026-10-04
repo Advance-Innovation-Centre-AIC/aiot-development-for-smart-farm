@@ -28,7 +28,7 @@ BROKER = "broker.hivemq.com"          # สำรอง: "test.mosquitto.org" �
 CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
-BTN_NAMES = ("SW6", "SW5")
+BTN_NAMES = ("SW5", "SW6")
 READ_MS, SEND_MS, POLL_MS = 1000, 5000, 100
 RUN_MS = 1800000                      # ส่งนาน 30 นาที
 SOUND = True                          # False = ดังเฉพาะตอนกด SW5
