@@ -20,7 +20,7 @@ TEAM = "teamXX"                        # เลขกลุ่มที่ผู
 BROKER = "broker.hivemq.com"
 CLIENT_ID = "bento-gw-" + TEAM         # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 BASE = "bento-aiot/" + TEAM + "/"
-BTN_NAMES = ("SW6", "SW5")
+BTN_NAMES = ("SW5", "SW6")
 SOIL_MIN = 30
 PUMP_SEC, PUMP_MAX_S = 10, 30          # รดกี่วิ / เพดานที่ส่งให้ PLC
 TANK_MIN = 10                          # ถังต่ำกว่านี้ไม่สั่ง (PLC กันซ้ำอีกชั้น)
@@ -300,7 +300,7 @@ def main():
         stop(w, led, problem)
     show_link(w, True)
     show_note(w, "ออนไลน์ " + TEAM, COL_OK)
-    farm, water, toggle = Farm(), Button(0), Button(1)
+    farm, water, toggle = Farm(), Button(1), Button(0)
     n = 0
     t0 = t_send = t_draw = time.ticks_ms()
     t_cmd = time.ticks_add(t0, -COOLDOWN_MS)
