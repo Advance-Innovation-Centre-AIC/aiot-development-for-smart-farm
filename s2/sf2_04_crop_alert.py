@@ -26,7 +26,7 @@ ROOT = "bento-aiot"
 CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC_EVENT = ROOT + "/" + TEAM + "/event"
 TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
-BTN_NAMES = ("SW5", "SW6")
+BTN_NAMES = ("SW6", "SW5")
 
 # (ชื่อไทย, รหัสอังกฤษ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)
 CROPS = (
