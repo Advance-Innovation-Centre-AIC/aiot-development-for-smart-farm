@@ -294,7 +294,7 @@ def main():
         now = time.ticks_ms()
         msg = mqtt.get_message()       # ฟังทุก 20 ms แม้จะอ่านเซนเซอร์แค่ทุกวินาที
         ack = on_command(w, s, msg[1]) if msg else False
-        down = buttons.pressed(0)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
+        down = buttons.pressed(1)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
         if down and not was_down:      # นับตอนเพิ่งกดลง กดค้างไม่นับซ้ำ
             ack = True
         was_down = down
