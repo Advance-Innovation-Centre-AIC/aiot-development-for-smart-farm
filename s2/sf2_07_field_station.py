@@ -29,7 +29,7 @@ T_BASE = ROOT + "/" + TEAM + "/"
 PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC
 PLC_DEFAULT_S = 10
 SEND_MS, POLL_MS, RUN_MS = 5000, 100, 1800000
-BTN_NAMES = ("SW5", "SW6")
+BTN_NAMES = ("SW6", "SW5")
 
 SPEAKER = 40
 VOLUME = 25
