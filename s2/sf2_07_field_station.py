@@ -29,7 +29,7 @@ T_BASE = ROOT + "/" + TEAM + "/"
 PLC_MAX_S, PLC_TANK_MIN = 30, 10       # กฎความปลอดภัยของ PLC
 PLC_DEFAULT_S = 10
 SEND_MS, POLL_MS, RUN_MS = 5000, 100, 1800000
-BTN_NAMES = ("SW6", "SW5")
+BTN_NAMES = ("SW5", "SW6")
 
 SPEAKER = 40
 VOLUME = 25
@@ -290,7 +290,7 @@ def main():
         stop(w, relay, problem)
     show_link(w, True)
     show_status(w, "แปลงของ " + TEAM + " ออนไลน์", COL_OK)
-    plc, stop_btn, got = Plc(), Button(0), 0
+    plc, stop_btn, got = Plc(), Button(1), 0
     counts, shown, was_on = {"soil": 0, "tank": 0}, -1, False
     t0 = time.ticks_ms()
     due = {"soil": 0, "state": SEND_MS // 4, "tank": SEND_MS // 2}   # เหลื่อมกัน กล่องรับของ Gateway มีช่องเดียว
