@@ -24,7 +24,7 @@ BROKER = "broker.hivemq.com"
 CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd"
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
-BTN_NAMES = ("SW6", "SW5")
+BTN_NAMES = ("SW5", "SW6")
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินาที ก็ได้แค่ 30
 TANK_MIN = 10  # ต่ำกว่านี้ห้ามปั๊ม (ปั๊มแห้งพัง)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
@@ -279,7 +279,7 @@ def main():
         stop(w, pump, problem)
     show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
-    stop_btn = Button(0)
+    stop_btn = Button(1)
     got = n = pump_ms = pump_t0 = 0
     shown = -1
     t_send = t0 = time.ticks_ms()
