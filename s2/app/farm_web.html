@@ -42,8 +42,8 @@
 <p>ทีม <input id="team" size="7" value="teamXX"> <button id="go">ต่อ</button> สถานะ: <b id="status">ยังไม่ได้ต่อ</b></p>
 <div id="cards"></div>
 <p>
-  <button data-cmd='{"cmd":"pump","on":1,"sec":10}'>รดน้ำ 10 วินาที</button>
-  <button data-cmd='{"cmd":"pump","on":0}'>ปิดปั๊ม</button>
+  <button data-cmd='{"pump":1,"sec":10}'>รดน้ำ 10 วินาที</button>
+  <button data-cmd='{"pump":0}'>ปิดปั๊ม</button>
   <button data-cmd='{"cmd":"beep"}'>เรียกคนที่ฟาร์ม</button>
   <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
 </p>
@@ -62,7 +62,7 @@
     <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">60 %</div></div>
     <div class="simBox"><div class="simLabel">ถังน้ำจำลอง</div><div id="plcSimTank" class="simValue">80 %</div></div>
   </div>
-  <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> และ Simulator รายงานสถานะกลับที่ <code>.../plc/state</code> พร้อมจำลอง <code>field/soil</code> และ <code>field/tank</code> เพื่อแทนแปลงจำลองด้วย</p>
+  <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
 </section>
 <p>
   <button id="downloadCsv">ดาวน์โหลด CSV</button>
@@ -92,8 +92,14 @@ const telemetryRows = [];
 // ----- PLC / field simulator -----
 let plcSimTimer = null;
 let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0 };
-const PLC_SIM_PERIOD_MS = 2000;
+const PLC_SIM_PERIOD_MS = 1000;
 const FIELD_SIM_PERIOD_MS = 5000;
+const PLC_MAX_S = 30;
+const PLC_TANK_MIN = 10;
+const SOIL_DRY_PER_S = 0.4;
+const SOIL_WET_PER_S = 2.0;
+const TANK_USE_PER_S = 1.0;
+const TANK_FILL_PER_S = 0.05;
 
 function simTopic(kind) { return ROOT + "/" + team + "/" + kind; }
 function simPublish(kind, obj) {
@@ -110,17 +116,56 @@ function updatePlcSimUi() {
 function plcSimTick() {
   if (!plcSimState.online) return;
   const now = Date.now();
+
+  // field_sim.py: ครบเวลาที่สั่งไว้ -> PLC ดับปั๊มเอง
   if (plcSimState.pump && plcSimState.pumpUntil && now >= plcSimState.pumpUntil) {
     plcSimState.pump = 0;
     plcSimState.pumpUntil = 0;
   }
-  // จำลองแปลง: ดินแห้งลงเองเมื่อปั๊มไม่ทำงาน และชื้นขึ้นเมื่อปั๊มทำงาน
-  plcSimState.soil += plcSimState.pump ? 2.5 : -0.6;
-  plcSimState.soil = Math.max(5, Math.min(95, plcSimState.soil));
-  if (plcSimState.pump) plcSimState.tank = Math.max(0, plcSimState.tank - 1.2);
-  simPublish("plc/state", { online: 1, pump: plcSimState.pump, by: "farm_web_plc_sim" });
-  simPublish("field/soil", { soil: Math.round(plcSimState.soil), by: "farm_web_plc_sim" });
-  simPublish("field/tank", { tank: Math.round(plcSimState.tank), by: "farm_web_plc_sim" });
+
+  // จำลองฟิสิกส์แบบเดียวกับ field_sim.py
+  const dt = PLC_SIM_PERIOD_MS / 1000;
+  if (plcSimState.pump) {
+    plcSimState.soil += SOIL_WET_PER_S * dt;
+    plcSimState.tank -= TANK_USE_PER_S * dt;
+  } else {
+    plcSimState.soil -= SOIL_DRY_PER_S * dt;
+  }
+  plcSimState.tank += TANK_FILL_PER_S * dt;
+
+  plcSimState.soil = Math.max(0, Math.min(100, plcSimState.soil));
+  plcSimState.tank = Math.max(0, Math.min(100, plcSimState.tank));
+
+  // PLC ดับเองถ้าถังต่ำกว่าเกณฑ์
+  if (plcSimState.pump && plcSimState.tank < PLC_TANK_MIN) {
+    plcSimState.pump = 0;
+    plcSimState.pumpUntil = 0;
+  }
+
+  // plc/state ตาม field_sim.py
+  simPublish("plc/state", {
+    pump: plcSimState.pump ? 1 : 0,
+    left_s: plcSimState.pump && plcSimState.pumpUntil
+      ? Math.max(0, Math.ceil((plcSimState.pumpUntil - now) / 1000))
+      : 0,
+    why: plcSimState.pump ? "on" : "tick",
+    n: Date.now()
+  });
+
+  // field/soil และ field/tank ใช้ payload แบบ node/value เหมือน field_sim.py
+  simPublish("field/soil", {
+    node: "soil-1",
+    value: Math.round(plcSimState.soil),
+    unit: "%",
+    n: Date.now()
+  });
+  simPublish("field/tank", {
+    node: "tank-1",
+    value: Math.round(plcSimState.tank),
+    unit: "%",
+    n: Date.now()
+  });
+
   updatePlcSimUi();
 }
 function startPlcSimulator() {
@@ -220,12 +265,34 @@ function connect() {
     let data = null;
     try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
     // PLC Simulator รับคำสั่งจาก Gateway โดยตรง
+    // field_sim.py contract: {"pump": 1, "sec": 10} หรือ {"pump": 0}
     if (plcSimState.online && topic.endsWith("/plc/cmd") && data && typeof data === "object" && !Array.isArray(data)) {
-      if (data.cmd === "pump") {
-        plcSimState.pump = data.on ? 1 : 0;
-        const sec = Math.max(0, Math.min(30, Number(data.sec) || 0));
-        plcSimState.pumpUntil = plcSimState.pump && sec ? Date.now() + sec * 1000 : 0;
-        simPublish("plc/state", { online: 1, pump: plcSimState.pump, by: "farm_web_plc_sim", cmd: "pump" });
+      if ("pump" in data) {
+        let why = "off";
+
+        if (!data.pump) {
+          plcSimState.pump = 0;
+          plcSimState.pumpUntil = 0;
+        } else if (plcSimState.tank < PLC_TANK_MIN) {
+          plcSimState.pump = 0;
+          plcSimState.pumpUntil = 0;
+          why = "blocked_tank";
+        } else {
+          let sec = Number.isInteger(data.sec) && data.sec > 0 ? data.sec : 10;
+          sec = Math.min(sec, PLC_MAX_S);
+          plcSimState.pump = 1;
+          plcSimState.pumpUntil = Date.now() + sec * 1000;
+          why = "on";
+        }
+
+        simPublish("plc/state", {
+          pump: plcSimState.pump,
+          left_s: plcSimState.pump && plcSimState.pumpUntil
+            ? Math.max(0, Math.ceil((plcSimState.pumpUntil - Date.now()) / 1000))
+            : 0,
+          why,
+          n: Date.now()
+        });
         updatePlcSimUi();
       }
     }
