@@ -6,6 +6,7 @@
   broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
   TODO ของกลุ่ม: แก้ LABELS ให้เป็นชื่อที่กลุ่มอยากเห็น / เพิ่มปุ่มคำสั่งของกลุ่มเอง / ทำให้การ์ดเป็นสีแดงเมื่อค่าเกินเกณฑ์
   CSV: หน้าเว็บเก็บ telemetry ที่ได้รับไว้ในหน่วยความจำ และดาวน์โหลดได้ด้วยปุ่ม "ดาวน์โหลด CSV"
+  PLC Simulator: เปิดจากหน้านี้เพื่อแทน app/field_sim.py ในทางเลือกที่ 1 โดยใช้ MQTT contract เดิมของ S2
 -->
 <html lang="th">
 <head>
@@ -26,6 +27,14 @@
   #events { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
   #logStatus { color: var(--dim); font-size: 14px; }
   button, input { font-size: 16px; padding: 10px 12px; margin: 4px 4px 0 0; }
+  #plcSim { margin-top: 14px; padding: 12px; background: var(--card); border: 2px solid var(--line); border-radius: 10px; }
+  #plcSim h2 { margin: 0 0 8px; font-size: 18px; }
+  #plcSim .simGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  #plcSim .simBox { padding: 9px; border-radius: 8px; background: var(--bg); }
+  #plcSim .simLabel { color: var(--dim); font-size: 13px; }
+  #plcSim .simValue { font-size: 20px; font-weight: 700; }
+  #plcSim .simHint { color: var(--dim); font-size: 13px; margin: 8px 0 0; }
+  #plcSim .danger { border-color: var(--bad); color: var(--bad); }
 </style>
 </head>
 <body>
@@ -39,6 +48,22 @@
   <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
 </p>
 <p><input id="say" maxlength="20" placeholder="ข้อความอังกฤษขึ้นจอ LED"> <button id="sayBtn">ส่งข้อความ</button></p>
+<section id="plcSim">
+  <h2>PLC Simulator — ใช้แทน <code>app/field_sim.py</code></h2>
+  <p class="simHint">เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง ไม่ต้องรัน Python simulator เพิ่ม</p>
+  <div class="bar">
+    <button id="plcSimStart" class="primary">เริ่ม PLC Simulator</button>
+    <button id="plcSimStop">หยุด Simulator</button>
+    <button id="plcSimDrop" class="danger">จำลอง PLC หลุด</button>
+  </div>
+  <div class="simGrid">
+    <div class="simBox"><div class="simLabel">PLC</div><div id="plcSimOnline" class="simValue">OFF</div></div>
+    <div class="simBox"><div class="simLabel">ปั๊ม</div><div id="plcSimPump" class="simValue">OFF</div></div>
+    <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">60 %</div></div>
+    <div class="simBox"><div class="simLabel">ถังน้ำจำลอง</div><div id="plcSimTank" class="simValue">80 %</div></div>
+  </div>
+  <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> และ Simulator รายงานสถานะกลับที่ <code>.../plc/state</code> พร้อมจำลอง <code>field/soil</code> และ <code>field/tank</code> เพื่อแทนแปลงจำลองด้วย</p>
+</section>
 <p>
   <button id="downloadCsv">ดาวน์โหลด CSV</button>
   <button id="clearCsv">ล้างข้อมูลที่เก็บไว้</button>
@@ -63,6 +88,71 @@ const events = [];
 // เพื่อให้กลุ่มดาวน์โหลดเป็น CSV ได้โดยไม่ต้องมี server เพิ่ม
 const csvColumns = ["n", "temp_c", "rh", "hpa", "az", "soil", "light", "tank", "pump", "by"];
 const telemetryRows = [];
+
+// ----- PLC / field simulator -----
+let plcSimTimer = null;
+let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0 };
+const PLC_SIM_PERIOD_MS = 2000;
+const FIELD_SIM_PERIOD_MS = 5000;
+
+function simTopic(kind) { return ROOT + "/" + team + "/" + kind; }
+function simPublish(kind, obj) {
+  if (!client || !client.connected) return false;
+  client.publish(simTopic(kind), JSON.stringify(obj));
+  return true;
+}
+function updatePlcSimUi() {
+  $("plcSimOnline").textContent = plcSimState.online ? "ONLINE" : "OFF";
+  $("plcSimPump").textContent = plcSimState.pump ? "ON" : "OFF";
+  $("plcSimSoil").textContent = Math.round(plcSimState.soil) + " %";
+  $("plcSimTank").textContent = Math.round(plcSimState.tank) + " %";
+}
+function plcSimTick() {
+  if (!plcSimState.online) return;
+  const now = Date.now();
+  if (plcSimState.pump && plcSimState.pumpUntil && now >= plcSimState.pumpUntil) {
+    plcSimState.pump = 0;
+    plcSimState.pumpUntil = 0;
+  }
+  // จำลองแปลง: ดินแห้งลงเองเมื่อปั๊มไม่ทำงาน และชื้นขึ้นเมื่อปั๊มทำงาน
+  plcSimState.soil += plcSimState.pump ? 2.5 : -0.6;
+  plcSimState.soil = Math.max(5, Math.min(95, plcSimState.soil));
+  if (plcSimState.pump) plcSimState.tank = Math.max(0, plcSimState.tank - 1.2);
+  simPublish("plc/state", { online: 1, pump: plcSimState.pump, by: "farm_web_plc_sim" });
+  simPublish("field/soil", { soil: Math.round(plcSimState.soil), by: "farm_web_plc_sim" });
+  simPublish("field/tank", { tank: Math.round(plcSimState.tank), by: "farm_web_plc_sim" });
+  updatePlcSimUi();
+}
+function startPlcSimulator() {
+  if (!/^team\d{2}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีมก่อนเริ่ม PLC Simulator", false); return; }
+  if (!client || !client.connected) { setStatus("กด ต่อ ก่อนเริ่ม PLC Simulator", false); return; }
+  stopPlcSimulator(false);
+  plcSimState.online = true;
+  updatePlcSimUi();
+  plcSimTimer = setInterval(plcSimTick, PLC_SIM_PERIOD_MS);
+  plcSimTick();
+  setStatus("PLC Simulator ทำงานแล้ว", true);
+}
+function stopPlcSimulator(showStatus = true) {
+  if (plcSimTimer) clearInterval(plcSimTimer);
+  plcSimTimer = null;
+  plcSimState.online = false;
+  plcSimState.pump = 0;
+  plcSimState.pumpUntil = 0;
+  updatePlcSimUi();
+  if (showStatus) setStatus("หยุด PLC Simulator แล้ว", true);
+}
+function dropPlcSimulator() {
+  if (!plcSimState.online) { setStatus("PLC Simulator ยังไม่ทำงาน", false); return; }
+  // หยุด heartbeat/report แต่ไม่ปิด MQTT เพื่อให้ Gateway ตรวจจับ timeout ได้จริง
+  if (plcSimTimer) clearInterval(plcSimTimer);
+  plcSimTimer = null;
+  plcSimState.online = false;
+  plcSimState.pump = 0;
+  plcSimState.pumpUntil = 0;
+  updatePlcSimUi();
+  setStatus("จำลอง PLC หลุดแล้ว — รอดู Gateway แจ้ง PLC หลุด", true);
+}
 
 function setStatus(text, ok) { $("status").textContent = text; $("status").style.color = ok ? "var(--ok)" : "var(--bad)"; }
 
@@ -129,6 +219,16 @@ function connect() {
     const text = payload.toString();
     let data = null;
     try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
+    // PLC Simulator รับคำสั่งจาก Gateway โดยตรง
+    if (plcSimState.online && topic.endsWith("/plc/cmd") && data && typeof data === "object" && !Array.isArray(data)) {
+      if (data.cmd === "pump") {
+        plcSimState.pump = data.on ? 1 : 0;
+        const sec = Math.max(0, Math.min(30, Number(data.sec) || 0));
+        plcSimState.pumpUntil = plcSimState.pump && sec ? Date.now() + sec * 1000 : 0;
+        simPublish("plc/state", { online: 1, pump: plcSimState.pump, by: "farm_web_plc_sim", cmd: "pump" });
+        updatePlcSimUi();
+      }
+    }
     if (topic.endsWith("/telemetry") && data && typeof data === "object" && !Array.isArray(data)) {
       showCards(data);
       recordTelemetry(data);
@@ -165,6 +265,10 @@ $("downloadCsv").addEventListener("click", downloadCsv);
 $("clearCsv").addEventListener("click", clearCsv);
 document.querySelectorAll("button[data-cmd]").forEach((b) => b.addEventListener("click", () => send(JSON.parse(b.dataset.cmd))));
 $("sayBtn").addEventListener("click", () => send({ cmd: "say", text: $("say").value }));
+$("plcSimStart").addEventListener("click", startPlcSimulator);
+$("plcSimStop").addEventListener("click", () => stopPlcSimulator(true));
+$("plcSimDrop").addEventListener("click", dropPlcSimulator);
+updatePlcSimUi();
 updateLogStatus();
 if (team !== "teamXX") connect();
 </script>
