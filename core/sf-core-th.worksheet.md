@@ -123,10 +123,10 @@
 
 | ไฟล์ | หลักการ | ลองทำ | จดผล |
 |---|---|---|---|
-| ★ `cp1_01_button_patterns.py` | ปุ่มเดียวอ่านได้ 3 แบบ: ระดับ · ขอบ · รูปแบบ | กดสั้น · กดค้างเกิน 0.8 วิ · กดสองครั้งเร็ว ๆ ทั้ง SW5 และ SW6 | ขอบกดลง ____ ครั้ง · คลิก ____ · ค้าง ____ · ดับเบิล ____ |
-| ★ `cp1_02_knob_scaling.py` | เลขดิบ 0–4095 → ค่าที่มีหน่วย + ช่องกันกะพริบ | หมุน VR1–VR4 ช้า ๆ · กด SW5 เปิด/ปิดช่องกันกะพริบ | VR1 กลางช่วง raw ≈ ____ · 1 ขั้นของ VR2 = ____ °C |
-| ★ `cp1_03_loop_clock.py` | ลูปเดียว สามจังหวะ ไม่มีใครรอใคร | ดูตารางคาบจริง · กด SW5 สลับเป็นโหมดง่าย (sleep ต่อกัน) | คาบเฉลี่ย "อากาศ" โหมดปกติ ____ ms · โหมดง่าย ____ ms |
-| ★ `cp1_04_calibrate.py` | ชดเชย · ตั้งศูนย์ · สอบเทียบสองจุด | ตั้ง `TEMP_OFFSET` · กด SW5 ตั้งศูนย์มุมเอียง · SW6 เก็บจุดแห้ง/เปียกด้วย VR1 | `TEMP_OFFSET` ของบอร์ดเรา = ____ · มุมเอียงดิบตอนวางปกติ = ____ ° |
+| ★ [`cp1_01_button_patterns.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_01_button_patterns.py) | ปุ่มเดียวอ่านได้ 3 แบบ: ระดับ · ขอบ · รูปแบบ | กดสั้น · กดค้างเกิน 0.8 วิ · กดสองครั้งเร็ว ๆ ทั้ง SW5 และ SW6 | ขอบกดลง ____ ครั้ง · คลิก ____ · ค้าง ____ · ดับเบิล ____ |
+| ★ [`cp1_02_knob_scaling.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_02_knob_scaling.py) | เลขดิบ 0–4095 → ค่าที่มีหน่วย + ช่องกันกะพริบ | หมุน VR1–VR4 ช้า ๆ · กด SW5 เปิด/ปิดช่องกันกะพริบ | VR1 กลางช่วง raw ≈ ____ · 1 ขั้นของ VR2 = ____ °C |
+| ★ [`cp1_03_loop_clock.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_03_loop_clock.py) | ลูปเดียว สามจังหวะ ไม่มีใครรอใคร | ดูตารางคาบจริง · กด SW5 สลับเป็นโหมดง่าย (sleep ต่อกัน) | คาบเฉลี่ย "อากาศ" โหมดปกติ ____ ms · โหมดง่าย ____ ms |
+| ★ [`cp1_04_calibrate.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_04_calibrate.py) | ชดเชย · ตั้งศูนย์ · สอบเทียบสองจุด | ตั้ง `TEMP_OFFSET` · กด SW5 ตั้งศูนย์มุมเอียง · SW6 เก็บจุดแห้ง/เปียกด้วย VR1 | `TEMP_OFFSET` ของบอร์ดเรา = ____ · มุมเอียงดิบตอนวางปกติ = ____ ° |
 
 ### Code Quest ส่วนที่ 1 · ระดับ 1–2 โจทย์หลัก (มีเฉลยในคาบ)
 
@@ -135,7 +135,7 @@
 - [ ] **ระดับ 1 เดา (3):** เก็บจุดแห้งที่ raw 3000 และจุดเปียกที่ raw 1000 แล้วหมุน VR1 ไปที่ raw 2000 ได้ ______ % (`cp1_04`)
 - [ ] **ระดับ 2 แก้ (1):** ตั้ง `LONG_MS = 2000` แล้วกดค้าง 1 วินาที ได้ผลอะไร เพราะอะไร ______________________ (`cp1_01`)
 - [ ] **ระดับ 2 แก้ (2):** ตั้ง `CLIMATE_MS = 250` แล้วดูคอลัมน์ "ช้า" ของ IMU เปลี่ยนไหม ______________________ (`cp1_03`)
-- [ ] **ระดับ 3 เติม — โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า) ทำที่บ้านใน Emulator:** เปิด `core/practise/cp1_02_practise.py` เติม `map_range()` และ `clamp()` ให้ผ่านการตรวจ 6 กรณี
+- [ ] **ระดับ 3 เติม — โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า) ทำที่บ้านใน Emulator:** เปิด [`core/practise/cp1_02_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp1_02_practise.py) เติม `map_range()` และ `clamp()` ให้ผ่านการตรวจ 6 กรณี
 - [ ] **ระดับ 4 สร้าง — โจทย์เพิ่ม:** ใน `cp1_01` เพิ่ม "กด SW6 ค้าง 3 วินาที = ล้างตัวนับ" พร้อมแถบบอกความคืบหน้าระหว่างกดค้าง
 
 ---
@@ -146,19 +146,19 @@
 
 | ไฟล์ | หลักการ | ลองทำ | จดผล |
 |---|---|---|---|
-| ★ `cp2_01_filter_race.py` | สัญญาณเดียว ตัวกรองสามแบบแข่งกัน | หมุน VR1 · หมุน VR2 ปรับ `alpha` ของ EMA ดูเส้นตามช้า/เร็ว | ค่ากระโดดที่ปล่อยผ่าน: EMA ____ · Median ____ · Kalman ____ |
-| ☆ `cp2_02_rolling_stats.py` | ค่าเฉลี่ย · SD · z-score ของ 30 ค่าล่าสุด | หมุน VR1 เร็ว ๆ แล้วค้าง · กด SW5 สลับเป็นอุณหภูมิแล้วเป่าลมใส่เซนเซอร์ | z สูงสุดที่เห็น ____ · ไฟ "ผิดปกติ" ติด ____ ครั้ง |
-| ★ `cp2_03_decision_ladder.py` | ข้อมูลเดียว ตัดสิน 4 แบบเทียบกัน | ค้าง VR1 แถวเส้น 50 % หนึ่งนาที · ขั้น 4 กด SW5 = รับทราบ | ตัวนับเปลี่ยน: ขั้น 1 ____ · ขั้น 2 ____ · ขั้น 3 ____ · ขั้น 4 ____ |
-| ★ `cp2_04_sound_spectrum.py` | เสียงเดียวกัน ดูตามเวลา vs ดูตามความถี่ | ผิวปาก · ปรบมือ · ฮัมเสียงต่ำ · กด SW5/SW6 ให้ลำโพงเล่นโน้ต 440/880 Hz | ยอดผิวปากที่ ____ Hz · ปรบมือหน้าตาแบบ ______________ |
-| ★ `cp2_06_ai_confidence_gate.py` | AI ต้องมั่นใจพอหลายครั้งติดกันก่อนลงมือ | หมุน VR1 ปรับ `CONF_MIN` · เขย่า/ขยับบอร์ดตามโมเดลที่เลือก | ที่ `CONF_MIN` 0.6 ลงมือ ____ ครั้ง · ที่ 0.95 ลงมือ ____ ครั้ง "ไม่แน่ใจ" ____ ครั้ง |
+| ★ [`cp2_01_filter_race.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_01_filter_race.py) | สัญญาณเดียว ตัวกรองสามแบบแข่งกัน | หมุน VR1 · หมุน VR2 ปรับ `alpha` ของ EMA ดูเส้นตามช้า/เร็ว | ค่ากระโดดที่ปล่อยผ่าน: EMA ____ · Median ____ · Kalman ____ |
+| ☆ [`cp2_02_rolling_stats.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py) | ค่าเฉลี่ย · SD · z-score ของ 30 ค่าล่าสุด | หมุน VR1 เร็ว ๆ แล้วค้าง · กด SW5 สลับเป็นอุณหภูมิแล้วเป่าลมใส่เซนเซอร์ | z สูงสุดที่เห็น ____ · ไฟ "ผิดปกติ" ติด ____ ครั้ง |
+| ★ [`cp2_03_decision_ladder.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_03_decision_ladder.py) | ข้อมูลเดียว ตัดสิน 4 แบบเทียบกัน | ค้าง VR1 แถวเส้น 50 % หนึ่งนาที · ขั้น 4 กด SW5 = รับทราบ | ตัวนับเปลี่ยน: ขั้น 1 ____ · ขั้น 2 ____ · ขั้น 3 ____ · ขั้น 4 ____ |
+| ★ [`cp2_04_sound_spectrum.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_04_sound_spectrum.py) | เสียงเดียวกัน ดูตามเวลา vs ดูตามความถี่ | ผิวปาก · ปรบมือ · ฮัมเสียงต่ำ · กด SW5/SW6 ให้ลำโพงเล่นโน้ต 440/880 Hz | ยอดผิวปากที่ ____ Hz · ปรบมือหน้าตาแบบ ______________ |
+| ★ [`cp2_06_ai_confidence_gate.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_06_ai_confidence_gate.py) | AI ต้องมั่นใจพอหลายครั้งติดกันก่อนลงมือ | หมุน VR1 ปรับ `CONF_MIN` · เขย่า/ขยับบอร์ดตามโมเดลที่เลือก | ที่ `CONF_MIN` 0.6 ลงมือ ____ ครั้ง · ที่ 0.95 ลงมือ ____ ครั้ง "ไม่แน่ใจ" ____ ครั้ง |
 
-**การบ้านใน Emulator:** ☆ `cp2_05_dew_point_guard.py` — จุดน้ำค้าง (dew point) เตือนหยดน้ำเกาะใบ · ลองตั้งความชื้นในแผงจำลองสูง ๆ แล้วดูว่า T − Td แคบลงจนเตือนที่ค่าเท่าไร ______ °C
+**การบ้านใน Emulator:** ☆ [`cp2_05_dew_point_guard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py) — จุดน้ำค้าง (dew point) เตือนหยดน้ำเกาะใบ · ลองตั้งความชื้นในแผงจำลองสูง ๆ แล้วดูว่า T − Td แคบลงจนเตือนที่ค่าเท่าไร ______ °C
 
 ### Code Quest ส่วนที่ 2
 
 - [ ] **ระดับ 1 เดา (โจทย์หลัก):** EMA `alpha = 0.2` ค่านิ่งอยู่ที่ 40 แล้วมีค่ากระโดดไป 85 หนึ่งตัว เส้น EMA ขึ้นไปที่ ______ · Median หน้าต่าง 5 กับค่ากระโดดเดียวกัน ได้ ______
 - [ ] **ระดับ 2 แก้ (โจทย์หลัก):** ตั้ง `HOLD_S = 0` ใน `cp2_03` แล้วค้าง VR1 แถวเส้นเหมือนเดิม ตัวนับขั้น 3 เทียบกับขั้น 1 เป็นอย่างไร ______ · ตั้ง `CONF_MIN` สูงมากใน `cp2_06` ขึ้น "ไม่แน่ใจ" บ่อยแค่ไหน ______
-- [ ] **ระดับ 3 เติม — โจทย์หลัก (มีเฉลยในคาบ, 10 นาที):** เปิด `core/practise/cp2_03_practise.py` เติมช่อง A B C ใน `next_state()` ของ state machine แล้วรัน · ผ่านเมื่อ Console ขึ้น **"ผ่าน!"** ครบ 8 การเปลี่ยนสถานะ
+- [ ] **ระดับ 3 เติม — โจทย์หลัก (มีเฉลยในคาบ, 10 นาที):** เปิด [`core/practise/cp2_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp2_03_practise.py) เติมช่อง A B C ใน `next_state()` ของ state machine แล้วรัน · ผ่านเมื่อ Console ขึ้น **"ผ่าน!"** ครบ 8 การเปลี่ยนสถานะ
 
 | ช่อง | คำตอบที่เดาก่อนรัน | ลองอะไรไปบ้าง | ติดตรงไหน / ผ่านแล้ว |
 |---|---|---|---|
@@ -186,25 +186,25 @@
 
 | ไฟล์ | หลักการ | ลองทำ | จดผล |
 |---|---|---|---|
-| ★ `cp3_01_status_language.py` | สถานะเดียว พูดภาษาเดียวกันทุกช่องทาง | หมุน VR1 ผ่าน 4 สถานะ · ค้างที่ "อันตราย" แล้วกด SW5 รับทราบ | หลังรับทราบ ไฟ ______ เสียง ______ |
-| ★ `cp3_03_report_by_exception.py` | ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่ | ใส่ Wi-Fi และ TEAM · หมุน VR1 เป็นช่วง ๆ · ดูตัวเลข "ส่งจริง" เทียบ "ถ้าส่งทุกครั้ง" | ประหยัด ____ % ใน ____ นาที |
-| ★ `cp3_06_modbus_frame.py` | บอร์ดสร้างเฟรม Modbus TCP จริง แล้วส่ง "ความตั้งใจ" ผ่าน MQTT | SW5 = อ่านค่า (FC03) · SW6 = สั่งปั๊ม (FC06) · ดูเฟรมทีละไบต์ | เฟรม FC06 ที่บอร์ดสร้าง: `__ __ __ __ __ __ __ __ __ __ __ __` |
+| ★ [`cp3_01_status_language.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py) | สถานะเดียว พูดภาษาเดียวกันทุกช่องทาง | หมุน VR1 ผ่าน 4 สถานะ · ค้างที่ "อันตราย" แล้วกด SW5 รับทราบ | หลังรับทราบ ไฟ ______ เสียง ______ |
+| ★ [`cp3_03_report_by_exception.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py) | ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่ | ใส่ Wi-Fi และ TEAM · หมุน VR1 เป็นช่วง ๆ · ดูตัวเลข "ส่งจริง" เทียบ "ถ้าส่งทุกครั้ง" | ประหยัด ____ % ใน ____ นาที |
+| ★ [`cp3_06_modbus_frame.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py) | บอร์ดสร้างเฟรม Modbus TCP จริง แล้วส่ง "ความตั้งใจ" ผ่าน MQTT | SW5 = อ่านค่า (FC03) · SW6 = สั่งปั๊ม (FC06) · ดูเฟรมทีละไบต์ | เฟรม FC06 ที่บอร์ดสร้าง: `__ __ __ __ __ __ __ __ __ __ __ __` |
 
 **สาธิต Modbus บนโน้ตบุ๊ก (ผู้สอนทำ หรือกลุ่มที่มีโน้ตบุ๊กทำตาม):**
 1. เทอร์มินัลที่ 1: `python core/app/modbus_plc_sim.py` — PLC จำลอง พูด Modbus TCP ที่พอร์ต 5020
-2. เทอร์มินัลที่ 2: แก้ `TEAM` ใน `core/app/modbus_bridge.py` ให้ตรงกับบอร์ด แล้ว `python core/app/modbus_bridge.py`
+2. เทอร์มินัลที่ 2: แก้ `TEAM` ใน [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py) ให้ตรงกับบอร์ด แล้ว `python core/app/modbus_bridge.py`
 3. กด SW6 บนบอร์ด → ดูไบต์ 12 ตัวเดียวกับบนจอบอร์ด ออกจากโน้ตบุ๊กไปที่ PLC และคำตอบวิ่งกลับมาที่บอร์ด
 
 > บอร์ดรุ่นนี้ **ยังส่ง Modbus TCP เองไม่ได้** (เฟิร์มแวร์ไม่มีโมดูล Modbus และไม่มี socket) บอร์ดจึงส่ง "ความตั้งใจ" ผ่าน MQTT แล้วให้เกตเวย์บนโน้ตบุ๊กพูด Modbus TCP แทน — เป็นวิธีที่นิยมใช้พา PLC รุ่นเก่าเข้าระบบ IoT
 > เสียงทุกไฟล์ใช้ `ui.tone` ผ่าน `beep()` / `chirp()` ที่ `VOLUME = 25` เพราะ `ui.tone` ตั้งความดังได้ ส่วน `ui.sfx` บนเฟิร์มแวร์นี้ดังคงที่ ปรับเบาไม่ได้
 
-**การบ้านใน Emulator:** ☆ `cp3_02_matrix_toolkit.py` จอไฟ 16×8 เป็นจอเล็ก 4 แบบ (กราฟเส้น หลอด ตัวเลข ตัววิ่ง) · ☆ `cp3_04_command_confirm.py` สั่ง → รอคำยืนยัน → ส่งซ้ำ → ถอยไปทางปลอดภัย (ใช้คู่กับ `s2/app/field_sim.py`) · ☆ `cp3_05_two_pipes.py` ค่าเดียวกัน สองท่อ: `mqtt` 1883 ไม่เข้ารหัส เทียบค่าตั้งของท่อ `tesaiot` ที่เข้ารหัส
+**การบ้านใน Emulator:** ☆ [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) จอไฟ 16×8 เป็นจอเล็ก 4 แบบ (กราฟเส้น หลอด ตัวเลข ตัววิ่ง) · ☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) สั่ง → รอคำยืนยัน → ส่งซ้ำ → ถอยไปทางปลอดภัย (ใช้คู่กับ `s2/app/field_sim.py`) · ☆ [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) ค่าเดียวกัน สองท่อ: `mqtt` 1883 ไม่เข้ารหัส เทียบค่าตั้งของท่อ `tesaiot` ที่เข้ารหัส
 
 ### Code Quest ส่วนที่ 3
 
 - [ ] **ระดับ 1 เดา (โจทย์หลัก):** ค่าที่อ่านได้ 40, 40.5, 41, 43, 43.2, 46 · `DEADBAND = 2` · เทียบกับ **ค่าที่ส่งล่าสุด** · ค่าแรกส่งเสมอ · ส่งเมื่อเปลี่ยน **มากกว่า** 2 → ส่งทั้งหมด ______ ครั้ง (ไม่นับการส่งว่ายังอยู่)
 - [ ] **ระดับ 2 แก้ (โจทย์หลัก):** ตั้ง `HEARTBEAT_S = 10` ใน `cp3_03` แล้วดู % ที่ประหยัดได้ ______ · ตั้ง `REPEAT_S = 3` ใน `cp3_01` แล้วค้างที่ "อันตราย" รำคาญหรือยัง ______
-- [ ] **ระดับ 3 เติม — โจทย์หลัก (มีเฉลยในคาบ, 7 นาที):** เปิด `core/practise/cp3_06_practise.py` เติมช่อง A (รูปแบบ `struct` ของ PDU) และ B (ค่าช่อง len ของ MBAP) ใน `fc06_write()` — ผู้สอนเติมช่อง A ให้ดูก่อน · ผ่านเมื่อ Console ขึ้น **"ผ่าน!"** (ตรวจ 3 กรอบ รวมกรอบ `00 01 00 00 00 06 01 06 00 00 00 01`)
+- [ ] **ระดับ 3 เติม — โจทย์หลัก (มีเฉลยในคาบ, 7 นาที):** เปิด [`core/practise/cp3_06_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py) เติมช่อง A (รูปแบบ `struct` ของ PDU) และ B (ค่าช่อง len ของ MBAP) ใน `fc06_write()` — ผู้สอนเติมช่อง A ให้ดูก่อน · ผ่านเมื่อ Console ขึ้น **"ผ่าน!"** (ตรวจ 3 กรอบ รวมกรอบ `00 01 00 00 00 06 01 06 00 00 00 01`)
 
 | ช่อง | คำตอบที่เดาก่อนรัน | ลองอะไรไปบ้าง | ติดตรงไหน / ผ่านแล้ว |
 |---|---|---|---|
@@ -229,12 +229,12 @@
 
 | ไฟล์ | หลักการ | ลองทำ | จดผล |
 |---|---|---|---|
-| ★ `cp4_01_one_value_many_faces.py` | ค่าเดียว หลายหน้าตา — widget ไหนเหมาะกับข้อมูลแบบไหน | หมุน VR1 ช้า ๆ · ดูตัวนับ "ส่งไปจอ" | อ่านค่าได้เร็วที่สุดจาก widget ______ |
-| ★ `cp4_02_style_at_runtime.py` | ปรับหน้าตาขณะรัน: สี เข็ม แถบเตือน ปุ่มถูกปิด | หมุน VR1 ข้ามโซน · หมุน VR2 ให้ถังต่ำกว่าเกณฑ์ แล้วลองกดปุ่มเปิดปั๊ม | ปุ่มถูกปิดเมื่อถังต่ำกว่า ____ % |
-| ★ `cp4_03_event_router.py` | เหตุการณ์ → ตาราง router → ฟังก์ชัน | แตะปุ่มเปิดปั๊ม · กดค้าง · เลื่อน Slider · หมุน Roller · สลับ Switch | แตะครั้งเดียวได้ type ______ · กดค้างได้ ______ |
-| ★ `cp4_05_hmi_page_pattern.py` | หน้า HMI: แถบสถานะนอกแท็บ · แท็บ · ยืนยันก่อนสั่ง · บันทึกเหตุการณ์ | แท็บ "สั่งงาน" → "เปิดปั๊ม" → ตอบกล่องยืนยัน · หมุน VR2 ให้ถังต่ำกว่า 20 % · ดูแท็บ "บันทึก" | แถบสถานะยังเห็นอยู่ไหมตอนอยู่แท็บอื่น ☐ เห็น ☐ ไม่เห็น |
+| ★ [`cp4_01_one_value_many_faces.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_01_one_value_many_faces.py) | ค่าเดียว หลายหน้าตา — widget ไหนเหมาะกับข้อมูลแบบไหน | หมุน VR1 ช้า ๆ · ดูตัวนับ "ส่งไปจอ" | อ่านค่าได้เร็วที่สุดจาก widget ______ |
+| ★ [`cp4_02_style_at_runtime.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_02_style_at_runtime.py) | ปรับหน้าตาขณะรัน: สี เข็ม แถบเตือน ปุ่มถูกปิด | หมุน VR1 ข้ามโซน · หมุน VR2 ให้ถังต่ำกว่าเกณฑ์ แล้วลองกดปุ่มเปิดปั๊ม | ปุ่มถูกปิดเมื่อถังต่ำกว่า ____ % |
+| ★ [`cp4_03_event_router.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_03_event_router.py) | เหตุการณ์ → ตาราง router → ฟังก์ชัน | แตะปุ่มเปิดปั๊ม · กดค้าง · เลื่อน Slider · หมุน Roller · สลับ Switch | แตะครั้งเดียวได้ type ______ · กดค้างได้ ______ |
+| ★ [`cp4_05_hmi_page_pattern.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_05_hmi_page_pattern.py) | หน้า HMI: แถบสถานะนอกแท็บ · แท็บ · ยืนยันก่อนสั่ง · บันทึกเหตุการณ์ | แท็บ "สั่งงาน" → "เปิดปั๊ม" → ตอบกล่องยืนยัน · หมุน VR2 ให้ถังต่ำกว่า 20 % · ดูแท็บ "บันทึก" | แถบสถานะยังเห็นอยู่ไหมตอนอยู่แท็บอื่น ☐ เห็น ☐ ไม่เห็น |
 
-**การบ้านใน Emulator:** ☆ `cp4_04_draw_on_screen.py` — วาดด้วยของที่มี: `ui.Line` (เส้นหักไม่เกิน 16 จุด) กับ `ui.DotMatrix` (ภาพ 16×8 เดียวกับจอไฟ RGB) · บอร์ดนี้ไม่มี Canvas
+**การบ้านใน Emulator:** ☆ [`cp4_04_draw_on_screen.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_04_draw_on_screen.py) — วาดด้วยของที่มี: `ui.Line` (เส้นหักไม่เกิน 16 จุด) กับ `ui.DotMatrix` (ภาพ 16×8 เดียวกับจอไฟ RGB) · บอร์ดนี้ไม่มี Canvas
 
 > **รู้ไว้ก่อนใช้ MsgBox:** ปุ่มที่เติมใน MsgBox ด้วย `add_button()` ไม่ส่งเหตุการณ์กลับมาให้ Python — `cp4_05` จึงใช้ MsgBox แสดงคำถาม แล้ววาง `ui.Button` จริงสองปุ่มไว้ในกล่องเป็นคำตอบ
 
@@ -242,7 +242,7 @@
 
 - [ ] **ระดับ 1 เดา:** ปุ่มที่ `.listen("long_pressed")` แตะหนึ่งครั้ง `ui.poll()` ได้ type ______ · กดค้าง 1 วินาทีแล้วปล่อย ได้ ______ (เรียงตามลำดับ)
 - [ ] **ระดับ 2 แก้:** เปลี่ยนเกณฑ์โซนสีและขนาดฟอนต์ใน `cp4_02` แล้วย้ายการ์ดหนึ่งใบด้วย `pos()` · ดูว่าอ่านง่ายขึ้นไหม ______
-- [ ] **ระดับ 3 เติม — โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า):** `core/practise/cp4_03_practise.py` เติมตาราง router ให้ผ่านการตรวจด้วยเหตุการณ์ปลอม
+- [ ] **ระดับ 3 เติม — โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า):** [`core/practise/cp4_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp4_03_practise.py) เติมตาราง router ให้ผ่านการตรวจด้วยเหตุการณ์ปลอม
 - [ ] **ระดับ 4 สร้าง — โจทย์เพิ่ม:** เพิ่ม MsgBox ยืนยันก่อน "หยุดทั้งหมด" ใน `cp4_03` หรือเพิ่มแท็บที่ 4 ใน `cp4_05`
 
 ---
@@ -449,7 +449,7 @@ def should_send(v, last_sent, t_last, now):
 | ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม | รอ ~1 นาที หรือกด **RESET** แล้วรันใหม่ |
 | ข้อความเข้าไม่ครบ | ส่ง JSON สั้น ๆ ห่างกัน · กล่องรับมีช่องเดียว ข้อความใหม่ทับข้อความเก่า |
 
-**บอร์ดยังทำไม่ได้:** Modbus และ socket (ใช้เกตเวย์บนโน้ตบุ๊ก `core/app/modbus_bridge.py`) · `mqtt` ไม่มี TLS / retain / Last Will · MQTTS มีเฉพาะผ่าน `tesaiot` ไปแพลตฟอร์ม TESAIoT · `ui.sfx` ปรับความดังไม่ได้
+**บอร์ดยังทำไม่ได้:** Modbus และ socket (ใช้เกตเวย์บนโน้ตบุ๊ก [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)) · `mqtt` ไม่มี TLS / retain / Last Will · MQTTS มีเฉพาะผ่าน `tesaiot` ไปแพลตฟอร์ม TESAIoT · `ui.sfx` ปรับความดังไม่ได้
 
 ### หน้า 4 — โชว์ (จอบอร์ด)
 
@@ -503,3 +503,50 @@ while running:
 | ข้อความไทย | บนบอร์ด `len()` นับเป็นไบต์ อย่าตัดข้อความไทยด้วย `[a:b]` |
 | จอไฟ RGB | ทุกคำสั่งอยู่ใน `try/except OSError` · สี 1–7 |
 | Emulator | ค่าเซนเซอร์ · MQTT · ไมโครโฟน (440 Hz) และผล AI เป็นของจำลอง · `enable()/disable()` ยังไม่มี |
+
+---
+
+## ภาคผนวก B — ไฟล์ใน `core/` ที่ใช้ในใบงาน
+
+ลิงก์ด้านล่างเป็นลิงก์ตรงไปยังไฟล์ใน GitHub ของหลักสูตร
+
+### ส่วนที่ 1 — วัด
+- [`cp1_01_button_patterns.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_01_button_patterns.py)
+- [`cp1_02_knob_scaling.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_02_knob_scaling.py)
+- [`cp1_03_loop_clock.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_03_loop_clock.py)
+- [`cp1_04_calibrate.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp1_04_calibrate.py)
+
+### ส่วนที่ 2 — ประมวลผล & ตัดสิน
+- [`cp2_01_filter_race.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_01_filter_race.py)
+- [`cp2_02_rolling_stats.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_02_rolling_stats.py)
+- [`cp2_03_decision_ladder.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_03_decision_ladder.py)
+- [`cp2_04_sound_spectrum.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_04_sound_spectrum.py)
+- [`cp2_05_dew_point_guard.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_05_dew_point_guard.py)
+- [`cp2_06_ai_confidence_gate.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp2_06_ai_confidence_gate.py)
+
+### ส่วนที่ 3 — ทำ
+- [`cp3_01_status_language.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py)
+- [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py)
+- [`cp3_03_report_by_exception.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py)
+- [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py)
+- [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py)
+- [`cp3_06_modbus_frame.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py)
+
+### ส่วนที่ 4 — โชว์
+- [`cp4_01_one_value_many_faces.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_01_one_value_many_faces.py)
+- [`cp4_02_style_at_runtime.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_02_style_at_runtime.py)
+- [`cp4_03_event_router.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_03_event_router.py)
+- [`cp4_04_draw_on_screen.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_04_draw_on_screen.py)
+- [`cp4_05_hmi_page_pattern.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp4_05_hmi_page_pattern.py)
+
+### ไฟล์ฝึก
+- [`core/practise/cp1_02_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp1_02_practise.py)
+- [`core/practise/cp2_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp2_03_practise.py)
+- [`core/practise/cp3_06_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py)
+- [`core/practise/cp4_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp4_03_practise.py)
+
+### สาธิต Modbus บนโน้ตบุ๊ก
+- [`core/app/modbus_plc_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py)
+- [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)
+
+> หมายเหตุ: เนื้อหาหลักของใบงานยังยึดตามไฟล์ต้นฉบับที่ให้มา และการปรับครั้งนี้เน้นให้อ่านง่ายขึ้น พร้อมเปลี่ยนการอ้างอิงไฟล์เป็น **ชื่อไฟล์เต็ม + ลิงก์ตรง GitHub** แบบเดียวกับ S2/S3
