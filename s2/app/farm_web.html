@@ -5,6 +5,7 @@
   ฟัง  bento-aiot/<ทีม>/telemetry กับ /event  และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd  (ชุดเดียวกับบอร์ด)
   broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
   TODO ของกลุ่ม: แก้ LABELS ให้เป็นชื่อที่กลุ่มอยากเห็น / เพิ่มปุ่มคำสั่งของกลุ่มเอง / ทำให้การ์ดเป็นสีแดงเมื่อค่าเกินเกณฑ์
+  CSV: หน้าเว็บเก็บ telemetry ที่ได้รับไว้ในหน่วยความจำ และดาวน์โหลดได้ด้วยปุ่ม "ดาวน์โหลด CSV"
 -->
 <html lang="th">
 <head>
@@ -23,6 +24,7 @@
   .name { color: var(--dim); font-size: 14px; }
   .num { font-size: clamp(26px, 7vw, 38px); font-weight: 700; overflow-wrap: anywhere; }
   #events { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #logStatus { color: var(--dim); font-size: 14px; }
   button, input { font-size: 16px; padding: 10px 12px; margin: 4px 4px 0 0; }
 </style>
 </head>
@@ -37,6 +39,11 @@
   <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
 </p>
 <p><input id="say" maxlength="20" placeholder="ข้อความอังกฤษขึ้นจอ LED"> <button id="sayBtn">ส่งข้อความ</button></p>
+<p>
+  <button id="downloadCsv">ดาวน์โหลด CSV</button>
+  <button id="clearCsv">ล้างข้อมูลที่เก็บไว้</button>
+  <span id="logStatus">ยังไม่มีข้อมูล telemetry</span>
+</p>
 <p>เหตุการณ์ล่าสุด (ใหม่อยู่บน):</p>
 <div id="events">(ยังไม่มี)</div>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
@@ -52,7 +59,62 @@ let client = null, team = new URLSearchParams(location.search).get("team") || "t
 $("team").value = team;
 const events = [];
 
+// เก็บ telemetry ที่หน้าเว็บได้รับไว้ในหน่วยความจำของเบราว์เซอร์
+// เพื่อให้กลุ่มดาวน์โหลดเป็น CSV ได้โดยไม่ต้องมี server เพิ่ม
+const csvColumns = ["n", "temp_c", "rh", "hpa", "az", "soil", "light", "tank", "pump", "by"];
+const telemetryRows = [];
+
 function setStatus(text, ok) { $("status").textContent = text; $("status").style.color = ok ? "var(--ok)" : "var(--bad)"; }
+
+function updateLogStatus() {
+  const count = telemetryRows.length;
+  $("logStatus").textContent = count
+    ? "เก็บ telemetry แล้ว " + count + " แถว"
+    : "ยังไม่มีข้อมูล telemetry";
+}
+
+function csvCell(value) {
+  if (value === undefined || value === null) return "";
+  const text = String(value);
+  return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
+function recordTelemetry(data) {
+  telemetryRows.push(csvColumns.map((key) => data[key]));
+  updateLogStatus();
+}
+
+function downloadCsv() {
+  if (!telemetryRows.length) {
+    setStatus("ยังไม่มี telemetry ให้ดาวน์โหลด", false);
+    return;
+  }
+
+  const lines = [
+    csvColumns.join(","),
+    ...telemetryRows.map((row) => row.map(csvCell).join(","))
+  ];
+
+  // UTF-8 BOM ช่วยให้ Excel เปิดภาษาไทยได้ถูกต้อง
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], {
+    type: "text/csv;charset=utf-8"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "farm_log_" + team + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  setStatus("ดาวน์โหลด farm_log_" + team + ".csv แล้ว", true);
+}
+
+function clearCsv() {
+  telemetryRows.length = 0;
+  updateLogStatus();
+  setStatus("ล้างข้อมูล CSV ที่เก็บไว้แล้ว", true);
+}
 
 function connect() {
   team = $("team").value.trim();
@@ -67,7 +129,10 @@ function connect() {
     const text = payload.toString();
     let data = null;
     try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
-    if (topic.endsWith("/telemetry") && data && typeof data === "object" && !Array.isArray(data)) showCards(data);
+    if (topic.endsWith("/telemetry") && data && typeof data === "object" && !Array.isArray(data)) {
+      showCards(data);
+      recordTelemetry(data);
+    }
     else if (topic.endsWith("/event")) {
       events.unshift(new Date().toLocaleTimeString() + "  " + text.slice(0, 160));
       $("events").textContent = events.slice(0, 8).join("\n");
@@ -96,8 +161,11 @@ function send(obj) {
 }
 
 $("go").addEventListener("click", connect);
+$("downloadCsv").addEventListener("click", downloadCsv);
+$("clearCsv").addEventListener("click", clearCsv);
 document.querySelectorAll("button[data-cmd]").forEach((b) => b.addEventListener("click", () => send(JSON.parse(b.dataset.cmd))));
 $("sayBtn").addEventListener("click", () => send({ cmd: "say", text: $("say").value }));
+updateLogStatus();
 if (team !== "teamXX") connect();
 </script>
 </body>
