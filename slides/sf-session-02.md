@@ -6,6 +6,7 @@ math: katex
 title: "Session 2 — ฟาร์มต่ออินเทอร์เน็ต · AIoT Development for Smart Farm"
 ---
 
+
 <!-- fit-css -->
 <style>
 section { font-size: 24px; padding: 40px 52px; justify-content: flex-start; }
@@ -36,6 +37,32 @@ section.cover img{filter:none}
 section.sec { background: linear-gradient(135deg,#0f3d2e 0%,#1f6b3a 55%,#7cb342 100%); color:#fff; justify-content:center; }
 section.sec h1 { font-size: 2.1em; color:#fff; }
 section.sec h2, section.sec p, section.sec li { color:#e8f5e9; }
+
+/* กล่องเนื้อหาบนพื้นสีเข้ม: บังคับข้อความให้เข้มเมื่ออยู่บนพื้นอ่อน */
+section.sec .goal,
+section.sec .goal p,
+section.sec .goal li,
+section.sec .think,
+section.sec .think p,
+section.sec .think li,
+section.sec .warn,
+section.sec .warn p,
+section.sec .warn li,
+section.sec .files,
+section.sec .files p,
+section.sec .files li,
+section.sec .files span,
+section.sec .files .f,
+section.sec .files .fh {
+  color:#263238 !important;
+}
+section.sec .goal strong,
+section.sec .think strong,
+section.sec .warn strong,
+section.sec .files strong { color:#1b5e20 !important; }
+section.sec .warn strong { color:#b71c1c !important; }
+section.sec .files a { color:#1b5e20 !important; }
+
 section.sec .when { display:inline-block; background:rgba(0,0,0,.28); border-radius:999px; padding:.1em .8em; font-size:.9em; margin-bottom:.4em; }
 .chal { margin-top:.7em; background:rgba(255,255,255,.95); color:#bf360c !important; border-radius:14px; padding:.45em .9em; font-size:.95em; box-shadow:0 4px 18px rgba(0,0,0,.25); }
 .chal b { color:#bf360c; }
@@ -87,6 +114,26 @@ section .files .hw ~ .f a { color:#6d4c41; }
 .tip { background:#f1f8e9; border-left:6px solid #7cb342; border-radius:8px; padding:.25em .7em; margin:.3em 0; font-size:.8em; color:#33691e; }
 </style>
 
+
+<script>
+(() => {
+  const openExternalLinks = () => {
+    document.querySelectorAll('a[href]').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      }
+    });
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', openExternalLinks);
+  } else {
+    openExternalLinks();
+  }
+})();
+</script>
+
 ![bg](img/cover_sf02.svg)
 
 <!-- _class: cover -->
@@ -101,6 +148,7 @@ section .files .hw ~ .f a { color:#6d4c41; }
 AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO Emulator
 
 ---
+
 
 ## 3 ชั่วโมงของเราวันนี้
 
@@ -145,6 +193,7 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">0:00 – 0:10 · อุ่นเครื่อง 10 นาที</div>
@@ -159,6 +208,7 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
 
 
 ---
+
 
 ## ภาพใหญ่ของวันนี้ — สองลูกศรวิ่งสวนทางกัน
 
@@ -195,6 +245,7 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
 - บอร์ดไม่ต้องรู้ว่าใครจะมาอ่าน แอปไม่ต้องรู้ว่าบอร์ดอยู่ที่ไหน — **รู้แค่ชื่อหัวข้อเดียวกัน**
 
 ---
+
 
 ## MQTT: ส่งเข้าหัวข้อ (publish) · ขอฟังหัวข้อ (subscribe)
 
@@ -238,6 +289,7 @@ section table { font-size: .62em; }
 </div>
 
 ---
+
 
 ## ก่อนเริ่ม — ทุกกลุ่มเปิด Hotspot มือถือให้บอร์ด
 
@@ -284,6 +336,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 
 ---
 
+
 ## ทำไมบอร์ดใช้ Wi-Fi ของสถานที่ไม่ได้ — captive portal
 
 <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
@@ -314,6 +367,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 - เน็ตที่กันพอร์ต 1883 ขาออกก็ไปไม่ถึงเช่นกัน — ไฟล์บอร์ดจะขึ้นบนจอว่า **"broker ไม่ตอบ …"** (ข้อความท้ายต่างกันเล็กน้อยในแต่ละไฟล์)
 
 ---
+
 
 ## โมดูล `wifi` — ห้าตัวที่ไฟล์วันนี้ใช้
 
@@ -347,6 +401,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 - ปุ่มและลูกบิด **เชื่อตัวอักษรบนแผงบอร์ด:** SW5 = ปุ่มล่าง = `buttons.pressed(0)` · SW6 = ปุ่มบน = `buttons.pressed(1)` · VR1–VR4 = `pots.read(0)`–`pots.read(3)` · อย่าเชื่อ `buttons.name()` ไฟล์คาบนี้จึงเขียนชื่อเองใน `BTN_NAMES`
 
 ---
+
 
 ## อ่านโค้ดให้เป็น: ไฟล์คาบนี้มี 6 ส่วน — ส่วนใหม่คือ "เครือข่าย"
 
@@ -383,6 +438,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 
 ---
 
+
 ## Code Quest — โจทย์ 4 ระดับในทุกกิจกรรม
 
 ทำเรียงจากระดับ 1 ขึ้นไป ทำได้ถึงไหนก็ได้แค่นั้น · แต้มสนุก ไม่นับเกรด · ไม่เพิ่มเวลาคาบ
@@ -401,6 +457,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 </div>
 
 ---
+
 
 ## Code Quest — ไฟล์ฝึกอยู่ที่ไหน + ติดขัดทำอย่างไร
 
@@ -429,6 +486,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">0:10 – 0:25 · 15 นาที</div>
@@ -445,6 +503,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 
 
 ---
+
 
 ## กิจกรรม 1 — ฟาร์มขึ้นเน็ตครั้งแรก
 
@@ -478,6 +537,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 </div>
 
 ---
+
 
 ## หัวใจของโค้ด — ป้ายต้องขึ้น "ก่อน" บรรทัดที่บล็อก แล้วจับเวลาคร่อมมัน
 
@@ -524,6 +584,7 @@ def connect_wifi(w):
 
 ---
 
+
 ## กับดักที่ชื่อ `"0.0.0.0"` — และรหัสผิดใช้เวลาเท่าไร
 
 <style scoped>
@@ -568,6 +629,7 @@ def wait_for_ip():
 </div>
 
 ---
+
 
 ## ต่อไม่ติดเพราะอะไร? — ให้บอร์ด "ฟังทั้งห้อง" ก่อนตอบ
 
@@ -625,6 +687,7 @@ def failed(w, led, took):
 
 ---
 
+
 ## เฝ้าลิงก์ — "ต่อติดแล้ว" ไม่ได้แปลว่า "ออนไลน์ตลอด"
 
 <style scoped>
@@ -680,6 +743,7 @@ def link_changed(online, sec):
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">0:25 – 0:55 · 30 นาที</div>
@@ -696,6 +760,7 @@ def link_changed(online, sec):
 
 
 ---
+
 
 ## บอร์ดใช้ 1883 · เบราว์เซอร์ใช้ wss 8884 — แต่เจอกันที่หัวข้อเดียวกัน
 
@@ -736,6 +801,7 @@ section p, section li { font-size: .86em; line-height: 1.26; }
 - ไม่มีชื่อผู้ใช้ ไม่มีรหัสผ่าน · QoS 0 · **ไม่มี retain** — แอปที่เปิดทีหลังเห็นแค่ใบถัดไป
 
 ---
+
 
 ## broker สาธารณะ: ใครก็อ่านได้ ใครก็เขียนได้
 
@@ -780,6 +846,7 @@ section li { margin: .05em 0; font-size: .86em; line-height: 1.26; }
 > ใครก็ส่งเข้า `bento-aiot/<TEAM>/cmd` ได้ ไม่ใช่แค่แอปของเรา — นี่คือเหตุผลที่ไฟล์บอร์ด **ไม่เชื่อคนส่งเลยสักบรรทัด** (กิจกรรม 4)
 
 ---
+
 
 ## บันไดสามขั้นที่ห้ามสลับ: Wi-Fi → IP → broker แล้วค่อยส่ง
 
@@ -842,6 +909,7 @@ def publish_json(topic, obj):
 
 ---
 
+
 ## ค่าที่ส่งออกไปต้องเป็นค่าจริง — และบอกตรง ๆ ว่าอะไรจำลอง
 
 <style scoped>
@@ -889,6 +957,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 ---
 
+
 ## กิจกรรม 2 — โรงเรือนรายงานตัว
 
 <div class="cols">
@@ -925,6 +994,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 ---
 
+
 ## เปิดหน้าเว็บอ่านค่าของกลุ่ม — ไม่ต้องติดตั้งอะไร
 
 <style scoped>
@@ -955,6 +1025,7 @@ section a { word-break: break-all; }
 - เปิดหน้าเว็บหลังบอร์ดส่งไปแล้ว **จะว่างจนใบถัดไปมาถึง** — บอร์ดส่งแบบ retain ไม่ได้ broker จึงไม่เก็บใบล่าสุดไว้ให้ · ไม่มีหน้าเว็บของเราก็ใช้ <https://www.hivemq.com/demos/websocket-client/> แทนได้ (host `broker.hivemq.com` · port `8884` · เปิด SSL · subscribe `bento-aiot/<TEAM>/#`)
 
 ---
+
 
 ## หัวใจของโค้ด — นาฬิกาสามเรือน: ปุ่ม 0.1 · วัด 1 · ส่ง 5 วินาที
 
@@ -1005,6 +1076,7 @@ section pre { font-size: .54em; }
 
 ---
 
+
 <!-- _class: brk -->
 
 # ☕ พัก 10 นาที
@@ -1016,6 +1088,7 @@ section pre { font-size: .54em; }
 **ระหว่างพัก ลองทายเล่น:** แอปเปิดทิ้งไว้ 10 นาที ควรได้ข้อมูลกี่แถว? (คำนวณก่อน แล้วเทียบกับของจริงในกิจกรรม 3)
 
 ---
+
 
 <!-- _class: sec -->
 
@@ -1033,6 +1106,7 @@ section pre { font-size: .54em; }
 
 
 ---
+
 
 ## สัญญา MQTT หน้าเดียว — ข้อความที่บอร์ดส่งออกมา
 
@@ -1082,6 +1156,7 @@ section p, section li { font-size: .86em; }
 
 ---
 
+
 ## สัญญา MQTT — คำสั่งที่บอร์ดรับทาง `bento-aiot/<TEAM>/cmd`
 
 <style scoped>
@@ -1104,6 +1179,7 @@ section li { font-size: .84em; }
 - ข้อความถึงบอร์ดไม่เกิน 255 ไบต์ · ชื่อหัวข้อไม่เกิน 127 ตัว
 
 ---
+
 
 ## `farm_monitor.py` — ติดตั้งครั้งเดียว แล้วแก้ TODO ของกลุ่ม
 
@@ -1160,6 +1236,7 @@ def rule(data):
 
 ---
 
+
 ## หัวใจของแอป — ได้ข้อความ → จด CSV → กฎ → เว้น 60 วินาที
 
 <style scoped>
@@ -1215,6 +1292,7 @@ def on_message(client, userdata, msg):
 
 ---
 
+
 ## `farm_web.html` — แอปในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร
 
 <style scoped>
@@ -1269,6 +1347,7 @@ function showCards(data) {
 
 ---
 
+
 ## Vibe coding — ให้ AI ช่วยเขียนแอปของกลุ่มจาก "สัญญา"
 
 <style scoped>
@@ -1294,6 +1373,7 @@ section p, section li { font-size: .84em; }
 </div>
 
 ---
+
 
 ## ทดสอบโดยไม่มีบอร์ด — `fake_board.py` และ `field_sim.py`
 
@@ -1337,6 +1417,7 @@ python fake_board.py
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">1:50 – 2:15 · 25 นาที</div>
@@ -1353,6 +1434,7 @@ python fake_board.py
 
 
 ---
+
 
 ## คำสั่งเดินทางกลับ — subscribe แล้วถามกล่องทุก 0.1 วินาที
 
@@ -1405,6 +1487,7 @@ section pre { font-size: .56em; }
 </div>
 
 ---
+
 
 ## ไม่เชื่อคนส่ง — ตรวจทุกคำสั่งก่อนแตะของจริง
 
@@ -1460,6 +1543,7 @@ def handle_command(raw, tank):
 
 ---
 
+
 ## กิจกรรม 4 — ปั๊มน้ำสั่งจากที่ไกล
 
 <style scoped>
@@ -1498,6 +1582,7 @@ section table { font-size: .6em; }
 </div>
 
 ---
+
 
 ## ความปลอดภัยที่ไม่พึ่งเน็ต — SW5 หยุดฉุกเฉิน · ถังแห้งดับเอง
 
@@ -1544,6 +1629,7 @@ section pre { font-size: .56em; }
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">2:15 – 2:30 · 15 นาที</div>
@@ -1560,6 +1646,7 @@ section pre { font-size: .56em; }
 
 
 ---
+
 
 ## ส่งเมื่อ "เปลี่ยน" ไม่ใช่ทุกวินาที — คนรับจะได้ไม่ชินจนเมิน
 
@@ -1612,6 +1699,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
 
 ---
 
+
 ## กิจกรรม 5 — พืชไม่สบาย มือถือรู้ทันที
 
 <div class="cols">
@@ -1645,6 +1733,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
 </div>
 
 ---
+
 
 ## รับทราบ + ตั้งเกณฑ์จากที่ไกล — และจุดวางภารกิจกลุ่ม
 
@@ -1710,187 +1799,177 @@ def on_command(w, s, raw):
 
 # ภารกิจกลุ่ม — ปิดวงจรฟาร์ม
 
-<div class="lead">ไม่มีใครกดปุ่มสั่งปั๊มเอง — ระบบปิดวงจรเอง</div>
+<div class="lead">เป้าหมายคือให้ระบบตัดสินใจเองตั้งแต่ “ดินแห้ง” จนถึง “ปั๊มเปิด” และมีหลักฐานให้ตรวจย้อนหลัง</div>
 
-<div class="flow"><b>ดินแห้ง</b><i>→</i><b>แอปตัดสิน</b><i>→</i><b>ปั๊มเปิด</b><i>→</i><b>CSV เป็นหลักฐาน</b></div>
-
-<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— บอร์ด: รับคำสั่งปั๊ม ตรวจก่อนทำ</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> <span>— แอป: กฎดินแห้ง + จด CSV</span></div></div></div>
-
-<div class="chal">🏆 <b>ท้าทาย:</b> วัดเวลา <b>"ดินแห้งจนปั๊มเปิด" จาก CSV</b> — กลุ่มไหนได้ตัวเลขสั้นที่สุด และอธิบายได้ว่าเวลานั้นมาจากไหนบ้าง?</div>
-
-
----
-
-## ภารกิจ: ดินแห้ง → แอปตัดสิน → ปั๊มเปิด → CSV เป็นหลักฐาน
-
-<style scoped>
-section table { font-size: .6em; }
-section li { font-size: .84em; }
-</style>
-
-<svg viewBox="0 0 1000 200" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
-  <defs><marker id="lp" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#546e7a"/></marker></defs>
-  <rect x="10" y="30" width="220" height="80" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
-  <text x="120" y="62" text-anchor="middle" font-size="19" font-weight="700" fill="#1b5e20">① หมุน VR1 ลง</text>
-  <text x="120" y="90" text-anchor="middle" font-size="16" fill="#37474f">บอร์ดส่ง soil ทุก 5 วิ</text>
-  <rect x="265" y="30" width="220" height="80" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
-  <text x="375" y="62" text-anchor="middle" font-size="19" font-weight="700" fill="#0d47a1">② แอป: soil &lt; SOIL_MIN</text>
-  <text x="375" y="90" text-anchor="middle" font-size="16" fill="#37474f">rule() + cooldown 60 วิ</text>
-  <rect x="520" y="30" width="220" height="80" rx="12" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="3"/>
-  <text x="630" y="62" text-anchor="middle" font-size="19" font-weight="700" fill="#6a1b9a">③ ส่ง cmd pump</text>
-  <text x="630" y="90" text-anchor="middle" font-size="16" fill="#37474f">บอร์ดตรวจ แล้วเปิดปั๊ม</text>
-  <rect x="775" y="30" width="215" height="80" rx="12" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
-  <text x="882" y="62" text-anchor="middle" font-size="19" font-weight="700" fill="#e65100">④ pump = 1</text>
-  <text x="882" y="90" text-anchor="middle" font-size="16" fill="#37474f">ในใบถัดไป → CSV</text>
-  <line x1="232" y1="70" x2="260" y2="70" stroke="#546e7a" stroke-width="4" marker-end="url(#lp)"/>
-  <line x1="487" y1="70" x2="515" y2="70" stroke="#546e7a" stroke-width="4" marker-end="url(#lp)"/>
-  <line x1="742" y1="70" x2="770" y2="70" stroke="#546e7a" stroke-width="4" marker-end="url(#lp)"/>
-  <path d="M882 114 C 882 170, 120 170, 120 116" fill="none" stroke="#546e7a" stroke-width="3" stroke-dasharray="9 7" marker-end="url(#lp)"/>
-  <text x="500" y="190" text-anchor="middle" font-size="17" fill="#546e7a">ส่วนหนึ่งของเวลา "ดินแห้งจนปั๊มเปิด" มาจากรอบส่งทุก 5 วินาทีของบอร์ด — ส่วนไหนอีก?</text>
-</svg>
+<div class="flow"><b>1 · บอร์ดส่ง soil</b><i>→</i><b>2 · แอปตัดสิน</b><i>→</i><b>3 · ส่งคำสั่ง pump</b><i>→</i><b>4 · บอร์ดเปิดปั๊ม</b></div>
 
 <div class="cols">
 <div>
+<div class="goal">🎯 <b>โจทย์</b><br>ไม่มีใครกดปุ่มสั่งปั๊มเอง ให้ระบบเปิดปั๊มเมื่อ <code>soil &lt; SOIL_MIN</code></div>
+<div class="try"><b>คนที่ 1 — ฝั่งบอร์ด</b><br>รัน <code>sf2_03_remote_pump.py</code> และหมุน VR1 ให้ดินแห้ง</div>
+<div class="try"><b>คนที่ 2 — ฝั่งแอป</b><br>รัน <code>farm_monitor.py</code> หรือเปิด <code>farm_web.html</code> แล้วดู telemetry / CSV</div>
+</div>
+<div>
+<div class="think"><b>สิ่งที่ต้องพิสูจน์</b><br>เห็นค่า soil ต่ำกว่าเกณฑ์ → แอปส่งคำสั่ง → บอร์ดรับคำสั่ง → <code>pump = 1</code></div>
+<div class="tip">ถ้าใช้ <code>farm_web.html</code> เวอร์ชันใหม่ สามารถกด <b>ดาวน์โหลด CSV</b> จากหน้าเว็บได้เลย</div>
+</div>
+</div>
+---
 
-| รอบ | ดินต่ำกว่าเกณฑ์ (CSV) | แอปสั่ง (แถว `command`) | `pump` = 1 | ใช้กี่วินาที |
+## ทำภารกิจทีละขั้น — อย่าข้ามจุดตรวจ
+
+<div class="flow"><b>① ทำให้ดินแห้ง</b><i>→</i><b>② รอ telemetry</b><i>→</i><b>③ ตรวจ rule</b><i>→</i><b>④ ดู pump</b></div>
+
+<div class="cols">
+<div>
+### ① ทำให้ดินแห้ง
+หมุน **VR1** ลงให้ค่า <code>soil</code> ต่ำกว่า <code>SOIL_MIN</code>
+
+### ② รอข้อมูลเข้าฝั่งแอป
+บอร์ดส่ง telemetry เป็นรอบ ๆ จึงอาจไม่ได้เห็นค่าใหม่ทันที
+
+### ③ ตรวจการตัดสินใจ
+แอปต้องเห็นว่า
+
+```text
+soil < SOIL_MIN
+        ↓
+ส่ง {"cmd":"pump","on":1,"sec":...}
+```
+
+</div>
+<div>
+### ④ ตรวจว่าปั๊มทำงานจริง
+บอร์ดจะตรวจคำสั่งอีกครั้งก่อนเปิดปั๊ม และส่งสถานะกลับมา
+
+```text
+command
+   ↓
+sf2_03_remote_pump.py
+   ↓
+pump = 1
+```
+
+<div class="warn">อย่าวัดแค่ “แอปส่งคำสั่งแล้ว” — จุดสำคัญคือ <b>บอร์ดได้รับและเปิดปั๊มจริง</b></div>
+
+</div>
+</div>
+
+<div class="chal">🏆 <b>คำถาม:</b> เวลาตั้งแต่ดินต่ำกว่าเกณฑ์จนปั๊มเปิด มาจากอะไรบ้าง? ลองแยก “รอบส่งข้อมูล” กับ “เวลาประมวลผล/ส่งคำสั่ง”</div>
+---
+
+## หลักฐานของภารกิจ — ดูจาก CSV ไม่ใช่เดา
+
+<div class="lead">เราต้องตอบได้ว่า “ดินแห้งเมื่อไร → แอปสั่งเมื่อไร → ปั๊มเปิดเมื่อไร”</div>
+
+| รอบ | เวลา soil ต่ำกว่าเกณฑ์ | เวลาแอปส่งคำสั่ง | เวลา `pump = 1` | ต่างกันกี่วินาที |
 |---|---|---|---|---|
 | 1 | | | | |
 | 2 | | | | |
-
-**ส่งงาน:** กราฟจาก Excel (ดิน + ปั๊ม) · รูปจอบอร์ดตอนปั๊มเปิด · โค้ดส่วนที่แก้
-
-</div>
-<div>
-
-**เลือกเพิ่ม 1 ข้อ (ท้าทาย)**
-- **A** TODO 4: ร้อนเกินเกณฑ์ → ส่ง `{"cmd":"say","text":"HOT"}`
-- **B** ใน `sf2_04` ตรง `>>> ภารกิจกลุ่ม` วางคำสั่ง `pump` จาก `sf2_03`
-- **C** ใน `sf2_03` เพิ่ม `{"cmd":"set","tank_min":20}` พร้อมกันค่าแปลก ๆ
-- **D** Smart IoT Gateway: `sf2_06` + `field_sim.py` (ช่วงต่อยอด)
-
-</div>
-</div>
-
----
-
-## วิธีรันบนบอร์ด
-
-<style scoped>
-section li, section p { margin: .05em 0; line-height: 1.26; font-size: .88em; }
-</style>
+| 3 | | | | |
 
 <div class="cols">
-<div class="c55">
-
-1. **บนจอบอร์ด** แตะการ์ด **BENTO Playground** เปิดค้างไว้ก่อนส่งโค้ด
-2. **บนคอม** เปิด BENTO IDE (<https://ide.tesaiot.com/>) กด **Connect** บอร์ด
-3. เปิดไฟล์ของคาบนี้ แก้หัวไฟล์: `WIFI_SSID` · `WIFI_PASS` · `TEAM` จาก `teamXX` เป็นเลขที่ผู้สอนแจก (ลืม = ไฟล์หยุดตั้งแต่แรกพร้อมบอกบนจอ) · `sf2_01` ไม่มี `TEAM` · `sf2_04` แก้ `CROP` กับ `TEMP_OFFSET` ด้วย · `sf2_05` ใช้ `DEVICE_ID` ที่ผู้สอนแจก · `BROKER` ตั้งไว้แล้ว ไม่ต้องแก้
-4. กด **Program to Device** แล้ว **หันไปมองจอบอร์ด** · อย่ากดรีเซ็ตระหว่างที่จอนิ่ง
-5. ข้อความจาก `print()` เช่น `ส่ง: {...}` ดูได้ใน **Console**
-6. **ไฟล์ละครั้ง รันครั้ง** — อย่าแก้หลายไฟล์แล้วค่อยรันทีเดียว จะไม่รู้ว่าพังที่ไหน
-
+<div>
+**ถ้าใช้ `farm_monitor.py`**
+- เปิดไฟล์ `farm_log_<TEAM>.csv` ใน Excel
+- หาแถว telemetry ที่ `soil < SOIL_MIN`
+- หาแถว `command`
+- ดูช่วงที่ `pump` เปลี่ยนเป็น `1`
 </div>
 <div>
-
-<div class="warn">
-
-**บอกตรง ๆ:** ไฟล์บอร์ดของคาบนี้ รันกับ Wi-Fi และ MQTT จริงบนบอร์ด TESAIoT Dev Kit แล้ว (broker.hivemq.com): ค่าจากบอร์ดถึง `farm_monitor.py` และลง CSV · คำสั่งปั๊มถึงบอร์ด · Gateway สั่ง PLC รดน้ำเองเมื่อดินแห้ง · ยกเว้น `sf2_05` ที่ต้องใช้รหัสอุปกรณ์จากผู้สอน · broker สาธารณะบางครั้งตอบช้า ถ้าขึ้น **"broker ไม่ตอบ …"** ให้กด **Program to Device** อีกครั้ง · เจออาการแปลกอื่น จดข้อความบนจอลงใบงานแล้วบอกผู้สอน
-
-</div>
-
-<div class="think">
-
-**ถ้าเน็ตของสถานที่กันพอร์ตทั้งห้อง** (ผู้สอนประกาศ): ข้อ MQTT ผ่านเมื่อกลุ่มอธิบายจากจอได้ว่าหยุดที่ขั้นไหนของ **Wi-Fi → IP → broker** และเพราะอะไร
-
-</div>
-
+**ถ้าใช้ `farm_web.html`**
+- เปิดหน้าเว็บของทีม
+- ปล่อยให้ telemetry วิ่งสักระยะ
+- กด **ดาวน์โหลด CSV**
+- เปิด `farm_log_<TEAM>.csv` ใน Excel
 </div>
 </div>
 
+<div class="tip">หลักฐานที่ดีต้องตรวจย้อนกลับได้ ไม่ใช่แค่เห็นปั๊มติดแล้วบอกว่า “สำเร็จ”</div>
 ---
 
-## ข้อมูลไหลไปทางไหน — วิทยุอยู่ฝั่งเดียวกับโค้ดของเรา
+## วิธีรันไฟล์คาบนี้ — แยก “บอร์ด” กับ “แอป” ให้ชัด
+
+<div class="cols">
+<div>
+### ฝั่งบอร์ด
+1. เปิด BENTO Playground และเชื่อมบอร์ดใน BENTO IDE
+2. แก้ <code>WIFI_SSID</code> · <code>WIFI_PASS</code> · <code>TEAM</code>
+3. รันไฟล์ **ทีละไฟล์**
+4. ดูข้อความใน Console และดูจอบอร์ดประกอบ
+
+<div class="tip">อย่าแก้หลายไฟล์แล้วค่อยรันพร้อมกัน เพราะจะหาต้นเหตุยาก</div>
+</div>
+<div>
+### ฝั่งโน้ตบุ๊ก
+เลือกอย่างใดอย่างหนึ่ง
+
+- <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> — Python + CSV
+- <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> — เว็บ + CSV + ส่งคำสั่ง
+
+เปิดด้วย TEAM เดียวกับบอร์ด เช่น <code>?team=team05</code>
+
+<div class="warn">ถ้าเว็บไม่เห็นข้อมูล ให้ตรวจ TEAM ก่อนเป็นอันดับแรก</div>
+</div>
+</div>
+---
+
+## ข้อมูลไหลไปทางไหน — จำแค่ 2 ทิศทาง
 
 <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
-  <defs><marker id="w1" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#455a64"/></marker></defs>
-  <rect x="20" y="80" width="250" height="96" rx="12" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
-  <text x="145" y="110" text-anchor="middle" font-size="18" font-weight="700" fill="#1565c0">Cortex-M33 (Non-secure)</text>
-  <text x="145" y="138" text-anchor="middle" font-size="17" fill="#0d47a1">โค้ด Python ของเรา</text>
-  <text x="145" y="162" text-anchor="middle" font-size="17" fill="#0d47a1">+ Wi-Fi · MQTT</text>
-  <rect x="304" y="80" width="150" height="96" rx="12" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
-  <text x="379" y="120" text-anchor="middle" font-size="19" font-weight="700" fill="#ef6c00">ชิปวิทยุ</text>
-  <text x="379" y="148" text-anchor="middle" font-size="16" fill="#e65100">Wi-Fi บน SoM</text>
-  <rect x="488" y="80" width="160" height="96" rx="12" fill="#eceff1" stroke="#455a64" stroke-width="3"/>
-  <text x="568" y="120" text-anchor="middle" font-size="19" font-weight="700" fill="#455a64">Hotspot มือถือ</text>
-  <text x="568" y="148" text-anchor="middle" font-size="16" fill="#37474f">แจกเลข IP</text>
-  <rect x="682" y="80" width="170" height="96" rx="12" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="3"/>
-  <text x="767" y="120" text-anchor="middle" font-size="19" font-weight="700" fill="#6a1b9a">broker</text>
-  <text x="767" y="148" text-anchor="middle" font-size="16" fill="#4a148c">hivemq · 1883</text>
-  <rect x="780" y="10" width="200" height="56" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
-  <text x="880" y="34" text-anchor="middle" font-size="18" font-weight="700" fill="#2e7d32">Cortex-M55</text>
-  <text x="880" y="56" text-anchor="middle" font-size="15" fill="#1b5e20">วาดจอ ไม่ยุ่งกับเน็ต</text>
-  <line x1="272" y1="128" x2="300" y2="128" stroke="#455a64" stroke-width="3" marker-end="url(#w1)"/>
-  <line x1="456" y1="128" x2="484" y2="128" stroke="#455a64" stroke-width="3" marker-end="url(#w1)"/>
-  <line x1="650" y1="128" x2="678" y2="128" stroke="#455a64" stroke-width="3" marker-end="url(#w1)"/>
-  <path d="M145 78 C 145 22, 600 16, 776 34" fill="none" stroke="#6a1b9a" stroke-width="3" marker-end="url(#w1)"/>
-  <text x="470" y="68" text-anchor="middle" font-size="15" fill="#6a1b9a">ui.* → ส่งให้ M55 วาด (ui.poll())</text>
-  <text x="500" y="212" text-anchor="middle" font-size="19" font-weight="700" fill="#37474f">เน็ตทั้งเส้นอยู่ฝั่ง M33 — คอร์เดียวกับที่รัน Python ของเรา</text>
-  <text x="500" y="238" text-anchor="middle" font-size="17" fill="#78909c">wifi.connect() จึงบล็อกได้ทั้งโปรแกรม และต้อง ui.poll() ให้จอทันก่อนเข้าบรรทัดนั้น</text>
+  <defs><marker id="flowA" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#2e7d32"/></marker><marker id="flowB" markerUnits="userSpaceOnUse" viewBox="0 0 12 12" markerWidth="16" markerHeight="16" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6a1b9a"/></marker></defs>
+  <rect x="20" y="65" width="220" height="105" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+  <text x="130" y="100" text-anchor="middle" font-size="20" font-weight="700" fill="#1b5e20">🌱 Dev Kit</text>
+  <text x="130" y="130" text-anchor="middle" font-size="16" fill="#37474f">telemetry · event</text>
+  <text x="130" y="155" text-anchor="middle" font-size="15" fill="#546e7a">ส่งข้อมูลออก</text>
+  <rect x="390" y="65" width="220" height="105" rx="14" fill="#eceff1" stroke="#455a64" stroke-width="3"/>
+  <text x="500" y="100" text-anchor="middle" font-size="20" font-weight="700" fill="#37474f">📮 MQTT Broker</text>
+  <text x="500" y="130" text-anchor="middle" font-size="16" fill="#546e7a">bento-aiot/&lt;TEAM&gt;/...</text>
+  <text x="500" y="155" text-anchor="middle" font-size="15" fill="#546e7a">เป็นตัวกลาง</text>
+  <rect x="760" y="65" width="220" height="105" rx="14" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
+  <text x="870" y="100" text-anchor="middle" font-size="20" font-weight="700" fill="#0d47a1">💻 แอป</text>
+  <text x="870" y="130" text-anchor="middle" font-size="16" fill="#37474f">farm_monitor / farm_web</text>
+  <text x="870" y="155" text-anchor="middle" font-size="15" fill="#546e7a">ดูข้อมูล · ส่ง cmd</text>
+  <line x1="242" y1="100" x2="382" y2="100" stroke="#2e7d32" stroke-width="5" marker-end="url(#flowA)"/>
+  <line x1="618" y1="100" x2="752" y2="100" stroke="#2e7d32" stroke-width="5" marker-end="url(#flowA)"/>
+  <line x1="752" y1="145" x2="618" y2="145" stroke="#6a1b9a" stroke-width="5" marker-end="url(#flowB)"/>
+  <line x1="382" y1="145" x2="242" y2="145" stroke="#6a1b9a" stroke-width="5" marker-end="url(#flowB)"/>
+  <text x="500" y="35" text-anchor="middle" font-size="19" font-weight="700" fill="#2e7d32">เขียว = ข้อมูลออก</text>
+  <text x="500" y="215" text-anchor="middle" font-size="19" font-weight="700" fill="#6a1b9a">ม่วง = คำสั่งกลับ</text>
 </svg>
 
-- `wifi.connect()` บล็อกคอร์เดียวกับที่รัน Python → ระหว่างนั้นไม่มีใครส่งงานใหม่ไปให้ M55 วาด → **จอหลักนิ่ง**
-- `mqtt.get_message()` ตรงกันข้าม **ไม่บล็อกเลย** จึงต้องเป็นเราที่วนถามเองทุก 0.1 วินาที
+- **ออก:** บอร์ด → <code>telemetry / event</code> → แอป
+- **กลับ:** แอป → <code>cmd</code> → บอร์ด
+- ทุกฝั่งต้องใช้ **TEAM เดียวกัน**
 
-> ถ้าเข้าใจสไลด์นี้ จะไม่มีวันเขียนป้ายบอกสถานะไว้ **หลัง** บรรทัดที่บล็อกอีกเลย
-
+<div class="think">ถ้าแอปเห็นข้อมูล แต่สั่งปั๊มไม่ได้ ให้ถามว่า “ขาไป” หรือ “ขากลับ” เสียตรงไหน?</div>
 ---
 
-## MVP checkpoint — ผ่านคาบนี้เมื่อ
+## MVP checkpoint — ก่อนจบคาบต้องพิสูจน์อะไรได้บ้าง
 
-<style scoped>
-section li, section p { margin: .04em 0; line-height: 1.26; font-size: .9em; }
-</style>
+<div class="cols">
+<div>
+<div class="goal">☑ <b>ฟาร์มขึ้นเน็ต</b><br><code>sf2_01</code> ได้ IP ที่ไม่ใช่ <code>0.0.0.0</code></div>
+<div class="goal">☑ <b>ฟาร์มรายงานตัว</b><br><code>sf2_02</code> ส่ง telemetry และแอปเห็นค่าของ TEAM ตัวเอง</div>
+<div class="goal">☑ <b>แอปของกลุ่มทำงาน</b><br><code>farm_monitor.py</code> หรือ <code>farm_web.html</code> เห็นข้อมูลและเก็บหลักฐาน</div>
+</div>
+<div>
+<div class="goal">☑ <b>สั่งกลับได้</b><br><code>sf2_03_remote_pump.py</code> รับคำสั่งและเปิดปั๊มจริง</div>
+<div class="goal">☑ <b>ปิดวงจรได้</b><br>ดินแห้ง → แอปตัดสิน → ส่งคำสั่ง → <code>pump = 1</code></div>
+<div class="goal">☑ <b>อธิบายได้</b><br>บอกได้ว่า MQTT ส่งข้อมูลไปทางไหน และคำสั่งกลับมาทางไหน</div>
+</div>
+</div>
 
-**กลุ่มส่งค่าฟาร์มออกไปให้แอปของตัวเองเห็น และสั่งปั๊มกลับมาได้**
+### ถ้าติด ให้เช็กตามลำดับนี้
 
-- [ ] `sf2_01` ขึ้นเลข IP ที่ **ไม่ใช่** `0.0.0.0` บนจอบอร์ด
-- [ ] `sf2_02` ค่าของกลุ่มขึ้นบนหน้าเว็บมือถือ (`id` ตรงกับ TEAM) และกรอกตาราง 4.2 ครบ 3 ใบ
-- [ ] แอปของกลุ่ม (`farm_monitor.py` หรือ `farm_web.html`) แสดงค่าจากบอร์ดของกลุ่มเอง และแก้ TODO อย่างน้อย 2 ข้อ
-- [ ] มีไฟล์ CSV ที่เปิดใน Excel พร้อมกราฟ (กลุ่มที่ใช้เว็บ: ตารางจดมือ 5 แถว)
-- [ ] `sf2_03` ปั๊มเปิดจากคำสั่งที่ไกลอย่างน้อย 1 ครั้ง และกรอกตาราง 4.4 อย่างน้อย 4 แถว
-- [ ] ภารกิจกลุ่มสำเร็จอย่างน้อย 1 รอบ (มีแถว `command` และ `pump` = 1 ใน CSV)
+| อาการ | เช็กก่อน |
+|---|---|
+| แอปว่าง | <code>TEAM</code> ตรงกันไหม? |
+| บอร์ดไม่ต่อเน็ต | Hotspot · SSID · password |
+| แอปเห็นข้อมูลแต่ปั๊มไม่ทำงาน | คำสั่ง <code>cmd</code> ถูกส่งกลับไหม? |
+| ปั๊มไม่เปิด | ดูกฎความปลอดภัยใน <code>sf2_03_remote_pump.py</code> |
 
-> **ถ้าเน็ตของห้องกันพอร์ตทั้งห้อง** (ผู้สอนประกาศ) ข้อ MQTT ผ่านเมื่อกลุ่มอธิบายจากจอได้ว่าหยุดที่ขั้นไหนของ Wi-Fi → IP → broker และเพราะอะไร
-
----
-
-## กับดักที่เจอบ่อย
-
-<style scoped>
-section table { font-size: .52em; }
-section table td, section table th { padding: .1em .45em; }
-section blockquote { font-size: .8em; }
-</style>
-
-| อาการ | สาเหตุที่แท้จริง | วิธีแก้ |
-|---|---|---|
-| จอนิ่งค้างนาน คิดว่าบอร์ดแฮงก์ | `wifi.connect()` บล็อกได้ถึงราว 85 วินาที | รอ **อย่ากดรีเซ็ต** · ป้าย + `ui.poll()` ต้องมาก่อนบรรทัดนั้น |
-| ได้ IP แต่ขึ้น "broker ไม่ตอบ …" | broker สาธารณะตอบช้าชั่วคราว · หรือ Wi-Fi ที่ต้อง login หน้าเว็บ / เน็ตกันพอร์ต 1883 | บอร์ดลองให้เองแล้ว 3 ครั้ง · รอ 1 นาทีแล้วกด **Program to Device** อีกครั้ง · ถ้ายังไม่ได้ ใช้ Hotspot มือถือของกลุ่ม |
-| "ได้ยินวงแต่ต่อไม่ผ่าน" | รหัสผ่านผิด | แก้ `WIFI_PASS` (อย่างน้อย 8 ตัว) |
-| "ไม่ได้ยินวง ..." | ชื่อผิด · Hotspot ปิด · เป็นคลื่น 5 GHz | iPhone เปิด Maximize Compatibility · Android เลือก 2.4 GHz |
-| โค้ดบอกว่าได้ IP แต่ส่งอะไรไม่ออก | เขียน `if wifi.ip():` — `"0.0.0.0"` ถือว่าจริง | เทียบตรง ๆ `wifi.ip() != "0.0.0.0"` |
-| "แก้ TEAM เป็นเลขกลุ่มก่อน" | ยังเป็น `teamXX` | แก้ `TEAM` ให้ตรงกับที่ผู้สอนแจก |
-| บอร์ดส่งแต่หน้าเว็บว่าง | `?team=` ไม่ตรง หรือเปิดหน้าเว็บหลังบอร์ดส่ง (ไม่มี retain) | ตรวจ TEAM สองที่ แล้วรอใบถัดไป 5 วินาที |
-| สองเครื่องผลัดกันหลุด | `client_id` ซ้ำ — broker เตะตัวเก่า | บอร์ดต่อท้ายตัวสุ่มเองทุกครั้งที่ต่อ · แอปต่อท้ายตัวสุ่มเสมอ |
-| ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม | การเชื่อมต่อของรอบก่อนยังค้างอยู่ที่ broker | รอราว 1 นาที หรือกด **RESET** แล้วรันใหม่ |
-| ยิงคำสั่งสามใบ บอร์ดได้ใบเดียว | กล่องรับมีช่องเดียว ใบใหม่ทับใบเก่า | ส่งห่างอย่างน้อย 1 วินาที · กฎอัตโนมัติเว้น 60 วินาที |
-| `say` ภาษาไทยแล้วจอไฟไม่ขึ้น | จอไฟ RGB รับเฉพาะอักษรอังกฤษ ตัวเลข เครื่องหมาย | ใช้อังกฤษ ไม่เกิน 20 ตัว |
-| `farm_monitor.py` ต่อไม่ได้ | ยังไม่ `pip install paho-mqtt` หรือเน็ตกันพอร์ต 1883 | ติดตั้ง · ใช้ Hotspot · หรือใช้ `farm_web.html` |
-| หน้าเว็บขึ้นผิดพลาด | เน็ตกันพอร์ต 8884 | ตัวสำรองที่ผู้สอนประกาศ `wss://test.mosquitto.org:8081/mqtt` หรือต่อ Hotspot |
-| แอปไม่เห็นอะไรจากบอร์ดใน Emulator | MQTT ของ Emulator เป็น broker จำลองในเบราว์เซอร์ | ทดสอบแอปด้วย `fake_board.py` |
-
-> ครึ่งหนึ่งของตารางนี้ **ไม่มี error ให้จับสักตัว** โปรแกรมเดินผ่านไปเงียบ ๆ แล้วรายงานสิ่งที่ไม่จริง — บั๊กที่แพงที่สุดในงานเครือข่าย
-
+<div class="chal">🏁 ผ่านเมื่อกลุ่มอธิบายเส้นทาง <b>ข้อมูลออก → การตัดสินใจ → คำสั่งกลับ → การทำงานจริง</b> ได้จากสิ่งที่ทดลอง ไม่ใช่แค่ท่องชื่อไฟล์</div>
 ---
 
 <!-- _class: sec -->
@@ -1901,14 +1980,13 @@ section blockquote { font-size: .8em; }
 
 <div class="lead">Gateway ตัดสินใจ แต่ความจริงคือสิ่งที่ PLC รายงาน</div>
 
-<div class="flow"><b>โหนดเซนเซอร์ในแปลง</b><i>→</i><b>Gateway ตัดสิน</b><i>→</i><b>PLC คุมปั๊ม</b><i>→</i><b>PLC รายงานกลับ</b></div>
+<div class="flow"><b>โหนดเซนเซอร์ในแปลง</b><i>→</i><b>Gateway ตัดสิน</b><i>→</i><b>PLC Simulator</b><i>→</i><b>PLC รายงานกลับ</b></div>
 
-<div class="files"><div><div class="fh hw">☆ ทางที่ 1 · บอร์ดเดียว + โน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway ของฟาร์ม</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py">field_sim.py</a> <span>— แปลงผักจำลองบนโน้ตบุ๊ก</span></div></div><div><div class="fh hw">☆ ทางที่ 2 · สองบอร์ด ร่วมกับทีมข้าง ๆ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py">sf2_07_field_station.py</a> <span>— บอร์ดทีมข้าง ๆ เล่นเป็นแปลงผัก</span></div></div></div>
+<div class="files"><div><div class="fh hw">☆ ทางที่ 1 · บอร์ดเดียว + โน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway ของฟาร์ม</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html" target="_blank" rel="noopener noreferrer">farm_web.html</a> <span>— จำลอง PLC ในหน้าเว็บ · ไม่ต้องรัน <code>field_sim.py</code></span></div></div><div><div class="fh hw">☆ ทางที่ 2 · สองบอร์ด ร่วมกับทีมข้าง ๆ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py" target="_blank" rel="noopener noreferrer">sf2_07_field_station.py</a> <span>— บอร์ดทีมข้าง ๆ เล่นเป็นแปลงผัก</span></div></div></div>
 
-<div class="chal">🏆 <b>ท้าทาย:</b> ปิด <code>field_sim.py</code> กลางคัน แล้ว <b>จับเวลาว่า Gateway ขึ้น "PLC หลุด!" ภายในกี่วินาที</b> — ตรงกับค่าไหนในโค้ด?</div>
-
-
+<div class="chal">🏆 <b>ท้าทาย:</b> เปิด <code>farm_web.html</code> แล้วกด <b>เริ่ม PLC Simulator</b> → ทำให้ค่า <code>soil</code> ต่ำกว่าเกณฑ์ → ดูว่า Gateway ส่งคำสั่ง <code>plc/cmd</code> และ Simulator ตอบ <code>plc/state</code> พร้อม <b>Pump = ON</b> หรือไม่ จากนั้นกด <b>จำลอง PLC หลุด</b> แล้วจับเวลาว่า Gateway ขึ้น <b>"PLC หลุด!"</b> ภายในกี่วินาที — ตรงกับค่าไหนในโค้ด?</div>
 ---
+
 
 ## ภาพฟาร์มจริง: โหนดเซนเซอร์ → Gateway → PLC
 
@@ -1981,6 +2059,7 @@ section svg { max-height: 290px; }
 
 ---
 
+
 ## ข้อความในแปลง — โหนด · PLC · Gateway
 
 <style scoped>
@@ -2027,6 +2106,7 @@ section p, section li { font-size: .84em; }
 
 ---
 
+
 ## Gateway ตัดสินใจ — แต่ความจริงคือสิ่งที่ PLC รายงาน
 
 <style scoped>
@@ -2071,6 +2151,7 @@ def app_request(cmd, tank):
 - **กฎออโต้ห้าข้อต้องจริงพร้อมกัน** ถ้าข้อใดไม่แน่ใจ (`None`) = ไม่สั่ง · ปุ่ม **SW5** ผ่าน `app_request()` **กฎเดียวกับคำสั่งจากแอป** · **SW6** หรือแตะสวิตช์บนจอ = สลับโหมดออโต้
 
 ---
+
 
 ## PLC ไม่เชื่อใคร — ความปลอดภัยสองชั้น
 
@@ -2126,6 +2207,7 @@ def check_plc_alive(w, farm, now):
 
 ---
 
+
 ## อ่านนอกเวลา: `sf2_05` — ฟาร์มจำที่อยู่คลาวด์เอง
 
 <style scoped>
@@ -2167,6 +2249,7 @@ def wait_platform(w):
 
 ---
 
+
 <!-- _class: sec -->
 
 <div class="when">2:50 – 3:00 · 10 นาที</div>
@@ -2179,6 +2262,7 @@ def wait_platform(w):
 
 
 ---
+
 
 ## Exit ticket (ทุกคนตอบ 1 ข้อ) + แผนโปรเจกต์ของกลุ่ม
 
@@ -2232,6 +2316,7 @@ section li { font-size: .86em; }
 
 ---
 
+
 ## คาบหน้า: เซนเซอร์และ AI ในฟาร์ม + เริ่มโปรเจกต์ของกลุ่ม
 
 <div class="cols">
@@ -2254,6 +2339,7 @@ section li { font-size: .86em; }
 </div>
 
 ---
+
 
 ## ดูเพิ่มเติมนอกเวลา
 
@@ -2297,6 +2383,7 @@ section a { word-break: break-all; }
 
 ---
 
+
 ## อ้างอิงและเครดิต (1/2) — ภาพและไดอะแกรม
 
 <style scoped>
@@ -2323,6 +2410,7 @@ section table { font-size: .92em; }
 **สถานะการทดสอบ:** `farm_monitor.py` และ `farm_web.html` ทดสอบกับ broker.hivemq.com จริงแล้ว โดยใช้บอร์ดจำลองบนโน้ตบุ๊ก · ไฟล์บอร์ด รันกับ Wi-Fi และ MQTT จริงบนบอร์ด TESAIoT Dev Kit แล้ว (broker.hivemq.com): ค่าจากบอร์ดถึง `farm_monitor.py` และลง CSV · คำสั่งปั๊มถึงบอร์ด · Gateway สั่ง PLC รดน้ำเองเมื่อดินแห้ง · ยกเว้น `sf2_05` ที่ต้องใช้รหัสอุปกรณ์จากผู้สอน
 
 ---
+
 
 ## อ้างอิงและเครดิต (2/2) — วิดีโอ
 
