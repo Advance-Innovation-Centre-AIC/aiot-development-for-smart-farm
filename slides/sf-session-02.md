@@ -1822,8 +1822,8 @@ def on_command(w, s, raw):
 
 <div class="cols">
 <div>
-### ① ทำให้ดินแห้ง
-หมุน **VR1** ลงให้ค่า <code>soil</code> ต่ำกว่า <code>SOIL_MIN</code>
+<h3>① ทำให้ดินแห้ง</h3>
+<p>หมุน <strong>VR1</strong> ลงให้ค่า <code>soil</code> ต่ำกว่า <code>SOIL_MIN</code></p>
 
 ### ② รอข้อมูลเข้าฝั่งแอป
 บอร์ดส่ง telemetry เป็นรอบ ๆ จึงอาจไม่ได้เห็นค่าใหม่ทันที
@@ -1839,8 +1839,8 @@ soil < SOIL_MIN
 
 </div>
 <div>
-### ④ ตรวจว่าปั๊มทำงานจริง
-บอร์ดจะตรวจคำสั่งอีกครั้งก่อนเปิดปั๊ม และส่งสถานะกลับมา
+<h3>④ ตรวจว่าปั๊มทำงานจริง</h3>
+<p>บอร์ดจะตรวจคำสั่งอีกครั้งก่อนเปิดปั๊ม และส่งสถานะกลับมา</p>
 
 ```text
 command
@@ -1870,18 +1870,22 @@ pump = 1
 
 <div class="cols">
 <div>
-**ถ้าใช้ `farm_monitor.py`**
-- เปิดไฟล์ `farm_log_<TEAM>.csv` ใน Excel
-- หาแถว telemetry ที่ `soil < SOIL_MIN`
-- หาแถว `command`
-- ดูช่วงที่ `pump` เปลี่ยนเป็น `1`
+<p><strong>ถ้าใช้ <code>farm_monitor.py</code></strong></p>
+<ul>
+<li>เปิดไฟล์ <code>farm_log_&lt;TEAM&gt;.csv</code> ใน Excel</li>
+<li>หาแถว telemetry ที่ <code>soil &lt; SOIL_MIN</code></li>
+<li>หาแถว <code>command</code></li>
+<li>ดูช่วงที่ <code>pump</code> เปลี่ยนเป็น <code>1</code></li>
+</ul>
 </div>
 <div>
-**ถ้าใช้ `farm_web.html`**
-- เปิดหน้าเว็บของทีม
-- ปล่อยให้ telemetry วิ่งสักระยะ
-- กด **ดาวน์โหลด CSV**
-- เปิด `farm_log_<TEAM>.csv` ใน Excel
+<p><strong>ถ้าใช้ <code>farm_web.html</code></strong></p>
+<ul>
+<li>เปิดหน้าเว็บของทีม</li>
+<li>ปล่อยให้ telemetry วิ่งสักระยะ</li>
+<li>กด <strong>ดาวน์โหลด CSV</strong></li>
+<li>เปิด <code>farm_log_&lt;TEAM&gt;.csv</code> ใน Excel</li>
+</ul>
 </div>
 </div>
 
@@ -1892,17 +1896,19 @@ pump = 1
 
 <div class="cols">
 <div>
-### ฝั่งบอร์ด
-1. เปิด BENTO Playground และเชื่อมบอร์ดใน BENTO IDE
-2. แก้ <code>WIFI_SSID</code> · <code>WIFI_PASS</code> · <code>TEAM</code>
-3. รันไฟล์ **ทีละไฟล์**
-4. ดูข้อความใน Console และดูจอบอร์ดประกอบ
+<h3>ฝั่งบอร์ด</h3>
+<ol>
+<li>เปิด BENTO Playground และเชื่อมบอร์ดใน BENTO IDE</li>
+<li>แก้ <code>WIFI_SSID</code> · <code>WIFI_PASS</code> · <code>TEAM</code></li>
+<li>รันไฟล์ <strong>ทีละไฟล์</strong></li>
+<li>ดูข้อความใน Console และดูจอบอร์ดประกอบ</li>
+</ol>
 
 <div class="tip">อย่าแก้หลายไฟล์แล้วค่อยรันพร้อมกัน เพราะจะหาต้นเหตุยาก</div>
 </div>
 <div>
-### ฝั่งโน้ตบุ๊ก
-เลือกอย่างใดอย่างหนึ่ง
+<h3>ฝั่งโน้ตบุ๊ก</h3>
+<p>เลือกอย่างใดอย่างหนึ่ง</p>
 
 - <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> — Python + CSV
 - <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> — เว็บ + CSV + ส่งคำสั่ง
