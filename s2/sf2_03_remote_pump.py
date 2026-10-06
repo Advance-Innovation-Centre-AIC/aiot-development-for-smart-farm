@@ -301,7 +301,7 @@ def main():
             show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "ถังแห้ง ดับเอง", COL_INFO)
             beep("stop")
         set_led(pump, pump_ms)
-        sec_left = left // 1000 + 1 if pump_ms else 0
+        sec_left = (left + 999) // 1000 if pump_ms else 0     # ปัดขึ้น: สั่ง 10 วิ เริ่มนับที่ 10 ไม่ใช่ 11
         if sec_left != shown:
             shown = matrix_countdown(sec_left, shown)
             show_pump(w, sec_left)

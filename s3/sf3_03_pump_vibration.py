@@ -217,7 +217,7 @@ def show_note(w, text, col):
 
 def show_learning(w, st, now):
     left = max(0, LEARN_MS - time.ticks_diff(now, st.t_learn))
-    show_note(w, "วางบอร์ดนิ่ง ๆ เรียนรู้ค่าปกติ อีก %d วิ" % (left // 1000 + 1), COL_WARN)
+    show_note(w, "วางบอร์ดนิ่ง ๆ เรียนรู้ค่าปกติ อีก %d วิ" % ((left + 999) // 1000), COL_WARN)
     w["learn"].value(100 - left * 100 // LEARN_MS)
 
 
