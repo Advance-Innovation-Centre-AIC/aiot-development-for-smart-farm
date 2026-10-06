@@ -42,8 +42,10 @@
 <p>ทีม <input id="team" size="7" value="teamXX"> <button id="go">ต่อ</button> สถานะ: <b id="status">ยังไม่ได้ต่อ</b></p>
 <div id="cards"></div>
 <p>
-  <button data-cmd='{"pump":1,"sec":10}'>รดน้ำ 10 วินาที</button>
-  <button data-cmd='{"pump":0}'>ปิดปั๊ม</button>
+  <!-- คำสั่งจากแอปไป .../cmd ใช้รูปแบบ {"cmd":"pump",...} (สัญญาข้อ 4 และ 4.1) ทั้ง sf2_03 และ sf2_06 อ่านแบบนี้
+       {"pump":1,"sec":10} เป็นรูปแบบของ .../plc/cmd ที่ Gateway ส่งให้ PLC เท่านั้น ถ้าส่งไป .../cmd บอร์ดจะไม่ทำอะไร -->
+  <button data-cmd='{"cmd":"pump","on":1,"sec":10}'>รดน้ำ 10 วินาที</button>
+  <button data-cmd='{"cmd":"pump","on":0}'>ปิดปั๊ม</button>
   <button data-cmd='{"cmd":"beep"}'>เรียกคนที่ฟาร์ม</button>
   <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
 </p>
@@ -51,6 +53,7 @@
 <section id="plcSim">
   <h2>PLC Simulator — ใช้แทน <code>app/field_sim.py</code></h2>
   <p class="simHint">เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง ไม่ต้องรัน Python simulator เพิ่ม</p>
+  <p class="simHint"><b>ใช้คู่กับ <code>sf2_06_smart_gateway.py</code> เท่านั้น</b> — PLC จำลองรับคำสั่งจาก Gateway ทาง <code>.../plc/cmd</code> ถ้าบอร์ดรัน <code>sf2_03_remote_pump.py</code> (ภารกิจกลุ่ม) ไม่ต้องเปิด PLC จำลอง ปั๊มคือไฟสีฟ้าบนบอร์ด และสถานะดูได้จากการ์ด "ปั๊ม" ด้านบน</p>
   <div class="bar">
     <button id="plcSimStart" class="primary">เริ่ม PLC Simulator</button>
     <button id="plcSimStop">หยุด Simulator</button>
@@ -91,7 +94,7 @@ const telemetryRows = [];
 
 // ----- PLC / field simulator -----
 let plcSimTimer = null;
-let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0 };
+let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0, why: "start", n: 0 };
 const PLC_SIM_PERIOD_MS = 1000;
 const FIELD_SIM_PERIOD_MS = 5000;
 const PLC_MAX_S = 30;
@@ -113,14 +116,32 @@ function updatePlcSimUi() {
   $("plcSimSoil").textContent = Math.round(plcSimState.soil) + " %";
   $("plcSimTank").textContent = Math.round(plcSimState.tank) + " %";
 }
+// ส่งแบบเดียวกับ field_sim.py: ฟิสิกส์ขยับทุก 1 วิ แต่ soil / plc/state / tank ส่งอย่างละครั้งต่อ 5 วิ เหลื่อมกัน
+// เพราะกล่องรับข้อความของบอร์ดมีช่องเดียว ส่งสามข้อความพร้อมกันบอร์ดจะได้แค่ใบเดียว (plc/state ตอนเปลี่ยนส่งทันที)
+const SIM_TICKS_PER_CYCLE = Math.max(1, Math.round(FIELD_SIM_PERIOD_MS / PLC_SIM_PERIOD_MS));
+const SIM_SLOT = { soil: 0, state: Math.floor(SIM_TICKS_PER_CYCLE / 4), tank: Math.floor(SIM_TICKS_PER_CYCLE / 2) };
+let plcSimTicks = 0;
+let plcSimSent = { soil: 0, tank: 0 };
+function plcSimStatePayload(why) {
+  const now = Date.now();
+  return {
+    pump: plcSimState.pump ? 1 : 0,
+    left_s: plcSimState.pump && plcSimState.pumpUntil ? Math.max(0, Math.ceil((plcSimState.pumpUntil - now) / 1000)) : 0,
+    why,
+    n: ++plcSimState.n
+  };
+}
 function plcSimTick() {
   if (!plcSimState.online) return;
   const now = Date.now();
+  const wasOn = plcSimState.pump;
 
   // field_sim.py: ครบเวลาที่สั่งไว้ -> PLC ดับปั๊มเอง
+  let why = null;
   if (plcSimState.pump && plcSimState.pumpUntil && now >= plcSimState.pumpUntil) {
     plcSimState.pump = 0;
     plcSimState.pumpUntil = 0;
+    why = "timeout";
   }
 
   // จำลองฟิสิกส์แบบเดียวกับ field_sim.py
@@ -140,31 +161,26 @@ function plcSimTick() {
   if (plcSimState.pump && plcSimState.tank < PLC_TANK_MIN) {
     plcSimState.pump = 0;
     plcSimState.pumpUntil = 0;
+    why = "blocked_tank";
   }
 
-  // plc/state ตาม field_sim.py
-  simPublish("plc/state", {
-    pump: plcSimState.pump ? 1 : 0,
-    left_s: plcSimState.pump && plcSimState.pumpUntil
-      ? Math.max(0, Math.ceil((plcSimState.pumpUntil - now) / 1000))
-      : 0,
-    why: plcSimState.pump ? "on" : "tick",
-    n: Date.now()
-  });
+  // plc/state ตาม field_sim.py: ตอนปั๊มเปลี่ยนส่งทันที และส่งซ้ำทุก 5 วิ (heartbeat ให้ Gateway รู้ว่า PLC ยังอยู่)
+  const slot = plcSimTicks % SIM_TICKS_PER_CYCLE;
+  if (why && wasOn !== plcSimState.pump) {
+    plcSimState.why = why;
+    simPublish("plc/state", plcSimStatePayload(why));
+  } else if (slot === SIM_SLOT.state) {
+    simPublish("plc/state", plcSimStatePayload(plcSimState.why));
+  }
 
-  // field/soil และ field/tank ใช้ payload แบบ node/value เหมือน field_sim.py
-  simPublish("field/soil", {
-    node: "soil-1",
-    value: Math.round(plcSimState.soil),
-    unit: "%",
-    n: Date.now()
-  });
-  simPublish("field/tank", {
-    node: "tank-1",
-    value: Math.round(plcSimState.tank),
-    unit: "%",
-    n: Date.now()
-  });
+  // field/soil และ field/tank ใช้ payload แบบ node/value เหมือน field_sim.py (n = ลำดับของแต่ละโหนด)
+  if (slot === SIM_SLOT.soil) {
+    simPublish("field/soil", { node: "soil-1", value: Math.round(plcSimState.soil), unit: "%", n: ++plcSimSent.soil });
+  }
+  if (slot === SIM_SLOT.tank) {
+    simPublish("field/tank", { node: "tank-1", value: Math.round(plcSimState.tank), unit: "%", n: ++plcSimSent.tank });
+  }
+  plcSimTicks += 1;
 
   updatePlcSimUi();
 }
@@ -173,6 +189,7 @@ function startPlcSimulator() {
   if (!client || !client.connected) { setStatus("กด ต่อ ก่อนเริ่ม PLC Simulator", false); return; }
   stopPlcSimulator(false);
   plcSimState.online = true;
+  plcSimTicks = 0;
   updatePlcSimUi();
   plcSimTimer = setInterval(plcSimTick, PLC_SIM_PERIOD_MS);
   plcSimTick();
@@ -285,14 +302,8 @@ function connect() {
           why = "on";
         }
 
-        simPublish("plc/state", {
-          pump: plcSimState.pump,
-          left_s: plcSimState.pump && plcSimState.pumpUntil
-            ? Math.max(0, Math.ceil((plcSimState.pumpUntil - Date.now()) / 1000))
-            : 0,
-          why,
-          n: Date.now()
-        });
+        plcSimState.why = why;
+        simPublish("plc/state", plcSimStatePayload(why));   // ตอบสถานะทันทีทุกครั้งที่มีคำสั่ง (field_sim.py)
         updatePlcSimUi();
       }
     }
