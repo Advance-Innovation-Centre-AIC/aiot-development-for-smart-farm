@@ -792,8 +792,8 @@ section p, section li { font-size: .86em; line-height: 1.26; }
   <line x1="618" y1="92" x2="744" y2="112" stroke="#2e7d32" stroke-width="4" marker-end="url(#r1)"/>
   <circle id="sf2anim5" cx="262" cy="56" r="6" fill="#2e7d32"/><animate href="#sf2anim5" attributeName="cx" values="262;370;262" dur="2.4s" repeatCount="indefinite"/>
   <rect x="20" y="168" width="960" height="66" rx="10" fill="#fff3e0" stroke="#ef6c00" stroke-width="2" stroke-dasharray="8 6"/>
-  <text x="40" y="196" font-size="18" font-weight="700" fill="#e65100">BENTO Emulator: broker จำลองอยู่ในเบราว์เซอร์ — "No TCP leaves the browser"</text>
-  <text x="40" y="222" font-size="16" fill="#8d4a4a">ค่าที่บอร์ดใน Emulator ส่งไม่ไปถึงแอปจริง และคำสั่งจากแอปไม่ถึงบอร์ดใน Emulator · หลักฐานข้อ MQTT นับจากบอร์ดจริง</text>
+  <text x="40" y="196" font-size="18" font-weight="700" fill="#e65100">BENTO Emulator: ต่อ broker สาธารณะ (broker.hivemq.com) ได้จริงผ่าน WebSocket</text>
+  <text x="40" y="222" font-size="16" fill="#8d4a4a">แอปเห็นค่าที่บอร์ดใน Emulator ส่ง และสั่งบอร์ดใน Emulator ได้ · client id ต่อท้าย "-emu" · ต่อไม่ได้ใน 5 วิ = ใช้ broker จำลองแทน (บอกที่คอนโซล) · หลักฐานข้อ MQTT นับจากบอร์ดจริง</text>
 </svg>
 
 - เบราว์เซอร์เปิดสาย TCP ตรง ๆ ไม่ได้ จึงพูด MQTT ผ่าน WebSocket ที่ `wss://broker.hivemq.com:8884/mqtt` · broker ส่งต่อให้เองโดยไม่สนว่าแต่ละฝั่งมาทางไหน
@@ -987,7 +987,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 ![w:590](img/emu/sf2_02_greenhouse_report__sent_kit.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย · ค่าเซนเซอร์จำลอง) — <b>MQTT ใน Emulator เป็น broker จำลอง "No TCP leaves the browser"</b> "ส่งแล้ว 3 ใบ" จึงไม่ได้ออกไปถึง broker.hivemq.com · จอไฟ RGB นับใบที่ส่ง · แผง Emulator พิมพ์ชื่อปุ่มเป็น SW4 / SW5: ปุ่มซ้าย = <b>SW5</b> (ปุ่มล่าง) ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย · ค่าเซนเซอร์จำลอง) — จอไฟ RGB นับใบที่ส่ง · Emulator ส่งถึง broker.hivemq.com จริงผ่าน WebSocket (client id ต่อท้าย -emu) แอปของกลุ่มจึงเห็นใบเหล่านี้ · แผง Emulator พิมพ์ชื่อปุ่มเป็น SW4 / SW5: ปุ่มซ้าย = <b>SW5</b> (ปุ่มล่าง) ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</div>
 
 </div>
 </div>
@@ -1409,7 +1409,7 @@ python fake_board.py
 <div>
 
 - [`field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py) = แปลงผักจำลอง (โหนดเซนเซอร์ + PLC) ใช้คู่กับ Gateway ในช่วงต่อยอด
-- **BENTO Emulator ใช้ทดสอบแอปไม่ได้** — MQTT ของ Emulator เป็น broker จำลองในเบราว์เซอร์ ข้อความไม่ออกมาถึงแอป
+- **BENTO Emulator ใช้ทดสอบแอปได้** — Emulator ต่อ broker.hivemq.com จริงผ่าน WebSocket แอปเห็นข้อความและสั่งบอร์ดใน Emulator ได้ · ถ้า broker ไม่ตอบใน 5 วิ Emulator ใช้ broker จำลองแทนและบอกที่คอนโซล (ตอนนั้นแอปจะไม่เห็นข้อความ)
 - ที่มา: [`fake_board.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.py) · สัญญาข้อ 6
 
 </div>
@@ -1576,7 +1576,7 @@ section table { font-size: .6em; }
 
 ![w:600](img/emu/sf2_03_remote_pump__pump_on_kit.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — <b>MQTT ใน Emulator เป็น broker จำลอง ("No TCP leaves the browser")</b> คำสั่ง <code>{"cmd": "pump", "on": 1, "sec": 20}</code> ในภาพป้อนเข้า broker จำลองตอนถ่ายภาพ ไม่ได้มาจากแอปจริง (TEAM = team99 เฉพาะตอนถ่าย) · ไฟปั๊มบนจอติด วงแหวนและจอไฟ RGB นับถอยหลัง 17 วินาที</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — คำสั่ง <code>{"cmd": "pump", "on": 1, "sec": 20}</code> ในภาพป้อนเข้า broker จำลองตอนถ่ายภาพ ไม่ได้มาจากแอปจริง (TEAM = team99 เฉพาะตอนถ่าย) · ตอนเรียน Emulator ต่อ broker จริง สั่งจาก farm_web.html ได้เลย · ไฟปั๊มบนจอติด วงแหวนและจอไฟ RGB นับถอยหลัง 17 วินาที</div>
 
 </div>
 </div>
@@ -1616,7 +1616,7 @@ section pre { font-size: .56em; }
 
 ![w:480](img/emu/sf2_03_remote_pump__tank_low.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — หมุน VR4 ลงเหลือ 5 % ระหว่างปั๊มเปิด → "ถังแห้ง ดับเอง" หลอดถังเป็นสีแดง · กฎนี้อยู่ในบอร์ดเอง ไม่พึ่ง MQTT (ซึ่งใน Emulator เป็น broker จำลอง)</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — หมุน VR4 ลงเหลือ 5 % ระหว่างปั๊มเปิด → "ถังแห้ง ดับเอง" หลอดถังเป็นสีแดง · กฎนี้อยู่ในบอร์ดเอง ไม่พึ่ง MQTT: เน็ตหลุดก็ยังดับปั๊มได้</div>
 
 </div>
 </div>
@@ -1689,7 +1689,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
 
 ![w:470](img/emu/sf2_04_crop_alert__comfy.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย) — มะเขือเทศ 25 °C 70 %RH แดด +0 → "สบายดี" · รอบแรกแจ้งเสมอ จึงขึ้น "แจ้งไปแล้ว 1 ครั้ง" · MQTT ใน Emulator เป็น broker จำลอง ใบแจ้งนั้นไม่ได้ออกนอกเบราว์เซอร์</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย) — มะเขือเทศ 25 °C 70 %RH แดด +0 → "สบายดี" · รอบแรกแจ้งเสมอ จึงขึ้น "แจ้งไปแล้ว 1 ครั้ง" · Emulator ต่อ broker.hivemq.com จริง ใบแจ้งนี้จึงขึ้นในแอปของกลุ่มด้วย</div>
 
 - **VR3 = แดดจำลอง** บวกอุณหภูมิ 0–10 °C · แจ้งเตือนส่ง `sun_c` บอกว่าบวกไปเท่าไร
 - `level` 0 สบาย · 1 เริ่มเครียด · 2 แย่แล้ว (ร้องซ้ำทุก 5 วินาทีจนมีคนรับทราบ)
@@ -1727,7 +1727,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
 
 ![w:640](img/emu/sf2_04_crop_alert__alert.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — ตั้งอุณหภูมิจำลอง 30 °C + หมุน VR3 สุด (แดด +10) = 40 °C → "แย่แล้ว!: ร้อนไป" กล่องเตือนลอยกลางจอจนกว่าจะมีคนรับทราบ · <b>MQTT ใน Emulator เป็น broker จำลอง</b> แจ้งเตือนในภาพจึงไม่ได้ออกไปถึงมือถือจริง</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — ตั้งอุณหภูมิจำลอง 30 °C + หมุน VR3 สุด (แดด +10) = 40 °C → "แย่แล้ว!: ร้อนไป" กล่องเตือนลอยกลางจอจนกว่าจะมีคนรับทราบ · Emulator ต่อ broker.hivemq.com จริง แจ้งเตือนจึงไปถึงหน้าเว็บบนมือถือของกลุ่มได้ (ภาพนี้ถ่ายเฉพาะจอ Emulator)</div>
 
 </div>
 </div>
@@ -2149,7 +2149,7 @@ def app_request(cmd, tank):
 
 ![w:470](img/emu/sf2_06_smart_gateway__watering.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — ใน Emulator ไม่มีแปลงและ PLC จริง และ <b>MQTT เป็น broker จำลอง ("No TCP leaves the browser")</b> ภาพนี้ป้อนข้อความแทน <code>field_sim.py</code> เข้า broker จำลองตอนถ่าย: <code>field/soil</code> = 25 · <code>field/tank</code> = 70 · และคำตอบ <code>plc/state</code> ของ PLC → Gateway เห็นดิน 25 % &lt; 30 % สั่งรดน้ำ · ไฟ PLC ติด "เดิน อีก 10 วิ"</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — ใน Emulator ไม่มีแปลงและ PLC จริง ภาพนี้ป้อนข้อความแทน <code>field_sim.py</code> เข้า broker จำลองตอนถ่าย: <code>field/soil</code> = 25 · <code>field/tank</code> = 70 · และคำตอบ <code>plc/state</code> ของ PLC → Gateway เห็นดิน 25 % &lt; 30 % สั่งรดน้ำ · ไฟ PLC ติด "เดิน อีก 10 วิ" · ตอนเรียนใช้ PLC Simulator ใน farm_web.html แทนได้ เพราะ Emulator ต่อ broker จริง</div>
 
 </div>
 </div>
@@ -2203,7 +2203,7 @@ def check_plc_alive(w, farm, now):
 
 ![w:450](img/emu/sf2_07_field_station__station.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — <code>sf2_07</code> เล่นเป็นแปลง: VR1 = ดิน 40 % · VR4 = ถัง 80 % · ไฟสีฟ้า = รีเลย์ (TEAM = team99 เฉพาะตอนถ่าย · MQTT ใน Emulator เป็นแบบจำลอง จึง "รับคำสั่งแล้ว 0")</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — <code>sf2_07</code> เล่นเป็นแปลง: VR1 = ดิน 40 % · VR4 = ถัง 80 % · ไฟสีฟ้า = รีเลย์ (TEAM = team99 เฉพาะตอนถ่าย · ตอนถ่ายยังไม่มีคำสั่งเข้ามา จึง "รับคำสั่งแล้ว 0" — Emulator ต่อ broker จริง ใช้คู่กับ Gateway ได้)</div>
 
 - **ชั้นที่ 1** Gateway ตรวจก่อนส่ง · **ชั้นที่ 2** PLC ตรวจซ้ำด้วยกฎของตัวเอง — ชั้นไหนพลาด อีกชั้นยังกันไว้
 - Gateway สั่งเปิด 999 วินาที → **ใคร** ตัดเหลือ 30?
@@ -2404,7 +2404,7 @@ section table { font-size: .92em; }
 |---|---|---|---|
 | ลำดับการเข้าร่วมเครือข่ายไร้สาย (802.11 Connection Setup) | Superspritz | CC BY-SA 4.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:802.11_Connection_Setup.svg) |
 
-**ภาพหน้าจอจาก BENTO Emulator** (ค่าเซนเซอร์ Wi-Fi และ MQTT เป็นค่าจำลอง · MQTT ใน Emulator เป็น broker จำลองในเบราว์เซอร์ "No TCP leaves the browser" · ไฟล์ของคอร์สไม่ถูกแก้ ตอนถ่ายภาพแทน `TEAM = "teamXX"` เป็น `team99` และป้อนข้อความเข้า broker จำลองในภาพ `sf2_03` กับ `sf2_06` ตามที่เขียนใต้ภาพ)
+**ภาพหน้าจอจาก BENTO Emulator** (ค่าเซนเซอร์และ Wi-Fi เป็นค่าจำลอง · Emulator ต่อ broker สาธารณะจริงผ่าน WebSocket แต่ภาพ sf2_03 กับ sf2_06 ถ่ายโดยป้อนข้อความเข้า broker จำลอง · ไฟล์ของคอร์สไม่ถูกแก้ ตอนถ่ายภาพแทน `TEAM = "teamXX"` เป็น `team99` และป้อนข้อความเข้า broker จำลองในภาพ `sf2_03` กับ `sf2_06` ตามที่เขียนใต้ภาพ)
 `sf2_01` ต่อ Wi-Fi แล้ว · `sf2_02` ส่งแล้ว 3 ใบ (+ แผงลูกบิด/จอไฟ RGB) · `sf2_03` ปั๊มเปิด (+ แผง) และถังแห้งดับเอง · `sf2_04` สบายดี และแย่แล้ว (กล่องเตือน) · `sf2_05` คลังค่าตั้ง · `sf2_06` Gateway สั่งรดน้ำ · `sf2_07` แปลงผัก: โหนด + PLC
 
 **ไดอะแกรมที่วาดขึ้นเองสำหรับคอร์สนี้ (SVG/HTML):** ปก · สองลูกศรวิ่งสวนทาง · captive portal · โมดูล wifi · ไฟล์ 6 ส่วน · ป้ายก่อนบรรทัดที่บล็อก · ได้ยินวงไหม · 1883 กับ wss 8884 · broker สาธารณะ · บันไดสามขั้น · หน้าอ่านค่า 4 ขั้น · เส้นเวลา fake_board · กล่องรับช่องเดียว · ภารกิจปิดวงจร · ข้อมูลไหลไปทางไหน · Smart IoT Gateway

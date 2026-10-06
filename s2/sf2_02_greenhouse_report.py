@@ -4,7 +4,7 @@
 # ลองเล่น  : เปิด farm_web.html?team=<เลขกลุ่ม> บนมือถือ แล้วเป่าลมใส่บอร์ด หมุนลูกบิด
 # บนจอ     : ตัวเลขใหญ่ (Seg7) หลอดลูกบิด (Bar) กราฟ (Chart) ไฟออนไลน์ (Led)
 # แนวคิด AIoT: วัดถี่ได้ แต่ส่งห่าง ๆ โดยถามว่าถึงเวลาหรือยัง ไม่ใช่ time.sleep(5)
-# บอร์ด     : TESAIoT Dev Kit และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลอง)
+# บอร์ด     : TESAIoT Dev Kit และ BENTO Emulator (Emulator ต่อ broker สาธารณะจริงผ่าน WebSocket)
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM
 # ระวัง     : พอร์ต 1883 ไม่เข้ารหัส ใครก็อ่านหัวข้อเราได้ ห้ามส่งของลับ
 

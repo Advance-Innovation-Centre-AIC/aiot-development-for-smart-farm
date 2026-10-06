@@ -12,7 +12,7 @@
 # ต่อยอด   : ให้ read_value() คืนอุณหภูมิ SHT40 (อ่าน 3 ครั้ง + TEMP_OFFSET แบบ cp1_04)
 #            แล้วตั้ง DEADBAND = 0.3, UNIT = "C" และช่วงกราฟ LO, HI = 15, 40
 # ในฟาร์ม  : เซนเซอร์ใช้แบตเตอรี่ ส่งน้อยลง = วิทยุทำงานน้อยลง แบตอยู่ได้นานขึ้น
-# บอร์ด    : TESAIoT Dev Kit และ BENTO Emulator (MQTT ใน Emulator เป็นแบบจำลองในเบราว์เซอร์)
+# บอร์ด    : TESAIoT Dev Kit และ BENTO Emulator (Emulator ต่อ broker สาธารณะจริงผ่าน WebSocket)
 # ระวัง     : พอร์ต 1883 ไม่เข้ารหัส (mqtt ของเฟิร์มแวร์นี้ไม่มี TLS) ใครก็อ่านได้ ห้ามส่งของลับ
 #            ไม่มี retain และไม่มี Last Will คนรับจึงต้องจับเวลา heartbeat เอง
 

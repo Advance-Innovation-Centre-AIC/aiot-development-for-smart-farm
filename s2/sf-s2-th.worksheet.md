@@ -185,12 +185,12 @@ pip install paho-mqtt
 
 ------------------------------------------------------------------------
 
-> **หมายเหตุ:** BENTO Emulator ใช้ MQTT จำลองในเบราว์เซอร์
-> จึงไม่ใช่ตัวแทนสำหรับทดสอบว่า
+> **หมายเหตุ:** BENTO Emulator ต่อ broker.hivemq.com จริงผ่าน WebSocket
+> จึงใช้ทดสอบได้ว่า
 > [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)
 > หรือ
 > [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)
-> รับข้อความจาก broker จริงได้
+> รับข้อความจาก broker จริงได้ (ถ้า Emulator ต่อ broker ไม่ได้ใน 5 วิ จะใช้ broker จำลองแทนและบอกที่คอนโซล)
 
 ------------------------------------------------------------------------
 

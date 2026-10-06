@@ -1284,7 +1284,7 @@ def why_send(value, last, quiet_ms):
 
 ![w:600](img/emu/cp3_03_report_by_exception__turn_more.png)
 
-<div class="cap">ภาพจาก BENTO Emulator · MQTT ใน Emulator เป็นแบบจำลองในเบราว์เซอร์ ไม่มีอะไรออกจากเครื่อง · ลูกบิดหมุนจากแผงจำลอง</div>
+<div class="cap">ภาพจาก BENTO Emulator · Emulator ต่อ broker.hivemq.com จริงผ่าน WebSocket (client id ต่อท้าย -emu) · ลูกบิดหมุนจากแผงจำลอง</div>
 
 <div class="warn">
 
@@ -1369,7 +1369,7 @@ def why_send(value, last, quiet_ms):
 
 ![w:430](img/emu/cp3_06_modbus_frame__fc06_pump_on_confirmed.png)
 
-<div class="cap">ภาพจาก BENTO Emulator · MQTT ใน Emulator เป็นแบบจำลองในเบราว์เซอร์ เกตเวย์บนโน้ตบุ๊กจึงตอบไม่ได้ · ไบต์ของกรอบคำนวณด้วย struct จริง</div>
+<div class="cap">ภาพจาก BENTO Emulator · ตอนถ่ายไม่มีเกตเวย์บนโน้ตบุ๊กตอบ (Emulator ต่อ broker.hivemq.com จริง ถ้ารันเกตเวย์ด้วย TEAM เดียวกันจะได้คำตอบ) · ไบต์ของกรอบคำนวณด้วย struct จริง</div>
 
 </div>
 </div>
