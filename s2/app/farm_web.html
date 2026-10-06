@@ -65,6 +65,11 @@
     <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">60 %</div></div>
     <div class="simBox"><div class="simLabel">ถังน้ำจำลอง</div><div id="plcSimTank" class="simValue">80 %</div></div>
   </div>
+  <div class="bar">
+    <label>ตั้งดินจำลอง <input id="plcSimSoilSet" type="range" min="0" max="100" value="60"></label>
+    <label>ตั้งถังน้ำจำลอง <input id="plcSimTankSet" type="range" min="0" max="100" value="80"></label>
+  </div>
+  <p class="simHint">เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
   <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
 </section>
 <p>
@@ -94,7 +99,7 @@ const telemetryRows = [];
 
 // ----- PLC / field simulator -----
 let plcSimTimer = null;
-let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0, why: "start", n: 0 };
+let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0, why: "start", n: 0, lastStateAt: -Infinity };
 const PLC_SIM_PERIOD_MS = 1000;
 const FIELD_SIM_PERIOD_MS = 5000;
 const PLC_MAX_S = 30;
@@ -105,16 +110,41 @@ const TANK_USE_PER_S = 1.0;
 const TANK_FILL_PER_S = 0.05;
 
 function simTopic(kind) { return ROOT + "/" + team + "/" + kind; }
-function simPublish(kind, obj) {
+
+// ทุกข้อความที่หน้านี้ส่งไปหาบอร์ด (คำสั่งจากปุ่ม และค่าจาก PLC Simulator) ออกทางคิวเดียว ห่างกันอย่างน้อย BOARD_GAP_MS
+// กล่องรับของบอร์ดมีช่องเดียวและถูกถามทุก 0.1 วิ (สัญญาข้อ 4 และ 8) ถ้าสองข้อความจากหน้านี้ไปถึงติดกัน ใบใหม่ทับใบเก่า
+// ทดสอบจริงผ่าน broker: ก่อนมีคิว คำสั่ง "ปิดปั๊ม" หาย 1 ใน 16 ครั้ง เพราะไปถึงพร้อมค่าดินจาก Simulator
+const BOARD_GAP_MS = 400;
+const boardQueue = [];
+let boardLastAt = -Infinity, boardTimer = null;
+function toBoard(topic, obj) {
   if (!client || !client.connected) return false;
-  client.publish(simTopic(kind), JSON.stringify(obj));
+  boardQueue.push([topic, JSON.stringify(obj)]);
+  drainBoardQueue();
   return true;
+}
+function drainBoardQueue() {
+  if (boardTimer || !boardQueue.length) return;
+  const wait = boardLastAt + BOARD_GAP_MS - Date.now();
+  if (wait > 0) { boardTimer = setTimeout(() => { boardTimer = null; drainBoardQueue(); }, wait); return; }
+  const [topic, text] = boardQueue.shift();
+  if (client && client.connected) client.publish(topic, text);
+  boardLastAt = Date.now();
+  drainBoardQueue();
+}
+function simPublish(kind, obj) {
+  return toBoard(simTopic(kind), obj);
 }
 function updatePlcSimUi() {
   $("plcSimOnline").textContent = plcSimState.online ? "ONLINE" : "OFF";
   $("plcSimPump").textContent = plcSimState.pump ? "ON" : "OFF";
   $("plcSimSoil").textContent = Math.round(plcSimState.soil) + " %";
   $("plcSimTank").textContent = Math.round(plcSimState.tank) + " %";
+  // ตัวเลื่อนตามค่าจริงของแปลงจำลอง (ยกเว้นตอนกำลังลากอยู่)
+  for (const [id, v] of [["plcSimSoilSet", plcSimState.soil], ["plcSimTankSet", plcSimState.tank]]) {
+    const el = $(id);
+    if (el && document.activeElement !== el) el.value = Math.round(v);
+  }
 }
 // ส่งแบบเดียวกับ field_sim.py: ฟิสิกส์ขยับทุก 1 วิ แต่ soil / plc/state / tank ส่งอย่างละครั้งต่อ 5 วิ เหลื่อมกัน
 // เพราะกล่องรับข้อความของบอร์ดมีช่องเดียว ส่งสามข้อความพร้อมกันบอร์ดจะได้แค่ใบเดียว (plc/state ตอนเปลี่ยนส่งทันที)
@@ -122,8 +152,10 @@ const SIM_TICKS_PER_CYCLE = Math.max(1, Math.round(FIELD_SIM_PERIOD_MS / PLC_SIM
 const SIM_SLOT = { soil: 0, state: Math.floor(SIM_TICKS_PER_CYCLE / 4), tank: Math.floor(SIM_TICKS_PER_CYCLE / 2) };
 let plcSimTicks = 0;
 let plcSimSent = { soil: 0, tank: 0 };
+let plcSimPending = { soil: false, tank: false };   // ค่าแปลงที่ถึงรอบแล้วแต่ยังไม่ได้ส่ง (ส่งได้ทีละใบต่อวินาที)
 function plcSimStatePayload(why) {
   const now = Date.now();
+  plcSimState.lastStateAt = now;
   return {
     pump: plcSimState.pump ? 1 : 0,
     left_s: plcSimState.pump && plcSimState.pumpUntil ? Math.max(0, Math.ceil((plcSimState.pumpUntil - now) / 1000)) : 0,
@@ -169,15 +201,24 @@ function plcSimTick() {
   if (why && wasOn !== plcSimState.pump) {
     plcSimState.why = why;
     simPublish("plc/state", plcSimStatePayload(why));
-  } else if (slot === SIM_SLOT.state) {
-    simPublish("plc/state", plcSimStatePayload(plcSimState.why));
+  } else if (slot === SIM_SLOT.state && now - plcSimState.lastStateAt >= 1000) {
+    // ชีพจรทุก 5 วิ why = "tick" เสมอ (สัญญาข้อ 3.6) ถ้าส่งเหตุผลเดิมซ้ำ เช่น blocked_tank Gateway จะเตือนซ้ำทุก 5 วิ
+    // และถ้าเพิ่งส่งสถานะไปไม่ถึง 1 วิ (เพิ่งตอบคำสั่ง) ไม่ต้องส่งซ้ำติด ๆ กัน เหมือน field_sim.py
+    plcSimState.why = "tick";
+    simPublish("plc/state", plcSimStatePayload("tick"));
   }
 
   // field/soil และ field/tank ใช้ payload แบบ node/value เหมือน field_sim.py (n = ลำดับของแต่ละโหนด)
-  if (slot === SIM_SLOT.soil) {
+  // ถ้าวินาทีนี้เพิ่งส่ง plc/state ไป (ปั๊มเปลี่ยน หรือเพิ่งตอบคำสั่ง) เลื่อนค่าแปลงไปวินาทีถัดไป
+  // ไม่อย่างนั้นสองข้อความถึงบอร์ดพร้อมกัน ใบใหม่ทับใบเก่า และ Gateway อาจไม่เห็นสถานะ blocked_tank เลย
+  if (slot === SIM_SLOT.soil) plcSimPending.soil = true;
+  if (slot === SIM_SLOT.tank) plcSimPending.tank = true;
+  const stateJustSent = Date.now() - plcSimState.lastStateAt < PLC_SIM_PERIOD_MS / 2;
+  if (!stateJustSent && plcSimPending.soil) {
+    plcSimPending.soil = false;
     simPublish("field/soil", { node: "soil-1", value: Math.round(plcSimState.soil), unit: "%", n: ++plcSimSent.soil });
-  }
-  if (slot === SIM_SLOT.tank) {
+  } else if (!stateJustSent && plcSimPending.tank) {
+    plcSimPending.tank = false;
     simPublish("field/tank", { node: "tank-1", value: Math.round(plcSimState.tank), unit: "%", n: ++plcSimSent.tank });
   }
   plcSimTicks += 1;
@@ -190,6 +231,7 @@ function startPlcSimulator() {
   stopPlcSimulator(false);
   plcSimState.online = true;
   plcSimTicks = 0;
+  plcSimPending = { soil: false, tank: false };
   updatePlcSimUi();
   plcSimTimer = setInterval(plcSimTick, PLC_SIM_PERIOD_MS);
   plcSimTick();
@@ -327,7 +369,10 @@ function showCards(data) {
     const card = document.createElement("div"), name = document.createElement("div"), num = document.createElement("div");
     card.className = "card"; name.className = "name"; num.className = "num";
     name.textContent = LABELS[key] || key;
-    num.textContent = key === "pump" ? (data[key] ? "เปิด" : "ปิด") : String(data[key]).slice(0, 24);
+    // null = บอร์ดไม่รู้ค่า (เช่น Gateway ไม่ได้ยิน PLC เกิน 15 วิ) ต้องขึ้นว่าไม่ทราบ ห้ามขึ้นว่า "ปิด" เพราะปั๊มอาจยังเดินอยู่
+    const v = data[key];
+    num.textContent = v === null || v === undefined ? "ไม่ทราบ"
+      : key === "pump" ? (v ? "เปิด" : "ปิด") : String(v).slice(0, 24);
     card.append(name, num);
     box.append(card);
   }
@@ -335,7 +380,7 @@ function showCards(data) {
 
 function send(obj) {
   if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ กด ต่อ ก่อน", false); return; }
-  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  toBoard(ROOT + "/" + team + "/cmd", obj);
 }
 
 $("go").addEventListener("click", connect);
@@ -346,6 +391,8 @@ $("sayBtn").addEventListener("click", () => send({ cmd: "say", text: $("say").va
 $("plcSimStart").addEventListener("click", startPlcSimulator);
 $("plcSimStop").addEventListener("click", () => stopPlcSimulator(true));
 $("plcSimDrop").addEventListener("click", dropPlcSimulator);
+$("plcSimSoilSet").addEventListener("input", (e) => { plcSimState.soil = Number(e.target.value); updatePlcSimUi(); });
+$("plcSimTankSet").addEventListener("input", (e) => { plcSimState.tank = Number(e.target.value); updatePlcSimUi(); });
 updatePlcSimUi();
 updateLogStatus();
 if (team !== "teamXX") connect();
