@@ -1,6 +1,7 @@
 # sf2_06_smart_gateway.py - Smart IoT Gateway: ฟังแปลง ตัดสินใจ สั่ง PLC
 #
 # ภารกิจ   : ฟัง field/+ (โหนด) plc/state (PLC) cmd (แอป) · ดิน < 30 % และน้ำพอ -> ส่ง plc/cmd รดน้ำ 10 วิ
+#            แอปเรียกคนที่ฟาร์ม (beep) และส่งข้อความขึ้นจอไฟ RGB (say) ได้เหมือน sf2_03
 # ลองเล่น  : รัน app/field_sim.py บนโน้ตบุ๊ก หรืออีกกลุ่มรัน sf2_07_field_station.py (TEAM เดียวกัน)
 # บนจอ     : ไฟ PLC กับ RGB_BLUE ตาม plc/state ที่ PLC รายงาน ไม่ใช่ที่เราสั่ง
 
@@ -8,6 +9,7 @@ import buttons
 import gpio
 import json
 import mqtt
+import rgbmatrix
 import time
 import ui
 import wifi
@@ -117,6 +119,24 @@ def app_request(cmd, tank):
     if act == "auto":
         return None, 1 if cmd.get("on", 1) else 0, "ตั้งออโต้"
     return None, None, "ไม่รู้จักคำสั่ง"
+
+
+def ascii_only(text):
+    return "".join(c for c in str(text) if " " <= c <= "~")[:20]
+
+
+def farm_request(cmd):
+    # คำสั่งถึงคนที่ฟาร์ม ไม่ผ่าน PLC (สัญญาข้อ 4 แบบเดียวกับ sf2_03)
+    # -> (ทำอะไร, ข้อความวิ่ง, ข้อความขึ้นจอ) หรือ None ถ้าไม่ใช่คำสั่งกลุ่มนี้
+    act = cmd.get("cmd") if cmd else None
+    if act == "beep":
+        return "beep", "", "เจ้าของฟาร์มเรียก!"
+    if act == "say":
+        text = ascii_only(cmd.get("text", ""))
+        return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ")
+    if act == "ack":                   # ack เป็นของ sf2_04
+        return "", "", "ไม่มีแจ้งเตือน (sf2_04)"
+    return None
 
 
 # ---- 4) เครือข่าย ----
@@ -246,6 +266,16 @@ def on_message(w, farm, msg, now):
     elif topic == "plc/state" and body:
         on_plc(w, farm, body, now)
     elif topic == "cmd":
+        local = farm_request(body)
+        if local:
+            do, msg, text = local
+            if do == "beep":
+                beep("hit")
+            elif do == "say" and msg:
+                rgbmatrix.scroll(msg, rgbmatrix.PURPLE, 80)   # วิ่งเองบนบอร์ด ไม่ต้องวนในลูป
+                beep("tap")
+            show_note(w, text, COL_INFO)
+            return None
         plc_cmd, auto, text = app_request(body, field_now(farm, "tank", now))
         if auto is not None:
             farm.auto = bool(auto)
@@ -293,6 +323,7 @@ def main():
         ui.volume(SPEAKER)
     w = build_screen()
     led = led_named("RGB_BLUE")
+    rgbmatrix.clear()
     if len(TEAM) != 6 or not TEAM[4:].isdigit() or TEAM == "team00":
         stop(w, led, "แก้ TEAM ก่อน")
     problem = connect_gateway(w)
