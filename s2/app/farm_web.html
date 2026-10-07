@@ -14,46 +14,140 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ฟาร์มของเรา</title>
 <style>
-  :root { --bg: #f6f6f3; --card: #ffffff; --ink: #1d1d1b; --dim: #6b6b66; --ok: #1f7a4d; --bad: #b3261e; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #161615; --card: #232321; --ink: #ededea; --dim: #9a9a94; --ok: #5cc08c; --bad: #f08a80; }
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   }
-  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
-  h1 { font-size: 1.6em; margin: .2em 0 .4em; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } .sim, .layout > section:last-child { grid-column: 1 / -1; } }
   #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .card, #events { background: var(--card); border-radius: 10px; padding: 10px 12px; min-width: 0; }
-  .name { color: var(--dim); font-size: 14px; }
-  .num { font-size: clamp(26px, 7vw, 38px); font-weight: 700; overflow-wrap: anywhere; }
-  #events { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
-  #logStatus { color: var(--dim); font-size: 14px; }
-  button, input { font-size: 16px; padding: 10px 12px; margin: 4px 4px 0 0; }
-  #plcSim { margin-top: 14px; padding: 12px; background: var(--card); border: 2px solid var(--line); border-radius: 10px; }
-  #plcSim h2 { margin: 0 0 8px; font-size: 18px; }
-  #plcSim .simGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
-  #plcSim .simBox { padding: 9px; border-radius: 8px; background: var(--bg); }
-  #plcSim .simLabel { color: var(--dim); font-size: 13px; }
-  #plcSim .simValue { font-size: 20px; font-weight: 700; }
-  #plcSim .simHint { color: var(--dim); font-size: 13px; margin: 8px 0 0; }
-  #plcSim .danger { border-color: var(--bad); color: var(--bad); }
+  #cards:not(:empty) + .empty { display: none; }
+  .card { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
+  .card .name { color: var(--dim); font-size: 13px; overflow-wrap: anywhere; }
+  .card .num { font-size: clamp(24px, 5vw, 32px); font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+  .card .num.is-text { font-size: 18px; padding-top: 6px; }          /* คำ เช่น gateway ไม่ต้องตัวใหญ่จนแตกบรรทัด */
+  .card .num.is-unknown { font-size: 18px; padding-top: 6px; color: var(--warn); }
+  .card .num.is-on { color: var(--water); }
+  .card .meter { height: 6px; border-radius: 3px; background: var(--line); margin-top: 8px; overflow: hidden; }
+  .card .meter i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+  .card[data-key="tank"] .meter i { background: var(--water); }
+  .cmds { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .say { display: grid; gap: 6px; margin-top: 14px; }
+  .say input { flex: 1; min-width: 140px; }
+  .simGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 14px 0; }
+  .simBox { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--line); min-width: 0; }
+  .simLabel { color: var(--dim); font-size: 13px; }
+  .simValue { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  #plcSimOnline[data-on="1"], #plcSimPump[data-on="1"] { color: var(--accent); }
+  .sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 20px; }
+  .sliders label { display: grid; gap: 4px; font-size: 14px; color: var(--dim); }
+  .sliders input[type="range"] { width: 100%; accent-color: var(--accent); }
+  #plcSimTankSet { accent-color: var(--water); }
+  .why { margin: 14px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2);
+    border-left: 4px solid var(--accent); font-weight: 600; }
+  .why:empty { display: none; }
+  .how { margin-top: 12px; color: var(--dim); font-size: 14px; }
+  .how summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+  .how p { margin: 8px 0 0; }
+  #events { white-space: pre-wrap; min-height: 3em; max-height: 220px; overflow-y: auto; }
 </style>
 </head>
 <body>
-<h1>ฟาร์มของเรา</h1>
-<p>ทีม <input id="team" size="7" value="teamXX"> <button id="go">ต่อ</button> สถานะ: <b id="status">ยังไม่ได้ต่อ</b></p>
-<div id="cards"></div>
-<p>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12C12 7 8 4 3 4c0 5 3 8 9 8z"/><path d="M12 14c0-4 3-7 9-7 0 4-3 7-9 7z"/></svg>
+    </div>
+    <div><h1>ฟาร์มของเรา</h1><p class="sub">Smart Farm · Session 2 · ดูค่าและสั่งงานบอร์ดของกลุ่ม</p></div>
+  </div>
+  <div class="conn">
+    <label class="bar" for="team"><span class="muted small">ทีม</span>
+      <input id="team" size="7" value="teamXX" autocomplete="off" aria-label="เลขทีม เช่น team05"></label>
+    <button id="go" class="primary">ต่อ</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้ต่อ</b>
+  </div>
+</header>
+
+<main class="layout">
+<section class="panel farm" aria-labelledby="h-farm">
+  <h2 id="h-farm">สถานะฟาร์ม <span class="hint">อัปเดตทุกครั้งที่บอร์ดส่ง telemetry</span></h2>
+  <div id="cards"></div>
+  <p class="empty muted small" id="cardsEmpty">ยังไม่มีค่า กด "ต่อ" แล้วรอบอร์ดส่งรอบถัดไป (ทุก 1–5 วินาที)</p>
+</section>
+
+<section class="panel" aria-labelledby="h-cmd">
+  <h2 id="h-cmd">สั่งงานบอร์ด</h2>
   <!-- คำสั่งจากแอปไป .../cmd ใช้รูปแบบ {"cmd":"pump",...} (สัญญาข้อ 4 และ 4.1) ทั้ง sf2_03 และ sf2_06 อ่านแบบนี้
        {"pump":1,"sec":10} เป็นรูปแบบของ .../plc/cmd ที่ Gateway ส่งให้ PLC เท่านั้น ถ้าส่งไป .../cmd บอร์ดจะไม่ทำอะไร -->
-  <button data-cmd='{"cmd":"pump","on":1,"sec":10}'>รดน้ำ 10 วินาที</button>
-  <button data-cmd='{"cmd":"pump","on":0}'>ปิดปั๊ม</button>
-  <button data-cmd='{"cmd":"beep"}'>เรียกคนที่ฟาร์ม</button>
-  <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
-</p>
-<p><input id="say" maxlength="20" placeholder="ข้อความอังกฤษขึ้นจอ LED"> <button id="sayBtn">ส่งข้อความ</button></p>
-<section id="plcSim">
-  <h2>PLC Simulator — ใช้แทน <code>app/field_sim.py</code></h2>
-  <p class="simHint">เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง ไม่ต้องรัน Python simulator เพิ่ม</p>
-  <p class="simHint"><b>ใช้คู่กับ <code>sf2_06_smart_gateway.py</code> เท่านั้น</b> — PLC จำลองรับคำสั่งจาก Gateway ทาง <code>.../plc/cmd</code> ถ้าบอร์ดรัน <code>sf2_03_remote_pump.py</code> (ภารกิจกลุ่ม) ไม่ต้องเปิด PLC จำลอง ปั๊มคือไฟสีฟ้าบนบอร์ด และสถานะดูได้จากการ์ด "ปั๊ม" ด้านบน</p>
+  <div class="cmds">
+    <button data-cmd='{"cmd":"pump","on":1,"sec":10}' class="water">รดน้ำ 10 วินาที</button>
+    <button data-cmd='{"cmd":"pump","on":0}'>ปิดปั๊ม</button>
+    <button data-cmd='{"cmd":"beep"}'>เรียกคนที่ฟาร์ม</button>
+    <button data-cmd='{"cmd":"ack"}'>รับทราบแจ้งเตือน (sf2_04)</button>
+  </div>
+  <label class="say" for="say"><span class="muted small">ข้อความวิ่งบนจอไฟ RGB (อังกฤษ ไม่เกิน 20 ตัว)</span>
+    <span class="bar"><input id="say" maxlength="20" placeholder="เช่น HELLO FARM"> <button id="sayBtn">ส่งข้อความ</button></span></label>
+</section>
+
+<section id="plcSim" class="panel sim" aria-labelledby="h-sim">
+  <h2 id="h-sim">PLC Simulator <span class="hint">ใช้แทน <code>app/field_sim.py</code> · ใช้คู่กับ <code>sf2_06_smart_gateway.py</code> เท่านั้น</span></h2>
   <div class="bar">
     <button id="plcSimStart" class="primary">เริ่ม PLC Simulator</button>
     <button id="plcSimStop">หยุด Simulator</button>
@@ -65,21 +159,32 @@
     <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">45 %</div></div>
     <div class="simBox"><div class="simLabel">ถังน้ำจำลอง</div><div id="plcSimTank" class="simValue">80 %</div></div>
   </div>
-  <div class="bar">
-    <label>ตั้งดินจำลอง <input id="plcSimSoilSet" type="range" min="0" max="100" value="45"></label>
-    <label>ตั้งถังน้ำจำลอง <input id="plcSimTankSet" type="range" min="0" max="100" value="80"></label>
+  <div class="sliders">
+    <label for="plcSimSoilSet"><span>ตั้งดินจำลอง</span><input id="plcSimSoilSet" type="range" min="0" max="100" value="45"></label>
+    <label for="plcSimTankSet"><span>ตั้งถังน้ำจำลอง</span><input id="plcSimTankSet" type="range" min="0" max="100" value="80"></label>
   </div>
-  <p id="plcSimWhy" class="simValue" style="font-size:16px"></p>
-  <p class="simHint">กดเริ่มทุกครั้งแปลงกลับไปที่ดิน 45 % ถัง 80 % · เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
-  <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
+  <p id="plcSimWhy" class="why" aria-live="polite"></p>
+  <details class="how">
+    <summary>วิธีใช้และสิ่งที่ Simulator ส่ง</summary>
+    <p>เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง ไม่ต้องรัน Python simulator เพิ่ม</p>
+    <p>PLC จำลองรับคำสั่งจาก Gateway ทาง <code>.../plc/cmd</code> ถ้าบอร์ดรัน <code>sf2_03_remote_pump.py</code> (ภารกิจกลุ่ม) ไม่ต้องเปิด PLC จำลอง ปั๊มคือไฟสีฟ้าบนบอร์ด และสถานะดูได้จากการ์ด "ปั๊ม" ด้านบน</p>
+    <p>กดเริ่มทุกครั้งแปลงกลับไปที่ดิน 45 % ถัง 80 % · เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
+    <p>คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
+  </details>
 </section>
-<p>
-  <button id="downloadCsv">ดาวน์โหลด CSV</button>
-  <button id="clearCsv">ล้างข้อมูลที่เก็บไว้</button>
-  <span id="logStatus">ยังไม่มีข้อมูล telemetry</span>
-</p>
-<p>เหตุการณ์ล่าสุด (ใหม่อยู่บน):</p>
-<div id="events">(ยังไม่มี)</div>
+
+<section class="panel" aria-labelledby="h-log">
+  <h2 id="h-log">บันทึกข้อมูล</h2>
+  <div class="bar">
+    <button id="downloadCsv">ดาวน์โหลด CSV</button>
+    <button id="clearCsv">ล้างข้อมูลที่เก็บไว้</button>
+    <span id="logStatus" class="muted small">ยังไม่มีข้อมูล telemetry</span>
+  </div>
+  <p class="muted small" style="margin:14px 0 6px">เหตุการณ์ล่าสุด (ใหม่อยู่บน)</p>
+  <div id="events" class="log">(ยังไม่มี)</div>
+</section>
+</main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
         integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
 <script>
@@ -87,7 +192,10 @@ const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";   // สำรอง: "w
 const ROOT = "bento-aiot";
 // ชื่อไทยของคีย์ที่บอร์ดส่ง คีย์ที่ไม่อยู่ในนี้ก็ยังขึ้นการ์ด แค่ใช้ชื่ออังกฤษ (TODO: แก้ได้ตามใจ)
 const LABELS = { temp_c: "อุณหภูมิ C", rh: "ความชื้น %", hpa: "ความกด hPa", az: "เอียง az",
-                 soil: "ดิน % (VR1)", light: "แสง % (VR3)", tank: "ถังน้ำ % (VR4)", pump: "ปั๊ม", n: "ใบที่" };
+                 soil: "ดิน % (VR1)", light: "แสง % (VR3)", tank: "ถังน้ำ % (VR4)", pump: "ปั๊ม", n: "ใบที่",
+                 auto: "โหมดออโต้", by: "ส่งโดย" };
+// คีย์ที่เป็นเปอร์เซ็นต์ 0-100 การ์ดจะมีแถบบอกระดับด้วย
+const PERCENT_KEYS = ["soil", "light", "tank", "rh"];
 const $ = (id) => document.getElementById(id);
 let client = null, team = new URLSearchParams(location.search).get("team") || "teamXX";
 $("team").value = team;
@@ -166,6 +274,8 @@ function plcSimWhyText() {
 function updatePlcSimUi() {
   $("plcSimWhy").textContent = plcSimWhyText();
   $("plcSimOnline").textContent = plcSimState.online ? "ONLINE" : "OFF";
+  $("plcSimOnline").dataset.on = plcSimState.online ? "1" : "0";
+  $("plcSimPump").dataset.on = plcSimState.pump ? "1" : "0";
   $("plcSimPump").textContent = plcSimState.pump ? "ON" : "OFF";
   $("plcSimSoil").textContent = Math.round(plcSimState.soil) + " %";
   $("plcSimTank").textContent = Math.round(plcSimState.tank) + " %";
@@ -400,12 +510,28 @@ function showCards(data) {
     if (key === "id") continue;
     const card = document.createElement("div"), name = document.createElement("div"), num = document.createElement("div");
     card.className = "card"; name.className = "name"; num.className = "num";
+    card.dataset.key = key;
     name.textContent = LABELS[key] || key;
     // null = บอร์ดไม่รู้ค่า (เช่น Gateway ไม่ได้ยิน PLC เกิน 15 วิ) ต้องขึ้นว่าไม่ทราบ ห้ามขึ้นว่า "ปิด" เพราะปั๊มอาจยังเดินอยู่
     const v = data[key];
-    num.textContent = v === null || v === undefined ? "ไม่ทราบ"
-      : key === "pump" ? (v ? "เปิด" : "ปิด") : String(v).slice(0, 24);
+    if (v === null || v === undefined) {
+      num.textContent = "ไม่ทราบ";
+      num.classList.add("is-unknown");
+    } else if (key === "pump" || key === "auto") {
+      num.textContent = v ? "เปิด" : "ปิด";
+      if (v) num.classList.add("is-on");
+    } else {
+      num.textContent = String(v).slice(0, 24);
+      if (typeof v !== "number") num.classList.add("is-text");
+    }
     card.append(name, num);
+    if (PERCENT_KEYS.includes(key) && typeof v === "number") {
+      const meter = document.createElement("div"), fill = document.createElement("i");
+      meter.className = "meter";
+      fill.style.width = Math.max(0, Math.min(100, v)) + "%";
+      meter.append(fill);
+      card.append(meter);
+    }
     box.append(card);
   }
 }
