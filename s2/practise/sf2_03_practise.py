@@ -102,7 +102,7 @@ def matrix_countdown(sec_left, shown):
 # ---- 3) สมอง ----
 def pump_seconds(sec):
     # ตรวจเวลาที่สั่ง: ไม่ใช่จำนวนเต็มบวก = ค่าตั้งต้น  เกินเพดาน = เพดาน
-    if not isinstance(sec, int) or sec <= 0:
+    if isinstance(sec, bool) or not isinstance(sec, int) or sec <= 0:  # true/false ใน JSON ไม่ใช่จำนวนเต็ม (สัญญาข้อ 4) แม้ Python นับ bool เป็น int
         sec = ____                     # ช่อง A: สั่งมาแปลก ๆ (ไม่ใช่จำนวนเต็มบวก) ใช้กี่วินาที?
     return min(sec, ____)              # ช่อง B: สั่งนานแค่ไหนก็ได้ไม่เกิน "อะไร"?
 
@@ -297,7 +297,7 @@ def main():
         stop(w, pump, problem)
     show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
-    stop_btn = Button(0)
+    stop_btn = Button(1)
     got = n = pump_ms = pump_t0 = 0
     shown = -1
     t_send = t0 = time.ticks_ms()

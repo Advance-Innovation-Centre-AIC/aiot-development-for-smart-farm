@@ -1141,9 +1141,9 @@ def next_state(state, over, ack, t_s):
 
 ## Part 3 — ไฟล์ของส่วนนี้
 
-<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py">cp3_01_status_language.py</a> <span>— ภาษาสถานะ: สี จังหวะ เสียง</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py">cp3_03_report_by_exception.py</a> <span>— ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py">cp3_06_modbus_frame.py</a> <span>— กรอบ Modbus TCP 12 ไบต์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py">cp3_06_practise.py</a> <span>— Code Quest ระดับ 3 · เติม fc06_write()</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก (ผู้สอนสาธิต)</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py">modbus_plc_sim.py</a> <span>— PLC จำลองที่พูด Modbus TCP</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py">modbus_bridge.py</a> <span>— เกตเวย์ MQTT ↔ Modbus TCP</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py">cp3_02_matrix_toolkit.py</a> <span>— จอไฟ 16×8 เป็นจอเล็ก 4 แบบ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py">cp3_04_command_confirm.py</a> <span>— คำสั่งต้องมีคำยืนยันและทางถอย</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py">cp3_05_two_pipes.py</a> <span>— ค่าเดียว สองท่อ: MQTT กับ MQTTS</span></div></div></div>
+<div class="files page"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_01_status_language.py">cp3_01_status_language.py</a> <span>— ภาษาสถานะ: สี จังหวะ เสียง</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py">cp3_03_report_by_exception.py</a> <span>— ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py">cp3_06_modbus_frame.py</a> <span>— กรอบ Modbus TCP 12 ไบต์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py">cp3_06_practise.py</a> <span>— Code Quest ระดับ 3 · เติม fc06_write()</span></div><div class="fh lap">💻 หน้าเว็บบนโน้ตบุ๊ก</div><div class="f"><a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/core/app/modbus_plc.html?team=team__">modbus_plc.html</a> <span>— เกตเวย์ + PLC จำลอง Modbus ในหน้าเดียว</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py">cp3_02_matrix_toolkit.py</a> <span>— จอไฟ 16×8 เป็นจอเล็ก 4 แบบ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py">cp3_04_command_confirm.py</a> <span>— คำสั่งต้องมีคำยืนยันและทางถอย</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py">cp3_05_two_pipes.py</a> <span>— ค่าเดียว สองท่อ: MQTT กับ MQTTS</span></div></div></div>
 
-<div class="cap">★ = เล่นบนบอร์ดในคาบ · 💻 = รันบนโน้ตบุ๊กด้วย Python 3 · ☆ = การบ้าน รันใน BENTO Emulator ได้</div>
+<div class="cap">★ = เล่นบนบอร์ดในคาบ · 💻 = หน้าเว็บ เปิดบนโน้ตบุ๊ก ไม่ต้องติดตั้งอะไร · ☆ = การบ้าน รันใน BENTO Emulator ได้</div>
 
 ---
 
@@ -1305,7 +1305,7 @@ def why_send(value, last, quiet_ms):
 - **ไม่รู้ = ปิดไว้ก่อน** (fail-safe): cp3_06 ถ้ายังไม่รู้สถานะปั๊ม กด SW6 จะขอ **"ปิด"** ก่อนเสมอ
 - **ด่านสุดท้ายอยู่ที่ PLC (interlock):** เปิดได้ไม่เกิน 30 วิ · ถังต่ำกว่า 10 % ไม่ยอมเปิด — ต่อให้บอร์ดดับไปเลย ปั๊มก็ไม่ค้าง
 
-☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) เล่นวงปิดนี้กับ [`field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py) บนโน้ตบุ๊ก: SW5 ขอเปิด 10 วิ · SW6 ขอปิด · รอ 3 วิ ส่งซ้ำ 1 ครั้ง · ยังเงียบ = สั่งปิดและถือว่า "ไม่รู้"
+☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) เล่นวงปิดนี้กับ **PLC Simulator** ใน [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__) (TEAM เดียวกัน): SW5 ขอเปิด 10 วิ · SW6 ขอปิด · รอ 3 วิ ส่งซ้ำ 1 ครั้ง · ยังเงียบ = สั่งปิดและถือว่า "ไม่รู้"
 
 ---
 
@@ -1348,7 +1348,7 @@ def why_send(value, last, quiet_ms):
 
 <div class="no">
 
-**บอร์ดรุ่นนี้ยังส่ง Modbus TCP เองไม่ได้** (เฟิร์มแวร์ไม่มีโมดูล Modbus และไม่มี socket) — เราจึงให้บอร์ดส่ง **"ความตั้งใจ"** ผ่าน MQTT แล้วให้เกตเวย์บนโน้ตบุ๊กพูด Modbus TCP แทน
+**บอร์ดรุ่นนี้ยังส่ง Modbus TCP เองไม่ได้** (เฟิร์มแวร์ไม่มีโมดูล Modbus และไม่มี socket) — เราจึงให้บอร์ดส่ง **"ความตั้งใจ"** ผ่าน MQTT แล้วให้เกตเวย์พูด Modbus TCP แทน (ในห้องคือหน้าเว็บ `modbus_plc.html` บนโน้ตบุ๊ก)
 
 </div>
 
@@ -1369,36 +1369,35 @@ def why_send(value, last, quiet_ms):
 
 ![w:430](img/emu/cp3_06_modbus_frame__fc06_pump_on_confirmed.png)
 
-<div class="cap">ภาพจาก BENTO Emulator · ตอนถ่ายไม่มีเกตเวย์บนโน้ตบุ๊กตอบ (Emulator ต่อ broker.hivemq.com จริง ถ้ารันเกตเวย์ด้วย TEAM เดียวกันจะได้คำตอบ) · ไบต์ของกรอบคำนวณด้วย struct จริง</div>
+<div class="cap">ภาพจาก BENTO Emulator · ตอนถ่ายไม่มีเกตเวย์ตอบ (Emulator ต่อ broker.hivemq.com จริง ถ้าเปิด modbus_plc.html ด้วย TEAM เดียวกันจะได้คำตอบ) · ไบต์ของกรอบคำนวณด้วย struct จริง</div>
 
 </div>
 </div>
 
 ---
 
-## เดโมผู้สอน: บอร์ด → MQTT → เกตเวย์ → Modbus TCP → PLC จำลอง
+## เดโม: บอร์ด → MQTT → เกตเวย์ → Modbus TCP → PLC จำลอง
 
 ![w:860](img/core/p3_modbus_gateway.svg)
 
 <div class="cols">
 <div>
 
-**บนโน้ตบุ๊ก 2 หน้าต่าง** (Python 3)
+**บนโน้ตบุ๊ก เปิดหน้าเว็บเดียว** (ไม่ต้องติดตั้งอะไร)
 
-```bash
-python modbus_plc_sim.py      # 1: PLC จำลอง พอร์ต 5020
-pip install paho-mqtt         # ครั้งแรกครั้งเดียว
-python modbus_bridge.py       # 2: แก้ TEAM ให้ตรงบอร์ดก่อน
+```text
+1  เปิด modbus_plc.html?team=team__ แล้วกด "เริ่ม"
+2  บอร์ดรัน cp3_06 (ตั้ง WiFi + TEAM เดียวกัน)
 ```
 
-[`modbus_plc_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py) · [`modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)
+[`modbus_plc.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/core/app/modbus_plc.html?team=team__) = เกตเวย์ + PLC จำลองในหน้าเดียว · เบราว์เซอร์เปิด TCP ไปหา PLC ตัวจริงไม่ได้ ต่อ PLC จริงต้องใช้เกตเวย์ฝั่งผู้สอน
 
 </div>
 <div>
 
 **ดูอะไร** (บอร์ดตั้ง WiFi + TEAM เดียวกัน)
-- กด SW5 อ่าน แล้ว SW6 สั่งเปิด → บรรทัด `-> PLC` ในหน้าต่างเกตเวย์คือ **12 ไบต์ชุดเดียวกับบนจอบอร์ด** ออกไปพอร์ต 5020 · คำตอบกลับถึงบอร์ด = **"ยืนยันแล้ว"**
-- ปิด PLC จำลองแล้วกดอีกครั้ง → บอร์ดขึ้น `plc_offline` สถานะปั๊มเป็น **--** (ไม่รู้) · เปิดใหม่ด้วย `--tank 5` แล้วสั่งเปิด → **"PLC ปฏิเสธ 4"**
+- กด SW5 อ่าน แล้ว SW6 สั่งเปิด → **กรอบทีละไบต์** ในหน้าเว็บคือ **12 ไบต์ชุดเดียวกับบนจอบอร์ด** · ตาราง register เปลี่ยนตาม · คำตอบกลับถึงบอร์ด = **"ยืนยันแล้ว"**
+- กด **ถอดสาย PLC** แล้วกดอีกครั้ง → บอร์ดขึ้น `plc_offline` สถานะปั๊มเป็น **--** (ไม่รู้) · ใส่น้ำในถัง 5 กด **เปิด PLC ใหม่** แล้วสั่งเปิด → **"PLC ปฏิเสธ 4"**
 
 </div>
 </div>
@@ -1423,7 +1422,7 @@ python modbus_bridge.py       # 2: แก้ TEAM ให้ตรงบอร์
 | **2 แก้** | **cp3_03:** ตั้ง `HEARTBEAT_S = 10` ปล่อย VR1 นิ่ง ๆ แล้วดู % ประหยัด คุ้มไหมกับการรู้เร็วขึ้นว่าบอร์ดตาย · **cp3_01:** ตั้ง `REPEAT_S = 3` ค้างที่ "อันตราย" ครึ่งนาที รำคาญหรือยัง? | โจทย์หลัก (มีเฉลยในคาบ) |
 | **3 เติม** | [`cp3_06_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py) เติม 2 ช่องใน `fc06_write()`: **A** รูปแบบ `struct` ของ PDU · **B** ค่า len ใน MBAP → ต้องได้ `00 01 00 00 00 06 01 06 00 00 00 01` | **โจทย์หลัก (มีเฉลยในคาบ)** · 7 นาที |
 | **4 สร้าง** | สร้างกรอบ **FC16** (เขียนหลายช่องในกรอบเดียว) โชว์บนจอบอร์ด — เกตเวย์และ PLC จำลองของเรารับแค่ FC03/FC06 อยากส่งจริงต้องแก้สองฝั่ง · หรือใน cp3_01 **ยกระดับเตือน** เมื่อ "อันตราย" ไม่มีใครกดรับทราบเกิน 60 วิ | โจทย์เพิ่ม (โบนัส เฉลยคาบหน้า) |
-| ☆ การบ้าน | [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) — จอไฟ 16×8 เป็นจอเล็ก 4 แบบ: กราฟเส้น หลอด ตัวเลข ตัววิ่ง<br>[`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) — สั่ง-ยืนยัน-ถอย กับ field_sim.py บนโน้ตบุ๊ก<br>[`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) — ค่าเดียวกัน สองท่อ | โจทย์เพิ่ม (รันใน Emulator ได้) |
+| ☆ การบ้าน | [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) — จอไฟ 16×8 เป็นจอเล็ก 4 แบบ: กราฟเส้น หลอด ตัวเลข ตัววิ่ง<br>[`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) — สั่ง-ยืนยัน-ถอย กับ PLC Simulator ใน farm_web.html<br>[`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) — ค่าเดียวกัน สองท่อ | โจทย์เพิ่ม (รันใน Emulator ได้) |
 
 <div class="goal">
 
@@ -1951,7 +1950,7 @@ section table { font-size: .6em; }
 
 | เรื่อง | บอร์ดรุ่นนี้ (เฟิร์มแวร์ปัจจุบัน) | ในคาบเราทำอย่างไร |
 |---|---|---|
-| **Modbus** TCP / RTU | ไม่มีโมดูล Modbus | บอร์ดสร้างเฟรมจริงด้วย `struct` · เกตเวย์บนโน้ตบุ๊กพูด Modbus TCP แทน |
+| **Modbus** TCP / RTU | ไม่มีโมดูล Modbus | บอร์ดสร้างเฟรมจริงด้วย `struct` · เกตเวย์พูด Modbus TCP แทน (ในห้อง: หน้าเว็บ `modbus_plc.html`) |
 | **socket** ของ Python | ไม่มี `socket` `network` `ssl` จึงเปิด TCP เองไม่ได้ | คุยผ่าน MQTT |
 | **RS-485** บนฐานบอร์ด | มีวงจรบนฐานบอร์ด แต่เฟิร์มแวร์ยังไม่ได้ขับ · ขาควบคุมใช้ร่วมกับปุ่ม SW5/SW6 | เป็นแนวคิดในสไลด์เท่านั้น |
 | **`mqtt`** | ไม่เข้ารหัส · ไม่มี retain · ไม่มี Last Will · ข้อความขาเข้ายาวได้ไม่เกิน 255 ไบต์ | ส่งว่ายังอยู่ (heartbeat) · JSON สั้น ๆ |

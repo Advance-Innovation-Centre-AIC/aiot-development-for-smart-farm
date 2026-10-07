@@ -40,7 +40,7 @@ TICK_MS = 500        # สรุปผลขึ้นจอทุกกี่ ms
 RUN_MS = 120000      # เล่นนาน 2 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -186,8 +186,8 @@ def show(w, spec, heard):
 def check_buttons(w, down):
     # ขอบกดลงของ SW5/SW6 -> เล่นโน้ตอ้างอิงที่รู้ความถี่ ไมค์จะได้ยินลำโพงของบอร์ดเอง
     # เรียกบ่อย (ห่างไม่เกิน ~50 ms) เพราะเฟิร์มแวร์กรองสั่นทุกครั้งที่อ่าน
-    for i in (0, 1):
-        d = bool(buttons.pressed(i))
+    for i in (0, 1):                                  # i = 0 คือ SW5 = pressed(1), i = 1 คือ SW6 = pressed(0)
+        d = bool(buttons.pressed(1 - i))
         if d and not down[i]:
             ui.tone(NOTES[i], ui.WAVE_SINE, VOLUME, NOTE_MS)
             w["note"].text(BTN_NAMES[i] + " เล่น %d Hz" % note_hz(NOTES[i]))

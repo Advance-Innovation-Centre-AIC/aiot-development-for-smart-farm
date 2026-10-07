@@ -158,7 +158,7 @@ def build_screen():
     w["chart"] = ui.Chart(x=12, y=252, w=400, h=86, color=COL_WARN, min=0, max=CHART_MAX_C)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
-    ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[0] + " = รับทราบ",
+    ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[1] + " = รับทราบ",
              x=424, y=256, color=COL_DIM, value=14)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
@@ -252,7 +252,7 @@ def on_level(w, s, level, why_th, why_en, t, h, sun):
     show_ack(w, s, "รอคนรับทราบ" if level == 2 else "ส่งแล้ว", COL_BAD if level == 2 else COL_DIM)
     close_box(w)
     if level == 2:  # MsgBox รับไม่เกิน 126 ไบต์
-        w["box"] = ui.MsgBox("แย่แล้ว!\n" + why_th + "\n" + BTN_NAMES[0] + " / ack = รับทราบ",
+        w["box"] = ui.MsgBox("แย่แล้ว!\n" + why_th + "\n" + BTN_NAMES[1] + " / ack = รับทราบ",
                              x=BOX[0], y=BOX[1], w=BOX[2], h=BOX[3], value=0)
 
 

@@ -32,7 +32,7 @@ SAMPLE_MS = 20       # อ่านปุ่มทุกกี่ ms (ระห�
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 SRC = ("VR1", "SHT40")       # ที่มา 0 = ลูกบิด (ค่าเริ่ม ใช้ในห้องเรียนสะดวก), 1 = อุณหภูมิ
 UNIT = ("%", "C")
@@ -59,7 +59,7 @@ def wait_click(ms, last):
     # คืน (มีการกดลงใหม่ไหม, สถานะปุ่มล่าสุด)
     hit, t0 = False, time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < ms:
-        d = bool(buttons.pressed(0))
+        d = bool(buttons.pressed(1))
         hit = hit or (d and not last)
         last = d
         time.sleep_ms(SAMPLE_MS)

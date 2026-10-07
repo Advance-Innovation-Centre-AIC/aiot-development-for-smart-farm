@@ -37,7 +37,7 @@ export class GatewayMap {
     this.fieldCol = fieldCol;
     this.fieldEmpty = el("div", { class: "gm-node gm-ghost", "data-state": "none" },
       el("div", { class: "gm-title" }, icon("node"), el("span", { text: "โหนดเซนเซอร์" })),
-      el("p", { class: "gm-hint", text: "ยังไม่ได้ยิน field/* (รัน field_sim.py หรือบอร์ดแปลง sf2_07)" }));
+      el("p", { class: "gm-hint", text: "ยังไม่ได้ยิน field/* (เปิด PLC Simulator ใน farm_web.html หรือบอร์ดแปลง sf2_07)" }));
     fieldCol.append(this.fieldEmpty);
 
     const gwRows = [row("ออโต้"), row("ดิน / ถัง"), row("ปั๊มตาม PLC"), row("คำสั่งจากแอป")];

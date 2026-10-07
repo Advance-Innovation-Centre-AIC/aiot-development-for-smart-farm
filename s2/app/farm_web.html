@@ -6,7 +6,7 @@
   broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
   TODO ของกลุ่ม: แก้ LABELS ให้เป็นชื่อที่กลุ่มอยากเห็น / เพิ่มปุ่มคำสั่งของกลุ่มเอง / ทำให้การ์ดเป็นสีแดงเมื่อค่าเกินเกณฑ์
   CSV: หน้าเว็บเก็บ telemetry ที่ได้รับไว้ในหน่วยความจำ และดาวน์โหลดได้ด้วยปุ่ม "ดาวน์โหลด CSV"
-  PLC Simulator: เปิดจากหน้านี้เพื่อแทน app/field_sim.py ในทางเลือกที่ 1 โดยใช้ MQTT contract เดิมของ S2
+  PLC Simulator: แปลงผักจำลอง (โหนดเซนเซอร์ + PLC) ในหน้านี้ ใช้กับทางเลือกที่ 1 ตามสัญญา MQTT ของ S2 ข้อ 3.5, 3.6 และ 4.2
 -->
 <html lang="th">
 <head>
@@ -147,7 +147,7 @@
 </section>
 
 <section id="plcSim" class="panel sim" aria-labelledby="h-sim">
-  <h2 id="h-sim">PLC Simulator <span class="hint">ใช้แทน <code>app/field_sim.py</code> · ใช้คู่กับ <code>sf2_06_smart_gateway.py</code> เท่านั้น</span></h2>
+  <h2 id="h-sim">PLC Simulator <span class="hint">แปลงผักจำลอง: โหนดเซนเซอร์ + PLC · ใช้คู่กับ Gateway <code>sf2_06_smart_gateway.py</code></span></h2>
   <div class="bar">
     <button id="plcSimStart" class="primary">เริ่ม PLC Simulator</button>
     <button id="plcSimStop">หยุด Simulator</button>
@@ -166,10 +166,10 @@
   <p id="plcSimWhy" class="why" aria-live="polite"></p>
   <details class="how">
     <summary>วิธีใช้และสิ่งที่ Simulator ส่ง</summary>
-    <p>เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง ไม่ต้องรัน Python simulator เพิ่ม</p>
+    <p>เปิดโหมดนี้บนโน้ตบุ๊กเมื่อใช้ทางเลือกที่ 1: บอร์ด Gateway 1 ตัว + โน้ตบุ๊ก 1 เครื่อง หน้านี้เล่นเป็นแปลงผักและ PLC ให้เอง ไม่ต้องติดตั้งอะไรเพิ่ม</p>
     <p>PLC จำลองรับคำสั่งจาก Gateway ทาง <code>.../plc/cmd</code> ถ้าบอร์ดรัน <code>sf2_03_remote_pump.py</code> (ภารกิจกลุ่ม) ไม่ต้องเปิด PLC จำลอง ปั๊มคือไฟสีฟ้าบนบอร์ด และสถานะดูได้จากการ์ด "ปั๊ม" ด้านบน</p>
     <p>กดเริ่มทุกครั้งแปลงกลับไปที่ดิน 45 % ถัง 80 % · เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
-    <p>คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
+    <p>คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตามสัญญาข้อ 4.2 เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ตามสัญญาข้อ 3.5–3.6</p>
   </details>
 </section>
 
@@ -208,7 +208,7 @@ const telemetryRows = [];
 
 // ----- PLC / field simulator -----
 let plcSimTimer = null;
-// ค่าเริ่มต้นเท่ากับ field_sim.py (SOIL_START, TANK_START) และกด "เริ่ม PLC Simulator" ทุกครั้งจะกลับมาที่ค่านี้
+// ค่าเริ่มต้นของแปลงจำลอง (SOIL_START, TANK_START) และกด "เริ่ม PLC Simulator" ทุกครั้งจะกลับมาที่ค่านี้
 const SOIL_START = 45;
 const TANK_START = 80;
 let plcSimState = { online: false, pump: 0, soil: SOIL_START, tank: TANK_START, pumpUntil: 0, why: "start", n: 0, lastStateAt: -Infinity, lastCmdAt: -Infinity };
@@ -285,7 +285,7 @@ function updatePlcSimUi() {
     if (el && document.activeElement !== el) el.value = Math.round(v);
   }
 }
-// ส่งแบบเดียวกับ field_sim.py: ฟิสิกส์ขยับทุก 1 วิ แต่ soil / plc/state / tank ส่งอย่างละครั้งต่อ 5 วิ เหลื่อมกัน
+// จังหวะส่งของแปลงจำลอง: ฟิสิกส์ขยับทุก 1 วิ แต่ soil / plc/state / tank ส่งอย่างละครั้งต่อ 5 วิ เหลื่อมกัน
 // เพราะกล่องรับข้อความของบอร์ดมีช่องเดียว ส่งสามข้อความพร้อมกันบอร์ดจะได้แค่ใบเดียว (plc/state ตอนเปลี่ยนส่งทันที)
 const SIM_TICKS_PER_CYCLE = Math.max(1, Math.round(FIELD_SIM_PERIOD_MS / PLC_SIM_PERIOD_MS));
 const SIM_SLOT = { soil: 0, state: Math.floor(SIM_TICKS_PER_CYCLE / 4), tank: Math.floor(SIM_TICKS_PER_CYCLE / 2) };
@@ -307,7 +307,7 @@ function plcSimTick() {
   const now = Date.now();
   const wasOn = plcSimState.pump;
 
-  // field_sim.py: ครบเวลาที่สั่งไว้ -> PLC ดับปั๊มเอง
+  // ครบเวลาที่สั่งไว้ -> PLC ดับปั๊มเอง (why = "timeout" ตามสัญญาข้อ 3.6)
   let why = null;
   if (plcSimState.pump && plcSimState.pumpUntil && now >= plcSimState.pumpUntil) {
     plcSimState.pump = 0;
@@ -315,7 +315,7 @@ function plcSimTick() {
     why = "timeout";
   }
 
-  // จำลองฟิสิกส์แบบเดียวกับ field_sim.py
+  // จำลองฟิสิกส์ของแปลง: ปั๊มเดิน ดินชื้นขึ้นและถังลด · ปั๊มดับ ดินแห้งลงเอง · ถังเติมเองช้า ๆ
   const dt = PLC_SIM_PERIOD_MS / 1000;
   if (plcSimState.pump) {
     plcSimState.soil += SOIL_WET_PER_S * dt;
@@ -335,19 +335,19 @@ function plcSimTick() {
     why = "blocked_tank";
   }
 
-  // plc/state ตาม field_sim.py: ตอนปั๊มเปลี่ยนส่งทันที และส่งซ้ำทุก 5 วิ (heartbeat ให้ Gateway รู้ว่า PLC ยังอยู่)
+  // plc/state ตามสัญญาข้อ 3.6: ตอนปั๊มเปลี่ยนส่งทันที และส่งซ้ำทุก 5 วิ (heartbeat ให้ Gateway รู้ว่า PLC ยังอยู่)
   const slot = plcSimTicks % SIM_TICKS_PER_CYCLE;
   if (why && wasOn !== plcSimState.pump) {
     plcSimState.why = why;
     simPublish("plc/state", plcSimStatePayload(why));
   } else if (slot === SIM_SLOT.state && now - plcSimState.lastStateAt >= 1000) {
     // ชีพจรทุก 5 วิ why = "tick" เสมอ (สัญญาข้อ 3.6) ถ้าส่งเหตุผลเดิมซ้ำ เช่น blocked_tank Gateway จะเตือนซ้ำทุก 5 วิ
-    // และถ้าเพิ่งส่งสถานะไปไม่ถึง 1 วิ (เพิ่งตอบคำสั่ง) ไม่ต้องส่งซ้ำติด ๆ กัน เหมือน field_sim.py
+    // และถ้าเพิ่งส่งสถานะไปไม่ถึง 1 วิ (เพิ่งตอบคำสั่ง) ไม่ต้องส่งซ้ำติด ๆ กัน
     plcSimState.why = "tick";
     simPublish("plc/state", plcSimStatePayload("tick"));
   }
 
-  // field/soil และ field/tank ใช้ payload แบบ node/value เหมือน field_sim.py (n = ลำดับของแต่ละโหนด)
+  // field/soil และ field/tank ใช้ payload แบบ node/value ตามสัญญาข้อ 3.5 (n = ลำดับของแต่ละโหนด)
   // ถ้าวินาทีนี้เพิ่งส่ง plc/state ไป (ปั๊มเปลี่ยน หรือเพิ่งตอบคำสั่ง) เลื่อนค่าแปลงไปวินาทีถัดไป
   // ไม่อย่างนั้นสองข้อความถึงบอร์ดพร้อมกัน ใบใหม่ทับใบเก่า และ Gateway อาจไม่เห็นสถานะ blocked_tank เลย
   if (slot === SIM_SLOT.soil) plcSimPending.soil = true;
@@ -465,7 +465,7 @@ function connect() {
     let data = null;
     try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
     // PLC Simulator รับคำสั่งจาก Gateway โดยตรง
-    // field_sim.py contract: {"pump": 1, "sec": 10} หรือ {"pump": 0}
+    // สัญญาข้อ 4.2: {"pump": 1, "sec": 10} หรือ {"pump": 0}
     if (plcSimState.online && topic.endsWith("/plc/cmd") && data && typeof data === "object" && !Array.isArray(data)) {
       plcSimState.lastCmdAt = Date.now();    // ใช้บอกเวลาเว้นของ Gateway (GW_COOLDOWN_S)
       if ("pump" in data) {
@@ -487,7 +487,7 @@ function connect() {
         }
 
         plcSimState.why = why;
-        simPublish("plc/state", plcSimStatePayload(why));   // ตอบสถานะทันทีทุกครั้งที่มีคำสั่ง (field_sim.py)
+        simPublish("plc/state", plcSimStatePayload(why));   // ตอบสถานะทันทีทุกครั้งที่มีคำสั่ง (สัญญาข้อ 4.2)
         updatePlcSimUi();
       }
     }

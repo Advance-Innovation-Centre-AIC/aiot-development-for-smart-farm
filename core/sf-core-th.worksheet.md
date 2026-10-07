@@ -26,8 +26,8 @@
 
 1. [ ] บอร์ดแฟลชเฟิร์มแวร์ BENTO ของ TESAIoT Dev Kit แล้ว (ขั้นตอนเดียวกับใบงานคาบ 1 ข้อ 2) · กด **Connect** ใน BENTO IDE ได้
 2. [ ] เปิด **BENTO Emulator** และเปิดโฟลเดอร์ `core/` ของคอร์สไว้
-3. [ ] รู้ตำแหน่งปุ่ม: **SW5 = ปุ่มล่าง** (`buttons.pressed(0)`) · **SW6 = ปุ่มบน** (`buttons.pressed(1)`) · **ห้ามโยกสวิตช์ SW2** (สวิตช์ตัดไฟ)
-4. [ ] (ส่วนที่ 3) มือถือเปิด Hotspot ให้บอร์ดได้ และโน้ตบุ๊กมี Python 3 + `pip install paho-mqtt` (ใช้ตัวเดียวกับคาบ 2)
+3. [ ] รู้ตำแหน่งปุ่ม: **SW5 = ปุ่มล่าง** (`buttons.pressed(1)`) · **SW6 = ปุ่มบน** (`buttons.pressed(0)`) · **ห้ามโยกสวิตช์ SW2** (สวิตช์ตัดไฟ)
+4. [ ] (ส่วนที่ 3) มือถือเปิด Hotspot ให้บอร์ดได้ และโน้ตบุ๊กมีเบราว์เซอร์ที่ต่อเน็ตได้ สำหรับเปิดหน้าเว็บ `modbus_plc.html` (ไม่ต้องติดตั้งอะไรเพิ่ม)
 
 > ทุกไฟล์ในคาบนี้เดิน 2–5 นาทีแล้วจบเอง (จอขึ้น "จบรอบแล้ว") อยากเล่นต่อ กด Program to Device อีกครั้ง
 > เสียงทุกไฟล์ดังเฉพาะตอนมีเหตุการณ์ และตั้งความดังไว้ที่ `VOLUME = 38` (0–127 ราว 30 %) ในส่วน 1 ของไฟล์
@@ -53,7 +53,7 @@
 | 0:10–0:45 | **ส่วนที่ 1 วัด** | ★ `cp1_01` `cp1_02` `cp1_03` `cp1_04` |
 | 0:45–1:30 | **ส่วนที่ 2 ประมวลผล & ตัดสิน** | ★ `cp2_01` `cp2_03` `cp2_04` `cp2_06` (☆ `cp2_02` ถ้ามีเวลา) |
 | 1:30–1:40 | พัก | |
-| 1:40–2:15 | **ส่วนที่ 3 ทำ** | ★ `cp3_01` `cp3_03` `cp3_06` + สาธิต Modbus บนโน้ตบุ๊ก |
+| 1:40–2:15 | **ส่วนที่ 3 ทำ** | ★ `cp3_01` `cp3_03` `cp3_06` + สาธิต Modbus ด้วยหน้าเว็บ |
 | 2:15–2:50 | **ส่วนที่ 4 โชว์ (จอบอร์ด)** | ★ `cp4_01` `cp4_02` `cp4_03` `cp4_05` |
 | 2:50–3:00 | การ์ดออกแบบของกลุ่ม + Exit ticket | — |
 
@@ -190,15 +190,15 @@
 | ★ [`cp3_03_report_by_exception.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_03_report_by_exception.py) | ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่ | ใส่ Wi-Fi และ TEAM · หมุน VR1 เป็นช่วง ๆ · ดูตัวเลข "ส่งจริง" เทียบ "ถ้าส่งทุกครั้ง" | ประหยัด ____ % ใน ____ นาที |
 | ★ [`cp3_06_modbus_frame.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_06_modbus_frame.py) | บอร์ดสร้างเฟรม Modbus TCP จริง แล้วส่ง "ความตั้งใจ" ผ่าน MQTT | SW5 = อ่านค่า (FC03) · SW6 = สั่งปั๊ม (FC06) · ดูเฟรมทีละไบต์ | เฟรม FC06 ที่บอร์ดสร้าง: `__ __ __ __ __ __ __ __ __ __ __ __` |
 
-**สาธิต Modbus บนโน้ตบุ๊ก (ผู้สอนทำ หรือกลุ่มที่มีโน้ตบุ๊กทำตาม):**
-1. เทอร์มินัลที่ 1: `python core/app/modbus_plc_sim.py` — PLC จำลอง พูด Modbus TCP ที่พอร์ต 5020
-2. เทอร์มินัลที่ 2: แก้ `TEAM` ใน [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py) ให้ตรงกับบอร์ด แล้ว `python core/app/modbus_bridge.py`
-3. กด SW6 บนบอร์ด → ดูไบต์ 12 ตัวเดียวกับบนจอบอร์ด ออกจากโน้ตบุ๊กไปที่ PLC และคำตอบวิ่งกลับมาที่บอร์ด
+**สาธิต Modbus ด้วยหน้าเว็บ (ผู้สอนเปิดขึ้นจอ หรือกลุ่มที่มีโน้ตบุ๊กเปิดตาม ไม่ต้องติดตั้งอะไร):**
+1. เปิด [`core/app/modbus_plc.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/core/app/modbus_plc.html?team=team__) ใส่ `TEAM` ให้ตรงกับบอร์ด แล้วกด **เริ่ม** — หน้าเดียวเล่นเป็นทั้งเกตเวย์และ PLC จำลอง
+2. บอร์ดรัน `cp3_06_modbus_frame.py` (ตั้ง Wi-Fi + `TEAM` เดียวกัน) · กด SW5 อ่านค่า แล้วกด SW6 สั่งปั๊ม
+3. ดูไบต์ 12 ตัวเดียวกับบนจอบอร์ด ขึ้นในช่อง "กรอบทีละไบต์" ของหน้าเว็บ พร้อมตาราง register ของ PLC และคำตอบวิ่งกลับมาที่บอร์ด
 
-> บอร์ดรุ่นนี้ **ยังส่ง Modbus TCP เองไม่ได้** (เฟิร์มแวร์ไม่มีโมดูล Modbus และไม่มี socket) บอร์ดจึงส่ง "ความตั้งใจ" ผ่าน MQTT แล้วให้เกตเวย์บนโน้ตบุ๊กพูด Modbus TCP แทน — เป็นวิธีที่นิยมใช้พา PLC รุ่นเก่าเข้าระบบ IoT
+> บอร์ดรุ่นนี้ **ยังส่ง Modbus TCP เองไม่ได้** (เฟิร์มแวร์ไม่มีโมดูล Modbus และไม่มี socket) บอร์ดจึงส่ง "ความตั้งใจ" ผ่าน MQTT แล้วให้เกตเวย์พูด Modbus TCP แทน — เป็นวิธีที่นิยมใช้พา PLC รุ่นเก่าเข้าระบบ IoT · ในห้องใช้หน้าเว็บเป็นเกตเวย์ + PLC จำลอง เพราะเบราว์เซอร์เปิด TCP ไปหา PLC ตัวจริงไม่ได้ (ต่อ PLC จริงต้องใช้เกตเวย์ฝั่งผู้สอน)
 > เสียงทุกไฟล์ใช้ `ui.tone` ผ่าน `beep()` / `chirp()` ที่ `VOLUME = 25` เพราะ `ui.tone` ตั้งความดังได้ ส่วน `ui.sfx` บนเฟิร์มแวร์นี้ดังคงที่ ปรับเบาไม่ได้
 
-**การบ้านใน Emulator:** ☆ [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) จอไฟ 16×8 เป็นจอเล็ก 4 แบบ (กราฟเส้น หลอด ตัวเลข ตัววิ่ง) · ☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) สั่ง → รอคำยืนยัน → ส่งซ้ำ → ถอยไปทางปลอดภัย (ใช้คู่กับ `s2/app/field_sim.py`) · ☆ [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) ค่าเดียวกัน สองท่อ: `mqtt` 1883 ไม่เข้ารหัส เทียบค่าตั้งของท่อ `tesaiot` ที่เข้ารหัส
+**การบ้านใน Emulator:** ☆ [`cp3_02_matrix_toolkit.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_02_matrix_toolkit.py) จอไฟ 16×8 เป็นจอเล็ก 4 แบบ (กราฟเส้น หลอด ตัวเลข ตัววิ่ง) · ☆ [`cp3_04_command_confirm.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_04_command_confirm.py) สั่ง → รอคำยืนยัน → ส่งซ้ำ → ถอยไปทางปลอดภัย (ใช้คู่กับ PLC Simulator ใน `s2/app/farm_web.html`) · ☆ [`cp3_05_two_pipes.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/cp3_05_two_pipes.py) ค่าเดียวกัน สองท่อ: `mqtt` 1883 ไม่เข้ารหัส เทียบค่าตั้งของท่อ `tesaiot` ที่เข้ารหัส
 
 ### Code Quest ส่วนที่ 3
 
@@ -282,7 +282,7 @@
 
 ## ทำต่อที่บ้านด้วย BENTO Emulator
 
-ทุกไฟล์ในโฟลเดอร์ `core/` รันใน Emulator ได้ ใช้แผง **TESAIoT DEV KIT** (ลูกบิด VR1–VR4 ปุ่มสองปุ่ม จอไฟ RGB — แผงนี้ยังเขียนชื่อปุ่มว่า SW4/SW5 ซึ่งคือ SW5 ปุ่มล่าง / SW6 ปุ่มบน ของบอร์ดจริงตามลำดับ) กับแผงเซนเซอร์
+ทุกไฟล์ในโฟลเดอร์ `core/` รันใน Emulator ได้ ใช้แผง **TESAIoT DEV KIT** (ลูกบิด VR1–VR4 ปุ่มสองปุ่ม จอไฟ RGB — แผงนี้เขียนชื่อปุ่มว่า SW5 (ซ้าย) และ SW6 (ขวา) ตรงกับบอร์ดจริง: SW5 ปุ่มล่าง · SW6 ปุ่มบน) กับแผงเซนเซอร์
 สิ่งที่ Emulator **จำลอง** ไม่ใช่ของจริง: ค่าเซนเซอร์ · ไมโครโฟนเป็นเสียงสังเคราะห์ 440 Hz · MQTT วิ่งอยู่ในเบราว์เซอร์ ไม่ออกเน็ตจริง · จังหวะเวลาของลูปไม่ใช่จังหวะของบอร์ด · โมเดล AI เป็นผลจำลอง
 
 ## คำใบ้ Code Quest (เปิดเมื่อจำเป็น — ทีละขั้น ขั้นละ −1 แต้ม)
@@ -347,7 +347,7 @@
 
 | คำสั่ง | ได้อะไร |
 |---|---|
-| `buttons.pressed(i)` | `True` = กดอยู่ · `i` 0 = SW5 (ปุ่มล่าง) · 1 = SW6 (ปุ่มบน) · กรองสั่น 50 ms ตอนที่เราเรียก |
+| `buttons.pressed(i)` | `True` = กดอยู่ · `i` 0 = SW6 (ปุ่มบน) · 1 = SW5 (ปุ่มล่าง) · กรองสั่น 50 ms ตอนที่เราเรียก |
 | `pots.read(i)` · `pots.read_all()` · `pots.norm(i)` | 0–4095 ของ VR1–VR4 (`i` 0–3) · ทั้ง 4 ตัวเป็น tuple · 0.0–1.0 |
 | `sensors.sht40.temperature()` · `.humidity()` · `.temperature_humidity()` | °C · %RH · (°C, %RH) — อ่านสูงกว่าห้องเพราะบอร์ดอุ่น จึงมี `TEMP_OFFSET` |
 | `sensors.dps368.pressure()` | hPa |
@@ -362,7 +362,7 @@ while True:
     now = time.ticks_ms()
     if time.ticks_diff(now, t_btn) >= 20:      # ปุ่ม: ถี่
         t_btn = now
-        down = buttons.pressed(0)
+        down = buttons.pressed(1)              # SW5 (ปุ่มล่าง)
     if time.ticks_diff(now, t_air) >= 1000:    # อากาศ: ช้า
         t_air = now
         t = read_temp() + TEMP_OFFSET
@@ -449,7 +449,7 @@ def should_send(v, last_sent, t_last, now):
 | ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม | รอ ~1 นาที หรือกด **RESET** แล้วรันใหม่ |
 | ข้อความเข้าไม่ครบ | ส่ง JSON สั้น ๆ ห่างกัน · กล่องรับมีช่องเดียว ข้อความใหม่ทับข้อความเก่า |
 
-**บอร์ดยังทำไม่ได้:** Modbus และ socket (ใช้เกตเวย์บนโน้ตบุ๊ก [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)) · `mqtt` ไม่มี TLS / retain / Last Will · MQTTS มีเฉพาะผ่าน `tesaiot` ไปแพลตฟอร์ม TESAIoT · `ui.sfx` ปรับความดังไม่ได้
+**บอร์ดยังทำไม่ได้:** Modbus และ socket (ใช้เกตเวย์แทน · ในห้องคือหน้าเว็บ [`core/app/modbus_plc.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/core/app/modbus_plc.html?team=team__)) · `mqtt` ไม่มี TLS / retain / Last Will · MQTTS มีเฉพาะผ่าน `tesaiot` ไปแพลตฟอร์ม TESAIoT · `ui.sfx` ปรับความดังไม่ได้
 
 ### หน้า 4 — โชว์ (จอบอร์ด)
 
@@ -494,7 +494,7 @@ while running:
 
 | เรื่อง | จำไว้ |
 |---|---|
-| ปุ่ม | SW5 = ปุ่มล่าง = `pressed(0)` · SW6 = ปุ่มบน = `pressed(1)` · ใช้ `BTN_NAMES = ("SW5", "SW6")` ไม่ใช้ `buttons.name()` |
+| ปุ่ม | SW5 = ปุ่มล่าง = `pressed(1)` · SW6 = ปุ่มบน = `pressed(0)` · ชื่อบนจอใช้ `BTN_NAMES = ("SW5", "SW6")` ซึ่งเรียงตามชื่อ ไม่ใช่เลขของ `pressed` (ชื่อที่ `i` อ่านจาก `pressed(1 - i)`) · ไม่ใช้ `buttons.name()` |
 | อุณหภูมิ | SHT40 อ่านสูงกว่าห้องเพราะบอร์ดอุ่นตัวเอง → `TEMP_OFFSET` |
 | มุมเอียง | บอร์ดวางเอียงอยู่แล้วบนขาตั้ง → กดตั้งศูนย์ (tare) ก่อนวัด |
 | จอ | คำสั่ง `ui` คำสั่งแรกทำให้เฟิร์มแวร์หยุดอ่านเซนเซอร์อัตโนมัติ โปรแกรมต้องอ่านเอง |
@@ -545,8 +545,7 @@ while running:
 - [`core/practise/cp3_06_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp3_06_practise.py)
 - [`core/practise/cp4_03_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/practise/cp4_03_practise.py)
 
-### สาธิต Modbus บนโน้ตบุ๊ก
-- [`core/app/modbus_plc_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_plc_sim.py)
-- [`core/app/modbus_bridge.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/core/app/modbus_bridge.py)
+### สาธิต Modbus ด้วยหน้าเว็บ
+- [`core/app/modbus_plc.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/core/app/modbus_plc.html?team=team__)
 
 > หมายเหตุ: เนื้อหาหลักของใบงานยังยึดตามไฟล์ต้นฉบับที่ให้มา และการปรับครั้งนี้เน้นให้อ่านง่ายขึ้น พร้อมเปลี่ยนการอ้างอิงไฟล์เป็น **ชื่อไฟล์เต็ม + ลิงก์ตรง GitHub** แบบเดียวกับ S2/S3

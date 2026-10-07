@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<!--
+  ai_class.html - แผนที่ฟาร์มทั้งห้อง (คาบ 3) จอของผู้สอน เปิดขึ้นโปรเจกเตอร์ระหว่างทำภารกิจ AI
+  ดูอย่างเดียว: หน้านี้ไม่ส่งข้อความใด ๆ ขึ้น broker (ไม่มี publish ในไฟล์นี้เลย) ปุ่ม "เลือกทีมขึ้นพูด" สุ่มในเครื่องนี้เท่านั้น
+  เปิดแบบนี้: ai_class.html  หรือ  ai_class.html?teams=team01-team20&mission=pump&broker=mosquitto
+    ?broker=   hivemq (ค่าเริ่มต้น) หรือ mosquitto (สำรอง เมื่อผู้สอนประกาศ) ต้องตรงกับ BROKER บนบอร์ด
+    ?teams=    ทีมที่จะแสดง เป็นช่วงหรือรายการ เช่น team01-team20 หรือ team03,team07,team10-team12 (ไม่ใส่ = ทุกทีม)
+    ?mission=  เปิดมาแล้วกรองภารกิจเดียว: pump siren barn night voice worker drill sf3_06
+  ฟัง bento-aiot/+/ai  bento-aiot/+/event  bento-aiot/+/ai/feedback  ตาม s2/app/MQTT_CONTRACT_th.md ข้อ 2, 3.9, 3.10, 3.11 และ 5
+  broker สาธารณะ ใครก็ส่งขยะหรือชื่อทีมปลอมมาได้ ทุกค่าจึงตรวจชนิดและช่วงก่อนใช้ และใส่หน้าเว็บด้วย textContent เท่านั้น
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แผนที่ฟาร์มทั้งห้อง</title>
+<style>
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ (จอโปรเจกเตอร์ 1280x720 และโน้ตบุ๊ก) ---- */
+  [hidden] { display: none !important; }
+  .wrap { max-width: 1680px; padding: 12px 16px; }
+  h1 { font-size: 26px; }
+  .sub { font-size: 15px; }
+  h2 { font-size: 19px; margin-bottom: 10px; }
+  .top { margin-bottom: 10px; }
+  .settings { margin-bottom: 10px; padding: 10px 16px; }
+  .settings summary { cursor: pointer; font-weight: 700; }
+  .setgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 16px; margin: 12px 0; }
+  .setgrid label { display: grid; gap: 4px; font-size: 14px; color: var(--dim); }
+  #setMsg { overflow-wrap: anywhere; }
+  .warnline { margin: 0 0 10px; color: var(--warn); font-weight: 600; overflow-wrap: anywhere; }
+  /* ชิปกรองภารกิจ: บอกด้วยว่ากี่ทีมทำภารกิจนั้น */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .filters button { min-height: 44px; border-radius: 999px; font-size: 17px; padding: 6px 14px; display: inline-flex; gap: 8px; align-items: center; }
+  .filters .cnt { min-width: 1.7em; padding: 0 6px; border-radius: 999px; background: var(--surface); color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+  .filters button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .filters button.zero:not(.on) { opacity: .55; }
+  .stage { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 1100px) {
+    .stage { grid-template-columns: minmax(0, 2.1fr) minmax(320px, 1fr); }
+    /* จอกว้าง: แผงคุยกันติดอยู่ด้านขวาเสมอ แผนที่เลื่อนได้ แผงขวาเลื่อนในตัวเอง (20 ทีมไม่พอดีจอ 720 แถว) */
+    .side { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--dim); margin: -4px 0 10px; }
+  .legend .lg::before, .pState::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+    background: var(--st); margin-right: 6px; vertical-align: -1px; }
+  /* แปลงของแต่ละทีม: แถบซ้ายและกรอบเป็นสีตามระดับ (lvl) · ทุกสีมีคำกำกับเสมอ ไม่ใช้สีอย่างเดียว */
+  .map { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; padding: 10px; min-height: 120px;
+    border-radius: var(--radius-sm); background: var(--surface-2);
+    background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--surface)) 0 14px, var(--surface) 14px 28px); }
+  .plot { position: relative; display: grid; gap: 2px; align-content: start; padding: 10px 12px 10px 18px; min-width: 0;
+    border-radius: var(--radius-sm); background: var(--surface); border: 2px solid var(--line); box-shadow: var(--shadow); overflow-wrap: anywhere;
+    line-height: 1.3; }
+  /* สีตามสถานะ: ต้องอยู่หลัง .plot เพื่อไม่ให้ถูกทับ */
+  .st-green { --st: var(--ok); } .st-amber { --st: var(--warn); } .st-red { --st: var(--bad); }
+  .st-silent, .st-stopped { --st: var(--dim); }
+  .plot::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; border-radius: 8px 0 0 8px; background: var(--st); }
+  .plot.st-amber { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, var(--surface)); }
+  .plot.st-red { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 13%, var(--surface)); }
+  .plot.st-silent { border-style: dashed; opacity: .5; filter: grayscale(1); }
+  .plot.st-stopped { border-style: dashed; }
+  .plot.pulse { animation: pulse 1.2s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 70%, transparent); }
+    100% { box-shadow: 0 0 0 16px color-mix(in srgb, var(--bad) 0%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .plot.pulse { animation: none; border-width: 5px; } }
+  .plot.picked { outline: 5px solid var(--water); outline-offset: 3px; }
+  .pHead { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-width: 0; }
+  .pIcon { font-size: 26px; line-height: 1; }
+  .pTeam { font-size: 21px; font-weight: 800; font-family: var(--mono); }
+  .pState { margin-left: auto; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .pMission { font-size: 14px; color: var(--dim); }
+  .pLabel { font-size: 23px; font-weight: 800; line-height: 1.25; }
+  .pSub { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--dim); font-family: var(--mono); }
+  .badge { font-family: var(--font); font-size: 12px; font-weight: 700; padding: 0 8px; border-radius: 999px; border: 1px solid var(--warn); color: var(--ink); }
+  .pCount { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--dim); margin: 0; }
+  /* แผงคุยกันในห้อง */
+  .side { display: grid; gap: 14px; min-width: 0; }
+  .pickBtn { width: 100%; min-height: 66px; font-size: 25px; border-radius: var(--radius); }
+  .pickOut { margin-top: 10px; min-height: 3.2em; text-align: center; overflow-wrap: anywhere; }
+  .pickName { display: block; font-size: 42px; font-weight: 800; font-family: var(--mono); line-height: 1.15; }
+  .pickInfo { display: block; font-size: 17px; color: var(--dim); }
+  .pickRow { justify-content: space-between; margin-top: 6px; }
+  .rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .rank li { display: grid; grid-template-columns: 1.8em auto minmax(0, 1fr); gap: 2px 8px; align-items: center; font-size: 17px; }
+  .rank .no { font-weight: 800; color: var(--dim); text-align: right; }
+  .rank .who { font-weight: 800; font-family: var(--mono); white-space: nowrap; }
+  .rank .val { justify-self: end; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+  .rank .meter { grid-column: 2 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .rank .meter i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+  .rank .meter.bad i { background: var(--bad); }
+  .wait { margin: 8px 0 0; overflow-wrap: anywhere; }
+  .feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 300px; overflow-y: auto; }
+  .feed li { padding: 6px 10px; border-radius: 8px; background: var(--surface-2); border-left: 5px solid var(--line); font-size: 16px; overflow-wrap: anywhere; }
+  .feed li.k-alarm { border-left-color: var(--bad); }
+  .feed li.k-warn { border-left-color: var(--warn); }
+  .feed li.k-ok { border-left-color: var(--ok); }
+  .feed li.k-info { border-left-color: var(--water); }
+  .feed .ft { color: var(--dim); font-family: var(--mono); font-size: 13px; margin-right: 6px; }
+  .feed .fw { font-weight: 800; font-family: var(--mono); margin-right: 4px; }
+  .foot { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15"/><path d="M15 6v15"/></svg>
+    </div>
+    <div><h1>แผนที่ฟาร์มทั้งห้อง · ภารกิจ AI</h1><p class="sub">Smart Farm · Session 3 · ทุกทีมบนแผนที่เดียว · หน้านี้ดูอย่างเดียว ไม่ส่งคำสั่งใด ๆ</p></div>
+  </div>
+  <div class="conn">
+    <button id="fsBtn" type="button">เต็มจอ</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้ต่อ</b>
+  </div>
+</header>
+
+<details class="panel settings" id="settings">
+  <summary>ตั้งค่า <span class="muted small">broker · ทีมที่แสดง · เกณฑ์ · ใส่ในลิงก์ได้ เช่น ?teams=team01-team20&amp;mission=pump&amp;broker=mosquitto</span></summary>
+  <div class="setgrid">
+    <label for="broker">broker (ต้องตรงกับ BROKER บนบอร์ด สัญญาข้อ 1)
+      <select id="broker">
+        <option value="hivemq">HiveMQ (หลัก)</option>
+        <option value="mosquitto">Mosquitto (สำรอง เมื่อผู้สอนประกาศ)</option>
+      </select></label>
+    <label for="teams">ทีมที่แสดง (ว่าง = ทุกทีม)
+      <input id="teams" placeholder="team01-team20, team25" maxlength="120" autocomplete="off" spellcheck="false"></label>
+    <label for="minFb">อันดับ "เตือนผิด": คนตอบอย่างน้อย (ครั้ง)
+      <input id="minFb" type="number" min="1" max="100" step="1"></label>
+    <label for="silentS">แปลงเป็นสีเทาเมื่อ AI เงียบเกิน (วินาที)
+      <input id="silentS" type="number" min="2" max="120" step="1"></label>
+    <label for="forgetMin">ลบแปลงออกเมื่อเงียบเกิน (นาที)
+      <input id="forgetMin" type="number" min="1" max="240" step="1"></label>
+  </div>
+  <div class="bar"><button id="applyBtn" class="primary" type="button">ใช้ค่านี้</button> <span id="setMsg" class="small"></span></div>
+</details>
+<p id="urlWarn" class="warnline" hidden></p>
+
+<nav id="filters" class="filters" aria-label="กรองตามภารกิจ"></nav>
+
+<main class="stage">
+<section class="panel" aria-labelledby="h-map">
+  <h2 id="h-map">แปลงของแต่ละทีม <span class="hint">หนึ่งแปลงต่อหนึ่งทีม เรียงตามเลขทีม</span></h2>
+  <div class="legend">
+    <span class="lg st-red">แดง = AI และกฎยืนยันตรงกัน (กะพริบ = บอร์ดกำลังเตือน)</span>
+    <span class="lg st-amber">เหลือง = ฝ่ายเดียว ให้คนไปดู</span>
+    <span class="lg st-green">เขียว = ปกติ</span>
+    <span class="lg st-silent" id="legendSilent">เทา = AI เงียบ</span>
+    <span>🔔 เตือนใน 1 ชั่วโมง · 🤝 AI กับกฎตรงกัน · คนตอบ ✓ เหตุจริง ✗ เตือนผิด ? ไม่แน่ใจ</span>
+  </div>
+  <div id="map" class="map"></div>
+  <p id="mapEmpty" class="empty">ยังไม่มีทีมส่งผล AI · ให้ทีมรัน sf3_08 (หรือ sf3_06) บนบอร์ดหรือใน BENTO Emulator หรือกดบอร์ดจำลองในหน้า ai_farm.html แล้วรอสัก 2 วินาที</p>
+</section>
+
+<aside class="side">
+  <section class="panel" aria-labelledby="h-pick">
+    <h2 id="h-pick" hidden>เลือกทีมขึ้นพูด</h2>
+    <button id="pickBtn" class="water pickBtn" type="button">🎲 เลือกทีมขึ้นพูด</button>
+    <div id="pickOut" class="pickOut" aria-live="polite"><span id="pickName" class="pickName"></span><span id="pickInfo" class="pickInfo">สุ่มจากทีมที่มีข้อมูล (ตามภารกิจที่กรองอยู่) ไม่ซ้ำจนครบทุกทีม</span></div>
+    <div class="bar pickRow"><span id="pickLeft" class="muted small"></span><button id="pickReset" type="button">เริ่มรอบใหม่</button></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-false">
+    <h2 id="h-false">เตือนผิดน้อยที่สุด <span id="falseHint" class="hint"></span></h2>
+    <ol id="rankFalse" class="rank"></ol>
+    <p id="rankFalseEmpty" class="empty small">ยังไม่มีทีมที่มีคนตอบครบ · ให้กลุ่มกดปุ่ม "เหตุจริง / เตือนผิด / ไม่แน่ใจ" ในแอปของกลุ่มทุกครั้งที่บอร์ดเตือน</p>
+    <p id="rankFalseWait" class="wait muted small"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-agree">
+    <h2 id="h-agree">AI กับกฎเห็นตรงกันมากที่สุด <span id="agreeHint" class="hint"></span></h2>
+    <ol id="rankAgree" class="rank"></ol>
+    <p id="rankAgreeEmpty" class="empty small">ยังไม่มีทีมที่มีเหตุพอ · ลองทำให้เกิดเหตุ (เขย่าปั๊ม เปิดเสียงไซเรน ฯลฯ) แล้วดูว่า AI กับกฎของกลุ่มบอกตรงกันไหม</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-feed">
+    <h2 id="h-feed">เหตุการณ์ล่าสุดของทั้งห้อง <span id="feedHint" class="hint"></span></h2>
+    <ol id="feed" class="feed"></ol>
+    <p id="feedEmpty" class="empty small">ยังไม่มีเหตุการณ์ · เริ่มเตือน ฝนตก สั่งด้วยเสียง คนงานยืนยัน และเจาะเสร็จ จะขึ้นที่นี่ทันที</p>
+  </section>
+</aside>
+</main>
+
+<footer class="foot muted small">
+  <span id="msgCount">รับ 0 ข้อความ · ทิ้ง 0</span>
+  <span>ข้อความที่ผิดรูปแบบ ใหญ่เกิน หรือชื่อทีมไม่ใช่ team01–team99 ถูกทิ้ง (broker สาธารณะ ใครก็ส่งมาได้)</span>
+  <span>หน้านี้ไม่ส่งอะไรขึ้น broker</span>
+</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+// แผนที่ฟาร์มทั้งห้อง: ฟังอย่างเดียว ไม่มีการส่งข้อความขึ้น broker ในไฟล์นี้
+// broker สาธารณะ ใครก็ส่งอะไรมาก็ได้ ทุกอย่างที่มาจากข้อความจึงใส่หน้าเว็บด้วย textContent เท่านั้น ห้ามใช้ innerHTML
+
+// ===================== ตั้งค่า (ค่าเริ่มต้น · แก้บนหน้าได้ในแผง "ตั้งค่า" หรือใส่ในลิงก์) =====================
+const ROOT = "bento-aiot";                                         // สัญญาข้อ 2
+const BROKERS = {                                                  // สัญญาข้อ 1 · ต้องตรงกับ BROKER บนบอร์ด
+  hivemq: "wss://broker.hivemq.com:8884/mqtt",
+  mosquitto: "wss://test.mosquitto.org:8081/mqtt",
+};
+const DEFAULT_BROKER = "hivemq";
+const DEFAULT_MIN_FB = 5;        // อันดับ "เตือนผิดน้อยที่สุด" นับเฉพาะทีมที่มีคนตอบอย่างน้อยเท่านี้
+const DEFAULT_SILENT_S = 6;      // AI เงียบเกินกี่วินาที แปลงเป็นสีเทา (สัญญาข้อ 3.9: "AI เงียบ" ราว 6 วินาที)
+const DEFAULT_FORGET_MIN = 10;   // เงียบเกินกี่นาที ลบแปลงออกจากแผนที่
+const MIN_AGREE = 5;             // อันดับ "เห็นตรงกัน" ต้องมีข้อความที่ AI หรือกฎบอกเหตุอย่างน้อยเท่านี้
+const MAX_PAYLOAD_B = 1024;      // ข้อความของบอร์ดไม่เกิน 255 ไบต์ (ข้อ 3.11) ใหญ่กว่านี้ทิ้งโดยไม่อ่าน
+const FEED_MAX = 40;             // เหตุการณ์ล่าสุดเก็บกี่รายการ
+const AGREE_KEEP = 200;          // จำผล agree ล่าสุดกี่ข้อความต่อทีมต่อภารกิจ
+const FB_KEEP = 300;             // จำคำตอบ feedback ล่าสุดกี่ใบต่อทีมต่อภารกิจ
+const ALARM_KEEP = 200;          // จำเวลาเริ่มเตือนกี่ครั้งต่อทีมต่อภารกิจ (แสดงเฉพาะ 1 ชั่วโมงล่าสุด)
+const HOUR_MS = 3600 * 1000;
+const RANK_SHOW = 5;             // แผงอันดับแสดงกี่ทีม
+const WAIT_SHOW = 8;             // รายชื่อ "ยังตอบไม่ถึง" แสดงกี่ทีม
+const AI_WIN = 5, AI_NEED = 3;   // บอร์ด sf3_06 ที่ไม่ส่ง alarm: นับป้ายอันตราย 3 ใน 5 เอง (ข้อ 3.9 และท้ายข้อ 3.11)
+// ป้ายที่ sf3_06 ถือว่าอันตราย (ข้อ 3.9 ชุดเดียวกับ sf3_04) ใช้นับ 3 ใน 5 เองเฉพาะบอร์ดที่ไม่ส่ง alarm และ lvl
+const DANGER_39 = new Set(["anomaly", "shaking", "sirens", "cough", "baby_cry", "chainsaw", "crackling_fire", "alarm"]);
+const TEAM_RE = /^team(0[1-9]|[1-9][0-9])$/;                      // team01..team99 เหมือนหน้าแจ้งเตือนและ apps/
+
+// ภารกิจตามสัญญาข้อ 3.11 (m -> ไอคอน + ชื่อไทย)
+const MISSIONS = new Map([
+  ["pump", { icon: "🩺", name: "หมอปั๊มน้ำ" }],
+  ["siren", { icon: "🚨", name: "ยามฟังไซเรน" }],
+  ["barn", { icon: "🐷", name: "หูโรงเรือน" }],
+  ["night", { icon: "🌙", name: "ยามกลางคืน" }],
+  ["voice", { icon: "🗣️", name: "สั่งปั๊มด้วยเสียง" }],
+  ["worker", { icon: "👷", name: "คนงานปลอดภัย" }],
+  ["drill", { icon: "🔩", name: "ช่างซ่อมโรงเรือน", demo: true }],
+]);
+const NO_M = "sf3_06";                                             // บอร์ดตามข้อ 3.9/3.10 ที่ไม่ส่ง m
+const NO_M_INFO = { icon: "🤖", name: "AI (sf3_06)" };
+const RULE_ONLY = "rule-only";                                     // บอร์ดที่ไม่มีโมเดล ใช้กฎอย่างเดียว
+const AGREE_OK = new Set(["both", "ai", "rule", "none"]);
+const AI_EVENTS = new Set(["ai_alarm_start", "ai_alarm_end", "rain", "voice_cmd", "check_in", "drill_done"]);
+const VOICE_WHY = new Map([["", ""], ["unconfirmed", "ยังไม่มีคนยืนยัน"], ["gap", "สั่งถี่เกิน 3 วินาที"]]);
+const MATERIAL = new Map([["wood", "ไม้"], ["plastic", "พลาสติก"]]);
+// ป้ายของโมเดลเป็นภาษาไทย (Map ไม่ใช่ object: ป้ายชื่อ "constructor" จะได้ไม่ไปเจอของในตัว JavaScript)
+const LABEL_TH = new Map([
+  ["-", "ยังไม่มีผล"],
+  ["anomaly", "สั่นผิดปกติ"], ["unlabeled", "ปกติ (ไม่เข้าข่าย)"], ["shaking", "เขย่าแรง"], ["normal", "ปกติ"],
+  ["sirens", "เสียงไซเรน"], ["siren", "เสียงไซเรน"],
+  ["cough", "เสียงไอ"], ["water_tap", "ก๊อกน้ำเปิด"], ["baby_cry", "เสียงร้องไห้"],
+  ["chainsaw", "เลื่อยยนต์"], ["crackling_fire", "ไฟลุกปะทุ"], ["dog", "สุนัขเห่า"], ["rain", "ฝนตก"], ["alarm", "เสียงสัญญาณเตือน"],
+  ["go", "พูดว่า go"], ["stop", "พูดว่า stop"],
+  ["sitting", "นั่งนิ่ง"], ["standing", "ยืนนิ่ง"], ["walking", "เดิน"], ["running", "วิ่ง"], ["idle", "นิ่ง"],
+  ["wood_out", "เจาะทะลุไม้"], ["plastic_out", "เจาะทะลุพลาสติก"],
+  ["background", "เสียงพื้นหลัง"], ["silence", "เงียบ"], ["noise", "เสียงรบกวน"], ["unknown", "ไม่รู้จัก"],
+]);
+
+// ===================== สถานะของหน้า =====================
+const S = { broker: DEFAULT_BROKER, teams: null, teamsText: "", minFb: DEFAULT_MIN_FB, silentS: DEFAULT_SILENT_S,
+  forgetMin: DEFAULT_FORGET_MIN, mission: "all" };
+const teams = new Map();          // ชื่อทีม -> สถานะล่าสุด + ตัวนับ + แปลงบนแผนที่
+const feed = [];                  // เหตุการณ์ล่าสุด (ใหม่สุดอยู่หน้า) ไม่เกิน FEED_MAX
+const picked = new Set();         // ทีมที่ขึ้นพูดแล้วในรอบนี้
+const counts = { ok: 0, bad: 0 };
+const filterBtns = new Map();     // ภารกิจ -> { btn, cnt }
+let client = null;
+let pickedNow = null;
+let pickBusy = false;
+
+const $ = (id) => document.getElementById(id);
+const nowMs = () => performance.now();
+const own = (o, k) => o !== null && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k);
+const get = (o, k) => (own(o, k) ? o[k] : undefined);
+const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+// ข้อความสั้น ไม่มีตัวควบคุม และไม่มีตัวกลับทิศ (กันชื่อปลอมที่แสดงกลับหัว)
+const isText = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u001f\u007f-\u009f\u200e\u200f\u2028-\u202e\u2066-\u2069]/.test(v);
+const clip = (s, n) => { s = String(s); return s.length > n ? s.slice(0, n) + "…" : s; };
+const pct = (x) => Math.round(x * 100) + " %";
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function mInfo(m) { return MISSIONS.get(m) || NO_M_INFO; }
+function setStatus(text, tone) {
+  $("status").textContent = text;
+  $("status").style.color = tone ? "var(--" + tone + ")" : "";
+}
+function clockText() {
+  try { return new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }); }
+  catch (e) { return ""; }
+}
+
+// ===================== อ่านค่าตั้ง =====================
+// "team01-team20, team25" -> Set ของชื่อทีม · ส่วนที่อ่านไม่ออกคืนใน bad
+function parseTeams(text) {
+  const set = new Set(), bad = [];
+  const parts = String(text || "").trim().toLowerCase().split(/[\s,]+/).filter(Boolean).slice(0, 40);
+  for (const part of parts) {
+    const m = /^(?:team)?(\d{1,2})(?:-(?:team)?(\d{1,2}))?$/.exec(part);
+    const a = m ? Number(m[1]) : 0, b = m ? Number(m[2] === undefined ? m[1] : m[2]) : 0;
+    if (!m || a < 1 || b < 1) { bad.push(clip(part, 20)); continue; }
+    for (let i = Math.min(a, b); i <= Math.max(a, b); i++) set.add("team" + String(i).padStart(2, "0"));
+  }
+  return { set: set.size ? set : null, bad };
+}
+function readInt(text, lo, hi) {
+  const s = String(text).trim();
+  if (!/^\d{1,4}$/.test(s)) return null;
+  const v = Number(s);
+  return v >= lo && v <= hi ? v : null;
+}
+function readUrl() {
+  const q = new URLSearchParams(location.search);
+  const warn = [];
+  const b = (q.get("broker") || "").trim().toLowerCase();
+  if (b && own(BROKERS, b)) S.broker = b;
+  else if (b) warn.push("ไม่รู้จัก broker \"" + clip(b, 24) + "\" ใช้ HiveMQ แทน");
+  const tm = q.get("teams");
+  if (tm !== null && tm.trim()) {
+    const r = parseTeams(tm);
+    S.teams = r.set;
+    S.teamsText = r.set ? clip(tm.trim(), 120) : "";
+    if (r.bad.length) warn.push("teams อ่านไม่ออก: " + r.bad.slice(0, 5).join(", ") + (r.set ? " (ใช้เฉพาะส่วนที่อ่านได้)" : " (แสดงทุกทีม)"));
+  }
+  const ms = (q.get("mission") || "").trim().toLowerCase();
+  if (ms && (MISSIONS.has(ms) || ms === NO_M || ms === "all")) S.mission = ms;
+  else if (ms) warn.push("ไม่รู้จักภารกิจ \"" + clip(ms, 20) + "\" แสดงทุกภารกิจ");
+  return warn;
+}
+function fillSettings() {
+  $("broker").value = S.broker;
+  $("teams").value = S.teamsText;
+  $("minFb").value = String(S.minFb);
+  $("silentS").value = String(S.silentS);
+  $("forgetMin").value = String(S.forgetMin);
+  $("falseHint").textContent = "เรียงจากสัดส่วนเตือนผิดน้อยไปมาก · นับเฉพาะทีมที่มีคนตอบอย่างน้อย " + S.minFb + " ครั้ง";
+  $("agreeHint").textContent = "นับเฉพาะตอนที่ AI หรือกฎบอกว่าเกิดเหตุ อย่างน้อย " + MIN_AGREE + " ครั้ง";
+  $("feedHint").textContent = "เก็บ " + FEED_MAX + " รายการล่าสุด";
+  $("legendSilent").textContent = "เทา = AI เงียบเกิน " + S.silentS + " วินาที";
+}
+function setMsg(text, bad) { $("setMsg").textContent = text; $("setMsg").style.color = bad ? "var(--bad)" : "var(--ok)"; }
+function applySettings() {
+  const b = $("broker").value;
+  const tr = parseTeams($("teams").value);
+  const minFb = readInt($("minFb").value, 1, 100);
+  const silentS = readInt($("silentS").value, 2, 120);
+  const forgetMin = readInt($("forgetMin").value, 1, 240);
+  if (!own(BROKERS, b)) return setMsg("เลือก broker", true);
+  if (tr.bad.length) return setMsg("ทีมที่แสดงอ่านไม่ออก: " + tr.bad.slice(0, 5).join(", ") + " · ใช้แบบ team01-team20 หรือ team03,team07", true);
+  if (minFb === null) return setMsg("คนตอบอย่างน้อย: จำนวนเต็ม 1–100", true);
+  if (silentS === null) return setMsg("เงียบเกิน (วินาที): จำนวนเต็ม 2–120", true);
+  if (forgetMin === null) return setMsg("ลบแปลงเมื่อเงียบเกิน (นาที): จำนวนเต็ม 1–240", true);
+  const brokerChanged = b !== S.broker;
+  Object.assign(S, { broker: b, teams: tr.set, teamsText: tr.set ? clip($("teams").value.trim(), 120) : "", minFb, silentS, forgetMin });
+  if (S.teams) for (const name of [...teams.keys()]) if (!S.teams.has(name)) forget(name);
+  fillSettings();
+  setMsg(brokerChanged ? "ใช้แล้ว กำลังต่อ broker ใหม่" : "ใช้แล้ว", false);
+  tick();
+  if (brokerChanged) connect();
+}
+
+// ===================== ตรวจข้อความ (ทุกช่องเป็นของที่เชื่อไม่ได้) =====================
+function parseTopic(topic) {
+  if (typeof topic !== "string" || topic.length > 80) return null;
+  const p = topic.split("/");
+  if (p[0] !== ROOT || !TEAM_RE.test(p[1] || "")) return null;
+  const kind = p.slice(2).join("/");
+  return kind === "ai" || kind === "event" || kind === "ai/feedback" ? { team: p[1], kind } : null;
+}
+function decode(payload) {
+  let bytes = payload;
+  if (typeof payload === "string") bytes = new TextEncoder().encode(payload);
+  if (!bytes || typeof bytes.length !== "number" || bytes.length === 0 || bytes.length > MAX_PAYLOAD_B) return null;
+  let d;
+  try { d = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); } catch (e) { return null; }
+  return d !== null && typeof d === "object" && !Array.isArray(d) ? d : null;
+}
+// ข้อความสถานะ ai (ข้อ 3.9 / 3.10 / 3.11) -> ค่าที่ตรวจแล้ว หรือ null = ทิ้งทั้งใบ
+function readAi(d) {
+  const model = get(d, "model"), label = get(d, "label"), conf = get(d, "conf");
+  if (!isText(model, 40) || !isText(label, 32) || label === "" || !isInt(conf, 0, 100)) return null;
+  const n = get(d, "n");
+  if (n !== undefined && !isInt(n, 0, 1e9)) return null;
+  const out = { model, label, conf, m: null, lvl: null, alarm: null, agree: null };
+  const m = get(d, "m");
+  if (m !== undefined) { if (!MISSIONS.has(m)) return null; out.m = m; }
+  const lvl = get(d, "lvl");
+  if (lvl !== undefined) { if (!isInt(lvl, 0, 2)) return null; out.lvl = lvl; }
+  const alarm = get(d, "alarm");
+  if (alarm !== undefined) { if (!isInt(alarm, 0, 1)) return null; out.alarm = alarm; }
+  const agree = get(d, "agree");
+  if (agree !== undefined) { if (!AGREE_OK.has(agree)) return null; out.agree = agree; }
+  return out;
+}
+// คนตอบกลับ ai/feedback (ข้อ 3.11) · คำตอบเดิมของข้อความเดียวกัน (n + ป้าย + ความมั่นใจ) นับครั้งเดียว ใบหลังทับใบก่อน
+function readFeedback(d) {
+  const v = get(d, "v"), n = get(d, "n"), m = get(d, "m"), label = get(d, "label"), conf = get(d, "conf");
+  const lvl = get(d, "lvl"), agree = get(d, "agree");
+  if (v !== "true" && v !== "false" && v !== "unsure") return null;
+  if (!isInt(n, 0, 1e9)) return null;
+  if (m !== undefined && !MISSIONS.has(m)) return null;
+  if (label !== undefined && !isText(label, 32)) return null;
+  if (conf !== undefined && !isInt(conf, 0, 100)) return null;
+  if (lvl !== undefined && !isInt(lvl, 0, 2)) return null;
+  if (agree !== undefined && !AGREE_OK.has(agree)) return null;
+  return { v, m: m === undefined ? null : m, key: n + "|" + (label === undefined ? "" : label) + "|" + (conf === undefined ? "" : conf) };
+}
+function labelTh(label) { return LABEL_TH.get(String(label).toLowerCase()) || label; }
+// event ของ AI (ข้อ 3.10 และ 3.11) -> { m, kind, text } หรือ null = ทิ้ง
+function readEvent(e, d) {
+  const m = get(d, "m");
+  if (m !== undefined && !MISSIONS.has(m)) return null;
+  const out = { m: m === undefined ? null : m, kind: "info", text: "" };
+  if (e === "ai_alarm_start") {
+    const model = get(d, "model"), label = get(d, "label"), conf = get(d, "conf"), lvl = get(d, "lvl");
+    if (!isText(model, 40) || !isText(label, 32) || label === "" || !isInt(conf, 0, 100)) return null;
+    if (lvl !== undefined && !isInt(lvl, 0, 2)) return null;
+    out.kind = "alarm";
+    out.text = "เริ่มเตือน: " + labelTh(label) + " " + conf + " %"
+      + (lvl === 2 ? " · AI และกฎยืนยันตรงกัน" : lvl === 1 ? " · ฝ่ายเดียว ให้คนไปดู" : "");
+  } else if (e === "ai_alarm_end") {
+    const by = get(d, "by");
+    if (by !== undefined && by !== "ack" && by !== "clear") return null;
+    out.kind = "ok";
+    out.text = by === "ack" ? "หยุดเตือน: มีคนรับทราบแล้ว" : by === "clear" ? "หยุดเตือน: เหตุหายไปเอง" : "หยุดเตือนแล้ว";
+  } else if (e === "rain") {
+    const conf = get(d, "conf");
+    if (!isInt(conf, 0, 100)) return null;
+    out.text = "ได้ยินเสียงฝนตก (มั่นใจ " + conf + " %)";
+  } else if (e === "voice_cmd") {
+    const cmd = get(d, "cmd"), ok = get(d, "ok"), why = get(d, "why");
+    if ((cmd !== "go" && cmd !== "stop") || !isInt(ok, 0, 1)) return null;
+    if (why !== undefined && !VOICE_WHY.has(why)) return null;
+    if (ok === 1) out.text = cmd === "go" ? "สั่งด้วยเสียง \"go\" → เปิดปั๊ม" : "สั่งด้วยเสียง \"stop\" → ปิดปั๊มทันที";
+    else { out.kind = "warn"; out.text = "สั่งด้วยเสียง \"" + cmd + "\" แต่บอร์ดไม่ทำ" + (why ? ": " + VOICE_WHY.get(why) : ""); }
+  } else if (e === "check_in") {
+    const ok = get(d, "ok");
+    if (!isInt(ok, 0, 1)) return null;
+    out.kind = ok === 1 ? "ok" : "alarm";
+    out.text = ok === 1 ? "คนงานกดยืนยันว่าปลอดภัย" : "คนงานไม่ตอบใน 30 วินาที!";
+  } else if (e === "drill_done") {
+    const mat = get(d, "mat"), holes = get(d, "holes");
+    if (!MATERIAL.has(mat)) return null;
+    if (holes !== undefined && !isInt(holes, 0, 999)) return null;
+    out.text = "เจาะ" + MATERIAL.get(mat) + "เสร็จ" + (holes !== undefined ? " " + holes + " รู" : "");
+  } else return null;
+  return out;
+}
+
+// ===================== รับข้อความ =====================
+function drop() { counts.bad++; paintCounts(); }
+function onMessage(topic, payload) {
+  const tp = parseTopic(topic);
+  if (!tp) return drop();                                    // ชื่อทีมปลอม หรือหัวข้อแปลก
+  if (S.teams && !S.teams.has(tp.team)) return;              // นอกช่วงทีมที่ผู้สอนเลือก: ไม่สนใจ (ไม่นับว่าทิ้ง)
+  const d = decode(payload);
+  if (!d) return drop();                                     // ใหญ่เกิน ไม่ใช่ UTF-8 ไม่ใช่ JSON หรือไม่ใช่ object
+  const id = get(d, "id");
+  if (id !== undefined && id !== tp.team) return drop();     // id ในข้อความต้องตรงกับทีมในหัวข้อ
+  const now = nowMs();
+  const r = tp.kind === "ai" ? onAi(tp.team, d, now) : tp.kind === "event" ? onEvent(tp.team, d, now) : onFeedback(tp.team, d, now);
+  if (r === false) return drop();
+  if (r === true) { counts.ok++; paintCounts(); }
+  // r === null: ข้อความถูกรูปแบบแต่ไม่ใช่ของหน้านี้ (เช่น event ปุ่ม sw6 ของคาบ 2) ปล่อยผ่านเงียบ ๆ
+}
+function onAi(name, d, now) {
+  const a = readAi(d);
+  if (!a) return false;
+  const t = teams.get(name) || addTeam(name);
+  const m = a.m || NO_M;
+  if (t.m !== m) t.ring = [];
+  Object.assign(t, { m, model: a.model, label: a.label, conf: a.conf, lvl: a.lvl, alarm: a.alarm, agree: a.agree, lastAi: now });
+  const s = statsFor(t, m);
+  if (a.agree !== null && a.agree !== "none" && a.model !== RULE_ONLY) {
+    s.agree.push(a.agree === "both" ? 1 : 0);
+    if (s.agree.length > AGREE_KEEP) s.agree.shift();
+  }
+  if (a.alarm === null && a.lvl === null) {
+    // บอร์ดที่ไม่ส่ง alarm (sf3_06): นับป้ายอันตราย 3 ใน 5 เอง · หยุดโมเดลอยู่ไม่นับ
+    if (!(a.model === "" && a.label === "-")) {
+      t.ring.push(DANGER_39.has(a.label.toLowerCase()));
+      if (t.ring.length > AI_WIN) t.ring.shift();
+    }
+    alarmEdge(t, m, derivedOn(t), now);
+  } else if (a.alarm !== null) alarmEdge(t, m, a.alarm === 1, now);
+  paintTile(t, now);
+  return true;
+}
+function onEvent(name, d, now) {
+  const e = get(d, "event");
+  if (typeof e !== "string" || !AI_EVENTS.has(e)) return null;   // event ของคาบ 2 (sw6, pump, แจ้งเตือนพืช ...) ไม่ใช่ของหน้านี้
+  const ev = readEvent(e, d);
+  if (!ev) return false;
+  const t = teams.get(name);
+  const m = ev.m || (t ? t.m : null);
+  if (t) {
+    if (e === "ai_alarm_start") { alarmEdge(t, m, true, now); if (t.alarm !== null) t.alarm = 1; }
+    if (e === "ai_alarm_end") { t.inAlarm = false; if (t.alarm === 1) t.alarm = 0; }
+    paintTile(t, now);
+  }
+  if (e !== "ai_alarm_end") addFeed({ team: name, m, kind: ev.kind, text: ev.text, clock: clockText() });
+  return true;
+}
+function onFeedback(name, d, now) {
+  const f = readFeedback(d);
+  if (!f) return false;
+  const t = teams.get(name);
+  if (!t) return null;                                       // ยังไม่มีแปลงของทีมนี้ (ยังไม่ได้ยินผล AI) ไม่นับ
+  const s = statsFor(t, f.m || t.m);
+  s.fb.delete(f.key);
+  s.fb.set(f.key, f.v);
+  while (s.fb.size > FB_KEEP) s.fb.delete(s.fb.keys().next().value);
+  paintTile(t, now);
+  return true;
+}
+
+// ===================== ตัวนับต่อทีม =====================
+function statsFor(t, m) {
+  let s = t.stats.get(m);
+  if (!s) { s = { agree: [], alarms: [], fb: new Map() }; t.stats.set(m, s); }
+  return s;
+}
+function derivedOn(t) { return t.ring.filter(Boolean).length >= AI_NEED; }
+// นับการเตือนหนึ่งครั้งต่อหนึ่งเหตุ: event ai_alarm_start กับ alarm 0 -> 1 ของข้อความสถานะ อันไหนมาก่อนก็นับอันนั้น
+function alarmEdge(t, m, on, now) {
+  if (on && !t.inAlarm) {
+    const s = statsFor(t, m || t.m);
+    s.alarms.push(now);
+    if (s.alarms.length > ALARM_KEEP) s.alarms.shift();
+  }
+  t.inAlarm = on;
+}
+function alarmsLastHour(s, now) {
+  while (s.alarms.length && now - s.alarms[0] > HOUR_MS) s.alarms.shift();
+  return s.alarms.length;
+}
+function fbCount(s) {
+  const c = { yes: 0, no: 0, unsure: 0, total: s.fb.size };
+  for (const v of s.fb.values()) { if (v === "true") c.yes++; else if (v === "false") c.no++; else c.unsure++; }
+  return c;
+}
+function agreeRate(t, s) {
+  if (t.model === RULE_ONLY || !s.agree.length) return null;
+  return s.agree.reduce((a, b) => a + b, 0) / s.agree.length;
+}
+function visible(t) { return S.mission === "all" || t.m === S.mission; }
+
+// ===================== แปลงบนแผนที่ =====================
+function addTeam(name) {
+  const root = el("div", "plot");
+  const head = el("div", "pHead");
+  const tile = { root, icon: el("span", "pIcon"), team: el("b", "pTeam", name), state: el("span", "pState"),
+    mission: el("div", "pMission"), label: el("div", "pLabel"), raw: el("span"), rule: el("span", "badge", "rule-only"),
+    alarms: el("span", "pAlarms"), agree: el("span", "pAgree"), fb: el("span", "pFb") };
+  head.append(tile.icon, tile.team, tile.state);
+  const sub = el("div", "pSub");
+  sub.append(tile.raw, tile.rule);
+  const cnt = el("div", "pCount");
+  cnt.append(tile.alarms, tile.agree, tile.fb);
+  root.append(head, tile.mission, tile.label, sub, cnt);
+  const t = { name, m: NO_M, model: "", label: "-", conf: 0, lvl: null, alarm: null, agree: null, lastAi: 0,
+    inAlarm: false, ring: [], stats: new Map(), tile };
+  const after = [...teams.keys()].sort().find((k) => k > name);    // เรียงแปลงตามเลขทีม
+  $("map").insertBefore(root, after ? teams.get(after).tile.root : null);
+  teams.set(name, t);
+  return t;
+}
+function forget(name) {
+  const t = teams.get(name);
+  if (!t) return;
+  t.tile.root.remove();
+  teams.delete(name);
+  picked.delete(name);
+  if (pickedNow === name) pickedNow = null;
+}
+// สีของแปลง: เงียบ > กำลังเตือน > lvl 2/1/0 > หยุดโมเดล > นับ 3 ใน 5 เอง (บอร์ดที่ไม่ส่ง alarm และ lvl)
+function tileState(t, now) {
+  const quiet = Math.floor((now - t.lastAi) / 1000);
+  if (now - t.lastAi > S.silentS * 1000) return { key: "silent", text: "AI เงียบ " + quiet + " วิ" };
+  if (t.alarm === 1) return { key: "red", pulse: true, text: "กำลังเตือน!" };
+  if (t.lvl === 2) return { key: "red", text: "ยืนยันสองทาง" };
+  if (t.lvl === 1) return { key: "amber", text: "ฝ่ายเดียว ไปดู" };
+  if (t.model === "" && t.label === "-") return { key: "stopped", text: "หยุดโมเดล" };
+  if (t.lvl === 0 || t.alarm === 0) return { key: "green", text: "ปกติ" };
+  return derivedOn(t) ? { key: "red", text: "อันตราย 3 ใน 5" } : { key: "green", text: "ปกติ" };
+}
+function paintTile(t, now) {
+  const p = t.tile, info = mInfo(t.m), st = tileState(t, now), s = statsFor(t, t.m);
+  p.root.className = "plot st-" + st.key + (st.pulse ? " pulse" : "") + (pickedNow === t.name ? " picked" : "");
+  p.root.hidden = !visible(t);
+  p.root.title = "โมเดล: " + (t.model || "(หยุดอยู่)");
+  p.icon.textContent = info.icon;
+  p.state.textContent = st.text;
+  p.mission.textContent = info.name + (info.demo ? " (ผู้สอนสาธิต)" : "");
+  p.label.textContent = t.model === "" && t.label === "-" ? "หยุดโมเดลอยู่" : labelTh(t.label);
+  p.raw.textContent = t.model === "" ? "model ว่าง" : t.label + " · " + t.conf + " %";
+  p.rule.hidden = t.model !== RULE_ONLY;
+  p.alarms.textContent = "🔔 " + alarmsLastHour(s, now);
+  const r = agreeRate(t, s);
+  p.agree.textContent = "🤝 " + (r === null ? "—" : pct(r));
+  const f = fbCount(s);
+  p.fb.textContent = "✓" + f.yes + " ✗" + f.no + " ?" + f.unsure;
+}
+
+// ===================== ชิปกรองภารกิจ แผงอันดับ เหตุการณ์ =====================
+function buildFilters() {
+  const keys = [["all", { icon: "🗺️", name: "ทุกภารกิจ" }], ...MISSIONS, [NO_M, NO_M_INFO]];
+  for (const [key, info] of keys) {
+    const btn = el("button");
+    btn.type = "button";
+    const cnt = el("span", "cnt", "0");
+    btn.append(el("span", "", info.icon + " " + info.name + (info.demo ? " (ผู้สอน)" : "")), cnt);
+    btn.addEventListener("click", () => setMission(key));
+    $("filters").append(btn);
+    filterBtns.set(key, { btn, cnt });
+  }
+}
+function setMission(key) {
+  S.mission = key;
+  tick();
+  renderFeed();
+}
+function paintFilters() {
+  const n = new Map();
+  for (const t of teams.values()) n.set(t.m, (n.get(t.m) || 0) + 1);
+  for (const [key, f] of filterBtns) {
+    const c = key === "all" ? teams.size : n.get(key) || 0;
+    f.cnt.textContent = String(c);
+    f.btn.className = (S.mission === key ? "on" : "") + (c === 0 ? " zero" : "");
+    f.btn.setAttribute("aria-pressed", S.mission === key ? "true" : "false");
+  }
+}
+function rankRow(no, t, value, share, tone) {
+  const li = el("li");
+  const meter = el("div", "meter" + (tone ? " " + tone : ""));
+  const bar = el("i");
+  bar.style.width = Math.round(share * 100) + "%";
+  meter.append(bar);
+  li.append(el("span", "no", no + "."), el("span", "who", mInfo(t.m).icon + " " + t.name), el("span", "val", value), meter);
+  return li;
+}
+// อันดับร่วม: ค่าเท่ากันได้อันดับเดียวกัน (1, 1, 3)
+function ranked(rows, key) {
+  let prev = null, no = 0;
+  return rows.map((r, i) => { if (prev === null || r[key] !== prev) no = i + 1; prev = r[key]; return Object.assign(r, { no }); });
+}
+function renderRanks() {
+  const vis = [...teams.values()].filter(visible);
+  const fRows = [], wait = [], aRows = [];
+  for (const t of vis) {
+    const s = statsFor(t, t.m), f = fbCount(s);
+    if (f.total >= S.minFb) fRows.push({ t, f, share: f.no / f.total });
+    else if (f.total > 0) wait.push(t.name + " (" + f.total + ")");
+    const r = agreeRate(t, s);
+    if (r !== null && s.agree.length >= MIN_AGREE) aRows.push({ t, rate: r, n: s.agree.length, both: s.agree.reduce((a, b) => a + b, 0) });
+  }
+  const byName = (a, b) => (a.t.name < b.t.name ? -1 : a.t.name > b.t.name ? 1 : 0);
+  fRows.sort((a, b) => a.share - b.share || b.f.total - a.f.total || byName(a, b));
+  aRows.sort((a, b) => b.rate - a.rate || b.n - a.n || byName(a, b));
+  $("rankFalse").replaceChildren(...ranked(fRows, "share").slice(0, RANK_SHOW).map((r) =>
+    rankRow(r.no, r.t, "ผิด " + r.f.no + "/" + r.f.total + " (" + pct(r.share) + ")", r.share, "bad")));
+  $("rankFalseEmpty").hidden = fRows.length > 0;
+  wait.sort();
+  $("rankFalseWait").textContent = wait.length
+    ? "ยังตอบไม่ถึง " + S.minFb + " ครั้ง: " + wait.slice(0, WAIT_SHOW).join(" · ") + (wait.length > WAIT_SHOW ? " …" : "") : "";
+  $("rankAgree").replaceChildren(...ranked(aRows, "rate").slice(0, RANK_SHOW).map((r) =>
+    rankRow(r.no, r.t, "ตรงกัน " + pct(r.rate) + " (" + r.both + "/" + r.n + ")", r.rate, "")));
+  $("rankAgreeEmpty").hidden = aRows.length > 0;
+}
+function addFeed(row) {
+  feed.unshift(row);
+  if (feed.length > FEED_MAX) feed.length = FEED_MAX;
+  renderFeed();
+}
+function renderFeed() {
+  const rows = feed.filter((r) => S.mission === "all" || r.m === S.mission || (r.m === null && S.mission === NO_M));
+  $("feed").replaceChildren(...rows.map((r) => {
+    const li = el("li", "k-" + r.kind);
+    li.append(el("span", "ft", r.clock), el("span", "fw", r.team), document.createTextNode(" " + (r.m ? mInfo(r.m).icon : "📡") + " " + r.text));
+    return li;
+  }));
+  $("feedEmpty").hidden = rows.length > 0;
+}
+function paintCounts() { $("msgCount").textContent = "รับ " + counts.ok + " ข้อความ · ทิ้ง " + counts.bad; }
+function paintPickLeft() {
+  const pool = [...teams.values()].filter(visible).map((t) => t.name);
+  const left = pool.filter((n) => !picked.has(n)).length;
+  $("pickLeft").textContent = pool.length ? "ยังไม่ได้ขึ้นพูด " + left + " จาก " + pool.length + " ทีม" : "";
+}
+function tick() {
+  const now = nowMs();
+  for (const t of [...teams.values()]) {
+    if (now - t.lastAi > S.forgetMin * 60000) { forget(t.name); continue; }
+    paintTile(t, now);
+  }
+  const shown = [...teams.values()].filter(visible).length;
+  $("mapEmpty").hidden = shown > 0;
+  if (teams.size > 0 && shown === 0) $("mapEmpty").textContent = "ยังไม่มีทีมทำภารกิจนี้ · กด \"ทุกภารกิจ\" เพื่อดูทุกทีม";
+  else if (teams.size === 0) $("mapEmpty").textContent = "ยังไม่มีทีมส่งผล AI · ให้ทีมรัน sf3_08 (หรือ sf3_06) บนบอร์ดหรือใน BENTO Emulator หรือกดบอร์ดจำลองในหน้า ai_farm.html แล้วรอสัก 2 วินาที";
+  paintFilters();
+  renderRanks();
+  paintPickLeft();
+}
+
+// ===================== เลือกทีมขึ้นพูด (สุ่มในเครื่องนี้ ไม่ส่งอะไรออกไป) =====================
+function pickTeam() {
+  if (pickBusy) return;
+  const pool = [...teams.values()].filter(visible).map((t) => t.name).sort();
+  if (!pool.length) {
+    $("pickName").textContent = "";
+    $("pickInfo").textContent = "ยังไม่มีทีมที่มีข้อมูล" + (S.mission === "all" ? "" : "ในภารกิจนี้");
+    return;
+  }
+  let fresh = pool.filter((n) => !picked.has(n));
+  if (!fresh.length) { for (const n of pool) picked.delete(n); fresh = pool; }
+  const name = fresh[Math.min(fresh.length - 1, Math.floor(Math.random() * fresh.length))];
+  picked.add(name);
+  const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let steps = calm || pool.length < 2 ? 0 : 10;
+  pickBusy = true;
+  $("pickBtn").disabled = true;
+  $("pickInfo").textContent = "กำลังสุ่ม…";
+  const spin = () => {
+    if (steps-- > 0) {
+      $("pickName").textContent = pool[Math.floor(Math.random() * pool.length)];
+      setTimeout(spin, 90);
+      return;
+    }
+    pickBusy = false;
+    $("pickBtn").disabled = false;
+    showPick(name);
+  };
+  spin();
+}
+function showPick(name) {
+  const t = teams.get(name);
+  const prev = pickedNow;
+  pickedNow = t ? name : null;
+  if (prev && teams.has(prev)) paintTile(teams.get(prev), nowMs());
+  $("pickName").textContent = name;
+  if (!t) { $("pickInfo").textContent = "ทีมนี้หายไปจากแผนที่แล้ว ลองสุ่มใหม่"; paintPickLeft(); return; }
+  const info = mInfo(t.m);
+  $("pickInfo").textContent = info.icon + " " + info.name + " · ตอนนี้ AI เห็น: " + labelTh(t.label);
+  paintTile(t, nowMs());
+  if (typeof t.tile.root.scrollIntoView === "function") t.tile.root.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  paintPickLeft();
+}
+
+// ===================== เชื่อมต่อ (subscribe อย่างเดียว) =====================
+function randomHex(n) {
+  const a = new Uint8Array(n);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(a);
+  else for (let i = 0; i < n; i++) a[i] = Math.floor(Math.random() * 256);
+  return Array.from(a, (x) => x.toString(16).padStart(2, "0")).join("");
+}
+function connect() {
+  if (client) { const old = client; client = null; try { old.end(true); } catch (e) { /* ปิดอยู่แล้ว */ } }
+  if (typeof mqtt === "undefined" || !mqtt || typeof mqtt.connect !== "function") {
+    setStatus("โหลด mqtt.js ไม่ได้ (ต่ออินเทอร์เน็ตแล้วรีเฟรช)", "bad");
+    return;
+  }
+  const url = BROKERS[S.broker];
+  const host = url.replace(/^wss:\/\//, "").replace(/\/mqtt$/, "");
+  setStatus("กำลังต่อ " + host + " ...", "warn");
+  // client id สุ่มท้ายเสมอ ถ้าซ้ำกับบอร์ดหรือแอปอื่น broker จะเตะตัวที่ต่อก่อนหลุด (สัญญาข้อ 5.2)
+  const c = mqtt.connect(url, { clientId: "class-ai-" + randomHex(3), clean: true, keepalive: 30, connectTimeout: 10000, reconnectPeriod: 3000 });
+  client = c;
+  c.on("connect", () => {
+    if (client !== c) return;
+    setStatus("ต่อแล้ว · " + host, "ok");
+    // ฟังสามหัวข้อของทุกทีม ไม่ subscribe '#'
+    c.subscribe([ROOT + "/+/ai", ROOT + "/+/event", ROOT + "/+/ai/feedback"], { qos: 0 });
+  });
+  c.on("reconnect", () => { if (client === c) setStatus("กำลังต่อใหม่...", "warn"); });
+  c.on("close", () => { if (client === c) setStatus("หลุด กำลังลองใหม่", "bad"); });
+  c.on("error", (err) => { if (client === c) setStatus("ผิดพลาด: " + clip(err && err.message ? err.message : err, 80), "bad"); });
+  c.on("message", (topic, payload) => { if (client === c) onMessage(topic, payload); });
+}
+
+// ===================== เริ่ม =====================
+const urlWarn = readUrl();
+fillSettings();
+buildFilters();
+if (urlWarn.length) { $("urlWarn").textContent = "ลิงก์: " + urlWarn.join(" · "); $("urlWarn").hidden = false; }
+$("applyBtn").addEventListener("click", applySettings);
+$("pickBtn").addEventListener("click", pickTeam);
+$("pickReset").addEventListener("click", () => { picked.clear(); paintPickLeft(); $("pickInfo").textContent = "เริ่มรอบใหม่แล้ว ทุกทีมมีสิทธิ์ถูกเลือก"; });
+const docEl = document.documentElement;
+if (docEl && typeof docEl.requestFullscreen === "function") {
+  $("fsBtn").addEventListener("click", () => {
+    if (document.fullscreenElement) { if (document.exitFullscreen) document.exitFullscreen().catch(() => {}); }
+    else docEl.requestFullscreen().catch(() => {});
+  });
+} else $("fsBtn").hidden = true;
+paintCounts();
+tick();
+renderFeed();
+setInterval(tick, 1000);
+connect();
+</script>
+</body>
+</html>

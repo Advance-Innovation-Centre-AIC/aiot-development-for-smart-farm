@@ -7,18 +7,18 @@
 #            ตัวอย่างที่ต้องได้เป๊ะ: fc06_write(1, 1, 0, 1) = 00 01 00 00 00 06 01 06 00 00 00 01
 # ความจริง : เฟิร์มแวร์ของบอร์ดนี้ไม่มีโมดูล Modbus และไม่มี socket ให้ Python (ไม่มี socket/network/ssl)
 #            บอร์ดจึงเปิด TCP ไปหา PLC เองไม่ได้ สิ่งที่บอร์ดทำได้จริงคือ "สร้างกรอบ" ด้วย struct โชว์ทีละไบต์
-#            แล้วส่ง "สิ่งที่อยากทำ" พร้อมกรอบนั้น (hex) ขึ้น MQTT ให้ gateway บนโน้ตบุ๊ก
-#            core/app/modbus_bridge.py พูด Modbus TCP กับ PLC จำลอง core/app/modbus_plc_sim.py (พอร์ต 5020) แทน
+#            แล้วส่ง "สิ่งที่อยากทำ" พร้อมกรอบนั้น (hex) ขึ้น MQTT ให้ gateway
+#            ในห้องคือหน้าเว็บ core/app/modbus_plc.html ที่เล่นทั้ง gateway และ PLC จำลอง แล้วตอบกลับทาง MQTT
 #            gateway แบบนี้คือวิธีที่ฟาร์มจริงใช้พา PLC รุ่นเก่าเข้าระบบ IoT
 # ลองเล่น  : ยังไม่ตั้ง WiFi = "โหมดดูกรอบ" กด SW5 / SW6 ดูไบต์เปลี่ยน (ไม่ได้ส่งไปไหน)
-#            ตั้ง WiFi + TEAM แล้วเปิด modbus_plc_sim.py กับ modbus_bridge.py (TEAM เดียวกัน) บนโน้ตบุ๊ก
+#            ตั้ง WiFi + TEAM แล้วเปิด core/app/modbus_plc.html?team=<TEAM> (TEAM เดียวกัน) กด "เริ่ม"
 #            กด SW5 อ่าน HR0-HR2 แล้วกด SW6 สลับปั๊ม ดูไบต์ขาไปบนจอบอร์ด และไบต์ขากลับที่ gateway พิมพ์
-#            ลองปิด modbus_plc_sim.py แล้วกดอีกที หรือเปิดด้วย --tank 5 แล้วสั่งเปิดปั๊ม (PLC ปฏิเสธ รหัส 4)
-# ของบนบอร์ด: SW5 (ปุ่มล่าง) = buttons.pressed(0) = FC03 อ่าน 3 ช่อง (HR0 ปั๊ม, HR1 ดิน %, HR2 ถัง %)
-#            SW6 (ปุ่มบน) = buttons.pressed(1) = FC06 สลับปั๊ม HR0 - ลำโพงดังตอนกด และตอนได้/ไม่ได้คำตอบ
+#            ลองกด "ถอดสาย PLC" ในหน้าเว็บแล้วกดอีกที หรือใส่น้ำในถัง 5 กด "เปิด PLC ใหม่" แล้วสั่งเปิดปั๊ม (PLC ปฏิเสธ รหัส 4)
+# ของบนบอร์ด: SW5 (ปุ่มล่าง) = buttons.pressed(1) = FC03 อ่าน 3 ช่อง (HR0 ปั๊ม, HR1 ดิน %, HR2 ถัง %)
+#            SW6 (ปุ่มบน) = buttons.pressed(0) = FC06 สลับปั๊ม HR0 - ลำโพงดังตอนกด และตอนได้/ไม่ได้คำตอบ
 # บนจอ     : 12 ไบต์ของคำขอ สีฟ้า = MBAP สีเขียว = PDU ชื่อช่องอยู่ใต้ไบต์ - การ์ดล่าง = ผลและกรอบคำตอบ (hex)
 #            ข้อความบนจอสั้นโดยตั้งใจ: บอร์ดคอมไพล์ไฟล์นี้บนตัวเอง ตัวอักษรไทยกินที่ 3 ไบต์ต่อตัว
-# สัญญา    : (ตายตัวตาม core/app/modbus_bridge.py) ส่ง bento-aiot/<TEAM>/modbus/req
+# สัญญา    : (ตายตัวตาม core/app/modbus_plc.html) ส่ง bento-aiot/<TEAM>/modbus/req
 #            {"n", "fc", "addr", "qty" หรือ "value", "hex"} แล้วฟัง bento-aiot/<TEAM>/modbus/resp
 #            {"n", "ok": 1, "hex", "v": [...]} / {"n", "ok": 0, "hex", "exc": 1-4} / {"n", "ok": 0, "err": ...}
 #            จับคู่ด้วย n (n = tid ของกรอบ) ไม่มาใน RESP_MS = "ไม่มีคำตอบ" และไม่เดาว่าสำเร็จ
@@ -26,7 +26,7 @@
 #            และถ้ายังไม่รู้สถานะ SW6 จะขอ "ปิด" ก่อนเสมอ (ไม่รู้ = ปิดไว้ก่อน) PLC ยังมีระบบป้องกันของตัวเองอีกชั้น
 # ในฟาร์ม  : ปั๊มที่คุมด้วยอินเวอร์เตอร์ (VFD) มิเตอร์ไฟ หัววัดดิน/EC/pH แบบ RS-485 และ PLC ส่วนใหญ่พูด Modbus
 # บอร์ด    : TESAIoT Dev Kit และ BENTO Emulator (Emulator ต่อ broker สาธารณะจริงผ่าน WebSocket: ถ้าไม่มี
-#            gateway / modbus_bridge.py ของ TEAM เดียวกันทำงานอยู่ จะเห็น "ไม่มีคำตอบ")
+#            gateway / modbus_plc.html ของ TEAM เดียวกันเปิดอยู่ จะเห็น "ไม่มีคำตอบ")
 
 import buttons
 import json
@@ -39,16 +39,16 @@ import wifi
 # ---- 1) ตั้งค่า (แก้ได้) ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ไม่แก้ = โหมดดูกรอบ (สร้างกรอบโชว์บนจอ ไม่ส่งไปไหน)
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว - อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                       # เลขกลุ่ม ต้องตรงกับ TEAM ใน modbus_bridge.py
+TEAM = "teamXX"                       # เลขกลุ่ม ต้องตรงกับเลขกลุ่มในหน้า modbus_plc.html
 UNIT_ID = 1          # เลขเครื่องของ PLC (unit id) ใน MBAP
 RESP_MS = 3000       # รอคำตอบจาก gateway นานเท่านี้ (gateway เองรอ PLC 2 วิ)
 SAMPLE_MS = 20       # อ่านปุ่มและกล่องรับทุกกี่ ms (ปุ่มกรองสั่นทุกครั้งที่อ่าน กล่องรับมีช่องเดียว)
 RUN_MS = 300000      # เล่นนาน 5 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
-BROKER = "broker.hivemq.com"          # ต้องตรงกับ BROKER ใน modbus_bridge.py
+BROKER = "broker.hivemq.com"          # ต้องตรงกับ broker ที่เลือกในหน้า modbus_plc.html
 CLIENT_ID = "bento-mb-" + TEAM + "-%04x" % (time.ticks_ms() & 0xFFFF)   # ตัวท้ายสุ่มทุกครั้งที่รัน: รันใหม่ทันทีก็ไม่ชน id เก่า
 T_REQ = "bento-aiot/" + TEAM + "/modbus/req"
 T_RESP = "bento-aiot/" + TEAM + "/modbus/resp"
@@ -166,7 +166,7 @@ def main():
                 show_link(w, False)
             now = time.ticks_ms()
             for i in (0, 1):                                  # i = 0 คือ SW5, i = 1 คือ SW6
-                d = buttons.pressed(i)
+                d = buttons.pressed(1 - i)                    # SW5 = pressed(1), SW6 = pressed(0)
                 if d and not down[i] and not wait:           # ขอบกด และไม่ได้รอคำตอบของคำขอก่อนหน้าอยู่
                     n += 1
                     arg = want if i else 3                    # SW6 เขียนค่า want ลง HR0 - SW5 อ่าน 3 ช่องเริ่ม HR0
@@ -222,5 +222,5 @@ main()
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) เดาก่อนกด: กด SW5 ครั้งแรก (n = 1) ไบต์ที่ 0-1 (tid) และไบต์ที่ 11 (qty) จะเป็นเลขอะไร แล้วกดดูเฉลยบนจอ
-# 2) ตั้ง UNIT_ID = 2 แล้วกด SW6 ไบต์ไหนเปลี่ยน PLC จำลองตอบไหม (ดูที่หน้าต่าง modbus_plc_sim.py)
-# 3) ปิด modbus_plc_sim.py แล้วกด SW6 จอขึ้นอะไร ทำไมโปรแกรมไม่ยอมเชื่อว่าปั๊มเปิดแล้ว
+# 2) ตั้ง UNIT_ID = 2 แล้วกด SW6 ไบต์ไหนเปลี่ยน PLC จำลองตอบไหม (ดูที่บันทึก PLC ในหน้า modbus_plc.html)
+# 3) กด "ถอดสาย PLC" ในหน้า modbus_plc.html แล้วกด SW6 จอขึ้นอะไร ทำไมโปรแกรมไม่ยอมเชื่อว่าปั๊มเปิดแล้ว

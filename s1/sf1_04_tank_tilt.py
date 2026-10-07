@@ -73,7 +73,7 @@ def set_alarm(alarm, danger):
 
 
 class Button:
-    # ปุ่มบนฐาน (0 = SW5 ล่าง, 1 = SW6 บน) ที่ไม่พลาดการกดสั้น ๆ
+    # ปุ่มบนฐาน (1 = SW5 ล่าง ขา P17.7, 0 = SW6 บน ขา P17.5) ที่ไม่พลาดการกดสั้น ๆ
     # เฟิร์มแวร์กรองสั่น 50 ms จึงต้องอ่านบ่อย ๆ ระหว่างรอ (wait_ms) แล้วจำว่า "เพิ่งกด"
 
     def __init__(self, index):
@@ -298,7 +298,7 @@ def main():
         ui.volume(SPEAKER)
     w = build_screen()
     alarm = led_named("RGB_RED")
-    sw5, sw6 = Button(0), Button(1)
+    sw5, sw6 = Button(1), Button(0)
     rec = Record()
     roll0, pitch0 = measure_zero()     # ท่าตอนเริ่ม = ศูนย์
     w["help"].color(COL_DIM)

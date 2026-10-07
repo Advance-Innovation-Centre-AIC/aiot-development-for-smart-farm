@@ -56,7 +56,7 @@ def magnitude():
 
 
 class Button:
-    # 0 = SW5, 1 = SW6 · อ่านใน wait_ms จึงไม่พลาดการกดสั้น ๆ
+    # 1 = SW5 (ล่าง ขา P17.7), 0 = SW6 (บน ขา P17.5) · อ่านใน wait_ms จึงไม่พลาดการกดสั้น ๆ
     def __init__(self, index):
         self.index, self.down, self.clicked = index, False, False
 
@@ -296,7 +296,7 @@ def main():
     if hasattr(ui, "volume"):  # 2.4.1 ไม่มี
         ui.volume(SPEAKER)
     w = build_screen()
-    sw5 = Button(0)
+    sw5 = Button(1)
     t0 = t_draw = time.ticks_ms()
     st, mx, fails = Watch(t0), [None, t0], 0
     try:
@@ -323,4 +323,4 @@ main()
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) กด SW5 ขณะเพื่อนเคาะโต๊ะ 5 วิ (สอนปกติผิด ๆ) ต้องเขย่าแรงแค่ไหนถึงเตือน?
 # 2) กฎ "ผิดปกติรวมเกิน 10 วิ = หยุดปั๊ม" ในส่วน 3) ใช้ st.bad_ms โชว์ด้วย show_note()
-# 3) SW6 = Button(1) ล้าง st.bad_count, st.bad_ms · ใส่ใน wait_ms(SAMPLE_MS, (sw5, sw6))
+# 3) SW6 = Button(0) ล้าง st.bad_count, st.bad_ms · ใส่ใน wait_ms(SAMPLE_MS, (sw5, sw6))

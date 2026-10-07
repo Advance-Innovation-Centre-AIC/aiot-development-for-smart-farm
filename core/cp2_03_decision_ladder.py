@@ -33,7 +33,7 @@ TICK_MS = 500        # อัปเดตจอทุกกี่ ms (เฉพ�
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -148,7 +148,7 @@ def main():
     t0 = t3 = t_st = t_dec = t_show = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         now = time.ticks_ms()
-        d = bool(buttons.pressed(0))                    # อ่านปุ่มทุกรอบ (ทุก SAMPLE_MS)
+        d = bool(buttons.pressed(1))                    # อ่านปุ่มทุกรอบ (ทุก SAMPLE_MS)
         if d and not last:
             ack = True                                  # จำไว้ว่าเพิ่งกด จนถึงรอบตัดสิน
             beep("tap")

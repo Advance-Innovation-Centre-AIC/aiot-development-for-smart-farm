@@ -2,15 +2,17 @@
 #
 # ภารกิจ   : รันโมเดล AI บนบอร์ด (หาด้วยชื่อ) แล้วส่ง "ผลที่ AI สรุปแล้ว" ขึ้น bento-aiot/<TEAM>/ai
 #            ส่งเมื่อมีผลใหม่ที่ป้ายเปลี่ยน และส่งซ้ำทุก 2 วินาทีเป็นสัญญาณชีพ (heartbeat)
-# ลองเล่น  : แก้ WIFI_SSID WIFI_PASS TEAM แล้วรัน · เปิดหน้า apps/web-dashboard/ (แสดง .../ai และเตือนเมื่อ anomaly)
-#            หรือในเทอร์มินัล: mosquitto_sub -h broker.hivemq.com -t 'bento-aiot/<TEAM>/ai' -v
+# ลองเล่น  : แก้ WIFI_SSID WIFI_PASS TEAM แล้วรัน · เปิดหน้า apps/web-dashboard/ (แสดง .../ai และเตือนเมื่อป้ายอันตราย)
+#            และหน้าแจ้งเตือนเข้ามือถือ s3/app/notify/index.html?team=<TEAM> (เปิดในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร)
 #            วางบอร์ดนิ่ง แล้วเขย่า ดูว่าข้อความเปลี่ยนตอนไหน และ heartbeat มาทุกกี่วินาที
 # บนจอ     : ชื่อโมเดลที่ใช้, ป้ายผลตัวใหญ่, วงแหวนความมั่นใจ (Arc), ไฟอันตราย (Led), ไฟ MQTT (Led), ข้อความที่ส่ง
 # แนวคิด AIoT: ส่ง "ผลสรุป" ไม่ใช่ข้อมูลดิบ = ประหยัดเน็ต และข้อมูลดิบไม่ออกนอกฟาร์ม
 #            ส่งเฉพาะตอนมีความหมาย (ป้ายเปลี่ยน) + heartbeat ให้แอปรู้ว่าบอร์ดยังอยู่ · ห่างกันอย่างน้อย 200 ms
 # โมเดล    : หาด้วยชื่อตามลำดับ MODEL_KEYS: AnomalousVibration (ส่งลงบอร์ดจาก Edge AI Store) ก่อน
 #            ถ้าบอร์ดไม่มีหรือเลือกไม่สำเร็จจึงใช้ Motion ที่ติดมากับบอร์ด · ข้อความส่งแค่ "ชื่อ" โมเดล ไม่ส่งรหัสโมเดล
-# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) · ใน Emulator MQTT เป็นแบบจำลอง
+#            ป้ายอันตราย (ไฟแดง + เสียง) ชุดเดียวกับ sf3_04 ไม่รวม Push: anomaly shaking sirens cough baby_cry chainsaw crackling_fire alarm
+#            เปลี่ยน MODEL_KEYS เป็นโมเดลเสียง เช่น ("SirenDetection", "Siren Detection") ได้โดยไม่ต้องแก้ DANGER
+# บอร์ด     : TESAIoT Dev Kit (firmware 2.4.2 ขึ้นไป · 2.4.1 ก็รันได้) · BENTO Emulator ต่อ broker สาธารณะจริง ใช้โมเดลในตัว (Shake = shaking · POTEN เกินครึ่ง = เสียงดัง)
 # สัญญา MQTT: หัวข้อ .../ai = {"id": ทีม, "n": ลำดับข้อความ, "model": ชื่อโมเดล, "label": ป้าย, "conf": ความมั่นใจ %}
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM · ยังไม่แก้ = ทำงานออฟไลน์ (พิมพ์ผลลง Console แทน)
 
@@ -29,7 +31,8 @@ BROKER = "broker.hivemq.com"
 CLIENT_ID = "bento-ai-" + TEAM         # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 TOPIC = "bento-aiot/" + TEAM + "/ai"
 MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
-DANGER = ("anomaly", "shaking")        # ป้ายที่ถือว่าอันตราย (ดังเสียง + ไฟแดง)
+DANGER = ("anomaly", "shaking", "sirens", "cough", "baby_cry",   # ป้ายที่ถือว่าอันตราย (ดังเสียง + ไฟแดง)
+          "chainsaw", "crackling_fire", "alarm")                # ชุดเดียวกับ sf3_04 (ไม่รวม Push ของเรดาร์)
 HEARTBEAT_MS = 2000                    # ป้ายไม่เปลี่ยน ก็ยังส่งซ้ำทุกเท่านี้
 GAP_MS = 200                           # ห้ามส่งถี่กว่านี้ (broker สาธารณะ ใช้ร่วมกันหลายกลุ่ม)
 TICK_MS = 100                          # ถามผล AI ทุก 0.1 วินาที (จอเขียนเฉพาะตอนมีผลใหม่)
@@ -206,10 +209,10 @@ def main():
                 show_result(w, lab, conf)
                 if lab in DANGER and lab != old:
                     beep(84, 76)                           # เพิ่งเป็นอันตราย: ดังครั้งเดียว
-            if lab is not None and should_send(lab != sent_lab, time.ticks_diff(now, t_sent)):
+            if lab is not None and should_send(lab != sent_lab, time.ticks_diff(time.ticks_ms(), t_sent)):
                 n += 1                                     # 2) ส่งเมื่อมีความหมาย หรือถึง heartbeat
                 ok = send(online, {"id": TEAM, "n": n, "model": name, "label": lab, "conf": conf})
-                t_sent, sent_lab = now, lab
+                t_sent, sent_lab = time.ticks_ms(), lab           # เวลาที่ส่งจริง (เสียงบี๊บก่อนหน้ากินเวลา ~240 ms)
                 w["sent"].text(("ส่งแล้ว %d ข้อความ" if ok else "ออฟไลน์: พิมพ์ลง Console %d") % n)
                 w["json"].text("%s %d%% n=%d" % (lab, conf, n))
             if online and not mqtt.is_connected():
@@ -232,6 +235,6 @@ def main():
 main()
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) ตั้ง HEARTBEAT_MS = 10000 แล้วดูใน mosquitto_sub ว่าข้อความลดลงเท่าไรตอนวางบอร์ดนิ่ง
+# 1) ตั้ง HEARTBEAT_MS = 10000 แล้วดูในแดชบอร์ดว่าข้อความลดลงเท่าไรตอนวางบอร์ดนิ่ง
 # 2) ในแอปของกลุ่ม (s2/app/) เพิ่มกฎ: ไม่ได้ข้อความจาก .../ai เกิน 5 วินาที = ขึ้นเตือน "AI เงียบ"
 # 3) ส่ง "conf" เฉพาะตอนเกิน CONF 60 % หรือเพิ่มคีย์ "danger": 1/0 ให้แอปใช้ง่ายขึ้น

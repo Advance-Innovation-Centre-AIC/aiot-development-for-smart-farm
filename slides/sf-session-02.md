@@ -229,7 +229,7 @@ AIoT Development for Smart Farm — Intensive Course · TESAIoT Dev Kit + BENTO 
   <rect x="730" y="46" width="250" height="130" rx="14" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
   <text x="855" y="78" text-anchor="middle" font-size="22" font-weight="700" fill="#0d47a1">📱 แอปของกลุ่ม</text>
   <text x="855" y="108" text-anchor="middle" font-size="18" fill="#37474f">มือถือ · หน้าเว็บ</text>
-  <text x="855" y="134" text-anchor="middle" font-size="18" fill="#37474f">Python บนโน้ตบุ๊ก</text>
+  <text x="855" y="134" text-anchor="middle" font-size="18" fill="#37474f">farm_web บนโน้ตบุ๊ก</text>
   <text x="855" y="160" text-anchor="middle" font-size="18" fill="#37474f">จด CSV · กดสั่งปั๊ม</text>
   <line x1="274" y1="84" x2="368" y2="84" stroke="#2e7d32" stroke-width="5" marker-end="url(#g1)"/>
   <line x1="629" y1="84" x2="723" y2="84" stroke="#2e7d32" stroke-width="5" marker-end="url(#g1)"/>
@@ -398,7 +398,7 @@ WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่า�
 - สามตัวบนใช้ตอนต่อ สองตัวล่างใช้ตอน **หาสาเหตุ** · ความต่างของสามตัวบนอยู่ที่ **เวลาของคำถาม** ไม่ใช่ข้อมูลที่คืนมา
 - โมดูลนี้มีอีกสามตัวที่วันนี้ไม่ใช้ (`disconnect` · `ping` · `softap`) — ตรวจเองได้เสมอด้วย `print(dir(wifi))` บนบอร์ด
 - `ui` `rgbmatrix` `pots` `buttons` `sensors` `gpio` คือชุดเดิมจากคาบที่แล้ว · ของใหม่วันนี้คือ `wifi` `mqtt` `json` (และ `tesaiot` ใน `sf2_05`)
-- ปุ่มและลูกบิด **เชื่อตัวอักษรบนแผงบอร์ด:** SW5 = ปุ่มล่าง = `buttons.pressed(0)` · SW6 = ปุ่มบน = `buttons.pressed(1)` · VR1–VR4 = `pots.read(0)`–`pots.read(3)` · อย่าเชื่อ `buttons.name()` ไฟล์คาบนี้จึงเขียนชื่อเองใน `BTN_NAMES`
+- ปุ่มและลูกบิด **เชื่อตัวอักษรบนแผงบอร์ด:** SW5 = ปุ่มล่าง = `buttons.pressed(1)` · SW6 = ปุ่มบน = `buttons.pressed(0)` · VR1–VR4 = `pots.read(0)`–`pots.read(3)` · อย่าเชื่อ `buttons.name()` ไฟล์คาบนี้จึงเขียนชื่อเองใน `BTN_NAMES`
 
 ---
 
@@ -783,8 +783,8 @@ section p, section li { font-size: .86em; line-height: 1.26; }
   <text x="865" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1565c0">📱 เบราว์เซอร์ · wss 8884</text>
   <text x="865" y="60" text-anchor="middle" font-size="15" fill="#0d47a1">farm_web · my_first_reader</text>
   <rect x="750" y="82" width="230" height="62" rx="12" fill="#fff3e0" stroke="#ef6c00" stroke-width="3"/>
-  <text x="865" y="108" text-anchor="middle" font-size="18" font-weight="700" fill="#e65100">💻 Python · TCP 1883</text>
-  <text x="865" y="132" text-anchor="middle" font-size="15" fill="#a1683a">farm_monitor.py</text>
+  <text x="865" y="108" text-anchor="middle" font-size="18" font-weight="700" fill="#e65100">🧪 บอร์ดจำลอง · wss 8884</text>
+  <text x="865" y="132" text-anchor="middle" font-size="15" fill="#a1683a">fake_board.html</text>
   <line x1="252" y1="56" x2="380" y2="56" stroke="#2e7d32" stroke-width="4" marker-end="url(#r1)"/>
   <line x1="380" y1="100" x2="256" y2="100" stroke="#6a1b9a" stroke-width="4" marker-end="url(#r2)"/>
   <text x="316" y="84" text-anchor="middle" font-size="16" font-weight="700" fill="#37474f">TCP 1883</text>
@@ -797,7 +797,7 @@ section p, section li { font-size: .86em; line-height: 1.26; }
 </svg>
 
 - เบราว์เซอร์เปิดสาย TCP ตรง ๆ ไม่ได้ จึงพูด MQTT ผ่าน WebSocket ที่ `wss://broker.hivemq.com:8884/mqtt` · broker ส่งต่อให้เองโดยไม่สนว่าแต่ละฝั่งมาทางไหน
-- **ตัวสำรอง (ใช้เมื่อผู้สอนประกาศเท่านั้น):** `test.mosquitto.org` พอร์ต 1883 · หน้าเว็บ `wss://test.mosquitto.org:8081/mqtt` — แก้ `BROKER` (ไฟล์บอร์ดและ [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)) กับ `BROKER_URL` ([`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)) **พร้อมกัน**
+- **ตัวสำรอง (ใช้เมื่อผู้สอนประกาศเท่านั้น):** `test.mosquitto.org` พอร์ต 1883 · หน้าเว็บ `wss://test.mosquitto.org:8081/mqtt` — แก้ `BROKER` (ไฟล์บอร์ด) กับ `BROKER_URL` ([`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)) **พร้อมกัน**
 - ไม่มีชื่อผู้ใช้ ไม่มีรหัสผ่าน · QoS 0 · **ไม่มี retain** — แอปที่เปิดทีหลังเห็นแค่ใบถัดไป
 
 ---
@@ -830,7 +830,7 @@ section li { margin: .05em 0; font-size: .86em; line-height: 1.26; }
 - **หัวข้อต้องไม่ซ้ำใคร** ผู้สอนแจก `TEAM` ให้แต่ละกลุ่มไม่ซ้ำกัน · ไฟล์บอร์ด **ไม่ยอมรัน** ถ้ายังเป็น `teamXX`
 - **ห้าม subscribe `#`** ข้อความของคนแปลกหน้าทั้งโลกจะไหลเข้ามา · แอปของกลุ่มฟัง `bento-aiot/<TEAM>/#` · หน้ารวมฟัง `bento-aiot/+/telemetry` กับ `/+/event`
 - **ห้ามส่งความลับ** ไม่ว่ารหัส Wi-Fi ชื่อจริง หรือเบอร์โทร
-- **client_id ชนกันได้กับทุกคนบนอินเทอร์เน็ต** ชนเมื่อไร broker เตะตัวเก่าออก · บอร์ดใช้ `bento-farm-<TEAM>-<สุ่ม>` (สุ่มใหม่ทุกครั้งที่ต่อ) · แอป Python ใช้ `farm-app-<TEAM>-<สุ่ม>` · หน้าเว็บสุ่มชื่อของตัวเอง (`farm-web-…` / `web-…`) จึงไม่เตะกัน
+- **client_id ชนกันได้กับทุกคนบนอินเทอร์เน็ต** ชนเมื่อไร broker เตะตัวเก่าออก · บอร์ดใช้ `bento-farm-<TEAM>-<สุ่ม>` (สุ่มใหม่ทุกครั้งที่ต่อ) · หน้าเว็บสุ่มชื่อของตัวเอง (`farm-web-…` / `web-…`) จึงไม่เตะกัน
 
 </div>
 <div>
@@ -987,7 +987,7 @@ def build_payload(n, t, h, p, az, knobs, manual):
 
 ![w:590](img/emu/sf2_02_greenhouse_report__sent_kit.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย · ค่าเซนเซอร์จำลอง) — จอไฟ RGB นับใบที่ส่ง · Emulator ส่งถึง broker.hivemq.com จริงผ่าน WebSocket (client id ต่อท้าย -emu) แอปของกลุ่มจึงเห็นใบเหล่านี้ · แผง Emulator พิมพ์ชื่อปุ่มเป็น SW4 / SW5: ปุ่มซ้าย = <b>SW5</b> (ปุ่มล่าง) ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator (TEAM = team99 เฉพาะตอนถ่าย · ค่าเซนเซอร์จำลอง) — จอไฟ RGB นับใบที่ส่ง · Emulator ส่งถึง broker.hivemq.com จริงผ่าน WebSocket (client id ต่อท้าย -emu) แอปของกลุ่มจึงเห็นใบเหล่านี้ · ภาพนี้ถ่ายตอนแผงยังพิมพ์ชื่อปุ่มเป็น SW4 / SW5 · ตอนนี้แผงพิมพ์ SW5 / SW6 ตรงกับบอร์ด: ปุ่มซ้าย = <b>SW5</b> (ปุ่มล่าง) ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</div>
 
 </div>
 </div>
@@ -1100,7 +1100,7 @@ section pre { font-size: .54em; }
 
 <div class="flow"><b>ได้ข้อความ</b><i>→</i><b>จด CSV</b><i>→</i><b>กฎหนึ่งข้อ</b><i>→</i><b>เว้น 60 วินาที</b></div>
 
-<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div><div class="fh lap">💻 แอปของกลุ่ม (เลือกหนึ่ง)</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> <span>— Python บนโน้ตบุ๊ก: ตารางสด + CSV</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— แอปในเบราว์เซอร์ ไม่ต้องติดตั้ง</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.py">fake_board.py</a> <span>— บอร์ดจำลอง ทดสอบแอปตอนไม่มีบอร์ด</span></div></div></div>
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div><div class="fh lap">💻 แอปของกลุ่ม (หน้าเว็บ)</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— ตารางสด + CSV + ปุ่มสั่ง ไม่ต้องติดตั้ง</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html?team=team99">fake_board.html</a> <span>— บอร์ดจำลองในเบราว์เซอร์ ทดสอบแอปตอนไม่มีบอร์ด</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> แอปของกลุ่มไหน <b>จด CSV ครบทุกใบ โดยเลข <code>n</code> ไม่ขาดเลย</b> ใน 10 นาที — แล้วทำกราฟใน Excel ได้ก่อน?</div>
 
@@ -1181,7 +1181,7 @@ section li { font-size: .84em; }
 ---
 
 
-## `farm_monitor.py` — ติดตั้งครั้งเดียว แล้วแก้ TODO ของกลุ่ม
+## `farm_web.html` — เปิดลิงก์เดียว แล้วเติมกฎของกลุ่ม
 
 <style scoped>
 section pre { font-size: .56em; }
@@ -1190,25 +1190,21 @@ section pre { font-size: .56em; }
 <div class="cols">
 <div class="c55">
 
-```python
-# ===== TODO 1: ตั้งค่าของกลุ่ม =====
-TEAM = "teamXX"                                  # ต้องตรงกับ TEAM บนบอร์ด
-# ...
-# ===== TODO 2: เลือกคอลัมน์ที่อยากเห็นในตารางและใน Excel (ชื่อต้องตรงกับคีย์ที่บอร์ดส่ง) =====
-COLUMNS = ["n", "temp_c", "rh", "hpa", "az", "soil", "light", "tank", "pump"]
-# ...
-# ===== TODO 3: กฎของกลุ่ม ดินแห้งกว่าเกณฑ์ = สั่งรดน้ำ =====
-SOIL_MIN = 30          # ดิน (VR1 บนบอร์ด) ต่ำกว่านี้ถือว่าแห้ง
-PUMP_SEC = 10          # สั่งรดน้ำครั้งละกี่วินาที (บอร์ดตัดที่ 30 เองอยู่แล้ว)
-COOLDOWN_S = 60        # สั่งแล้วรออย่างน้อยกี่วินาทีก่อนสั่งซ้ำ ไม่งั้นแอปสั่งรัวทุก 5 วินาที
-# ...
-def rule(data):
-    """รับค่าหนึ่งใบจากบอร์ด คืนคำสั่งที่จะส่งกลับ (dict) หรือ None ถ้าไม่ต้องทำอะไร"""
-    soil = data.get("soil")
-    if isinstance(soil, (int, float)) and soil < SOIL_MIN and data.get("pump") != 1:
-        return {"cmd": "pump", "on": 1, "sec": PUMP_SEC}
-    # TODO 4: เพิ่มกฎของกลุ่มเอง เช่น ร้อนเกิน 32 C ให้ส่ง {"cmd": "say", "text": "HOT"}
-    return None
+```js
+// TODO 3 ของกลุ่ม (เติมเองใน farm_web.html ไฟล์ยังไม่มี): ดินแห้งกว่าเกณฑ์ = สั่งรดน้ำ
+const SOIL_MIN = 30;     // ดิน (VR1 บนบอร์ด) ต่ำกว่านี้ถือว่าแห้ง
+const PUMP_SEC = 10;     // สั่งรดน้ำครั้งละกี่วินาที (บอร์ดตัดที่ 30 เองอยู่แล้ว)
+const COOLDOWN_S = 60;   // สั่งแล้วรออย่างน้อยกี่วินาทีก่อนสั่งซ้ำ ไม่งั้นแอปสั่งรัวทุก 5 วินาที
+let lastCmdAt = 0;       // เวลาที่สั่งครั้งล่าสุด (มิลลิวินาที)
+
+// รับค่าหนึ่งใบจากบอร์ด คืนคำสั่งที่จะส่งกลับ หรือ null ถ้าไม่ต้องทำอะไร
+function rule(data) {
+  if (typeof data.soil === "number" && data.soil < SOIL_MIN && data.pump !== 1) {
+    return { cmd: "pump", on: 1, sec: PUMP_SEC };
+  }
+  // TODO 4: เพิ่มกฎของกลุ่มเอง เช่น ร้อนเกิน 32 C ให้ส่ง { cmd: "say", text: "HOT" }
+  return null;
+}
 ```
 
 </div>
@@ -1223,11 +1219,11 @@ def rule(data):
 <div class="try">
 
 **ลองทำ** (บอร์ดยังรัน `sf2_02` อยู่)
-1. ติดตั้งครั้งเดียว `pip install paho-mqtt` (Python 3.8+)
-2. ในโฟลเดอร์ `app` รัน `python farm_monitor.py`
-3. **TODO 1** แก้ `TEAM` · กด SW6 บนบอร์ด → แอปขึ้น `>>> เหตุการณ์`
-4. **TODO 2** เลือกคอลัมน์ · **TODO 3** ตั้ง `SOIL_MIN` แล้วหมุน VR1 ลง → `<<< สั่งกลับ`
-5. **TODO 4** กฎของกลุ่มเอง · Ctrl+C แล้วเปิด `farm_log_team__.csv` ใน Excel ทำกราฟ
+1. เปิด [`farm_web.html?team=team__`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__) ใส่เลขกลุ่ม กด **ต่อ** → การ์ดขึ้นทุก 5 วินาที
+2. กด SW6 บนบอร์ด → ขึ้นใน **เหตุการณ์ล่าสุด**
+3. **TODO 3** ดาวน์โหลดไฟล์ไปแก้ วางโค้ดทางซ้าย และส่วนที่ติดป้าย TODO 3 ในสไลด์ถัดไป · ตั้ง `SOIL_MIN` แล้วหมุน VR1 ลง → `<<< สั่งกลับ`
+4. **TODO 4** กฎของกลุ่มเอง — เขียนเองหรือให้ AI ช่วย (สไลด์ Vibe coding) ก็ได้
+5. กด **ดาวน์โหลด CSV** แล้วเปิด `farm_log_team__.csv` ใน Excel ทำกราฟ
 
 </div>
 
@@ -1246,38 +1242,38 @@ section pre { font-size: .56em; }
 <div class="cols">
 <div class="c60">
 
-```python
-def on_message(client, userdata, msg):
-    text = msg.payload.decode("utf-8", "replace")
-    try:
-        data = json.loads(text)
-    except ValueError:
-        data = None
-    if not isinstance(data, dict):               # คนอื่นส่งอะไรมาก็ได้ ไม่ใช่ JSON object ก็แค่จดไว้
-        data = {}
-    now = time.strftime("%Y-%m-%d %H:%M:%S")
-    if msg.topic == T_EVT:
-        print(">>> เหตุการณ์:", text[:120])
-        state["writer"].writerow([now, "event"] + [""] * len(COLUMNS) + [text[:200]])
-    else:
-        print_row(data)
-        state["writer"].writerow([now, "telemetry"] + [data.get(c, "") for c in COLUMNS] + [""])
-        cmd = rule(data)
-        if cmd and time.time() - state["last_cmd"] >= COOLDOWN_S:
-            state["last_cmd"] = time.time()
-            client.publish(T_CMD, json.dumps(cmd))
-            print("<<< สั่งกลับ:", json.dumps(cmd))
-            state["writer"].writerow([now, "command"] + [""] * len(COLUMNS) + [json.dumps(cmd)])
-    state["log"].flush()                         # เขียนลงดิสก์ทันที ปิดแอปแบบไหนข้อมูลก็ไม่หาย
+```js
+client.on("message", (topic, payload) => {
+  const text = payload.toString();
+  let data = null;
+  try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON ก็แสดงเป็นข้อความดิบ */ }
+  # ...
+  if (topic.endsWith("/telemetry") && data && typeof data === "object" && !Array.isArray(data)) {
+    showCards(data);
+    recordTelemetry(data);
+    // TODO 3 ของกลุ่ม (เติมเอง): ตัดสินด้วย rule() แล้วเว้น COOLDOWN_S ก่อนสั่งซ้ำ
+    const cmd = rule(data);
+    if (cmd && Date.now() - lastCmdAt >= COOLDOWN_S * 1000) {
+      lastCmdAt = Date.now();
+      send(cmd);
+      events.unshift(new Date().toLocaleTimeString() + "  <<< สั่งกลับ " + JSON.stringify(cmd));
+      $("events").textContent = events.slice(0, 8).join("\n");
+    }
+  }
+  else if (topic.endsWith("/event")) {
+    events.unshift(new Date().toLocaleTimeString() + "  " + text.slice(0, 160));
+    $("events").textContent = events.slice(0, 8).join("\n");
+  }
+});
 ```
 
 </div>
 <div>
 
-- ไม่ใช่ JSON object ก็ **แค่จดไว้** ไม่พัง
-- `rule(data)` ตัดสิน · `COOLDOWN_S` กัน **สั่งรัวทุก 5 วินาที**
-- ทุกแถวมี `kind` = `telemetry` / `event` / `command` → CSV คือ **หลักฐาน** ของภารกิจกลุ่ม
-- `utf-8-sig` = Excel อ่านภาษาไทยถูก · `flush()` ทุกใบ ปิดแอปแบบไหนข้อมูลก็ไม่หาย
+- ไม่ใช่ JSON ก็ **แค่แสดงเป็นข้อความดิบ** ไม่พัง
+- `rule(data)` ตัดสิน · `COOLDOWN_S` กัน **สั่งรัวทุก 5 วินาที** · คำสั่งที่ส่งขึ้นใน **เหตุการณ์ล่าสุด** พร้อมเวลา
+- `recordTelemetry()` จดทุกใบเป็นหนึ่งแถว (คอลัมน์ `n` … `by`) → CSV คือ **หลักฐาน** ของภารกิจกลุ่ม
+- ปุ่มดาวน์โหลดใส่ BOM (`\uFEFF`) = Excel อ่านภาษาไทยถูก · ข้อมูลอยู่ในเบราว์เซอร์ **รีเฟรชหรือปิดหน้า = หาย** กดดาวน์โหลดก่อน
 
 <div class="think">
 
@@ -1296,7 +1292,7 @@ def on_message(client, userdata, msg):
 ## `farm_web.html` — แอปในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร
 
 <style scoped>
-section pre { font-size: .54em; }
+section pre { font-size: .5em; }
 section li { font-size: .86em; }
 </style>
 
@@ -1304,25 +1300,33 @@ section li { font-size: .86em; }
 <div class="c60">
 
 ```js
-const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";   // สำรอง: "wss://test.mosquitto.org:8081/mqtt"
-const ROOT = "bento-aiot";
 // ชื่อไทยของคีย์ที่บอร์ดส่ง คีย์ที่ไม่อยู่ในนี้ก็ยังขึ้นการ์ด แค่ใช้ชื่ออังกฤษ (TODO: แก้ได้ตามใจ)
 const LABELS = { temp_c: "อุณหภูมิ C", rh: "ความชื้น %", hpa: "ความกด hPa", az: "เอียง az",
-                 soil: "ดิน % (VR1)", light: "แสง % (VR3)", tank: "ถังน้ำ % (VR4)", pump: "ปั๊ม", n: "ใบที่" };
+                 soil: "ดิน % (VR1)", light: "แสง % (VR3)", tank: "ถังน้ำ % (VR4)", pump: "ปั๊ม", n: "ใบที่",
+                 auto: "โหมดออโต้", by: "ส่งโดย" };
 ```
 
 ```js
 // การ์ดหนึ่งใบต่อหนึ่งคีย์ ใช้ textContent เสมอ ใครส่งอะไรมาก็ไม่ถูกรันเป็นโค้ด
 function showCards(data) {
-  const box = $("cards");
-  box.replaceChildren();
+  # ...
   for (const key of Object.keys(data).slice(0, 20)) {
     if (key === "id") continue;
     # ...
     name.textContent = LABELS[key] || key;
-    num.textContent = key === "pump" ? (data[key] ? "เปิด" : "ปิด") : String(data[key]).slice(0, 24);
-    card.append(name, num);
-    box.append(card);
+    # ...
+    const v = data[key];
+    if (v === null || v === undefined) {
+      num.textContent = "ไม่ทราบ";
+      # ...
+    } else if (key === "pump" || key === "auto") {
+      num.textContent = v ? "เปิด" : "ปิด";
+      # ...
+    } else {
+      num.textContent = String(v).slice(0, 24);
+      # ...
+    }
+    # ...
   }
 }
 ```
@@ -1333,12 +1337,12 @@ function showCards(data) {
 - เปิด <https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__> หรือดาวน์โหลดไฟล์ไปแก้เองแล้วเปิดในเครื่อง
 - **TODO ของกลุ่ม:** แก้ `LABELS` เป็นชื่อที่กลุ่มอยากเห็น (อย่างน้อย 2 คีย์) · เพิ่มปุ่มคำสั่งของกลุ่ม · การ์ดเป็นสีแดงเมื่อค่าเกินเกณฑ์
 - ใช้ `textContent` เสมอ — **ใครส่งอะไรมาก็ไม่ถูกรันเป็นโค้ด**
-- ไม่มี CSV → จดตารางด้วยมือ 5 แถวแทน
+- CSV เก็บในเบราว์เซอร์ → กด **ดาวน์โหลด CSV** ก่อนปิดหรือรีเฟรชหน้า
 - ต้องออกเน็ตถึง `cdn.jsdelivr.net` และพอร์ต 8884 ได้
 
 <div class="goal">
 
-✅ `farm_monitor.py` กับ `farm_web.html` **ทดสอบกับ broker.hivemq.com จริงแล้ว** — ทั้งกับบอร์ดจำลองบนโน้ตบุ๊ก และ `farm_monitor.py` กับบอร์ดจริงที่รัน `sf2_02`
+✅ `farm_web.html` **ทดสอบกับ broker.hivemq.com จริงแล้ว** กับบอร์ดจำลอง · กฎ TODO 3 ที่กลุ่มเติมเอง **ยังไม่ได้ทดสอบกับบอร์ดจริง** — ลองกับบอร์ดของกลุ่ม
 
 </div>
 
@@ -1361,21 +1365,21 @@ section p, section li { font-size: .84em; }
 
 <div class="pr">
 <div><b>ก. หน้าเว็บไฟล์เดียว</b><br>เขียนหน้าเว็บ dashboard ไฟล์ HTML ไฟล์เดียว ใช้ mqtt.js จาก CDN ต่อ `wss://broker.hivemq.com:8884/mqtt` subscribe `bento-aiot/team05/#` ตามสัญญาข้างบน แสดงการ์ดอุณหภูมิ ความชื้น ดิน ถังน้ำ กราฟอุณหภูมิย้อนหลัง 5 นาที รายการ event ล่าสุด และปุ่ม "รดน้ำ 10 วินาที" ที่ส่ง `{"cmd":"pump","on":1,"sec":10}` ไป `bento-aiot/team05/cmd` ใช้ client id สุ่ม รองรับค่า null และคีย์ที่ขาดหาย ใช้ textContent ห้ามใช้ innerHTML กับข้อมูลที่รับมา ภาษาไทยทั้งหน้า ใช้บนมือถือได้</div>
-<div><b>ข. Python จดข้อมูลและเตือน</b><br>เขียนโปรแกรม Python 3 ใช้ paho-mqtt (รองรับทั้งรุ่น 1.x และ 2.x) ต่อ `broker.hivemq.com` พอร์ต 1883 subscribe telemetry และ event ของ `team05` ตามสัญญาข้างบน จดทุกข้อความลงไฟล์ CSV ที่เปิดใน Excel แล้วภาษาไทยไม่เพี้ยน (utf-8-sig) และเตือนบนจอพร้อมเสียงเมื่อได้ event ที่ `level` เป็น 2 หรือเมื่อ `soil` ต่ำกว่า 30 · ถ้าดินแห้งให้ส่งคำสั่งรดน้ำ แต่เว้นอย่างน้อย 60 วินาทีก่อนสั่งซ้ำ และไม่สั่งเมื่อ `pump` เป็น 1 อยู่แล้ว</div>
-<div><b>ค. Streamlit</b><br>เขียนแอป Streamlit หนึ่งไฟล์ ใช้ paho-mqtt ใน thread แยกรับ `bento-aiot/team05/telemetry` ตามสัญญาข้างบน เก็บค่าล่าสุด 300 ใบ แสดงตัวเลขล่าสุดด้วย st.metric กราฟ temp_c และ soil ด้วย st.line_chart รีเฟรชทุก 2 วินาที และปุ่มส่งคำสั่งเปิด/ปิดปั๊มไป `bento-aiot/team05/cmd`</div>
-<div><b>ง. Node-RED</b><br>อธิบายทีละขั้นให้สร้าง flow ใน Node-RED ที่ใช้ mqtt in ต่อ `broker.hivemq.com:1883` topic `bento-aiot/team05/telemetry` แปลง JSON แล้วแสดง gauge ความชื้นดินและกราฟอุณหภูมิบน Dashboard พร้อมปุ่มที่ส่ง `{"cmd":"pump","on":1,"sec":10}` ผ่าน mqtt out ไป `bento-aiot/team05/cmd` ตามสัญญาข้างบน และให้ไฟล์ flow JSON ที่ import ได้</div>
+<div><b>ข. หน้าเว็บจดข้อมูลและเตือน</b><br>เขียนหน้าเว็บไฟล์ HTML ไฟล์เดียว ใช้ mqtt.js จาก CDN ต่อ `wss://broker.hivemq.com:8884/mqtt` subscribe telemetry และ event ของ `team05` ตามสัญญาข้างบน จดทุกข้อความเป็นตาราง มีปุ่มดาวน์โหลด CSV ที่เปิดใน Excel แล้วภาษาไทยไม่เพี้ยน (ใส่ BOM ไว้หน้าไฟล์) และเตือนบนจอพร้อมเสียงเมื่อได้ event ที่ `level` เป็น 2 หรือเมื่อ `soil` ต่ำกว่า 30 · ถ้าดินแห้งให้ส่งคำสั่งรดน้ำ แต่เว้นอย่างน้อย 60 วินาทีก่อนสั่งซ้ำ และไม่สั่งเมื่อ `pump` เป็น 1 อยู่แล้ว · ใช้ textContent ห้ามใช้ innerHTML กับข้อมูลที่รับมา</div>
+<div><b>ค. หน้าเว็บกราฟสด</b><br>เขียนหน้าเว็บไฟล์ HTML ไฟล์เดียว ใช้ mqtt.js และ Chart.js จาก CDN รับ `bento-aiot/team05/telemetry` ตามสัญญาข้างบน เก็บค่าล่าสุด 300 ใบ แสดงตัวเลขล่าสุดเป็นการ์ดใหญ่ กราฟ temp_c และ soil ย้อนหลัง และปุ่มส่งคำสั่งเปิด/ปิดปั๊มไป `bento-aiot/team05/cmd` ห่างกันอย่างน้อย 1 วินาที ใช้บนมือถือได้</div>
+<div><b>ง. Node-RED (ทางเลือก · กลุ่ม System Integrator)</b><br>อธิบายทีละขั้นให้สร้าง flow ใน Node-RED ที่ใช้ mqtt in ต่อ `broker.hivemq.com:1883` topic `bento-aiot/team05/telemetry` แปลง JSON แล้วแสดง gauge ความชื้นดินและกราฟอุณหภูมิบน Dashboard พร้อมปุ่มที่ส่ง `{"cmd":"pump","on":1,"sec":10}` ผ่าน mqtt out ไป `bento-aiot/team05/cmd` ตามสัญญาข้างบน และให้ไฟล์ flow JSON ที่ import ได้</div>
 </div>
 
 <div class="warn">
 
-**ก่อนเชื่อโค้ดที่ AI เขียน ตรวจ 4 ข้อ:** ① ทดสอบกับ `fake_board.py` ก่อนต่อบอร์ดจริง ② client id **สุ่ม** ไม่ซ้ำบอร์ด ③ ข้อมูลที่รับมาใช้ `textContent` ไม่ใช่ `innerHTML` ④ กฎอัตโนมัติมี cooldown ≥ 60 วินาที — **จะเขียนเองหรือ vibe coding ก็ได้ แต่กลุ่มต้องอธิบายโค้ดของตัวเองได้**
+**ก่อนเชื่อโค้ดที่ AI เขียน ตรวจ 4 ข้อ:** ① ทดสอบกับ `fake_board.html` ก่อนต่อบอร์ดจริง ② client id **สุ่ม** ไม่ซ้ำบอร์ด ③ ข้อมูลที่รับมาใช้ `textContent` ไม่ใช่ `innerHTML` ④ กฎอัตโนมัติมี cooldown ≥ 60 วินาที — **จะเขียนเองหรือ vibe coding ก็ได้ แต่กลุ่มต้องอธิบายโค้ดของตัวเองได้**
 
 </div>
 
 ---
 
 
-## ทดสอบโดยไม่มีบอร์ด — `fake_board.py` และ `field_sim.py`
+## ทดสอบโดยไม่มีบอร์ด — `fake_board.html` และ PLC Simulator
 
 <style scoped>
 section pre { font-size: .56em; }
@@ -1391,26 +1395,26 @@ section li { font-size: .86em; }
   <text x="590" y="76" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">20 วิ ขึ้นไป: แบบ sf2_03 (ดินแห้ง 20 % ให้แอปสั่งรดน้ำ) — ถึงวินาทีที่ 180</text>
   <circle cx="148" cy="112" r="9" fill="#ef6c00"/><text x="148" y="140" text-anchor="middle" font-size="15" fill="#e65100">วิที่ 12: กด SW6</text>
   <circle cx="400" cy="112" r="9" fill="#e53935"/><text x="400" y="140" text-anchor="middle" font-size="15" fill="#c62828">วิที่ 40: แจ้งเตือนพืช ระดับ 2</text>
-  <text x="40" y="36" font-size="17" font-weight="700" fill="#37474f">fake_board.py ส่งข้อความหน้าตาเดียวกับบอร์ดจริงทุกคีย์ · ทุก 5 วินาที · และรับคำสั่งด้วยกฎเดียวกับ sf2_03</text>
+  <text x="40" y="36" font-size="17" font-weight="700" fill="#37474f">fake_board.html ส่งข้อความหน้าตาเดียวกับบอร์ดจริงทุกคีย์ · ทุก 5 วินาที · และรับคำสั่งด้วยกฎเดียวกับ sf2_03</text>
 </svg>
 
 <div class="cols">
 <div class="c55">
 
-```bash
-pip install paho-mqtt
-python fake_board.py
+```text
+fake_board.html?team=team99   ← เปิด แล้วกด "เริ่ม"
+farm_web.html?team=team99     ← แอปของเรา เลขกลุ่มเดียวกัน
 ```
 
-- ตั้ง `TEAM` ให้ตรงกับแอป ใช้เลขที่ไม่มีใครใช้ (เช่น `team99`) · **อย่ารันพร้อมบอร์ดจริงเลขเดียวกัน**
-- มันพิมพ์บอกว่า **บอร์ดจริงจะทำอะไร** กับทุกคำสั่งที่แอปส่งมา
+- ใช้เลขกลุ่มเดียวกับแอป และเป็นเลขที่ไม่มีใครใช้ (เช่น `team99`) · **อย่าเปิดพร้อมบอร์ดจริงเลขเดียวกัน**
+- มันบอกในบันทึกบนหน้าว่า **บอร์ดจริงจะทำอะไร** กับทุกคำสั่งที่แอปส่งมา · ครบ 180 วินาทีหยุดเอง
 
 </div>
 <div>
 
-- [`field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py) = แปลงผักจำลอง (โหนดเซนเซอร์ + PLC) ใช้คู่กับ Gateway ในช่วงต่อยอด
+- **PLC Simulator** ใน [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__) = แปลงผักจำลอง (โหนดเซนเซอร์ + PLC) ใช้คู่กับ Gateway ในช่วงต่อยอด
 - **BENTO Emulator ใช้ทดสอบแอปได้** — Emulator ต่อ broker.hivemq.com จริงผ่าน WebSocket แอปเห็นข้อความและสั่งบอร์ดใน Emulator ได้ · ถ้า broker ไม่ตอบใน 5 วิ Emulator ใช้ broker จำลองแทนและบอกที่คอนโซล (ตอนนั้นแอปจะไม่เห็นข้อความ)
-- ที่มา: [`fake_board.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.py) · สัญญาข้อ 6
+- ที่มา: [`fake_board.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/fake_board.html) · สัญญาข้อ 6
 
 </div>
 </div>
@@ -1770,7 +1774,7 @@ def on_command(w, s, raw):
 ```python
         msg = mqtt.get_message()       # ฟังทุก 20 ms แม้จะอ่านเซนเซอร์แค่ทุกวินาที
         ack = on_command(w, s, msg[1]) if msg else False
-        down = buttons.pressed(0)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
+        down = buttons.pressed(1)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
         if down and not was_down:      # นับตอนเพิ่งกดลง กดค้างไม่นับซ้ำ
             ack = True
         was_down = down
@@ -1807,11 +1811,11 @@ def on_command(w, s, raw):
 <div>
 <div class="goal">🎯 <b>โจทย์</b><br>ไม่มีใครกดปุ่มสั่งปั๊มเอง ให้ระบบเปิดปั๊มเมื่อ <code>soil &lt; SOIL_MIN</code></div>
 <div class="try"><b>คนที่ 1 — ฝั่งบอร์ด</b><br>รัน <code>sf2_03_remote_pump.py</code> และหมุน VR1 ให้ดินแห้ง</div>
-<div class="try"><b>คนที่ 2 — ฝั่งแอป</b><br>รัน <code>farm_monitor.py</code> หรือเปิด <code>farm_web.html</code> แล้วดู telemetry / CSV</div>
+<div class="try"><b>คนที่ 2 — ฝั่งแอป</b><br>เปิด <code>farm_web.html</code> ที่เติมกฎของกลุ่มแล้ว (TODO 3) ดู telemetry และเหตุการณ์ล่าสุด</div>
 </div>
 <div>
 <div class="think"><b>สิ่งที่ต้องพิสูจน์</b><br>เห็นค่า soil ต่ำกว่าเกณฑ์ → แอปส่งคำสั่ง → บอร์ดรับคำสั่ง → <code>pump = 1</code></div>
-<div class="tip">ถ้าใช้ <code>farm_web.html</code> เวอร์ชันใหม่ สามารถกด <b>ดาวน์โหลด CSV</b> จากหน้าเว็บได้เลย</div>
+<div class="tip">กด <b>ดาวน์โหลด CSV</b> ก่อนปิดหน้าเว็บ — ข้อมูลเก็บอยู่ในเบราว์เซอร์ รีเฟรชแล้วหาย</div>
 </div>
 </div>
 ---
@@ -1870,21 +1874,21 @@ pump = 1
 
 <div class="cols">
 <div>
-<p><strong>ถ้าใช้ <code>farm_monitor.py</code></strong></p>
+<p><strong>① เก็บจาก <code>farm_web.html</code></strong></p>
 <ul>
-<li>เปิดไฟล์ <code>farm_log_&lt;TEAM&gt;.csv</code> ใน Excel</li>
-<li>หาแถว telemetry ที่ <code>soil &lt; SOIL_MIN</code></li>
-<li>หาแถว <code>command</code></li>
-<li>ดูช่วงที่ <code>pump</code> เปลี่ยนเป็น <code>1</code></li>
+<li>เปิดหน้าเว็บของทีม (เติมกฎแล้ว)</li>
+<li>ปล่อยให้ telemetry วิ่งสักระยะ</li>
+<li>จดเวลา <code>&lt;&lt;&lt; สั่งกลับ</code> จาก <strong>เหตุการณ์ล่าสุด</strong></li>
+<li>กด <strong>ดาวน์โหลด CSV</strong></li>
 </ul>
 </div>
 <div>
-<p><strong>ถ้าใช้ <code>farm_web.html</code></strong></p>
+<p><strong>② อ่านใน Excel</strong></p>
 <ul>
-<li>เปิดหน้าเว็บของทีม</li>
-<li>ปล่อยให้ telemetry วิ่งสักระยะ</li>
-<li>กด <strong>ดาวน์โหลด CSV</strong></li>
-<li>เปิด <code>farm_log_&lt;TEAM&gt;.csv</code> ใน Excel</li>
+<li>เปิด <code>farm_log_&lt;TEAM&gt;.csv</code></li>
+<li>หาแถวแรกที่ <code>soil &lt; SOIL_MIN</code> (จดเลข <code>n</code>)</li>
+<li>หาแถวแรกที่ <code>pump</code> เปลี่ยนเป็น <code>1</code></li>
+<li>ต่างกันกี่ใบ × 5 วินาที = เวลาที่ใช้</li>
 </ul>
 </div>
 </div>
@@ -1908,10 +1912,10 @@ pump = 1
 </div>
 <div>
 <h3>ฝั่งโน้ตบุ๊ก</h3>
-<p>เลือกอย่างใดอย่างหนึ่ง</p>
+<p>เปิดหน้าเว็บ ไม่ต้องติดตั้งอะไร</p>
 
-- <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> — Python + CSV
-- <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> — เว็บ + CSV + ส่งคำสั่ง
+- <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__">farm_web.html</a> — เว็บ + CSV + ส่งคำสั่ง
+- <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html?team=team99">fake_board.html</a> — บอร์ดจำลอง ตอนไม่มีบอร์ด
 
 เปิดด้วย TEAM เดียวกับบอร์ด เช่น <code>?team=team05</code>
 
@@ -1934,7 +1938,7 @@ pump = 1
   <text x="500" y="155" text-anchor="middle" font-size="15" fill="#546e7a">เป็นตัวกลาง</text>
   <rect x="760" y="65" width="220" height="105" rx="14" fill="#e3f2fd" stroke="#1565c0" stroke-width="3"/>
   <text x="870" y="100" text-anchor="middle" font-size="20" font-weight="700" fill="#0d47a1">💻 แอป</text>
-  <text x="870" y="130" text-anchor="middle" font-size="16" fill="#37474f">farm_monitor / farm_web</text>
+  <text x="870" y="130" text-anchor="middle" font-size="16" fill="#37474f">farm_web.html</text>
   <text x="870" y="155" text-anchor="middle" font-size="15" fill="#546e7a">ดูข้อมูล · ส่ง cmd</text>
   <line x1="242" y1="100" x2="382" y2="100" stroke="#2e7d32" stroke-width="5" marker-end="url(#flowA)"/>
   <line x1="618" y1="100" x2="752" y2="100" stroke="#2e7d32" stroke-width="5" marker-end="url(#flowA)"/>
@@ -1957,7 +1961,7 @@ pump = 1
 <div>
 <div class="goal">☑ <b>ฟาร์มขึ้นเน็ต</b><br><code>sf2_01</code> ได้ IP ที่ไม่ใช่ <code>0.0.0.0</code></div>
 <div class="goal">☑ <b>ฟาร์มรายงานตัว</b><br><code>sf2_02</code> ส่ง telemetry และแอปเห็นค่าของ TEAM ตัวเอง</div>
-<div class="goal">☑ <b>แอปของกลุ่มทำงาน</b><br><code>farm_monitor.py</code> หรือ <code>farm_web.html</code> เห็นข้อมูลและเก็บหลักฐาน</div>
+<div class="goal">☑ <b>แอปของกลุ่มทำงาน</b><br><code>farm_web.html</code> เห็นข้อมูลและเก็บหลักฐาน (CSV)</div>
 </div>
 <div>
 <div class="goal">☑ <b>สั่งกลับได้</b><br><code>sf2_03_remote_pump.py</code> รับคำสั่งและเปิดปั๊มจริง</div>
@@ -1988,7 +1992,7 @@ pump = 1
 
 <div class="flow"><b>โหนดเซนเซอร์ในแปลง</b><i>→</i><b>Gateway ตัดสิน</b><i>→</i><b>PLC Simulator</b><i>→</i><b>PLC รายงานกลับ</b></div>
 
-<div class="files"><div><div class="fh hw">☆ ทางที่ 1 · บอร์ดเดียว + โน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway ของฟาร์ม</span></div><div class="fh lap">💻 แอปบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html" target="_blank" rel="noopener noreferrer">farm_web.html</a> <span>— จำลอง PLC ในหน้าเว็บ · ไม่ต้องรัน <code>field_sim.py</code></span></div></div><div><div class="fh hw">☆ ทางที่ 2 · สองบอร์ด ร่วมกับทีมข้าง ๆ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py" target="_blank" rel="noopener noreferrer">sf2_07_field_station.py</a> <span>— บอร์ดทีมข้าง ๆ เล่นเป็นแปลงผัก</span></div></div></div>
+<div class="files"><div><div class="fh hw">☆ ทางที่ 1 · บอร์ดเดียว + โน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway ของฟาร์ม</span></div><div class="fh lap">💻 หน้าเว็บบนโน้ตบุ๊ก</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html" target="_blank" rel="noopener noreferrer">farm_web.html</a> <span>— PLC Simulator ในหน้าเว็บ: แปลงผักจำลอง (โหนดเซนเซอร์ + PLC)</span></div></div><div><div class="fh hw">☆ ทางที่ 2 · สองบอร์ด ร่วมกับทีมข้าง ๆ</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener noreferrer">sf2_06_smart_gateway.py</a> <span>— บอร์ดของเราเป็น Gateway</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py" target="_blank" rel="noopener noreferrer">sf2_07_field_station.py</a> <span>— บอร์ดทีมข้าง ๆ เล่นเป็นแปลงผัก</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> เปิด <code>farm_web.html</code> แล้วกด <b>เริ่ม PLC Simulator</b> → ทำให้ค่า <code>soil</code> ต่ำกว่าเกณฑ์ → ดูว่า Gateway ส่งคำสั่ง <code>plc/cmd</code> และ Simulator ตอบ <code>plc/state</code> พร้อม <b>Pump = ON</b> หรือไม่ จากนั้นกด <b>จำลอง PLC หลุด</b> แล้วจับเวลาว่า Gateway ขึ้น <b>"PLC หลุด!"</b> ภายในกี่วินาที — ตรงกับค่าไหนในโค้ด?</div>
 ---
@@ -2050,7 +2054,7 @@ section svg { max-height: 290px; }
 
 - **Sense (โหนด) → Decide (Gateway) → Act (PLC) → Confirm (PLC บอกสถานะจริงกลับมา)**
 - **คนสั่งไม่ใช่ความจริง** ความจริงคือสิ่งที่ PLC รายงานกลับ — จอ Gateway จึงโชว์ `plc/state` ไม่ใช่คำสั่งที่ส่งไป
-- ในห้องเรียนไม่มีโหนดและ PLC จริง: รัน `field_sim.py` บนโน้ตบุ๊กแทน หรือให้บอร์ดอีกกลุ่มรัน `sf2_07` เป็นแปลง · **ตั้ง TEAM เดียวกันทุกตัว**
+- ในห้องเรียนไม่มีโหนดและ PLC จริง: เปิด **PLC Simulator** ใน `farm_web.html` แทน หรือให้บอร์ดอีกกลุ่มรัน `sf2_07` เป็นแปลง · **ตั้ง TEAM เดียวกันทุกตัว**
 
 </div>
 <div>
@@ -2149,7 +2153,7 @@ def app_request(cmd, tank):
 
 ![w:470](img/emu/sf2_06_smart_gateway__watering.png)
 
-<div class="cap">ภาพจริงจาก BENTO Emulator — ใน Emulator ไม่มีแปลงและ PLC จริง ภาพนี้ป้อนข้อความแทน <code>field_sim.py</code> เข้า broker จำลองตอนถ่าย: <code>field/soil</code> = 25 · <code>field/tank</code> = 70 · และคำตอบ <code>plc/state</code> ของ PLC → Gateway เห็นดิน 25 % &lt; 30 % สั่งรดน้ำ · ไฟ PLC ติด "เดิน อีก 10 วิ" · ตอนเรียนใช้ PLC Simulator ใน farm_web.html แทนได้ เพราะ Emulator ต่อ broker จริง</div>
+<div class="cap">ภาพจริงจาก BENTO Emulator — ใน Emulator ไม่มีแปลงและ PLC จริง ภาพนี้ป้อนข้อความของแปลงจำลองเข้า broker จำลองตอนถ่าย: <code>field/soil</code> = 25 · <code>field/tank</code> = 70 · และคำตอบ <code>plc/state</code> ของ PLC → Gateway เห็นดิน 25 % &lt; 30 % สั่งรดน้ำ · ไฟ PLC ติด "เดิน อีก 10 วิ" · ตอนเรียนใช้ PLC Simulator ใน farm_web.html แทนได้ เพราะ Emulator ต่อ broker จริง</div>
 
 </div>
 </div>
@@ -2331,7 +2335,7 @@ section li { font-size: .86em; }
 - ให้บอร์ด **"รู้สึก"** มากขึ้น: **เรดาร์** เฝ้าคอก · **ไมค์** ฟังเล้าไก่ · **แรงสั่น** ของปั๊มน้ำ
 - **กฎที่เราเขียนเอง vs AI ที่รันบนชิปในบอร์ด (Edge AI)** — แล้ววัดเองว่าแบบไหนเหมาะกับปัญหาไหน
 - ชั่วโมงสุดท้ายของคาบ **เริ่มโปรเจกต์ของกลุ่ม** (Project Canvas แล้ว MVP บนบอร์ด) จากแม่แบบ **Smart IoT Gateway ครบห้าเสา** — เก็บแอปและ CSV ของวันนี้ไว้ ใช้ต่อได้ทันที
-- **เตรียมมา:** Hotspot มือถือ (ชื่อ/รหัสเดิม) · โน้ตบุ๊กที่ติดตั้ง `paho-mqtt` แล้ว · แผนโปรเจกต์ในตารางสไลด์ก่อน
+- **เตรียมมา:** Hotspot มือถือ (ชื่อ/รหัสเดิม) · โน้ตบุ๊กหรือมือถือที่มีเบราว์เซอร์ (ไม่ต้องติดตั้งอะไร) · แผนโปรเจกต์ในตารางสไลด์ก่อน
 
 </div>
 <div>
@@ -2378,9 +2382,9 @@ section a { word-break: break-all; }
 - หน้าฟาร์มของเรา: <https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__>
 - หน้าอ่านค่า: <https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/my_first_reader.html?team=team__>
 - หน้ารวม: <https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/mqtt_dashboard.html>
+- บอร์ดจำลอง: <https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html?team=team99>
 
 **เครื่องมือ**
-- paho-mqtt (Python): <https://pypi.org/project/paho-mqtt/>
 - ทดลอง MQTT บนเบราว์เซอร์: <https://www.hivemq.com/demos/websocket-client/>
 - TESAIoT Dev Kit SDK: <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/>
 
@@ -2411,9 +2415,9 @@ section table { font-size: .92em; }
 
 **อีโมจิ:** Twemoji — Twitter, Inc. และผู้ร่วมพัฒนา (jdecked/twemoji) — CC BY 4.0
 
-**ข้อมูลในสไลด์:** โค้ดทุกชิ้นคัดจากไฟล์ใน `s2/` ของคอร์สตรงตัว (ละได้เฉพาะบรรทัด `# ...`) · หัวข้อ คีย์ และคำสั่งจาก [`MQTT_CONTRACT_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md) · ลำดับกิจกรรมจาก [`sf-s2-th.worksheet.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf-s2-th.worksheet.md) · ฮาร์ดแวร์: TESAIoT Dev Kit SDK — <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/>
+**ข้อมูลในสไลด์:** โค้ดทุกชิ้นคัดจากไฟล์ใน `s2/` ของคอร์สตรงตัว (ละได้เฉพาะบรรทัด `# ...`) ยกเว้นบรรทัดที่ติดป้าย "TODO 3 ของกลุ่ม" ซึ่งเป็นตัวอย่างให้กลุ่มเติมเองใน `farm_web.html` · หัวข้อ คีย์ และคำสั่งจาก [`MQTT_CONTRACT_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md) · ลำดับกิจกรรมจาก [`sf-s2-th.worksheet.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf-s2-th.worksheet.md) · ฮาร์ดแวร์: TESAIoT Dev Kit SDK — <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/>
 
-**สถานะการทดสอบ:** `farm_monitor.py` และ `farm_web.html` ทดสอบกับ broker.hivemq.com จริงแล้ว โดยใช้บอร์ดจำลองบนโน้ตบุ๊ก · ไฟล์บอร์ด รันกับ Wi-Fi และ MQTT จริงบนบอร์ด TESAIoT Dev Kit แล้ว (broker.hivemq.com): ค่าจากบอร์ดถึง `farm_monitor.py` และลง CSV · คำสั่งปั๊มถึงบอร์ด · Gateway สั่ง PLC รดน้ำเองเมื่อดินแห้ง · ยกเว้น `sf2_05` ที่ต้องใช้รหัสอุปกรณ์จากผู้สอน
+**สถานะการทดสอบ:** `farm_web.html` ทดสอบกับ broker.hivemq.com จริงแล้ว โดยใช้บอร์ดจำลอง · ไฟล์บอร์ด รันกับ Wi-Fi และ MQTT จริงบนบอร์ด TESAIoT Dev Kit แล้ว (broker.hivemq.com): ค่าจากบอร์ดถึงแอปบนโน้ตบุ๊กและลง CSV · คำสั่งปั๊มถึงบอร์ด · Gateway สั่ง PLC รดน้ำเองเมื่อดินแห้ง · ยกเว้น `sf2_05` ที่ต้องใช้รหัสอุปกรณ์จากผู้สอน · ผลข้างต้นวัดตอนที่ยังใช้แอปและตัวจำลองรุ่น Python บนโน้ตบุ๊ก — `fake_board.html` และกฎ TODO 3 ใน `farm_web.html` ยังไม่ได้ทดสอบกับบอร์ดจริง
 
 ---
 
@@ -2435,4 +2439,4 @@ section p, section li { margin: .05em 0; line-height: 1.28; }
 - [Control PLC by MQTT Client](https://www.youtube.com/watch?v=-OFNvMDLv5g) — ThaiPLC · 6:21
 - [ตอนที่ 3 - ระบบ IoT sensor สำหรับความชื้นในดิน](https://www.youtube.com/watch?v=MHUWmhuaC1A) — mju.mooc · 5:13
 
-**มาตรฐานและเอกสารเปิดที่อ้างถึง:** IEEE 802.11 (ลำดับการเข้าร่วมเครือข่าย) · MQTT 3.1.1 — OASIS Standard (topic, publish/subscribe, QoS 0) · RFC 8259 (JSON) · HiveMQ public broker `broker.hivemq.com` (1883 TCP · 8884 wss) · หน้าเว็บของคอร์สใช้ MQTT.js 5.16.0 จาก cdn.jsdelivr.net · Python ใช้ paho-mqtt
+**มาตรฐานและเอกสารเปิดที่อ้างถึง:** IEEE 802.11 (ลำดับการเข้าร่วมเครือข่าย) · MQTT 3.1.1 — OASIS Standard (topic, publish/subscribe, QoS 0) · RFC 8259 (JSON) · HiveMQ public broker `broker.hivemq.com` (1883 TCP · 8884 wss) · หน้าเว็บของคอร์สใช้ MQTT.js 5.16.0 จาก cdn.jsdelivr.net

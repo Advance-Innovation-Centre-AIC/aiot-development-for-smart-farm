@@ -29,7 +29,8 @@ import ui
 VOLUME = 25          # ความดังเสียง 0-127 (≈20%)
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 MODEL_KEYS = ("AnomalousVibration", "Motion")   # ลองตามลำดับ: โมเดลจาก Store ก่อน ไม่มีหรือเลือกไม่ได้ค่อยใช้โมเดลในตัว
-                         # ลองเปลี่ยนเป็น ("Cough",) ("Alarm",) ("Siren",) (ฟังเสียง) หรือ ("Push",)
+                         # ลองโมเดลเสียงจาก Store ของคอร์ส (ตัวหลัง = ตัวสำรองในตัว): ("HomeSounds", "Cough")
+                         # ("SirenDetection", "Siren Detection") ("Environment Sounds", "Alarm") หรือเรดาร์ ("Push",)
 CONF_MIN = 60            # มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุการณ์
 CONFIRM_N = 3            # คลาสอันตรายต้องชนะอย่างน้อยกี่ครั้ง ใน WINDOW_N ผลล่าสุด ถึงจะเตือน
 WINDOW_N = 5             # ดูผลย้อนหลังกี่ครั้ง (ต้องไม่น้อยกว่า CONFIRM_N)
@@ -48,8 +49,9 @@ MEANING = {
     "anomaly": "สั่นผิดปกติ!", "unlabeled": "ปกติ",
     "cough": "ได้ยินเสียงไอ", "alarm": "เสียงสัญญาณเตือน",
     "sirens": "เสียงไซเรน", "Push": "มีคนผลักเข้ามา",
+    "baby_cry": "เสียงร้องแบบเด็ก", "chainsaw": "เลื่อยยนต์!", "crackling_fire": "ไฟไหม้!",
 }
-DANGER = ("shaking", "anomaly", "cough", "alarm", "sirens", "Push")
+DANGER = ("shaking", "anomaly", "cough", "alarm", "sirens", "Push", "baby_cry", "chainsaw", "crackling_fire")
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22

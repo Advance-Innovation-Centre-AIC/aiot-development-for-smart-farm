@@ -50,7 +50,7 @@ https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm
   กิจกรรม 1--2             ต่อบอร์ด / กดปุ่ม / หมุน VR /        เปิดเว็บ / จับเวลา / จดข้อมูล
                           จดค่าที่เห็น                        
 
-  กิจกรรม 3                ดูค่าจากบอร์ดและทดสอบกฎ            รัน Python หรือเว็บและตรวจ CSV
+  กิจกรรม 3                ดูค่าจากบอร์ดและทดสอบกฎ            เปิดหน้าเว็บ farm_web และตรวจ CSV
 
   กิจกรรม 4--5             ทดสอบคำสั่งและความปลอดภัยของบอร์ด   ส่งคำสั่งจากเว็บ/แอปและบันทึกผล
 
@@ -68,11 +68,7 @@ https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm
 -   [ ] ถ้าใช้ Android ให้เลือก **2.4 GHz** ถ้ามีตัวเลือก
 -   [ ] แก้ `WIFI_SSID`, `WIFI_PASS` และ `TEAM` ในไฟล์ที่ระบุ ก่อนกด **Program
     to Device**
--   [ ] ถ้าใช้ Python ให้ติดตั้ง `paho-mqtt`
-
-``` bash
-pip install paho-mqtt
-```
+-   [ ] โน้ตบุ๊กหรือมือถือเปิดหน้าเว็บของคอร์สได้ (เบราว์เซอร์ต่อเน็ต ไม่ต้องติดตั้งโปรแกรมเพิ่ม)
 
 **ความปลอดภัย:** broker ที่ใช้ในแบบฝึกนี้เป็น broker สาธารณะและพอร์ต 1883
 ไม่เข้ารหัส จึงห้ามใส่รหัสผ่านหรือข้อมูลส่วนตัวลงในข้อความ MQTT
@@ -187,8 +183,6 @@ pip install paho-mqtt
 
 > **หมายเหตุ:** BENTO Emulator ต่อ broker.hivemq.com จริงผ่าน WebSocket
 > จึงใช้ทดสอบได้ว่า
-> [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)
-> หรือ
 > [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)
 > รับข้อความจาก broker จริงได้ (ถ้า Emulator ต่อ broker ไม่ได้ใน 5 วิ จะใช้ broker จำลองแทนและบอกที่คอนโซล)
 
@@ -196,26 +190,22 @@ pip install paho-mqtt
 
 ## 7. กิจกรรม 3 --- แอปเฝ้าฟาร์มของกลุ่ม
 
-เลือกทำอย่างใดอย่างหนึ่ง:
+เปิดหน้าเว็บของกลุ่มในเบราว์เซอร์ (โน้ตบุ๊กหรือมือถือ ไม่ต้องติดตั้งอะไร):
+[`farm_web.html?team=team__`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__)
 
--   [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)
--   [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)
-
-ถ้าใช้ Python: ติดตั้ง `paho-mqtt` แล้วรัน
-
-``` bash
-python farm_monitor.py
-```
+เปลี่ยน `team__` ท้ายลิงก์เป็นเลขกลุ่ม แล้วกด **ต่อ** · ไม่มีบอร์ด เปิด
+[`fake_board.html?team=team99`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html?team=team99)
+แล้วกด **เริ่ม** และเปิด `farm_web.html` ด้วย `team99` เหมือนกัน
 
 -   [ ] แก้ `TEAM` ให้ตรงกับบอร์ด
 -   [ ] ให้เห็นข้อมูลสดจาก telemetry
 -   [ ] ตรวจว่ามี event จาก SW6
--   [ ] ตั้งค่า `SOIL_MIN` ของกลุ่ม
--   [ ] ให้แอปบันทึกข้อมูลเป็น `farm_log_<TEAM>.csv`
+-   [ ] เติมกฎดินแห้งของกลุ่มใน `farm_web.html` (TODO 3 ในสไลด์) แล้วตั้งค่า `SOIL_MIN`
+-   [ ] ให้แอปเก็บข้อมูลไว้ แล้วดาวน์โหลดเป็น `farm_log_<TEAM>.csv`
 
 ### กฎของกลุ่ม
 
-กฎตัวอย่างในไฟล์: ถ้า `soil` ต่ำกว่า `SOIL_MIN` และปั๊มยังไม่เปิด ให้ส่งคำสั่งเปิดปั๊ม
+กฎตัวอย่าง (เติมเองใน `farm_web.html` ตามสไลด์ หรือให้ AI ช่วยด้วยประโยค ข. ของสัญญาข้อ 7): ถ้า `soil` ต่ำกว่า `SOIL_MIN` และปั๊มยังไม่เปิด ให้ส่งคำสั่งเปิดปั๊ม
 โดยรออย่างน้อย `COOLDOWN_S` ก่อนสั่งซ้ำ
 
 **กฎที่กลุ่มเพิ่มเอง (เขียนแบบ "ถ้า... ให้..."):**
@@ -226,7 +216,7 @@ python farm_monitor.py
 
 ### ตรวจ CSV
 
--   [ ] กด `Ctrl+C` เพื่อหยุดแอป
+-   [ ] กด **ดาวน์โหลด CSV** บนหน้าเว็บ ก่อนปิดหรือรีเฟรชหน้า (ข้อมูลเก็บในเบราว์เซอร์)
 -   [ ] เปิด `farm_log_<TEAM>.csv` ใน Excel
 -   [ ] ทำกราฟ 1 กราฟจากข้อมูล เช่น `soil` หรือ `temp_c`
 
@@ -330,8 +320,9 @@ python farm_monitor.py
 
 -   [ ] บอร์ดรัน
     [`sf2_03_remote_pump.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py)
--   [ ] แอปรัน
-    [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)
+-   [ ] แอป:
+    [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__)
+    ที่เติมกฎดินแห้งแล้ว เปิดค้างไว้
 -   [ ] ตั้งกฎดินแห้งของกลุ่ม
 -   [ ] หมุน VR1 ให้ `soil` ต่ำกว่าเกณฑ์
 -   [ ] รอให้แอปตัดสินใจและส่งคำสั่งเอง
@@ -363,8 +354,8 @@ python farm_monitor.py
 -   [ ] เพิ่มคำสั่งเปลี่ยนเกณฑ์ถังน้ำ เช่น `{"cmd":"set","tank_min":20}`
 -   [ ] ทดลอง
     [`sf2_06_smart_gateway.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py)
-    ร่วมกับ
-    [`app/field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py)
+    ร่วมกับ PLC Simulator ใน
+    [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__)
 
 ------------------------------------------------------------------------
 
@@ -379,12 +370,12 @@ PLC → PLC คุมปั๊ม**
 
 -   [ ] รัน
     [`sf2_06_smart_gateway.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py)
--   [ ] รัน
-    [`app/field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py)
-    หรือใช้บอร์ดอีกกลุ่มเป็น field station
+-   [ ] เปิด PLC Simulator ใน
+    [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__)
+    (กด **เริ่ม PLC Simulator**) หรือใช้บอร์ดอีกกลุ่มเป็น field station
 -   [ ] ใช้ TEAM เดียวกัน
 -   [ ] ดูว่าดินต่ำกว่า 30% แล้ว Gateway สั่งรดน้ำเอง
--   [ ] หยุด `field_sim.py` แล้วดูว่า Gateway แจ้ง PLC หลุดหรือไม่
+-   [ ] กด **จำลอง PLC หลุด** ใน `farm_web.html` แล้วดูว่า Gateway แจ้ง PLC หลุดหรือไม่
 
 โครงสร้างนี้สำคัญกับงาน Smart Farm เพราะทำให้การตัดสินใจ การสั่งงาน
 และการตรวจสอบสถานะของปั๊มแยกหน้าที่กันชัดเจน
@@ -394,7 +385,7 @@ PLC → PLC คุมปั๊ม**
   Gateway เห็นค่าดิน/ถัง                         
   ดิน \< 30% แล้วสั่งรดน้ำเอง                     
   ปิดโหมดอัตโนมัติแล้วสั่งด้วย SW5                   
-  หยุด field_sim แล้วระบบรู้ว่า PLC/แหล่งข้อมูลหาย   
+  จำลอง PLC หลุด แล้วระบบรู้ว่า PLC/แหล่งข้อมูลหาย   
 
 ------------------------------------------------------------------------
 
@@ -494,17 +485,15 @@ PLC → PLC คุมปั๊ม**
 
   [`sf2_02_greenhouse_report.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py)   กิจกรรม 2 --- ส่ง telemetry
 
-  [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py)                       กิจกรรม 3 --- แอป Python + CSV
+  [`fake_board.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html?team=team99)                      กิจกรรม 3 --- บอร์ดจำลองในเบราว์เซอร์ ทดสอบแอปตอนไม่มีบอร์ด
 
-  [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)                           กิจกรรม 3--4 --- เว็บดูข้อมูล/ส่งคำสั่ง
+  [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html)                           กิจกรรม 3--4 --- เว็บดูข้อมูล/ส่งคำสั่ง/CSV · ต่อยอด --- PLC Simulator
 
   [`sf2_03_remote_pump.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py)               กิจกรรม 4 --- รับคำสั่งและควบคุมปั๊ม
 
   [`sf2_04_crop_alert.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py)                 กิจกรรม 5 --- แจ้งเตือนพืช
 
   [`sf2_06_smart_gateway.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py)           กิจกรรมต่อยอด --- Smart IoT Gateway
-
-  [`field_sim.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/field_sim.py)                             จำลองโหนดเซนเซอร์/แปลงสำหรับ Gateway
   ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ## หัวข้อ MQTT

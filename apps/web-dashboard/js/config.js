@@ -81,7 +81,7 @@ export const DEFAULT_RULES = [
   { name: "PLC หลุด (Gateway แจ้ง)", src: "event", key: "event", op: "==", val: "plc_lost", cool: 30, level: "crit" },
   { name: "PLC ไม่ยอมเปิด ถังต่ำ", src: "plc/state", key: "why", op: "==", val: "blocked_tank", cool: 60, level: "warn" },
   { name: "บอร์ดเงียบเกิน 15 วิ", src: "silence", key: "telemetry", op: ">", val: 15, cool: 60, level: "crit" },
-  { name: "AI พบความผิดปกติ (sf3_06)", src: "ai", key: "label", op: "==", val: "anomaly", win: 5, need: 3, cool: 30, level: "crit" },   // ป้ายสลับไปมา: 3 ใน 5 ใบล่าสุด
+  { name: "AI พบเหตุ (sf3_06)", src: "ai", key: "label", op: "in", val: "anomaly,shaking,sirens,cough,baby_cry,chainsaw,crackling_fire,alarm", win: 5, need: 3, cool: 30, level: "crit" },   // ป้ายสลับไปมา: 3 ใน 5 ใบล่าสุด · ป้ายชุดเดียวกับ DANGER ใน sf3_04/sf3_06 (สัญญาข้อ 3.9)
   { name: "AI alarm เริ่ม (event)", src: "event", key: "event", op: "==", val: "ai_alarm_start", cool: 30, level: "crit" },   // บอร์ดตัดสิน 3 ใน 5 เองแล้วส่งครั้งเดียว
   { name: "AI alarm ค้างอยู่ (state)", src: "ai", key: "alarm", op: "==", val: 1, cool: 60, level: "warn" },   // แอปที่เปิดกลางทางก็รู้ว่ากำลังเตือน
 ];

@@ -33,7 +33,7 @@ TICK_MS = 500        # อัปเดตจอทุกกี่ ms
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -66,9 +66,9 @@ def read_probe():
 
 
 def just_pressed(i, prev):
-    # True ครั้งเดียวตอนปุ่ม i (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) เพิ่งถูกกดลง
+    # True ครั้งเดียวตอนปุ่ม i (i = 0 คือ SW5 ปุ่มล่าง = pressed(1), i = 1 คือ SW6 ปุ่มบน = pressed(0)) เพิ่งถูกกดลง
     # ต้องเรียกทุกรอบ (ทุก SAMPLE_MS) เพราะการกรองสั่นเดินหน้าเฉพาะตอนที่อ่าน
-    d = bool(buttons.pressed(i))
+    d = bool(buttons.pressed(1 - i))
     e = d and not prev[i]
     prev[i] = d
     return e

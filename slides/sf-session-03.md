@@ -176,7 +176,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 </div>
 </div>
 
-<div class="files"><div><div class="fh">📡 ไฟล์บอร์ดจาก Session 2</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py">sf2_02_greenhouse_report.py</a> <span>— ส่ง telemetry ทุก 5 วิ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— ฟัง cmd แล้วสั่งปั๊ม</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py">sf2_04_crop_alert.py</a> <span>— ส่ง event เมื่อสถานะเปลี่ยน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— Gateway สั่ง PLC</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py">sf2_07_field_station.py</a> <span>— แปลงผัก + PLC ให้ทีมข้าง ๆ</span></div></div><div><div class="fh hw">💻 แอปของทีม</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py">farm_monitor.py</a> <span>— แอป Python บนโน้ตบุ๊ก</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— แอปในเบราว์เซอร์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div></div></div>
+<div class="files"><div><div class="fh">📡 ไฟล์บอร์ดจาก Session 2</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py">sf2_02_greenhouse_report.py</a> <span>— ส่ง telemetry ทุก 5 วิ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— ฟัง cmd แล้วสั่งปั๊ม</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py">sf2_04_crop_alert.py</a> <span>— ส่ง event เมื่อสถานะเปลี่ยน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— Gateway สั่ง PLC</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py">sf2_07_field_station.py</a> <span>— แปลงผัก + PLC ให้ทีมข้าง ๆ</span></div></div><div><div class="fh hw">💻 แอปของทีม</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— แอปในเบราว์เซอร์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div></div></div>
 
 <div class="think">
 
@@ -238,13 +238,13 @@ section table { font-size: .66em; }
 | 📐 **IMU** (ความเร่ง 3 แกน) | `sensors.bmi270.motion()` | การสั่นของปั๊ม/พัดลม | 3 · 4 |
 | 🌡️ อุณหภูมิ ความชื้น ความกดอากาศ | `sensors.sht40` · `sensors.dps368` | อากาศในโรงเรือน | 5 |
 | 🎛️ ลูกบิด **VR2–VR4** | `pots.read(1)` … `pots.read(3)` ค่า 0–4095 | เขตเตือน · เกณฑ์เสียง · เกณฑ์พัดลม · ดิน (จำลอง) | 1 · 2 · 5 |
-| 🔘 ปุ่ม **SW5 (ล่าง)** / **SW6 (บน)** | `buttons.pressed(0)` / `buttons.pressed(1)` | เปิด/ปิดระบบเฝ้า · เรียนรู้ใหม่ · รดน้ำเอง · รับทราบ | 1 · 3 · 5 |
+| 🔘 ปุ่ม **SW5 (ล่าง)** / **SW6 (บน)** | `buttons.pressed(1)` / `buttons.pressed(0)` | เปิด/ปิดระบบเฝ้า · เรียนรู้ใหม่ · รดน้ำเอง · รับทราบ | 1 · 3 · 5 |
 | 🟩 **จอไฟ RGB 16×8** | `rgbmatrix.scroll()` · `score()` · `bar()` · `fill()` · `blit()` | INTRUDER · PANIC · แถบคะแนน · สีสถานะ | ทุกกิจกรรม |
 | 🔊 ลำโพง | `beep(...)` = `ui.tone(...)` เบา ๆ (`VOLUME` ≈20%) · ลำโพงรวม `SPEAKER = 40` % ด้วย `ui.volume()` (firmware 2.4.2+) | ไซเรน เสียงเตือน — **เฉพาะตอนเกิดเหตุ** | ทุกกิจกรรม |
 
 <div class="warn">
 
-**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** — ห้ามโยก · ในแผง Emulator ป้ายชื่อปุ่มยังเป็นชื่อเก่า ให้ดูที่ **ลำดับ**: ปุ่มแรก = `pressed(0)` = **SW5 (ล่าง)** · ปุ่มที่สอง = `pressed(1)` = **SW6 (บน)**
+**SW2** บนฐานบอร์ดคือ **สวิตช์ตัดไฟ** — ห้ามโยก · ในแผง Emulator ปุ่มซ้าย = **SW5 (ล่าง)** = `pressed(1)` · ปุ่มขวา = **SW6 (บน)** = `pressed(0)` (ป้ายชื่อบนแผงตรงกับบอร์ดแล้ว)
 
 </div>
 
@@ -453,7 +453,7 @@ def confirm(inside, streak, near):
 
 **ตาคุณ (ท้ายไฟล์)**
 - นับผู้บุกรุกเฉพาะตอนเรดาร์บอกว่า **"มีการเคลื่อนไหว"** ด้วย (ส่ง `moving` เข้า `in_zone()`) แล้วลองยืนนิ่ง — แบบไหนเหมาะกับ **คอกวัวตอนกลางคืน**?
-- ให้ **SW6 (ปุ่มบน)** = `Button(1)` ล้างตัวนับ — อย่าลืมใส่ปุ่มใหม่ใน `wait_ms` ด้วย
+- ให้ **SW6 (ปุ่มบน)** = `Button(0)` ล้างตัวนับ — อย่าลืมใส่ปุ่มใหม่ใน `wait_ms` ด้วย
 
 <div class="warn">
 
@@ -1069,7 +1069,7 @@ section table { font-size: .68em; }
 
 ## ต่อยอด: ส่งผล AI ขึ้น MQTT ให้แอปของทีม — `sf3_06`
 
-<div class="flow"><b>AI บนบอร์ดสรุปป้าย</b><i>→</i><b>ป้ายเปลี่ยน · ครบ 2 วิ</b><i>→</i><b>bento-aiot/&lt;TEAM&gt;/ai</b><i>→</i><b>แดชบอร์ด / mosquitto_sub</b></div>
+<div class="flow"><b>AI บนบอร์ดสรุปป้าย</b><i>→</i><b>ป้ายเปลี่ยน · ครบ 2 วิ</b><i>→</i><b>bento-aiot/&lt;TEAM&gt;/ai</b><i>→</i><b>แดชบอร์ด · มือถือเด้ง</b></div>
 
 <div class="cols">
 <div>
@@ -1078,7 +1078,7 @@ section table { font-size: .68em; }
 
 **ลองทำ**
 1. แก้ `WIFI_SSID` `WIFI_PASS` และ `TEAM` (team01–team99 ตามที่ผู้สอนแจก · ยังเป็น teamXX = ไม่ต่อเน็ต พิมพ์ผลลง Console แทน)
-2. รัน แล้วเปิด [แดชบอร์ดของคอร์ส](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/apps/web-dashboard/) หรือพิมพ์บนโน้ตบุ๊ก<br>`mosquitto_sub -h broker.hivemq.com -t 'bento-aiot/team05/ai' -v`
+2. รัน แล้วเปิด [แดชบอร์ดของคอร์ส](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/apps/web-dashboard/) และ [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__) ใส่เลขทีมเดียวกัน (เปิดในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร)
 3. วางนิ่ง 10 วิ **นับข้อความ** แล้วเขย่า ดูว่าป้ายใหม่มาเร็วแค่ไหน
 
 </div>
@@ -1108,6 +1108,104 @@ def should_send(changed, since_ms):
 </div>
 
 <div class="src">BENTO Emulator ต่อ broker สาธารณะจริงผ่าน WebSocket · broker สาธารณะใช้ร่วมกันทั้งห้อง ไฟล์จึงไม่ส่งถี่กว่า 200 ms · ต่อ broker ไม่ได้ทันทีหลังหยุดโปรแกรม: รอราว 1 นาที หรือกด <b>RESET</b> แล้วรันใหม่</div>
+
+---
+
+## ภารกิจ AI ในฟาร์ม — 7 ปัญหา · 7 โมเดล · ไฟล์เดียว `sf3_08`
+
+<div class="flow"><b>เลือกปัญหา</b><i>→</i><b>Deploy โมเดล<br>Edge AI Store</b><i>→</i><b>บอร์ดตัดสิน<br>กฎ + AI</b><i>→</i><b>MQTT<br>.../ai</b><i>→</i><b>เว็บทีม +<br>มือถือเด้ง</b><i>→</i><b>คนตอบ<br>จริง / ผิด</b><i>→</i><b>CSV →<br>Trainer</b></div>
+
+<div class="tiles">
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🛠️ pump · หมอปั๊มน้ำ</b>
+<span class="chip s">AI</span> AnomalousVibration (IMU)<br>
+<span class="chip r">ปัญหา</span> ปั๊มเสียก่อนใครรู้ พืชขาดน้ำ<br>
+<span class="chip d">กฎคู่</span> ค่าสั่นเกินค่าปกติ × 3
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🚨 siren · ยามฟังไซเรน</b>
+<span class="chip s">AI</span> SirenDetection (ไมค์)<br>
+<span class="chip r">ปัญหา</span> รถฉุกเฉินมาถึงประตูฟาร์ม<br>
+<span class="chip d">กฎคู่</span> เสียงดังต่อเนื่อง ≥ 2 วิ
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🐖 barn · หูโรงเรือน</b>
+<span class="chip s">AI</span> HomeSounds (ไมค์)<br>
+<span class="chip r">ปัญหา</span> สัตว์ไอ · ก๊อกเปิดทิ้ง · เด็กร้องในบ้านพัก<br>
+<span class="chip d">กฎคู่</span> ไอถี่ใน 10 นาที · ก๊อกเปิด ≥ 30 วิ
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🌙 night · ยามกลางคืน</b>
+<span class="chip s">AI</span> Environment Sounds (ทดลอง)<br>
+<span class="chip r">ปัญหา</span> เลื่อยยนต์ ไฟไหม้ สุนัขเห่า · ฝนตก = งดรดน้ำ<br>
+<span class="chip d">กฎคู่</span> เสียงดังต่อเนื่อง
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🗣️ voice · สั่งปั๊มด้วยเสียง</b>
+<span class="chip s">AI</span> Voice Commands (ทดลอง)<br>
+<span class="chip r">ปัญหา</span> มือเปื้อนดิน กดปุ่มไม่ได้<br>
+<span class="chip d">กฎคู่</span> go ต้องยืนยัน · stop ทำทันที
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🦺 worker · คนงานปลอดภัย</b>
+<span class="chip s">AI</span> HumanActivity (ติดหน้าอก)<br>
+<span class="chip r">ปัญหา</span> ล้มกลางแดด ไม่มีใครเห็น<br>
+<span class="chip d">กฎคู่</span> นิ่งนาน → ถาม "โอเคไหม" 30 วิ
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">🪚 drill · ช่างซ่อมโรงเรือน</b>
+<span class="chip s">AI</span> DrillMaterialMic · ผู้สอนสาธิต<br>
+<span class="chip r">ปัญหา</span> เจาะทะลุโดยไม่รู้ตัว<br>
+<span class="chip d">กฎคู่</span> เสียงสว่านกำลังเดิน
+</div>
+<div class="tile" style="font-size:.5em;padding:6px 8px">
+<b class="t">💡 ภารกิจที่ 8 ของทีมคุณ</b>
+<span class="chip a">คิดเอง</span> ปัญหาในฟาร์มที่ "ได้ยิน" หรือ "รู้สึก" ได้<br>
+<span class="chip a">ทำ</span> เขียนสัญญา MQTT ของภารกิจใหม่ หน้าเว็บเดิมแสดงได้ทันที
+</div>
+</div>
+
+<div class="src">ทุกภารกิจส่งผลตาม <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">สัญญาข้อ 3.11</a> · <b>lvl 2</b> = กฎกับ AI เห็นตรงกัน (เตือนจริง) · <b>lvl 1</b> = ฝ่ายเดียว (ให้คนไปดู) · ชื่อโมเดลในโค้ดคือชื่อบนบอร์ด (Store "Siren" = บอร์ด "SirenDetection")</div>
+
+---
+
+## ภารกิจ AI — ลองทำ (ทีมละ 1 ภารกิจ · ต่อเป็นโปรเจกต์ได้)
+
+<div class="cols">
+<div>
+
+<div class="try">
+
+**ลองทำ**
+1. จับการ์ดภารกิจ แล้ว **Deploy** โมเดลของภารกิจจาก [Edge AI Store](https://edgeai-store.tesaiot.dev) ลงบอร์ด
+2. เปิด [`sf3_08_farm_ai_missions.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py) แก้ `MISSION` `TEAM` `WIFI_SSID` `WIFI_PASS` แล้วรัน → จอบอก **กฎ vs AI** และระดับ lvl
+3. เปิด [หน้าทีม](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__) และ [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__) ใส่เลขทีมเดียวกัน
+4. ทำให้เกิดเหตุจริง (เขย่าพัดลม · เปิดคลิปเสียงจากมือถือ · พูด go) แล้วกด **เหตุจริง / เตือนผิด** ให้ครบ 10 ครั้ง → ดาวน์โหลด CSV ไว้ฝึกใน BENTO Edge AI Trainer
+
+</div>
+
+<div class="tip"><b>ไม่มีบอร์ด?</b> เปิด <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__&amp;sim=1">หน้าทีมโหมดบอร์ดจำลอง</a> กดปุ่มเหตุการณ์ได้ทุกภารกิจ · หรือรัน sf3_08 ใน BENTO Emulator (ใช้โมเดลในตัวแทน)</div>
+
+</div>
+<div>
+
+```python
+MISSION = "pump"   # pump siren barn night voice worker drill
+TEAM = "teamXX"    # team01–team99 ตามที่ผู้สอนแจก
+```
+
+<div class="think">
+
+**ตาคุณ:** ① ภารกิจของทีมเตือนผิดกี่ครั้งใน 10 ครั้ง เพราะอะไร · ② ถ้าเป็นฟาร์มจริง จะติดบอร์ดไว้ตรงไหน · ③ รวมสองภารกิจ: **ฝน (night) + Gateway (กิจกรรม 5)** = ? · **ไอ (barn) + ร้อน (sf2_04)** = ?
+
+</div>
+
+<div class="goal"><b>กลุ่ม SI:</b> วัดเวลาจนคนกดรับทราบ (ack) · ต่อ voice เข้า PLC Simulator ใน <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__">farm_web</a> แล้วพิสูจน์ว่าถังต่ำยังชนะคำสั่งเสียง</div>
+
+</div>
+</div>
+
+<div class="src">ผู้สอนฉาย <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_class.html">แผนที่ฟาร์มทั้งห้อง</a> ตอน Stand-up: ทุกทีมพูด 30 วิ — ปัญหา → AI ช่วยอย่างไร → เตือนผิดกี่ครั้ง → จะต่อยอดอะไร</div>
 
 ---
 
@@ -1227,7 +1325,7 @@ section table { font-size: .68em; }
 
 1. แก้ `WIFI_SSID` `WIFI_PASS` `TEAM` ให้เหมือน Session 2 แล้วรัน → แถบสถานะขึ้น **"ออนไลน์ teamNN"** หรือ **"ออฟไลน์ (ทำงานต่อ)"**
 2. หมุน **VR2 ลง** (ดินแห้ง → ไฟปั๊ม) · หมุน **VR3 ลง** ต่ำกว่าอุณหภูมิห้อง (→ ไฟพัดลม) · **เดินเข้าหาบอร์ด** (→ INTRUDER) แล้วกด **SW6** · กด **SW5 ค้าง** (รดเอง) · แตะ **"ส่งรายงานเลย"**
-3. เปิดแอปของทีม [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py) หรือ [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html) ใส่ TEAM เดียวกัน → เห็นรายงาน · สั่ง `pump` `beep` แล้วบอร์ดตอบสนอง
+3. เปิดแอปของทีม [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__) ใส่ TEAM เดียวกัน → เห็นรายงาน · สั่ง `pump` `beep` แล้วบอร์ดตอบสนอง
 4. **ปิด Hotspot กลางทาง** — ฟาร์มยังตัดสินและเตือนได้ไหม?
 
 </div>
@@ -1359,7 +1457,7 @@ section table { font-size: .6em; }
 | **2 · เซนเซอร์** | เซนเซอร์จริงบนบอร์ดอย่างน้อย 1 ตัว (SHT40 · DPS368 · BMI270 · เรดาร์ · ไมค์) · กฎหรือ AI ที่มีตัวกันเตือนผิด (hysteresis / ยืนยัน N ครั้ง / นับในช่วงเวลา / ความมั่นใจขั้นต่ำ) · ถ้าใช้ SHT40 ต้องตั้ง `TEMP_OFFSET` เทียบกับเทอร์โมมิเตอร์ | [`sf1_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py)–[`sf1_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py) · [`sf3_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py)–[`sf3_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py) |
 | **3 · ปุ่มตั้งค่า** | ลูกบิด VR อย่างน้อย 1 ตัวเป็น "ค่าตั้ง" ที่มีเหตุผล (เช่น เกณฑ์) · ปุ่ม SW5 (ล่าง) / SW6 (บน) อย่างน้อย 1 ปุ่มที่มีหน้าที่ชัด (เช่น รับทราบ · รดน้ำเอง · เริ่มเที่ยว) | [`sf1_03`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
 | **4 · เสียง** | เสียงอย่างน้อย 2 แบบ ต่างกันตามเหตุการณ์ ดัง **เฉพาะตอนเกิดเหตุการณ์** | [`sf1_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py) · [`sf3_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
-| **5 · MQTT + แอปของตัวเอง** | บอร์ดส่ง telemetry ขึ้น `bento-aiot/<TEAM>/telemetry` ไม่ถี่กว่าทุก 5 วินาที · ส่ง event อย่างน้อย 1 ชนิดขึ้น `.../event` · รับคำสั่งอย่างน้อย 1 ชนิดจาก `.../cmd` · **เน็ตหลุดแล้วบอร์ดยังตัดสินและเตือนได้** · แอปของทีมต่อยอดจาก Session 2 เพิ่มอย่างน้อย 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป (เช่น บอร์ดเงียบเกิน 15 วิ) · ปุ่มสั่งกลับบอร์ด · กราฟ | [`sf2_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py)–[`sf2_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) · [`farm_monitor.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_monitor.py) · [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html) |
+| **5 · MQTT + แอปของตัวเอง** | บอร์ดส่ง telemetry ขึ้น `bento-aiot/<TEAM>/telemetry` ไม่ถี่กว่าทุก 5 วินาที · ส่ง event อย่างน้อย 1 ชนิดขึ้น `.../event` · รับคำสั่งอย่างน้อย 1 ชนิดจาก `.../cmd` · **เน็ตหลุดแล้วบอร์ดยังตัดสินและเตือนได้** · แอปของทีมต่อยอดจาก Session 2 เพิ่มอย่างน้อย 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป (เช่น บอร์ดเงียบเกิน 15 วิ) · ปุ่มสั่งกลับบอร์ด · กราฟ | [`sf2_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py)–[`sf2_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) · [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html) |
 
 ---
 
@@ -1655,7 +1753,7 @@ section table { font-size: .66em; }
 
 **Emulator แทนบอร์ดได้แค่ไหน** (แผง **TESAIoT DEV KIT**)
 - **VR1 = ระยะเรดาร์** 0.15–1.8 ม. · VR2–VR4 = ค่าตั้ง · ปุ่ม **Shake** = การเคลื่อนไหว/เครื่องสั่น
-- ⚠️ **เสียงไมค์เป็นสัญญาณสังเคราะห์** — ทดสอบเกณฑ์เสียงบนบอร์ดจริงเท่านั้น
+- ⚠️ **เสียงไมค์เป็นสัญญาณสังเคราะห์** — หมุน **POTEN** เกินครึ่ง = เสียงรอบบอร์ดดังขึ้น (ไมค์และโมเดลเสียงในตัว) · ตั้งเกณฑ์เสียงจริงบนบอร์ด
 - **MQTT ใน Emulator ต่อ broker.hivemq.com จริง** — แอปบนแล็ปท็อปเห็นข้อความได้ · ถ้า Emulator ต่อไม่ได้ใน 5 วิ จะใช้ broker จำลองแทนและบอกที่คอนโซล · หลักฐานเสา 5 ยังทดสอบบนบอร์ดจริง
 - ใช้ Emulator พัฒนา **โครงโปรแกรมและหน้าจอ** แล้วนำตัวเลขเกณฑ์ไปทดสอบบนบอร์ดก่อนวันนำเสนอ
 

@@ -73,7 +73,7 @@ def set_pump(pump, running):
 
 
 class Button:
-    # ปุ่มบนฐาน (0 = SW5 ล่าง, 1 = SW6 บน) ที่ไม่พลาดการกดสั้น ๆ
+    # ปุ่มบนฐาน (1 = SW5 ล่าง ขา P17.7, 0 = SW6 บน ขา P17.5) ที่ไม่พลาดการกดสั้น ๆ
     # เฟิร์มแวร์กรองสั่น 50 ms จึงต้องอ่านบ่อย ๆ ระหว่างรอ (wait_ms)
 
     def __init__(self, index):
@@ -283,7 +283,7 @@ def main():
         ui.volume(SPEAKER)
     w = build_screen()
     pump = led_named("RGB_BLUE")
-    sw5, sw6 = Button(0), Button(1)
+    sw5, sw6 = Button(1), Button(0)
     auto = AUTO_AT_START
     manual, manual_t0 = False, 0
     pump_on = False

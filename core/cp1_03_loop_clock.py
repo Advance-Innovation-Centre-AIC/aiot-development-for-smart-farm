@@ -30,7 +30,7 @@ TEMP_OFFSET = 0.0    # บอร์ดอุ่นจากชิปของต
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -59,7 +59,7 @@ def read_temp():
 
 
 class Button:
-    # ปุ่มบนฐานบอร์ด (0 = SW5 ปุ่มล่าง, 1 = SW6 ปุ่มบน) ที่ไม่พลาดการกดสั้น ๆ
+    # ปุ่มบนฐานบอร์ด (1 = SW5 ปุ่มล่าง ขา P17.7, 0 = SW6 ปุ่มบน ขา P17.5) ที่ไม่พลาดการกดสั้น ๆ
     # เฟิร์มแวร์กรองสั่น 50 ms "ทุกครั้งที่อ่าน" (ไม่ใช่ตัวจับเวลาเบื้องหลัง)
     # จึงต้องอ่านถี่ ๆ (ดู wait_ms) แล้วจำไว้ว่า "เพิ่งถูกกด"
     def __init__(self, index):
@@ -198,7 +198,7 @@ def main():
     now = time.ticks_ms()
     tasks = (Task(IMU_MS, now), Task(CLIMATE_MS, now), Task(SCREEN_MS, now))
     a = t = None                         # ค่าล่าสุดของ IMU และอุณหภูมิ
-    sw5 = Button(0)                      # SW5 = ปุ่มล่าง
+    sw5 = Button(1)                      # SW5 = ปุ่มล่าง
     naive, k = False, 0
     show_mode(w, naive)
     t0 = now

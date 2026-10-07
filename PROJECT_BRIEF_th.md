@@ -41,7 +41,7 @@
 | ไมค์ | `mic.start(sens=3)` · `mic.level()` · `mic.stats()` · `mic.lag()` · `mic.stop()` | `sf3_02` |
 | Edge AI (โมเดลในตัว) | `edge_ai.models()` · `edge_ai.select(index)` · `edge_ai.result()` · `edge_ai.stop()` — หาโมเดลด้วยชื่อ แล้วเก็บแค่ชื่อ ลำดับ และคลาส **ห้ามพิมพ์ทั้งแถวของ `edge_ai.models()`** | `sf3_04` |
 | ลูกบิด VR1–VR4 | `pots.read(0..3)` → 0–4095 | `sf1_03` · `sf3_05` |
-| ปุ่ม SW5 (ล่าง) / SW6 (บน) | `buttons.pressed(0)` = SW5 · `buttons.pressed(1)` = SW6 · `buttons.read()` | `sf1_01` · `sf3_05` |
+| ปุ่ม SW5 (ล่าง) / SW6 (บน) | `buttons.pressed(1)` = SW5 · `buttons.pressed(0)` = SW6 · `buttons.read()` | `sf1_01` · `sf3_05` |
 | RGB dot matrix 16×8 | `rgbmatrix.scroll("TEXT", สี, ms)` · `score(n, สี)` · `bar(ระดับ, สูงสุด, สี)` · `fill(สี)` · `clear()` — สี: RED GREEN YELLOW BLUE PURPLE CYAN WHITE · ตัวหนังสือวิ่งได้เฉพาะภาษาอังกฤษ/ตัวเลข | `sf1_01` · `sf3_01` |
 | ลำโพง | `ui.sfx(ui.SFX_UI_DENY)` (เสียงสำเร็จรูป) · `ui.tone(โน้ต MIDI, ui.WAVE_SQUARE, ความดัง, ms)` | `sf1_02` · `sf3_02` |
 | MQTT + WiFi | `wifi.connect()` · `mqtt.connect()` · `mqtt.publish()` · `mqtt.subscribe()` · `mqtt.get_message()` | `sf2_02` · `sf2_03` |

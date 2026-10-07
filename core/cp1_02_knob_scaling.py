@@ -30,7 +30,7 @@ TICK_MS = 500        # อ่านลูกบิดและอัปเดต
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 # ลูกบิดแต่ละตัว: (ชื่อบนการ์ด, หน่วย, ค่าต่ำสุด, ค่าสูงสุด, รูปแบบตัวเลข, จำนวนขีดบนไม้บรรทัด)
 KNOBS = (("VR1 ความชื้นดิน", "%", 0, 100, "%.0f", 11),
@@ -154,7 +154,7 @@ def main():
     t0 = t_show = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         now = time.ticks_ms()
-        down = bool(buttons.pressed(0))
+        down = bool(buttons.pressed(1))
         if down and not was:                                   # ขอบกดลงของ SW5
             band = 0 if band else DEADBAND
             show_band(w, band)

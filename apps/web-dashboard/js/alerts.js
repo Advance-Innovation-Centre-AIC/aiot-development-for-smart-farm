@@ -6,14 +6,14 @@
 //   เหตุการณ์ (event) เตือนทุกใบที่ตรง · ทุกกฎเว้นอย่างน้อย cool วินาทีก่อนเตือนซ้ำ ค่าที่แกว่งไปมาจะไม่เตือนรัว
 // ข้อจำกัดที่ต้องรู้:
 //   - แจ้งเตือนเครื่องใช้ได้เฉพาะหน้าเว็บที่เปิดผ่าน https หรือ localhost และต้องกดอนุญาตก่อน
-//   - เตือนได้เฉพาะตอนหน้านี้ยังเปิดอยู่ ปิดแอปแล้วอยากให้มือถือเด้ง ใช้ apps/notify/ (ntfy)
+//   - เตือนได้เฉพาะตอนหน้านี้ยังเปิดอยู่ ปิดแอปแล้วอยากให้มือถือเด้ง ใช้หน้า s3/app/notify/ (ntfy)
 //   - navigator.vibrate ไม่มีบน iPhone · เสียงต้องกดเปิดหนึ่งครั้ง (เบราว์เซอร์ห้ามเล่นเสียงเองก่อนคนแตะจอ)
 
 import { DEFAULT_RULES, SOUND_VOLUME } from "./config.js";
 import { load, save } from "./storage.js";
 import { el, icon, $, short } from "./ui.js";
 
-const OPS = ["<", "<=", ">", ">=", "==", "!="];
+const OPS = ["<", "<=", ">", ">=", "==", "!=", "in"];   // in = ค่าเป็นหนึ่งในรายการที่คั่นด้วยจุลภาค เช่น "anomaly,sirens"
 const SRCS = ["telemetry", "event", "plc/state", "field/soil", "field/tank", "ai", "silence"];
 const LEVELS = { info: "แจ้งให้รู้", warn: "ระวัง", crit: "ด่วน" };
 const LEVEL_PRIORITY = { info: 0, warn: 1, crit: 2 };
@@ -35,6 +35,7 @@ export function compare(a, op, b) {
     }
   }
   if (a === undefined || a === null) return false;
+  if (op === "in") return String(b).split(",").map((s) => s.trim()).filter(Boolean).includes(String(a));
   if (op === "==") return String(a) === String(b);
   if (op === "!=") return String(a) !== String(b);
   return false;

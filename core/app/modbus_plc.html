@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<!--
+  core/app/modbus_plc.html - PLC จำลองที่พูด Modbus + เกตเวย์ MQTT <-> Modbus ในหน้าเว็บเดียว ไม่ต้องติดตั้ง ไม่ต้องรัน Python
+  เปิดแบบนี้: .../core/app/modbus_plc.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม) หรือพิมพ์เลขกลุ่มในช่องบนหน้า แล้วกด "เริ่ม"
+    เลือก broker ในลิงก์ได้: &broker=mosquitto (ค่าเริ่มต้น hivemq) ต้องตรงกับ BROKER บนบอร์ด
+    เริ่มด้วยน้ำในถังน้อย ๆ เพื่อลองระบบป้องกันถังแห้ง: &tank=12  (แบบเดียวกับ modbus_plc_sim.py --tank 12)
+  ใช้คู่กับ core/cp3_06_modbus_frame.py บนบอร์ดหรือ BENTO Emulator (WiFi + TEAM เดียวกัน)
+  หน้านี้เล่นสองบทแทนสองโปรแกรมเดิม:
+    เกตเวย์ (แทน core/app/modbus_bridge.py): ฟัง bento-aiot/<ทีม>/modbus/req ตรวจคำขอแบบเดียวกันทุกข้อ ปฏิเสธด้วย err เดียวกัน
+      แล้วตอบ bento-aiot/<ทีม>/modbus/resp เป็น JSON ตัวเดียวกันทุกไบต์ พร้อมกรอบคำตอบ (hex) ที่ PLC ส่งกลับ
+    PLC (แทน core/app/modbus_plc_sim.py): FC03 อ่าน / FC06 เขียน register ชุดเดียวกัน ข้อยกเว้น 01-04 เดียวกัน
+      ฟิสิกส์ของแปลงและระบบป้องกันชุดเดียวกัน (เปิดได้ครั้งละไม่เกิน 30 วิ · ถังต่ำกว่า 10 % ไม่ยอมเปิด · ตัดแล้วรอถึง 15 %)
+  ทำไมไม่ต่อ PLC ตัวจริง: เบราว์เซอร์เปิด TCP ตรงไปที่พอร์ต 502 ไม่ได้ (อธิบายในกล่องบนหน้า)
+  broker สาธารณะ: ใครก็ส่งเข้า .../modbus/req ได้ ทุกคำขอถูกตรวจก่อนใช้ ข้อความทุกชิ้นแสดงด้วย textContent เท่านั้น
+  หน้านี้ต้องเปิดค้างไว้ระหว่างเล่น (อยู่แท็บหลังได้) และเปิดได้ทีละหน้าต่อกลุ่ม ถ้าเปิดสองหน้า PLC สองตัวจะตอบแข่งกัน
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLC จำลอง Modbus</title>
+<style>
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .wide { grid-column: 1 / -1; } }
+  fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  fieldset:disabled { opacity: .72; }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
+  a { color: var(--water); overflow-wrap: anywhere; }
+  .field { display: grid; gap: 4px; min-width: 0; margin-bottom: 10px; }
+  .field > span { font-size: 14px; color: var(--dim); }
+  .field input, .field select { width: 100%; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 14px; }
+  .hint { font-size: 13px; color: var(--dim); }
+  p.hint { margin: 0 0 10px; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  #formMsg { color: var(--bad); font-weight: 600; margin: 10px 0 0; }
+  #formMsg:empty { display: none; }
+  /* สถานะแปลง: ตัวเลขกว้างเท่ากันทุกหลัก */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; }
+  .tile { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
+  .tile .lbl { color: var(--dim); font-size: 13px; }
+  .tile .val { font-size: 22px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .tile .val[data-on="1"] { color: var(--water); }
+  .tile .val[data-warn="1"] { color: var(--warn); }
+  .tile .sub2 { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meter { height: 6px; border-radius: 3px; background: var(--line); margin-top: 8px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .3s; }
+  #mTank { background: var(--water); }
+  .why { margin: 14px 0 0; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2);
+    border-left: 4px solid var(--accent); font-weight: 600; }
+  .why:empty { display: none; }
+  /* ตาราง register: เลื่อนเฉพาะในกล่องถ้าจอแคบ หน้าไม่เลื่อนข้าง */
+  .tablewrap { overflow-x: auto; }
+  table.regs { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .regs th, .regs td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .regs th { color: var(--dim); font-weight: 600; font-size: 13px; }
+  .regs td.v { font-family: var(--mono); font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .regs td.hx { font-family: var(--mono); color: var(--dim); white-space: nowrap; }
+  .rw { font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .rw.w { color: var(--accent); border-color: var(--accent); }
+  /* กรอบทีละไบต์: ฟ้า = MBAP เขียว = PDU (สีเดียวกับจอบอร์ด cp3_06) แดง = ข้อยกเว้น */
+  .frames { display: grid; gap: 10px; max-height: 720px; overflow-y: auto; }
+  .frames:empty::before { content: "(ยังไม่มีคำขอ กด SW5 หรือ SW6 บนบอร์ด)"; color: var(--dim); font-size: 14px; }
+  .frame { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
+  .fhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 14px; margin-bottom: 4px; overflow-wrap: anywhere; }
+  .fhead > * { min-width: 0; }
+  .fhead .res { font-weight: 700; }
+  .fhead .res[data-tone="ok"] { color: var(--ok); }
+  .fhead .res[data-tone="bad"] { color: var(--bad); }
+  .fhead .res[data-tone="warn"] { color: var(--warn); }
+  .dir { font-size: 13px; color: var(--dim); margin: 8px 0 4px; }
+  .bytes { display: flex; flex-wrap: wrap; gap: 6px; }
+  .fld { display: grid; gap: 1px; padding: 4px 7px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); min-width: 0; }
+  .fld .hb { font-family: var(--mono); font-size: 16px; font-weight: 700; letter-spacing: .03em; white-space: nowrap; }
+  .fld .lb { font-size: 12px; color: var(--dim); }
+  .fld .vl { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .fld.mbap .hb { color: var(--water); }
+  .fld.pdu .hb { color: var(--accent); }
+  .fld.exc .hb { color: var(--bad); }
+  .raw { font-family: var(--mono); font-size: 14px; overflow-wrap: anywhere; }
+  .json { font-family: var(--mono); font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+  /* หน้าต่างบันทึก: บรรทัดเดียวกับที่สองหน้าต่างเทอร์มินัลเดิมพิมพ์ */
+  .logs2 { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .logs2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .term { white-space: pre-wrap; height: 320px; overflow-y: auto; margin: 0; }
+  .term:empty::before { content: "(ยังไม่มี)"; color: var(--dim); }
+  .notice { border-left: 4px solid var(--warn); }
+  .notice p:last-child { margin-bottom: 0; }
+  .steps { margin: 6px 0 12px; padding-left: 22px; font-size: 15px; }
+  .steps li { margin-bottom: 6px; }
+  .how { margin-top: 12px; color: var(--dim); font-size: 14px; }
+  .how summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+  .how p, .how ul { margin: 8px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h5"/><path d="M7 13h10"/><path d="M7 17h6"/><circle cx="16.5" cy="9" r="1"/></svg>
+    </div>
+    <div><h1>PLC จำลอง + เกตเวย์ Modbus</h1><p class="sub">Smart Farm · หัวใจ AIoT · cp3_06 · บอร์ดส่งกรอบ Modbus TCP ทาง MQTT หน้านี้ตอบแทน PLC</p></div>
+  </div>
+  <div class="conn">
+    <button id="start" class="primary" type="button">เริ่ม</button>
+    <button id="stop" class="danger" type="button" disabled>หยุด</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้เริ่ม</b>
+  </div>
+</header>
+
+<main class="layout">
+<section class="panel" aria-labelledby="h-set">
+  <h2 id="h-set">1. ตั้งค่า</h2>
+  <fieldset id="cfg">
+    <div class="grid2">
+      <label class="field" for="team"><span>เลขกลุ่ม (team01–team99) ตรงกับ TEAM บนบอร์ด</span>
+        <input id="team" placeholder="team05" maxlength="6" autocomplete="off" spellcheck="false"></label>
+      <label class="field" for="broker"><span>broker ตรงกับ BROKER บนบอร์ด</span>
+        <select id="broker">
+          <option value="hivemq">HiveMQ (ค่าเริ่มต้น)</option>
+          <option value="mosquitto">Mosquitto (สำรอง เมื่อผู้สอนประกาศ)</option>
+        </select></label>
+    </div>
+  </fieldset>
+  <label class="field" for="tank"><span>น้ำในถังตอนเปิด PLC (%) · แบบเดียวกับ <code>--tank</code> ของตัว Python</span>
+    <input id="tank" type="number" min="0" max="100" step="any" value="80" inputmode="decimal"></label>
+  <div class="bar">
+    <button id="plcPower" type="button" disabled>ถอดสาย PLC</button>
+    <span id="plcState" class="hint">PLC ยังไม่ทำงาน</span>
+  </div>
+  <p id="formMsg" role="alert"></p>
+  <p class="hint" style="margin-top:12px">ฟัง <code id="tReqShow">bento-aiot/&lt;ทีม&gt;/modbus/req</code> · ตอบ <code id="tRespShow">bento-aiot/&lt;ทีม&gt;/modbus/resp</code></p>
+</section>
+
+<section class="panel" aria-labelledby="h-farm">
+  <h2 id="h-farm">2. แปลงผักที่ PLC คุม <span class="hint">อัปเดต 10 ครั้งต่อวินาที</span></h2>
+  <div class="tiles">
+    <div class="tile"><div class="lbl">PLC</div><div id="sPlc" class="val">--</div></div>
+    <div class="tile"><div class="lbl">ปั๊ม (HR0)</div><div id="sPump" class="val">--</div><div id="sLeft" class="sub2"></div></div>
+    <div class="tile"><div class="lbl">ดิน (HR1)</div><div id="sSoil" class="val">--</div><div class="meter"><i id="mSoil"></i></div></div>
+    <div class="tile"><div class="lbl">ถังน้ำ (HR2)</div><div id="sTank" class="val">--</div><div class="meter"><i id="mTank"></i></div></div>
+    <div class="tile"><div class="lbl">เหตุปฏิเสธล่าสุด (HR4)</div><div id="sRefuse" class="val">--</div></div>
+  </div>
+  <p id="why" class="why" aria-live="polite"></p>
+</section>
+
+<section class="panel" aria-labelledby="h-regs">
+  <h2 id="h-regs">3. ตาราง holding register <span class="hint">ช่องละ 16 บิต · เลขช่องเริ่มที่ 0</span></h2>
+  <div class="tablewrap">
+    <table class="regs">
+      <thead><tr><th>ช่อง</th><th>ชื่อ</th><th>ค่า</th><th>ฐานสิบหก</th><th>สิทธิ์</th><th>ความหมาย</th></tr></thead>
+      <tbody>
+        <tr><td>HR0</td><td>ปั๊ม</td><td id="hr0" class="v">--</td><td id="hx0" class="hx">--</td><td><span class="rw w">อ่าน/เขียน</span></td><td>0 = ดับ · 1 = เดิน · เขียนได้แค่ 0 หรือ 1</td></tr>
+        <tr><td>HR1</td><td>ดิน %</td><td id="hr1" class="v">--</td><td id="hx1" class="hx">--</td><td><span class="rw">อ่านอย่างเดียว</span></td><td>ปัดเป็นจำนวนเต็ม</td></tr>
+        <tr><td>HR2</td><td>ถัง %</td><td id="hr2" class="v">--</td><td id="hx2" class="hx">--</td><td><span class="rw">อ่านอย่างเดียว</span></td><td>ปัดลงเสมอ (9.9 เป็น 9 ตรงกับที่ระบบป้องกันเห็นว่า "ต่ำกว่า 10")</td></tr>
+        <tr><td>HR3</td><td>ปั๊มเหลือกี่วิ</td><td id="hr3" class="v">--</td><td id="hx3" class="hx">--</td><td><span class="rw">อ่านอย่างเดียว</span></td><td>0 = ปั๊มดับอยู่</td></tr>
+        <tr><td>HR4</td><td>เหตุปฏิเสธล่าสุด</td><td id="hr4" class="v">--</td><td id="hx4" class="hx">--</td><td><span class="rw">อ่านอย่างเดียว</span></td><td>0 ไม่มี · 1 ถังต่ำกว่าเกณฑ์ · 2 ค่าที่เขียนผิด</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:10px">ข้อยกเว้นที่ PLC ตอบ: <b>01</b> ไม่รู้จักคำสั่ง · <b>02</b> ไม่มี register ให้ทำแบบนั้น (เช่นเขียน HR1–HR4) ·
+     <b>03</b> ค่าไม่ถูกต้อง (เช่นเขียน HR0 = 2) · <b>04</b> ไม่ยอมทำ (ระบบป้องกัน: ถังต่ำ)</p>
+</section>
+
+<section class="panel notice" aria-labelledby="h-tcp">
+  <h2 id="h-tcp">ทำไมหน้าเว็บไม่ต่อ PLC ตัวจริง</h2>
+  <p>เบราว์เซอร์ <b>เปิดการเชื่อมต่อ TCP ตรงไปหา PLC ที่พอร์ต 502 ไม่ได้</b> หน้าเว็บคุยออกไปได้แค่ HTTP และ WebSocket
+     (MQTT ของหน้านี้ก็วิ่งบน WebSocket) จึงต้องมี PLC จำลองอยู่ในหน้านี้เอง</p>
+  <p>ถ้าจะต่อ PLC ตัวจริง ต้องมีโปรแกรมเกตเวย์ MQTT ↔ Modbus TCP รันอยู่บน <b>เครื่องของผู้สอน</b> ที่อยู่ในวงแลนเดียวกับ PLC
+     · <b>ผู้เรียนไม่ต้องใช้เกตเวย์นั้น</b> ทุกขั้นของบทเรียนนี้ทำงานบนหน้านี้กับบอร์ด (หรือ BENTO Emulator)</p>
+</section>
+
+<section class="panel wide" aria-labelledby="h-frames">
+  <h2 id="h-frames">4. กรอบทีละไบต์ <span class="hint">ฟ้า = MBAP (หัว 7 ไบต์) · เขียว = PDU (ตัวคำสั่ง) · แดง = ข้อยกเว้น · ใหม่อยู่บน</span></h2>
+  <div id="frames" class="frames"></div>
+</section>
+
+<section class="panel wide" aria-labelledby="h-logs">
+  <h2 id="h-logs">5. หน้าต่างบันทึก <span class="hint">บรรทัดเดียวกับที่สองหน้าต่างเทอร์มินัลของ modbus_bridge.py และ modbus_plc_sim.py เคยพิมพ์</span></h2>
+  <div class="logs2">
+    <div><h3>เกตเวย์ MQTT ↔ Modbus</h3><div id="gwLog" class="log term"></div></div>
+    <div><h3>PLC (Modbus TCP)</h3><div id="plcLog" class="log term"></div></div>
+  </div>
+</section>
+
+<section class="panel wide" aria-labelledby="h-how">
+  <h2 id="h-how">วิธีใช้กับ cp3_06_modbus_frame.py</h2>
+  <ol class="steps">
+    <li>ใส่เลขกลุ่ม (หรือเปิดลิงก์ที่มี <code>?team=team05</code>) แล้วกด <b>เริ่ม</b> · เปิดหน้านี้ค้างไว้ อยู่แท็บหลังได้ · เปิดหน้าเดียวต่อกลุ่ม</li>
+    <li>ใน <code>cp3_06_modbus_frame.py</code> ตั้ง <code>WIFI_SSID</code> <code>WIFI_PASS</code> และ <code>TEAM</code> ให้ตรงกับหน้านี้ แล้วรันบนบอร์ดหรือ BENTO Emulator</li>
+    <li>กด <b>SW5</b> = FC03 อ่าน HR0–HR2 · กด <b>SW6</b> = FC06 สลับปั๊ม → 12 ไบต์บนจอบอร์ดคือกรอบ "ขาไป" ในข้อ 4 ทุกไบต์ · คำตอบกลับถึงบอร์ด = "ยืนยันแล้ว"</li>
+    <li>กด <b>ถอดสาย PLC</b> แล้วกด SW6 → บอร์ดขึ้น <code>plc_offline</code> และสถานะปั๊มเป็น <b>--</b> (ไม่รู้ ไม่เดาว่าสำเร็จ)</li>
+    <li>ใส่น้ำในถัง <b>5</b> กด <b>เปิด PLC ใหม่</b> แล้วกด SW6 สั่งเปิด → บอร์ดขึ้น <b>"PLC ปฏิเสธ 4"</b> (ระบบป้องกันถังแห้ง)</li>
+  </ol>
+  <details class="how">
+    <summary>สัญญา MQTT ของบทนี้ (ตายตัว ตรงกับที่บอร์ดใช้)</summary>
+    <p>ขอ <code>.../modbus/req</code> <code>{"n":7,"fc":3,"addr":0,"qty":3,"hex":"000700000006010300000003"}</code>
+       · มี <code>hex</code> = ส่งกรอบนั้นทุกไบต์ตามที่บอร์ดวาด · ไม่มี = สร้างกรอบให้จาก fc / addr / qty หรือ value</p>
+    <p>ตอบ <code>.../modbus/resp</code> <code>{"n":7,"ok":1,"hex":"&lt;กรอบคำตอบ&gt;","v":[0,45,80]}</code>
+       · PLC ปฏิเสธ <code>{"n":8,"ok":0,"hex":"...","exc":4}</code> · เกตเวย์ปฏิเสธ <code>{"n":8,"ok":0,"err":"..."}</code></p>
+    <ul>
+      <li><code>bad_req</code> อ่าน JSON ไม่ได้หรือช่องไม่ครบ (<code>n</code> เป็น null ถ้าอ่านไม่ได้) · <code>bad_frame</code> กรอบผิดรูป ไม่ส่งต่อ</li>
+      <li><code>too_big</code> ขออ่านเกิน 10 ช่อง (คำตอบจะล้นกล่องรับของบอร์ด) · <code>plc_offline</code> ต่อ PLC ไม่ได้ · <code>bad_reply</code> PLC ตอบผิดรูป</li>
+      <li><code>n</code> ของคำตอบ = <code>n</code> ของคำขอ ใช้จับคู่ · <code>ok</code> = 1 เฉพาะเมื่อ PLC ยืนยันแล้วเท่านั้น</li>
+    </ul>
+  </details>
+</section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+// ===== 0) ค่าตั้ง (แก้ได้) =====
+const ROOT = "bento-aiot";
+const BROKERS = {                                  // ต้องตรงกับ BROKER บนบอร์ด (หน้าเว็บต่อทาง WebSocket ที่ broker เดียวกัน)
+  hivemq: "wss://broker.hivemq.com:8884/mqtt",
+  mosquitto: "wss://test.mosquitto.org:8081/mqtt",
+};
+const BROKER_HOSTS = { "broker.hivemq.com": "hivemq", "test.mosquitto.org": "mosquitto" };   // ?broker= ใส่ชื่อ host แบบในไฟล์บอร์ดก็ได้
+const TEAM_RE = /^team(0[1-9]|[1-9][0-9])$/;      // team01..team99
+
+// PLC: ชื่อและค่าเดียวกับ core/app/modbus_plc_sim.py
+const UNIT_ID = 1;                                 // เลขเครื่องของ PLC ตัวนี้
+const SOIL_START = 45.0, TANK_START = 80.0;        // ค่าเริ่มต้น (%) · ถังเปลี่ยนได้ในช่อง "น้ำในถังตอนเปิด PLC"
+const SOIL_DRY_PER_S = 0.4;                        // ดินแห้งลงวินาทีละเท่านี้
+const SOIL_WET_PER_S = 2.0;                        // ปั๊มเดิน: ดินชื้นขึ้นวินาทีละเท่านี้
+const TANK_USE_PER_S = 1.0;                        // ปั๊มเดิน: น้ำในถังลดวินาทีละเท่านี้
+const TANK_FILL_PER_S = 0.05;                      // ฝนตก/น้ำประปาเติมถังช้า ๆ
+const PUMP_MAX_S = 30, TANK_MIN = 10;              // ระบบป้องกัน: เวลาเปิดสูงสุด, ถังต่ำสุดที่ยอมเปิด
+const TANK_RESUME = 15;                            // ถังแห้งตัดไปแล้ว ต้องกลับถึงเท่านี้ก่อนจึงยอมเปิดอีก
+const STATUS_S = 10;                               // พิมพ์สถานะแปลงทุกกี่วิ
+const NUM_REGS = 5;
+const HR_PUMP = 0;
+const EXC_FUNCTION = 1, EXC_ADDRESS = 2, EXC_VALUE = 3, EXC_DEVICE = 4;
+const EXC_TEXT = { 1: "ไม่รู้จักคำสั่งนี้", 2: "ไม่มี register นี้ให้ทำแบบนั้น", 3: "ค่าไม่ถูกต้อง", 4: "PLC ไม่ยอมทำ (ระบบป้องกัน)" };
+const REFUSE_NONE = 0, REFUSE_TANK = 1, REFUSE_VALUE = 2;
+const STEP_MS = 100;                               // ฟิสิกส์ขยับทุก 0.1 วิ (ตัว Python: time.sleep(0.1))
+const CATCHUP_MS = 150;                            // แท็บอยู่เบื้องหลัง เบราว์เซอร์หน่วงตัวจับเวลา: ช้าเกินครึ่งก้าวเมื่อไร ไล่ฟิสิกส์ทีละ 0.1 วิ
+
+// เกตเวย์: ค่าเดียวกับ core/app/modbus_bridge.py
+const BRIDGE_UNIT_ID = 1;                          // ใช้ตอนสร้างกรอบเองเท่านั้น (คำขอที่ไม่มี hex)
+const MAX_QTY = 10;                                // อ่านครั้งละไม่เกิน 10 ช่อง คำตอบจะไม่ล้นกล่องรับของบอร์ด
+const INT_MAX_STR_DIGITS = 4300;                   // json ของ Python 3.11+ ไม่ยอมอ่านจำนวนเต็มยาวเกินนี้
+
+// หน้าจอ
+const REG_NAMES = ["ปั๊ม", "ดิน", "ถัง", "เหลือวิ", "เหตุปฏิเสธ"];
+const REFUSE_TEXT = { 0: "ไม่มี", 1: "ถังต่ำกว่าเกณฑ์", 2: "ค่าที่เขียนผิด" };
+const ERR_TEXT = { bad_req: "เกตเวย์ปฏิเสธ: อ่าน JSON ไม่ได้ หรือช่องไม่ครบ", bad_frame: "เกตเวย์ปฏิเสธ: กรอบผิดรูป ไม่ส่งต่อ",
+                   too_big: "เกตเวย์ปฏิเสธ: ขออ่านเกิน " + MAX_QTY + " ช่อง", plc_offline: "ต่อ PLC ไม่ได้ (ถอดสายอยู่)",
+                   bad_reply: "PLC ตอบผิดรูป" };
+const LOG_MAX = 400;                               // บรรทัดที่เก็บในแต่ละหน้าต่างบันทึก
+const LINE_MAX = 2000;                             // บรรทัดยาวเกินนี้ (กรอบขยะยาว ๆ จาก broker สาธารณะ) แสดงแค่ต้นบรรทัด
+const FRAMES_MAX = 30;                             // กรอบล่าสุดที่แสดง
+
+const $ = (id) => document.getElementById(id);
+const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const nowMs = () => performance.now();
+const hex2 = (b) => b.toString(16).toUpperCase().padStart(2, "0");
+const spaced = (data) => Array.from(data, hex2).join(" ");                  // "00 07 00 ..." แบบ spaced() ของ Python
+const u16 = (b, i) => (b[i] << 8) | b[i + 1];                                // big-endian 2 ไบต์
+const pyList = (a) => "[" + a.join(", ") + "]";                              // print ของ list ใน Python
+const pyD = (x) => String(Math.trunc(x));                                    // "%d" ของ Python
+function words(b, start, count) { const out = []; for (let k = 0; k < count; k++) out.push(u16(b, start + 2 * k)); return out; }
+function sameBytes(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
+// round() ของ Python ปัดครึ่งไปหาเลขคู่ (44.5 -> 44) ไม่ใช่ Math.round (44.5 -> 45)
+function pyRound(x) { const f = Math.floor(x), d = x - f; return d > 0.5 ? f + 1 : d < 0.5 ? f : (f % 2 === 0 ? f : f + 1); }
+
+// ===== 1) อ่าน JSON แบบเดียวกับ json.loads ของ Python =====
+// ไม่ใช้ JSON.parse เพราะต้องตัดสินคำขอให้เหมือนเกตเวย์ Python ทุกไบต์: Python แยก 7 กับ 7.0 (n = 7.0 ไม่ใช่เลขรายการ)
+// อ่านจำนวนเต็มยาวได้ครบทุกหลัก (เก็บเป็น BigInt) รับ NaN / Infinity และไม่ยอม BOM นำหน้า
+// ผลที่ได้: จำนวนเต็ม = BigInt · ทศนิยม = number · ออบเจกต์ = Map (คีย์อะไรก็ไม่ไปชน prototype) · อาร์เรย์ = Array
+class PyValueError extends Error {}
+const JSON_WS = " \t\n\r";
+const NUM_RE = /-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][-+]?[0-9]+)?/y;
+const ESCAPES = { '"': '"', "\\": "\\", "/": "/", b: "\b", f: "\f", n: "\n", r: "\r", t: "\t" };
+function skipWs(s, i) { while (i < s.length && JSON_WS.includes(s[i])) i++; return i; }
+function readString(s, i) {                        // i = ตัวถัดจาก " เปิด · คืน [ข้อความ, ตำแหน่งถัดจาก " ปิด]
+  let out = "";
+  for (;;) {
+    let j = i;
+    while (j < s.length && s[j] !== '"' && s[j] !== "\\") {
+      if (s.charCodeAt(j) <= 0x1f) throw new PyValueError("Invalid control character");
+      j++;
+    }
+    if (j >= s.length) throw new PyValueError("Unterminated string");
+    out += s.slice(i, j);
+    if (s[j] === '"') return [out, j + 1];
+    const e = s[j + 1];
+    if (e !== "u") {
+      if (e === undefined || !own(ESCAPES, e)) throw new PyValueError("Invalid \\escape");
+      out += ESCAPES[e];
+      i = j + 2;
+      continue;
+    }
+    // \uXXXX: Python ต้องมีอีกอย่างน้อยหนึ่งตัวหลังเลขฐานสิบหก 4 หลัก · คู่ surrogate ต่อกันเองในสตริงของ JavaScript
+    const h = s.slice(j + 2, j + 6);
+    if (j + 6 >= s.length || !/^[0-9a-fA-F]{4}$/.test(h)) throw new PyValueError("Invalid \\uXXXX escape");
+    out += String.fromCharCode(parseInt(h, 16));
+    i = j + 6;
+  }
+}
+function readKey(s, i, box) {
+  if (s[i] !== '"') throw new PyValueError("Expecting property name enclosed in double quotes");
+  let key;
+  [key, i] = readString(s, i + 1);
+  i = skipWs(s, i);
+  if (s[i] !== ":") throw new PyValueError("Expecting ':' delimiter");
+  box.key = key;
+  return skipWs(s, i + 1);
+}
+function pyLoads(s) {
+  if (s.charCodeAt(0) === 0xFEFF) throw new PyValueError("Unexpected UTF-8 BOM");
+  const stack = [];                                // ไม่เรียกตัวเองซ้อน: JSON ซ้อนลึกแค่ไหนหน้าก็ไม่ค้าง
+  let i = skipWs(s, 0), cur;
+  for (;;) {
+    const c = s[i];
+    if (c === "{" || c === "[") {
+      const box = { val: c === "{" ? new Map() : [], key: null };
+      i = skipWs(s, i + 1);
+      if (s[i] === (c === "{" ? "}" : "]")) { cur = box.val; i += 1; }
+      else {
+        if (c === "{") i = readKey(s, i, box);
+        stack.push(box);
+        continue;
+      }
+    } else if (c === '"') { [cur, i] = readString(s, i + 1); }
+    else if (s.startsWith("null", i)) { cur = null; i += 4; }
+    else if (s.startsWith("true", i)) { cur = true; i += 4; }
+    else if (s.startsWith("false", i)) { cur = false; i += 5; }
+    else if (s.startsWith("NaN", i)) { cur = NaN; i += 3; }
+    else if (s.startsWith("Infinity", i)) { cur = Infinity; i += 8; }
+    else if (s.startsWith("-Infinity", i)) { cur = -Infinity; i += 9; }
+    else {
+      NUM_RE.lastIndex = i;
+      const m = NUM_RE.exec(s);
+      if (!m) throw new PyValueError("Expecting value");
+      if (m[1] === undefined && m[2] === undefined) {
+        if (m[0].replace("-", "").length > INT_MAX_STR_DIGITS) throw new PyValueError("Exceeds the limit for integer string conversion");
+        cur = BigInt(m[0]);
+      } else {
+        cur = Number(m[0]);
+      }
+      i += m[0].length;
+    }
+    for (;;) {                                     // ใส่ค่าที่เพิ่งอ่านลงกล่องที่เปิดอยู่ ปิดกล่องที่ครบแล้ว
+      if (!stack.length) {
+        if (skipWs(s, i) !== s.length) throw new PyValueError("Extra data");
+        return cur;
+      }
+      const box = stack[stack.length - 1], isObj = box.val instanceof Map;
+      if (isObj) box.val.set(box.key, cur); else box.val.push(cur);    // คีย์ซ้ำ: ค่าหลังทับค่าแรก เหมือน dict
+      i = skipWs(s, i);
+      if (s[i] === ",") {
+        i = skipWs(s, i + 1);
+        if (isObj) i = readKey(s, i, box);
+        break;
+      }
+      if (s[i] !== (isObj ? "}" : "]")) throw new PyValueError("Expecting ',' delimiter");
+      i += 1;
+      cur = box.val;
+      stack.pop();
+    }
+  }
+}
+// json.dumps(..., separators=(",", ":")) ของคำตอบ: n เป็น null / true / false / จำนวนเต็มยาวเท่าไรก็ได้
+function pyDumps(v) {
+  if (v === null) return "null";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "bigint" || typeof v === "number") return String(v);
+  if (typeof v === "string") return JSON.stringify(v);
+  if (Array.isArray(v)) return "[" + v.map(pyDumps).join(",") + "]";
+  return "{" + Object.keys(v).map((k) => JSON.stringify(k) + ":" + pyDumps(v[k])).join(",") + "}";
+}
+// isinstance(x, int) ของ Python: True / False ก็นับเป็นจำนวนเต็ม (1 / 0)
+const isPyInt = (x) => typeof x === "bigint" || typeof x === "boolean";
+const pyIntValue = (x) => (typeof x === "boolean" ? (x ? 1n : 0n) : x);
+// str(x) ก่อนส่งให้ bytes.fromhex · ทศนิยม list dict ได้ข้อความที่มี . e+ inf nan [ { เสมอ = ฐานสิบหกไม่ได้แน่นอน (คืน null)
+function pyStrForHex(v) {
+  if (typeof v === "string") return v;
+  if (typeof v === "bigint") return v.toString();
+  if (typeof v === "boolean") return v ? "True" : "False";
+  if (v === null) return "None";
+  return null;
+}
+// bytes.fromhex ของ Python: ฐานสิบหกทีละคู่ เว้นวรรคได้เฉพาะระหว่างคู่ (ช่องว่าง ASCII 6 แบบ) อักษรนอก ASCII = ผิด
+const HEX_WS = " \t\n\r\x0b\x0c";
+function pyFromHex(s) {
+  if (s === null) return null;
+  for (let k = 0; k < s.length; k++) if (s.charCodeAt(k) > 127) return null;
+  const out = [], hexVal = (ch) => (/^[0-9A-Fa-f]$/.test(ch || "") ? parseInt(ch, 16) : -1);
+  let i = 0;
+  while (i < s.length) {
+    if (HEX_WS.includes(s[i])) {
+      while (i < s.length && HEX_WS.includes(s[i])) i++;
+      if (i >= s.length) break;
+    }
+    const hi = hexVal(s[i]), lo = hexVal(s[i + 1]);
+    if (hi < 0 || lo < 0) return null;
+    out.push(hi * 16 + lo);
+    i += 2;
+  }
+  return out;
+}
+
+// ===== 2) PLC จำลอง (แบบเดียวกับ modbus_plc_sim.py) =====
+// until = เวลาที่ปั๊มต้องดับ (วินาที นาฬิกาเดียวกับ nowMs()/1000, 0 = ดับอยู่) · dry = ถังแห้งตัดไปแล้ว รอน้ำกลับถึง TANK_RESUME
+const plant = { soil: SOIL_START, tank: TANK_START, until: 0.0, refuse: REFUSE_NONE, dry: false };
+let plcOn = false, plcT0 = 0, plcLastMs = 0, plcNextStatus = 0, plcTimer = null;
+
+function pumpOn(t) { return t < plant.until; }
+
+function stepPlant(dt, t) {
+  // ขยับแปลงไป dt วินาที แล้วตรวจระบบป้องกัน คืนข้อความถ้า PLC เพิ่งดับปั๊มเอง
+  const wasOn = plant.until > 0.0;
+  if (pumpOn(t)) {
+    plant.soil += SOIL_WET_PER_S * dt;
+    plant.tank -= TANK_USE_PER_S * dt;
+  } else {
+    plant.soil -= SOIL_DRY_PER_S * dt;
+  }
+  plant.tank += TANK_FILL_PER_S * dt;
+  plant.soil = Math.max(0.0, Math.min(100.0, plant.soil));
+  plant.tank = Math.max(0.0, Math.min(100.0, plant.tank));
+  if (pumpOn(t) && plant.tank < TANK_MIN) {       // ถังแห้งระหว่างเดิน: ดับเองกันปั๊มพัง
+    plant.until = 0.0; plant.refuse = REFUSE_TANK; plant.dry = true;
+    return "ถังต่ำกว่า " + pyD(TANK_MIN) + " % ระหว่างเดิน PLC ดับปั๊มเอง (HR4 = 1) รอน้ำถึง " + pyD(TANK_RESUME) + " %";
+  }
+  if (wasOn && !pumpOn(t)) {                       // ครบเวลาสูงสุด
+    plant.until = 0.0;
+    return "ปั๊มเดินครบ " + pyD(PUMP_MAX_S) + " วิ PLC ดับเอง";
+  }
+  if (plant.dry && plant.tank >= TANK_RESUME) {
+    plant.dry = false;
+    return "น้ำในถังกลับถึง " + pyD(TANK_RESUME) + " % แล้ว PLC ยอมเปิดปั๊มได้อีก";
+  }
+  return null;
+}
+
+function registers(t) {
+  // ค่าทั้ง 5 ช่องตอนนี้ เป็นจำนวนเต็ม 16 บิต · ถังปัดลงเสมอ: 9.9 % รายงานเป็น 9 ตรงกับที่ระบบป้องกันเห็นว่า "ต่ำกว่า 10"
+  const on = pumpOn(t);
+  const left = on ? Math.max(0, Math.trunc(plant.until - t + 0.999)) : 0;
+  return [on ? 1 : 0, pyRound(plant.soil), Math.trunc(plant.tank), left, plant.refuse];
+}
+
+function exceptionPdu(fc, code) { return [(fc | 0x80) & 0xFF, code]; }   // FC ที่ติดบิตสูง + รหัสหนึ่งไบต์
+
+function readHolding(pdu, t) {
+  // FC03: [03][addr 2 ไบต์][จำนวนช่อง 2 ไบต์] -> [03][จำนวนไบต์][ค่าช่องละ 2 ไบต์ ...]
+  if (pdu.length !== 5) return exceptionPdu(3, EXC_VALUE);
+  const addr = u16(pdu, 1), qty = u16(pdu, 3);
+  if (!(1 <= qty && qty <= 125)) return exceptionPdu(3, EXC_VALUE);
+  if (addr + qty > NUM_REGS) return exceptionPdu(3, EXC_ADDRESS);
+  const out = [3, 2 * qty];
+  for (const r of registers(t).slice(addr, addr + qty)) out.push((r >> 8) & 0xFF, r & 0xFF);
+  return out;
+}
+
+function writeSingle(pdu, t) {
+  // FC06: [06][addr 2 ไบต์][ค่า 2 ไบต์] -> ทำสำเร็จ = ทวนคำขอกลับทั้งก้อน
+  if (pdu.length !== 5) return exceptionPdu(6, EXC_VALUE);
+  const addr = u16(pdu, 1), value = u16(pdu, 3);
+  if (addr !== HR_PUMP) return exceptionPdu(6, EXC_ADDRESS);   // HR1-HR4 อ่านได้อย่างเดียว เกินตารางก็ไม่มีอยู่จริง
+  if (value !== 0 && value !== 1) {
+    plant.refuse = REFUSE_VALUE;
+    return exceptionPdu(6, EXC_VALUE);
+  }
+  if (value === 1 && plant.tank < (plant.dry ? TANK_RESUME : TANK_MIN)) {
+    plant.refuse = REFUSE_TANK;
+    return exceptionPdu(6, EXC_DEVICE);
+  }
+  if (value === 0) plant.until = 0.0;
+  else if (!pumpOn(t)) plant.until = t + PUMP_MAX_S;           // เขียน 1 ซ้ำตอนเดินอยู่ไม่ต่อเวลา กันคนสั่งรัว
+  plant.refuse = REFUSE_NONE;
+  return pdu.slice();
+}
+
+function handlePdu(pdu, t) {
+  // หัวใจของ PLC: รับ PDU หนึ่งก้อน คืน PDU คำตอบ
+  const fc = pdu.length ? pdu[0] : 0;
+  if (fc === 3) return readHolding(pdu, t);
+  if (fc === 6) return writeSingle(pdu, t);
+  return exceptionPdu(fc, EXC_FUNCTION);
+}
+
+function buildAdu(tid, unit, pdu) {
+  // MBAP 7 ไบต์: เลขรายการ (ทวนของคำขอ), protocol id (0 เสมอ), จำนวนไบต์ที่ตามมา (unit + PDU), unit id
+  const len = pdu.length + 1;
+  return [(tid >> 8) & 0xFF, tid & 0xFF, 0, 0, (len >> 8) & 0xFF, len & 0xFF, unit & 0xFF].concat(pdu);
+}
+
+function describe(pdu, reply) {
+  // คำอธิบายภาษาคนของ PDU หนึ่งก้อน ไว้พิมพ์ต่อท้ายไบต์
+  const fc = pdu.length ? pdu[0] : 0;
+  if ((fc & 0x80) && pdu.length === 2) return "ข้อยกเว้น " + hex2(pdu[1]) + " = " + (own(EXC_TEXT, pdu[1]) ? EXC_TEXT[pdu[1]] : "?");
+  if (fc === 3 && reply) return "ค่า = " + pyList(words(pdu, 2, pdu[1] >> 1));
+  if ((fc === 3 || fc === 6) && pdu.length === 5) {
+    const a = u16(pdu, 1), b = u16(pdu, 3);
+    if (fc === 3) return "FC03 อ่าน " + b + " ช่อง เริ่ม HR" + a;
+    return (reply ? "FC06 ทำแล้ว HR" : "FC06 เขียน HR") + a + " = " + b;
+  }
+  return "FC" + hex2(fc);
+}
+
+function plcConnection(sent, t) {
+  // ฝั่ง PLC ของการเชื่อมต่อ TCP หนึ่งสาย (ModbusHandler ของ Python): ไบต์ที่เกตเวย์ส่งมา -> ไบต์ที่ PLC ส่งกลับ
+  const out = [];
+  let pos = 0;
+  for (;;) {
+    if (sent.length - pos < 7) return out;         // อีกฝั่งปิดสาย
+    const head = sent.slice(pos, pos + 7);
+    pos += 7;
+    const tid = u16(head, 0), pid = u16(head, 2), length = u16(head, 4), unit = head[6];
+    if (pid !== 0 || !(2 <= length && length <= 254)) {
+      plcLog("<- " + spaced(head) + "  (ไม่ใช่ Modbus TCP ตัดสายทิ้ง)", t);
+      return out;
+    }
+    if (sent.length - pos < length - 1) return out;
+    const pdu = sent.slice(pos, pos + length - 1);
+    pos += length - 1;
+    let note = describe(pdu, false);
+    if (unit !== UNIT_ID) note += ", unit " + unit + " ไม่ตรงแต่ตอบให้";   // Modbus TCP ส่วนใหญ่ไม่สน unit id จึงตอบให้
+    plcLog("<- " + spaced(head.concat(pdu)) + "  (" + note + ")", t);
+    const adu = buildAdu(tid, unit, handlePdu(pdu, t));
+    plcLog("-> " + spaced(adu) + "  (" + describe(adu.slice(7), true) + ")", t);
+    out.push(...adu);
+  }
+}
+
+function plcStep(ms) {
+  // หนึ่งรอบของลูปหลักใน modbus_plc_sim.py: ขยับแปลง พิมพ์เหตุการณ์ และพิมพ์สถานะทุก STATUS_S วิ
+  const t = ms / 1000;
+  const event = stepPlant(t - plcLastMs / 1000, t);
+  plcLastMs = ms;
+  if (event) plcLog(event, t);
+  if (t - plcT0 >= plcNextStatus) {
+    plcLog("สถานะ HR0-HR4 = " + pyList(registers(t)) + "  (ปั๊ม ดิน ถัง เหลือวิ เหตุปฏิเสธ)", t);
+    plcNextStatus += STATUS_S;
+  }
+}
+
+function plcCatchUp(ms) {
+  // แท็บที่อยู่เบื้องหลังถูกหน่วงตัวจับเวลาเหลือวินาทีละครั้งหรือนาทีละครั้ง: ไล่ฟิสิกส์ช่วงที่พลาดทีละ STEP_MS
+  // ปั๊มจึงดับตรงเวลาและระบบป้องกันถังแห้งตัดตรงจุดเดิม · ทำงานปกติ (ทุก 0.1 วิ) ไม่เข้าเงื่อนไขนี้เลย
+  if (ms - plcLastMs > CATCHUP_MS) while (ms - plcLastMs > STEP_MS) plcStep(plcLastMs + STEP_MS);
+}
+
+function plcTick() {
+  if (!plcOn) return;
+  const ms = nowMs();
+  plcCatchUp(ms);
+  plcStep(ms);
+  updateUi();
+}
+
+function plcPowerOn(tank) {
+  // เหมือนเปิด modbus_plc_sim.py ใหม่: แปลงเริ่มจากค่าตั้งต้นทุกครั้ง
+  Object.assign(plant, { soil: SOIL_START, tank, until: 0.0, refuse: REFUSE_NONE, dry: false });
+  const ms = nowMs();
+  plcOn = true;
+  plcT0 = ms / 1000;
+  plcLastMs = ms;
+  plcNextStatus = 0.0;
+  addLine("plcLog", "PLC จำลอง Modbus TCP ในหน้านี้ unit " + UNIT_ID + " ถังเริ่ม " + tank + " % | HR0 ปั๊ม HR1 ดิน HR2 ถัง HR3 เหลือวิ HR4 เหตุปฏิเสธ");
+  plcStep(ms);
+  plcTimer = setInterval(plcTick, STEP_MS);
+}
+
+function plcPowerOff() {
+  if (plcOn) plcCatchUp(nowMs());                  // แท็บเบื้องหลังอาจตามหลังอยู่: ไล่ฟิสิกส์ให้ถึงตอนนี้ก่อนปิด
+  if (plcTimer) clearInterval(plcTimer);
+  plcTimer = null;
+  if (plcOn) addLine("plcLog", "ปิด PLC จำลองแล้ว");
+  plcOn = false;
+}
+
+// ===== 3) เกตเวย์ MQTT <-> Modbus (แบบเดียวกับ modbus_bridge.py) =====
+class PlcOffline extends Error {}
+
+function buildFrame(tid, fc, addr, arg) {
+  // MBAP (เลขรายการ, protocol 0, ยาว 6 ไบต์, unit) + PDU (fc, addr, qty หรือ value) = 12 ไบต์
+  return [tid >> 8, tid & 0xFF, 0, 0, 0, 6, BRIDGE_UNIT_ID, fc, addr >> 8, addr & 0xFF, arg >> 8, arg & 0xFF];
+}
+
+function frameFromFields(req, n) {
+  // บอร์ดไม่ได้ส่งกรอบมา: สร้างจาก fc/addr/qty/value คืน null ถ้าช่องไม่ครบหรือค่าเกิน 16 บิต
+  const fc = req.get("fc"), addr = req.get("addr");
+  if (fc !== 3n && fc !== 6n) return null;
+  const arg = fc === 3n ? req.get("qty") : req.get("value");
+  for (const x of [addr, arg]) if (!isPyInt(x) || pyIntValue(x) < 0n || pyIntValue(x) > 0xFFFFn) return null;
+  const tid = n === null || n === false ? 0n : pyIntValue(n);                 // n or 0
+  return buildFrame(Number(BigInt.asUintN(16, tid)), Number(fc), Number(pyIntValue(addr)), Number(pyIntValue(arg)));
+}
+
+function checkFrame(adu) {
+  // คืน null ถ้าเป็นกรอบคำขอ FC03/FC06 ที่ส่งต่อได้ ไม่งั้นคืนรหัส err
+  if (!(8 <= adu.length && adu.length <= 260)) return "bad_frame";
+  const pid = u16(adu, 2), length = u16(adu, 4);
+  if (pid !== 0 || length !== adu.length - 6 || (adu[7] !== 3 && adu[7] !== 6) || adu.length !== 12) return "bad_frame";   // FC03/FC06 ขอ = 12 ไบต์พอดีเสมอ
+  if (adu[7] === 3 && u16(adu, 10) > MAX_QTY) return "too_big";
+  return null;
+}
+
+function readReply(req, rep) {
+  // แปลกรอบคำตอบเป็นส่วนที่เหลือของ JSON คำตอบ: ok + hex + v หรือ exc หรือ err
+  if (rep.length < 9 || rep[0] !== req[0] || rep[1] !== req[1] || rep[2] !== 0 || rep[3] !== 0 || u16(rep, 4) !== rep.length - 6) {
+    return { ok: 0, err: "bad_reply" };            // เลขรายการต้องตรงกับที่ส่งไป ไม่งั้นเป็นคำตอบของคนอื่น
+  }
+  const fc = req[7], pdu = rep.slice(7);
+  const out = { ok: 0, hex: rep.map(hex2).join("") };
+  if (pdu[0] === (fc | 0x80) && pdu.length === 2) { out.exc = pdu[1]; return out; }
+  const arg = u16(req, 10);                        // FC03 = จำนวนช่อง, FC06 = ค่าที่เขียน
+  if (fc === 3 && pdu[0] === 3 && pdu[1] === 2 * arg && 2 * arg === pdu.length - 2) { out.ok = 1; out.v = words(pdu, 2, arg); return out; }
+  if (fc === 6 && sameBytes(pdu, req.slice(7))) { out.ok = 1; out.v = [arg]; return out; }   // FC06 ทำสำเร็จ = PLC ทวนคำขอกลับทุกไบต์
+  return { ok: 0, err: "bad_reply" };
+}
+
+function talkToPlc(adu, t) {
+  // ต่อใหม่ทุกคำขอ ส่งกรอบ รอหัว 7 ไบต์ แล้วอ่านส่วนที่เหลือตามความยาวในหัว · PLC ถอดสาย = ต่อไม่ติด
+  if (!plcOn) throw new PlcOffline("ต่อไม่ติด: PLC ถูกถอดสาย");
+  const rep = plcConnection(adu, t);
+  if (rep.length < 7) throw new PlcOffline("PLC ปิดสายกลางคัน");
+  const length = u16(rep, 4);
+  if (!(2 <= length && length <= 254)) return rep.slice(0, 7);   // ผิดรูป ปล่อยให้ readReply ตัดสินเป็น bad_reply
+  if (rep.length < 6 + length) throw new PlcOffline("PLC ปิดสายกลางคัน");
+  return rep.slice(0, 6 + length);
+}
+
+function handleRequest(text, ms) {
+  // ข้อความ JSON หนึ่งก้อนจากบอร์ด -> คำตอบ (ยังไม่ส่ง) + กรอบขาไป/ขากลับไว้แสดง
+  let req;
+  try { req = pyLoads(text); } catch (e) { if (!(e instanceof PyValueError)) throw e; req = null; }
+  if (!(req instanceof Map)) return { reply: { n: null, ok: 0, err: "bad_req" } };
+  const n = isPyInt(req.get("n")) ? req.get("n") : null;
+  let adu, how;
+  if (req.has("hex")) {
+    adu = pyFromHex(pyStrForHex(req.get("hex")));
+    how = "กรอบจากบอร์ด ส่งต่อทุกไบต์";
+    if (adu === null) return { reply: { n, ok: 0, err: "bad_frame" } };
+  } else {
+    adu = frameFromFields(req, n);
+    how = "บอร์ดไม่ได้ส่งกรอบมา สร้างให้จาก fc/addr";
+    if (adu === null) return { reply: { n, ok: 0, err: "bad_req" } };
+  }
+  const err = checkFrame(adu);
+  if (err) {
+    gwLog("กรอบใช้ไม่ได้ (" + err + ") ไม่ส่งต่อ: " + spaced(adu));
+    return { reply: { n, ok: 0, err }, adu };
+  }
+  gwLog("-> PLC " + spaced(adu) + "  (" + how + ")");
+  let rep;
+  try {
+    rep = talkToPlc(adu, ms / 1000);
+  } catch (e) {                                    // ไม่แกล้งว่าสำเร็จ บอกตรง ๆ ว่า PLC ไม่อยู่
+    if (!(e instanceof PlcOffline)) throw e;
+    gwLog("PLC ไม่ตอบ (" + e.message + ")");
+    return { reply: { n, ok: 0, err: "plc_offline" }, adu };
+  }
+  gwLog("<- PLC " + spaced(rep));
+  return { reply: Object.assign({ n }, readReply(adu, rep)), adu, rep };
+}
+
+// ===== 4) MQTT ปุ่ม และค่าตั้ง =====
+let run = null;                                    // { cfg, client, tReq, tResp, t0 } ระหว่างทำงาน
+const utf8 = new TextDecoder("utf-8", { ignoreBOM: true });   // เหมือน decode("utf-8", "replace"): ไบต์เสียเป็น U+FFFD และไม่ตัด BOM ทิ้ง
+
+function onMessage(client, topic, payload) {
+  if (!run || run.client !== client || topic !== run.tReq) return;   // รับเฉพาะหัวข้อคำขอของกลุ่มเรา ชื่อต้องตรงทุกตัว
+  try {
+    const ms = nowMs();
+    if (plcOn) plcCatchUp(ms);
+    const text = typeof payload === "string" ? payload : utf8.decode(payload);
+    gwLog("MQTT <- " + firstChars(text, 120));
+    const res = handleRequest(text, ms);
+    const body = pyDumps(res.reply);
+    client.publish(run.tResp, body);
+    gwLog("MQTT -> " + body);
+    showExchange(ms, res, body);
+    updateUi();
+  } catch (e) {
+    gwLog("หน้านี้ทำคำขอนี้ไม่สำเร็จ (" + (e && e.name) + ") ไม่ได้ตอบ");
+    console.error(e);
+  }
+}
+
+function readTank() {
+  // แบบ --tank ของ Python: ตัวเลขใด ๆ แล้วบีบให้อยู่ใน 0-100
+  const s = String($("tank").value).trim();
+  if (!/^[+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][+-]?[0-9]+)?$/.test(s)) return null;
+  const v = Number(s);
+  return Number.isFinite(v) ? Math.max(0.0, Math.min(100.0, v)) : null;
+}
+
+function readForm() { return { team: $("team").value.trim().toLowerCase(), broker: $("broker").value, tank: readTank() }; }
+
+function checkSettings(c) {
+  if (!TEAM_RE.test(c.team)) return "ใส่เลขกลุ่ม team01 ถึง team99 เช่น team05 (ตรงกับ TEAM บนบอร์ด)";
+  if (!own(BROKERS, c.broker)) return "เลือก broker";
+  if (c.tank === null) return "น้ำในถังตอนเปิด PLC ต้องเป็นตัวเลข 0 ถึง 100";
+  return "";
+}
+
+function randomHex(nBytes) { return Array.from(crypto.getRandomValues(new Uint8Array(nBytes)), (b) => b.toString(16).padStart(2, "0")).join(""); }
+
+function start() {
+  if (run) return;
+  const cfg = readForm(), err = checkSettings(cfg);
+  showMsg(err);
+  if (err) { setStatus("ตั้งค่ายังไม่ครบ", "bad"); return; }
+  if (typeof mqtt === "undefined" || !mqtt || typeof mqtt.connect !== "function") { setStatus("โหลด mqtt.js ไม่ได้ เช็กเน็ตแล้วโหลดหน้าใหม่", "bad"); return; }
+  $("tank").value = String(cfg.tank);
+  const tReq = ROOT + "/" + cfg.team + "/modbus/req", tResp = ROOT + "/" + cfg.team + "/modbus/resp";
+  // client id สุ่มท้ายเสมอ ถ้าซ้ำกับบอร์ดหรือแอปอื่น broker จะเตะตัวที่ต่อก่อนหลุด
+  const clientId = "modbus-bridge-" + cfg.team + "-" + randomHex(3);
+  let client;
+  try {
+    client = mqtt.connect(BROKERS[cfg.broker], { clientId, clean: true, keepalive: 30, connectTimeout: 10000,
+      reconnectPeriod: 3000, resubscribe: false, protocolVersion: 4 });   // หลุดแล้วต่อใหม่เองทุก 3 วิ
+  } catch (e) {
+    setStatus("ต่อ broker ไม่ได้", "bad");
+    return;
+  }
+  run = { cfg, client, tReq, tResp, t0: nowMs() };
+  plcPowerOn(cfg.tank);                            // เหมือนเปิด modbus_plc_sim.py ก่อน แล้วจึงเปิดเกตเวย์
+  addLine("gwLog", "Modbus bridge " + cfg.team + " | " + tReq + " -> PLC ในหน้านี้ -> " + tResp);
+  // สมัครทุกครั้งที่ต่อติด หลุดแล้วต่อใหม่ก็ยังฟังอยู่ (เหมือน on_connect ของ Python)
+  client.on("connect", () => {
+    if (!run || run.client !== client) return;
+    client.subscribe(tReq, { qos: 0 });
+    gwLog("ต่อ broker แล้ว ฟัง " + tReq);
+    setStatus("ทำงานอยู่ · ฟัง " + cfg.team + "/modbus/req", "ok");
+  });
+  client.on("reconnect", () => { if (run && run.client === client) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  client.on("offline", () => { if (run && run.client === client) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  client.on("message", (topic, payload) => onMessage(client, topic, payload));
+  $("tReqShow").textContent = tReq;
+  $("tRespShow").textContent = tResp;
+  setStatus("กำลังต่อ " + BROKERS[cfg.broker].replace(/^wss:\/\//, "").replace(/\/mqtt$/, "") + " ...", "warn");
+  updateButtons();
+  updateUi();
+}
+
+function stop() {
+  if (!run) return;
+  const r = run;
+  run = null;
+  try { r.client.end(true); } catch (e) { /* ปิดอยู่แล้ว */ }
+  plcPowerOff();
+  addLine("gwLog", "ปิด bridge แล้ว");
+  setStatus("หยุดแล้ว", "dim");
+  updateButtons();
+  updateUi();
+}
+
+function togglePlc() {
+  // ถอดสาย = เหมือนปิด modbus_plc_sim.py ขณะเกตเวย์ยังทำงาน · เปิดใหม่ = รันใหม่ด้วยน้ำในถังตามช่อง (--tank)
+  if (!run) return;
+  if (plcOn) {
+    plcPowerOff();
+    setStatus("ถอดสาย PLC แล้ว · เกตเวย์ตอบ plc_offline", "warn");
+  } else {
+    const tank = readTank();
+    if (tank === null) { showMsg("น้ำในถังตอนเปิด PLC ต้องเป็นตัวเลข 0 ถึง 100"); return; }
+    showMsg("");
+    $("tank").value = String(tank);
+    plcPowerOn(tank);
+    setStatus("เปิด PLC ใหม่แล้ว · ถังเริ่ม " + tank + " %", "ok");
+  }
+  updateButtons();
+  updateUi();
+}
+
+function loadFromUrl() {
+  // ?team=team05&broker=mosquitto&tank=12 · ค่าผิดไม่ใช้ และบอกว่าผิดตรงไหน
+  const q = new URLSearchParams(location.search), notes = [];
+  const team = (q.get("team") || "").trim().toLowerCase();
+  if (TEAM_RE.test(team)) $("team").value = team;
+  else if (q.has("team")) notes.push("เลขกลุ่มในลิงก์ใช้ไม่ได้ (ต้องเป็น team01 ถึง team99)");
+  const b = (q.get("broker") || "").trim().toLowerCase();
+  if (own(BROKERS, b)) $("broker").value = b;
+  else if (own(BROKER_HOSTS, b)) $("broker").value = BROKER_HOSTS[b];
+  else if (q.has("broker")) notes.push("broker ในลิงก์ไม่รู้จัก ใช้ HiveMQ (เลือกได้ hivemq หรือ mosquitto)");
+  if (q.has("tank")) {
+    $("tank").value = String(q.get("tank")).slice(0, 24);
+    const v = readTank();
+    if (v === null) { $("tank").value = String(TANK_START); notes.push("ค่า tank ในลิงก์ไม่ใช่ตัวเลข ใช้ " + TANK_START + " %"); }
+    else $("tank").value = String(v);
+  }
+  showMsg(notes.join(" · "));
+}
+
+// ===== 5) หน้าจอ (textContent เสมอ ข้อความจาก broker สาธารณะเป็นของใครก็ได้ ไม่ถูกรันเป็นโค้ด) =====
+function setStatus(text, tone) { $("status").textContent = text; $("status").style.color = "var(--" + tone + ")"; }   // ok / warn / bad / dim
+function showMsg(text) { $("formMsg").textContent = text; }
+function fmtT(sec) { return sec.toFixed(1).padStart(6) + " วิ  "; }        // "%6.1f วิ  " แบบ log() ของ Python
+function firstChars(s, n) { let out = "", k = 0; for (const ch of s) { if (k++ >= n) break; out += ch; } return out; }   // text[:120] นับเป็นตัวอักษร
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+function clipLine(text) { return text.length > LINE_MAX ? text.slice(0, LINE_MAX) + " … (ยาว " + text.length + " ตัว)" : text; }
+function addLine(boxId, text) {
+  const box = $(boxId);
+  box.appendChild(el("div", "", clipLine(text)));
+  while (box.children.length > LOG_MAX) box.firstElementChild.remove();
+  box.scrollTop = box.scrollHeight;
+}
+function gwLog(text) { if (run) addLine("gwLog", fmtT(nowMs() / 1000 - run.t0 / 1000) + text); }
+function plcLog(text, t) { addLine("plcLog", fmtT(t - plcT0) + text); }
+
+function updateButtons() {
+  $("start").disabled = !!run;
+  $("stop").disabled = !run;
+  $("cfg").disabled = !!run;
+  $("plcPower").disabled = !run;
+  $("plcPower").textContent = run && !plcOn ? "เปิด PLC ใหม่" : "ถอดสาย PLC";
+  $("plcPower").className = run && !plcOn ? "primary" : "";
+}
+
+function whyText(regs) {
+  // บอกเป็นคำว่าทำไมปั๊มเดินหรือดับ ระบบถูกต้องแต่ต้องรอเงื่อนไข ถ้าไม่บอก ผู้เรียนเห็นแค่ "ดับ" แล้วคิดว่าพัง
+  if (!run) return "";
+  if (!plcOn) return "PLC ถูกถอดสาย: เกตเวย์ตอบบอร์ดว่า plc_offline · ใส่น้ำในถังแล้วกด \"เปิด PLC ใหม่\"";
+  if (regs[0]) return "ปั๊มเดิน อีก " + regs[3] + " วิ (เปิดได้ครั้งละไม่เกิน " + PUMP_MAX_S + " วิ) · ดินชื้นขึ้น " + SOIL_WET_PER_S + " %/วิ ถังลด " + TANK_USE_PER_S + " %/วิ";
+  const fill = " · ถังเติมเองช้า ๆ " + Math.round(TANK_FILL_PER_S * 60) + " %/นาที";
+  if (plant.dry) return "ถังเคยต่ำกว่า " + TANK_MIN + " % PLC ตัดปั๊มแล้ว จะยอมเปิดอีกเมื่อน้ำกลับถึง " + TANK_RESUME + " %" + fill;
+  if (plant.tank < TANK_MIN) return "ถังต่ำกว่า " + TANK_MIN + " % สั่งเปิดปั๊มจะได้ข้อยกเว้น 04 (ระบบป้องกัน)" + fill;
+  return "ปั๊มดับ · ดินแห้งลง " + SOIL_DRY_PER_S + " %/วิ" + fill + " · กด SW6 บนบอร์ดเพื่อสั่งเปิด";
+}
+
+function updateUi() {
+  const regs = plcOn ? registers(nowMs() / 1000) : null;
+  for (let i = 0; i < NUM_REGS; i++) {
+    $("hr" + i).textContent = regs ? String(regs[i]) : "--";
+    $("hx" + i).textContent = regs ? "0x" + regs[i].toString(16).toUpperCase().padStart(4, "0") : "--";
+  }
+  $("sPlc").textContent = !run ? "--" : plcOn ? "ทำงาน" : "ถอดสาย";
+  $("sPlc").dataset.warn = run && !plcOn ? "1" : "0";
+  $("plcState").textContent = !run ? "PLC ยังไม่ทำงาน" : plcOn ? "PLC ทำงาน (unit " + UNIT_ID + ")" : "PLC ถูกถอดสาย";
+  $("sPump").textContent = regs ? (regs[0] ? "เดิน" : "ดับ") : "--";
+  $("sPump").dataset.on = regs && regs[0] ? "1" : "0";
+  $("sLeft").textContent = regs && regs[0] ? "เหลือ " + regs[3] + " วิ" : "";
+  $("sSoil").textContent = regs ? regs[1] + " %" : "--";
+  $("sTank").textContent = regs ? regs[2] + " %" : "--";
+  $("sTank").dataset.warn = regs && plant.tank < TANK_MIN ? "1" : "0";
+  $("sRefuse").textContent = regs ? regs[4] + " " + (own(REFUSE_TEXT, regs[4]) ? REFUSE_TEXT[regs[4]] : "") : "--";
+  $("sRefuse").dataset.warn = regs && regs[4] ? "1" : "0";
+  $("mSoil").style.width = (regs ? plant.soil : 0) + "%";
+  $("mTank").style.width = (regs ? plant.tank : 0) + "%";
+  $("why").textContent = whyText(regs || []);
+}
+
+// แบ่งไบต์ของกรอบเป็นช่อง พร้อมชื่อภาษาไทยและค่าที่อ่านได้ · req = กรอบคำขอ (ใช้บอกว่าค่าในคำตอบ FC03 เป็นของช่องไหน)
+function frameFields(b, req) {
+  const f = [], add = (from, to, kind, label, value) => f.push({ from, to, kind, label, value });
+  if (b.length < 8) return null;
+  add(0, 2, "mbap", "เลขรายการ (tid)", String(u16(b, 0)));
+  add(2, 4, "mbap", "โปรโตคอล", u16(b, 2) === 0 ? "0 = Modbus" : String(u16(b, 2)));
+  add(4, 6, "mbap", "ความยาว (len)", u16(b, 4) + " ไบต์ตามมา");
+  add(6, 7, "mbap", "เลขเครื่อง (unit)", String(b[6]));
+  const fc = b[7], isReply = !!req;
+  if ((fc & 0x80) && b.length === 9 && isReply) {
+    add(7, 8, "exc", "รหัสคำสั่ง + 80", "ข้อยกเว้นของ FC" + hex2(fc & 0x7F));
+    add(8, 9, "exc", "รหัสข้อยกเว้น", (own(EXC_TEXT, b[8]) ? EXC_TEXT[b[8]] : "?"));
+  } else if (fc === 3 && isReply && b.length === 9 + b[8] && b[8] % 2 === 0) {
+    add(7, 8, "pdu", "รหัสคำสั่ง (fc)", "03 อ่าน");
+    add(8, 9, "pdu", "จำนวนไบต์", b[8] + " ไบต์");
+    const start = u16(req, 8);
+    for (let k = 0; k < b[8] / 2; k++) {
+      const hr = start + k;
+      add(9 + 2 * k, 11 + 2 * k, "pdu", "HR" + hr + (hr < REG_NAMES.length ? " " + REG_NAMES[hr] : ""), String(u16(b, 9 + 2 * k)));
+    }
+  } else if ((fc === 3 || fc === 6) && b.length === 12) {
+    add(7, 8, "pdu", "รหัสคำสั่ง (fc)", fc === 3 ? "03 อ่าน" : "06 เขียนช่องเดียว");
+    add(8, 10, "pdu", fc === 3 ? "ช่องเริ่ม (addr)" : "ช่อง (addr)", "HR" + u16(b, 8));
+    add(10, 12, "pdu", fc === 3 ? "จำนวนช่อง (qty)" : isReply ? "ค่าที่เขียนแล้ว" : "ค่าที่จะเขียน (value)", String(u16(b, 10)));
+  } else {
+    return null;
+  }
+  return f;
+}
+
+function bytesView(b, req) {
+  const fields = frameFields(b, req);
+  if (!fields) return el("div", "raw", clipLine(spaced(b)));        // ผิดรูป: แสดงไบต์ดิบ
+  const box = el("div", "bytes");
+  for (const x of fields) {
+    const cell = el("div", "fld " + x.kind);
+    cell.append(el("div", "hb", spaced(b.slice(x.from, x.to))), el("div", "lb", x.label), el("div", "vl", x.value));
+    box.append(cell);
+  }
+  return box;
+}
+
+function showExchange(ms, res, body) {
+  const r = res.reply, item = el("div", "frame"), head = el("div", "fhead");
+  let tone = "bad", text;
+  if (r.ok === 1) { tone = "ok"; text = "PLC ยืนยันแล้ว · v = " + pyList(r.v); }
+  else if (r.exc !== undefined) { text = "PLC ปฏิเสธ " + hex2(r.exc) + " = " + (own(EXC_TEXT, r.exc) ? EXC_TEXT[r.exc] : "?"); }
+  else { tone = r.err === "plc_offline" ? "warn" : "bad"; text = (own(ERR_TEXT, r.err) ? ERR_TEXT[r.err] : r.err) + " (" + r.err + ")"; }
+  const res2 = el("span", "res", text);
+  res2.dataset.tone = tone;
+  head.append(el("span", "hint", fmtT(ms / 1000 - run.t0 / 1000).trim()), el("b", "", "n = " + pyDumps(r.n)), res2);
+  item.append(head);
+  if (res.adu) {
+    item.append(el("div", "dir", "ขาไป บอร์ด → เกตเวย์ → PLC (" + res.adu.length + " ไบต์)"), bytesView(res.adu, null));
+  }
+  if (res.rep) {
+    item.append(el("div", "dir", "ขากลับ PLC → เกตเวย์ → บอร์ด (" + res.rep.length + " ไบต์)"), bytesView(res.rep, res.adu));
+  }
+  item.append(el("div", "json", "MQTT ตอบ: " + body));
+  const box = $("frames");
+  box.prepend(item);
+  while (box.children.length > FRAMES_MAX) box.lastElementChild.remove();
+}
+
+$("start").addEventListener("click", start);
+$("stop").addEventListener("click", stop);
+$("plcPower").addEventListener("click", togglePlc);
+loadFromUrl();
+updateButtons();
+updateUi();
+</script>
+</body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<!--
+  fake_board.html - บอร์ดจำลองในเบราว์เซอร์ ใช้ทดสอบแอปของกลุ่มตอนไม่มีบอร์ดจริง ไม่ต้องติดตั้งอะไร ไม่ต้องรัน Python
+  เปิดแบบนี้: fake_board.html?team=team99  (ใช้เลขที่ไม่ชนกลุ่มอื่น) แล้วกด "เริ่ม" · broker สำรอง: fake_board.html?team=team99&broker=mosquitto
+  ทำอะไร   : ต่อ broker สาธารณะแล้วส่งข้อความ "หน้าตาเดียวกับบอร์ดจริง" ทุกตัวอักษร (MQTT_CONTRACT_th.md ข้อ 3.1-3.4)
+             ช่วง 1 (20 วิแรก)  = แบบ sf2_02: ค่าฟาร์มทุก 5 วิ (ดินชื้น 55 %) + กด SW6 หนึ่งครั้งที่วินาทีที่ 12
+             ช่วง 2 (ที่เหลือ)   = แบบ sf2_03: ดิน ถังน้ำ ปั๊ม ทุก 5 วิ (ดินแห้ง 20 % ให้แอปสั่งรดน้ำ)
+             วินาทีที่ 40        = แจ้งเตือนพืช 1 ใบ แบบ sf2_04 (ร้อนไป ระดับ 2)
+             และฟังหัวข้อ cmd ทำตามคำสั่งด้วยกฎเดียวกับ sf2_03 (ปั๊มไม่เกิน 30 วิ ถังต่ำกว่า 10 % ไม่เปิด) แล้วบอกในบันทึกว่าบอร์ดจริงจะทำอะไร
+             ครบ 180 วิ หยุดเองและตัดการเชื่อมต่อ (กด "หยุด" ก่อนก็ได้)
+  แทน      : fake_board.py ตัวเดิม (Python บนโน้ตบุ๊ก) ข้อความ หัวข้อ จังหวะ และกฎรับคำสั่งเหมือนกันทุกตัวอักษร
+             ส่วนที่ตั้งใจให้ต่าง อยู่ในหัวข้อ "ต่างจาก fake_board.py" ในสคริปต์ข้างล่าง
+  ใช้คู่กับ  : farm_web.html?team=<ทีม> หรือ mqtt_dashboard.html หรือแอปที่กลุ่มเขียนเอง (ดู MQTT_CONTRACT_th.md)
+  ระวัง      : อย่าเปิดพร้อมบอร์ดจริง (หรือ BENTO Emulator) เลขกลุ่มเดียวกัน ข้อความจะปนกันจนแยกไม่ออกว่าอะไรมาจากไหน
+  หน้านี้ต้องเปิดค้างไว้ระหว่างจำลอง (อยู่แท็บเบื้องหลังได้) ปิดแท็บเมื่อไร บอร์ดจำลองหยุดและตัดการเชื่อมต่อ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บอร์ดจำลอง</title>
+<style>
+  /* หน้านี้ใช้ชุดสีเดียวกับ s2/app/farm_web.html (บล็อกข้างล่างคัดลอกมาตรงตัว ไม่ได้แก้) */
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; } .full { grid-column: 1 / -1; } }
+  p { margin: 0 0 10px; }
+  h3 { font-size: 15px; margin: 16px 0 8px; }
+  a { color: var(--water); overflow-wrap: anywhere; }
+  .notice { border-left: 4px solid var(--warn); margin-bottom: 16px; }
+  .notice p:last-child { margin-bottom: 0; }
+  fieldset { margin: 0 0 4px; padding: 0; border: 0; min-width: 0; }
+  fieldset:disabled { opacity: .72; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 14px; }
+  .field { display: grid; gap: 4px; min-width: 0; margin-bottom: 10px; }
+  .field > span { font-size: 14px; color: var(--dim); }
+  .field input, .field select { width: 100%; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  #formMsg { color: var(--bad); font-weight: 600; margin: 10px 0 0; }
+  #formMsg:empty { display: none; }
+  /* เวลา ช่วง ปั๊ม: ตัวเลขกว้างเท่ากันทุกหลัก */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 14px 0 8px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-width: 0; }
+  .stat .name { color: var(--dim); font-size: 13px; }
+  .stat .n { font-size: 20px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  #pump[data-on="1"] { color: var(--water); }
+  .topics code { margin-right: 4px; }
+  .links, .steps { margin: 6px 0 10px; padding-left: 22px; font-size: 14px; }
+  .links li, .steps li { margin-bottom: 6px; }
+  /* บันทึก: เหมือนจอ terminal ของตัว Python (ช่องว่างหน้าตัวเลขต้องคงไว้ให้ตรงคอลัมน์) */
+  #log { white-space: pre-wrap; min-height: 6em; max-height: 440px; overflow-y: auto; margin: 0; }
+  #log:empty::before { content: "(ยังไม่มี กด เริ่ม แล้วบรรทัดจะขึ้นที่นี่)"; color: var(--dim); }
+  #log .note { color: var(--dim); }
+  #log .warn { color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>
+    </div>
+    <div><h1>บอร์ดจำลอง</h1><p class="sub">Smart Farm · Session 2 · ส่งข้อความหน้าตาเดียวกับบอร์ดจริง ใช้ทดสอบแอปของกลุ่มตอนไม่มีบอร์ด</p></div>
+  </div>
+  <div class="conn">
+    <b id="status" class="chip" role="status">ยังไม่เริ่ม</b>
+  </div>
+</header>
+
+<section class="panel notice" aria-labelledby="h-warn">
+  <h2 id="h-warn">อย่าเปิดพร้อมบอร์ดจริงเลขกลุ่มเดียวกัน</h2>
+  <p>หน้านี้ส่งเข้าหัวข้อเดียวกับบอร์ดจริงทุกตัวอักษร ถ้าบอร์ดจริงของกลุ่ม (หรือ BENTO Emulator) ใช้เลขกลุ่มเดียวกันอยู่
+     ข้อความจะปนกันจนแยกไม่ออกว่าอะไรมาจากไหน และคำสั่งจากแอปจะไปถึงทั้งสองตัว
+     ใช้เลขที่ไม่มีใครใช้ เช่น <code>team99</code> หรือปิดบอร์ดจริงก่อนกดเริ่ม</p>
+  <p class="small muted">broker สาธารณะ ใครก็อ่านและส่งเข้าหัวข้อนี้ได้ หน้านี้จึงตรวจทุกคำสั่งก่อนทำ และไม่ส่งข้อมูลส่วนตัวใด ๆ</p>
+</section>
+
+<main class="layout">
+<section class="panel" aria-labelledby="h-run">
+  <h2 id="h-run">เริ่มจำลอง</h2>
+  <fieldset id="cfg">
+    <div class="grid3">
+      <label class="field" for="team"><span>เลขกลุ่ม (team01 ถึง team99)</span>
+        <input id="team" value="team99" maxlength="20" autocomplete="off" spellcheck="false"></label>
+      <label class="field" for="broker"><span>broker (ต้องตรงกับแอป)</span>
+        <select id="broker">
+          <option value="hivemq">HiveMQ (หลัก)</option>
+          <option value="mosquitto">Mosquitto (สำรอง เมื่อผู้สอนประกาศ)</option>
+        </select></label>
+      <label class="field" for="tank"><span>น้ำในถัง % (ลองใส่ 5 ดูว่าปั๊มยอมเปิดไหม)</span>
+        <input id="tank" type="number" min="0" max="100" step="1" value="80" inputmode="numeric"></label>
+    </div>
+  </fieldset>
+  <div class="bar">
+    <button id="startBtn" class="primary" type="button">เริ่ม</button>
+    <button id="stopBtn" type="button" disabled>หยุด</button>
+  </div>
+  <p id="formMsg" role="alert"></p>
+  <div class="stats">
+    <div class="stat"><div class="name">เวลา</div><div id="elapsed" class="n">0.0 วิ</div><div id="runOf" class="small muted"></div></div>
+    <div class="stat"><div class="name">ช่วง</div><div id="phase" class="n">ยังไม่เริ่ม</div></div>
+    <div class="stat"><div class="name">ปั๊ม (บอร์ดจริงคือไฟสีฟ้า)</div><div id="pump" class="n">ปิด</div></div>
+  </div>
+  <p id="next" class="small muted"></p>
+  <p class="small muted topics">ส่งเข้า <code id="tTel"></code><code id="tEvt"></code> · ฟัง <code id="tCmd"></code> · client id <code id="cid">-</code></p>
+</section>
+
+<section class="panel" aria-labelledby="h-see">
+  <h2 id="h-see">ดูผลในแอป</h2>
+  <p>เปิดในแท็บใหม่ แล้วกลับมาดูบันทึกที่หน้านี้ หน้านี้ต้องเปิดค้างไว้ (บนโน้ตบุ๊กอยู่แท็บเบื้องหลังได้ จังหวะอาจช้าไปราว 1 วิ ·
+     บนมือถือ เบราว์เซอร์มักหยุดแท็บที่ไม่ได้เปิดอยู่ ให้เปิดหน้านี้บนโน้ตบุ๊ก หรือเปิดแอปบนอีกเครื่อง)</p>
+  <ul class="links">
+    <li><a id="farmLink" href="farm_web.html?team=team99" target="_blank" rel="noopener">farm_web.html?team=team99</a> · การ์ดค่าฟาร์ม ปุ่มรดน้ำ เหตุการณ์ล่าสุด</li>
+    <li><a id="dashLink" href="mqtt_dashboard.html?team=team99" target="_blank" rel="noopener">mqtt_dashboard.html</a> · ทุกทีมในห้อง ข้อความดิบ และส่ง JSON เอง</li>
+  </ul>
+  <p id="brokerNote" class="small" hidden>farm_web.html ต่อ HiveMQ อย่างเดียว ถ้าเลือก Mosquitto ให้ดูผลใน mqtt_dashboard.html (เลือก Mosquitto ในช่องโบรกเกอร์)</p>
+  <p class="small muted">ลองกด "รดน้ำ 10 วินาที" ในแอป แล้วดูบรรทัด "คำสั่งเข้า" ในบันทึกข้างล่าง ข้อความหลัง <code>-&gt;</code> คือสิ่งที่บอร์ดจริงจะทำ
+     · ในช่วง 2 การ์ดปั๊มของแอปจะเป็น "เปิด" ในใบถัดไป</p>
+  <h3>เส้นเวลา</h3>
+  <ol id="timeline" class="steps"></ol>
+</section>
+
+<section class="panel full" aria-labelledby="h-log">
+  <h2 id="h-log">บันทึก <span class="hint">เหมือนจอของตัว Python · ใหม่อยู่ล่าง · บรรทัด "หมายเหตุ" = หน้าเว็บบอกเพิ่ม</span></h2>
+  <div id="log" class="log" role="log"></div>
+</section>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+// ===== 1) ตั้งค่า (ค่าเดียวกับ fake_board.py) =====
+const TEAM_DEFAULT = "team99";                     // ใช้เลขที่ไม่ชนกลุ่มอื่น · เปลี่ยนด้วย ?team=team05 หรือช่องบนหน้า
+const TEAM_RE = /^team(0[1-9]|[1-9][0-9])$/;       // team01..team99 (team00 = บอร์ดหน้าห้อง)
+const BROKERS = {                                  // สัญญาข้อ 1: เบราว์เซอร์ต่อพอร์ต 1883 ไม่ได้ ต้องใช้ WebSocket
+  hivemq: { name: "HiveMQ", url: "wss://broker.hivemq.com:8884/mqtt" },
+  mosquitto: { name: "Mosquitto", url: "wss://test.mosquitto.org:8081/mqtt" },
+};
+const BROKER_DEFAULT = "hivemq";                   // เปลี่ยนด้วย ?broker=mosquitto
+const ROOT = "bento-aiot";
+const RUN_S = 180;                                 // จำลองนานกี่วินาที
+const SEND_S = 5;                                  // ส่งค่าทุก 5 วิ เหมือนบอร์ด
+const PHASE2_S = 20;                               // วินาทีที่เปลี่ยนจากแบบ sf2_02 เป็นแบบ sf2_03
+const SW6_AT_S = 12;                               // วินาทีที่กด SW6 หนึ่งครั้ง
+const ALERT_AT_S = 40;                             // วินาทีที่แจ้งเตือนพืช 1 ใบ
+const TICK_MS = 100;                               // ดูนาฬิกาทุก 0.1 วิ (time.sleep(0.1) ของตัว Python)
+const PUMP_DEFAULT_S = 10, PUMP_MAX_S = 30, TANK_MIN = 10;   // กฎเดียวกับ sf2_03
+const TANK_DEFAULT = 80;                           // น้ำในถัง % (แก้ในช่องบนหน้า ลองใส่ 5 ดูว่าปั๊มยอมเปิดไหม)
+const KEEPALIVE_S = 60;                            // เท่ากับตัว Python
+const MAX_PAYLOAD_B = 255;                         // สัญญาข้อ 5.7: บอร์ดรับข้อความได้ไม่เกิน 255 ไบต์
+const CMD_GAP_S = 1;                               // สัญญาข้อ 5.4: แอปส่งคำสั่งห่างกันอย่างน้อย 1 วิ
+const INBOX_POLL_S = 0.1;                          // สัญญาข้อ 5.4: บอร์ดดูกล่องรับ (ช่องเดียว) ทุก 0.1 วิ
+const ECHO_CHARS = 80;                             // แสดงคำสั่งที่เข้ามาไม่เกิน 80 ตัว (เหมือนตัว Python)
+const MAX_LOG = 500;                               // บันทึกเก็บกี่บรรทัดล่าสุด
+
+// ต่างจาก fake_board.py (ตั้งใจ)
+//  1. นาฬิกาเริ่มนับตอนต่อ broker ติด (ตัว Python เริ่มนับตอนเปิดไฟล์ ก่อนต่อ) ใบแรกจึงออกที่ 0.0 วิ
+//  2. คำสั่งยาวเกิน 255 ไบต์ไม่ทำตาม เพราะบอร์ดจริงรับไม่ครบ (สัญญาข้อ 5.7) ตัว Python ทำตาม
+//  3. หลุดแล้วต่อใหม่เองและฟังคำสั่งต่อ (ตัว Python subscribe ครั้งเดียว ต่อใหม่แล้วไม่ได้ยินคำสั่งอีก)
+//     ใบที่ถึงเวลาส่งตอนหลุดหายไปเหมือนตัว Python แต่บันทึกบอกว่าส่งไม่ออก
+//  4. บรรทัด "หมายเหตุ" เพิ่ม: ต่อ/หลุด, คำสั่งมาถี่กว่า 1 วิ (ข้อ 5.4), คำสั่งค้างบน broker (retain), คำสั่งยาวเกิน
+//  5. คำบนจอ: "Ctrl+C เพื่อหยุด" -> "กดปุ่ม หยุด เพื่อหยุด" · "ไฟล์นี้แค่จดไว้" -> "หน้านี้แค่จดไว้"
+//  6. น้ำในถังแก้ในช่องบนหน้าแทนการแก้ไฟล์ · บันทึกเก็บ 500 บรรทัดล่าสุด
+// ส่วนที่ JavaScript กับ Python ต่างกันแต่หน้านี้ทำให้เหมือน Python: ดูข้อ 2) ข้างล่าง
+
+const $ = (id) => document.getElementById(id);
+let client = null;      // mqtt client ของรอบนี้
+let run = null;         // สถานะของรอบที่จำลองอยู่ (null = ยังไม่เคยเริ่ม)
+let timer = null;
+
+// ===== 2) เลขและข้อความแบบ Python (ให้ข้อความที่ส่งและบรรทัดในบันทึกตรงกับตัว Python ทุกตัวอักษร) =====
+// - json.dumps ของ Python เขียน 62.0 แต่ JSON.stringify เขียน 62 -> ทศนิยมห่อด้วย pyFloat() แล้วเขียนแบบ Python
+// - Python แยก 5 (int) กับ 5.0 (float): sec 5.0 ไม่ใช่จำนวนเต็มจึงเป็น 10 วิ · True นับเป็น int (sec true = 1 วิ)
+//   JSON.parse แยกไม่ได้ หน้านี้จึงอ่าน JSON เอง: int -> BigInt, float -> pyFloat, object -> Map (ไม่ยุ่ง __proto__)
+//   (ในหน้านี้ pyFloat คือ float ของ Python เสมอ ส่วนเลขจำนวนเต็มของ JavaScript คือ int)
+//   และรับ NaN / Infinity / -Infinity เหมือน json.loads
+// - str() ของ Python: 1e+16, 1e-05, 1.0, nan, inf, None, True, ['a'], {'k': 1} · "%6.1f" ปัดครึ่งไปเลขคู่
+// - ตัดข้อความเป็นตัวอักษร (code point) แบบ text[:80] ไม่ใช่หน่วย UTF-16 · BOM หน้าข้อความยังอยู่เหมือน decode ของ Python
+class PyFloat { constructor(v) { this.v = v; } }
+const pyFloat = (v) => new PyFloat(v);
+const DECODER = new TextDecoder("utf-8", { ignoreBOM: true });   // ไบต์เสียกลายเป็น U+FFFD เหมือน decode("utf-8", "replace")
+const NOT_PRINTABLE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}\p{Zs}]/u;
+const hex = (n, w) => n.toString(16).padStart(w, "0");
+const cut = (s, n) => Array.from(s).slice(0, n).join("");
+
+// repr(float) ของ Python
+function pyFloatRepr(x) {
+  if (Number.isNaN(x)) return "nan";
+  if (x === Infinity) return "inf";
+  if (x === -Infinity) return "-inf";
+  if (x === 0) return Object.is(x, -0) ? "-0.0" : "0.0";
+  const sign = x < 0 ? "-" : "";
+  const s = String(Math.abs(x));                   // ตัวเลขชุดสั้นที่สุดชุดเดียวกับ Python แต่จัดรูปคนละแบบ
+  const e = s.indexOf("e");
+  const mant = e < 0 ? s : s.slice(0, e);
+  const dot = mant.indexOf(".");
+  const ip = dot < 0 ? mant : mant.slice(0, dot), fp = dot < 0 ? "" : mant.slice(dot + 1);
+  let digits = ip + fp, decpt = ip.length + (e < 0 ? 0 : Number(s.slice(e + 1)));
+  const lead = digits.length - digits.replace(/^0+/, "").length;
+  digits = digits.slice(lead).replace(/0+$/, "");
+  decpt -= lead;
+  if (decpt <= -4 || decpt > 16) {
+    const ex = decpt - 1;
+    return sign + digits[0] + (digits.length > 1 ? "." + digits.slice(1) : "") + "e" + (ex < 0 ? "-" : "+") + String(Math.abs(ex)).padStart(2, "0");
+  }
+  if (decpt <= 0) return sign + "0." + "0".repeat(-decpt) + digits;
+  if (decpt >= digits.length) return sign + digits + "0".repeat(decpt - digits.length) + ".0";
+  return sign + digits.slice(0, decpt) + "." + digits.slice(decpt);
+}
+
+// "%.<d>f" % x ของ Python: ถ้าอยู่กึ่งกลางพอดี ปัดไปเลขคู่ (toFixed ปัดขึ้น)
+function pyFixed(x, d) {
+  if (Number.isNaN(x)) return "nan";
+  if (!Number.isFinite(x)) return x > 0 ? "inf" : "-inf";
+  const neg = x < 0 || Object.is(x, -0), ax = Math.abs(x);
+  let s;
+  if (ax >= 1e21) s = BigInt(ax).toString() + (d ? "." + "0".repeat(d) : "");   // toFixed เขียน 1e+21 แต่ Python เขียนเต็ม
+  else {
+    s = ax.toFixed(d);
+    const full = ax.toFixed(100), dot = full.indexOf(".");     // ค่าจริงของเลขทศนิยมฐานสองแบบไม่ปัด
+    const ip = full.slice(0, dot), fp = full.slice(dot + 1);
+    if (fp[d] === "5" && /^0*$/.test(fp.slice(d + 1)) && Number(d ? fp[d - 1] : ip[ip.length - 1]) % 2 === 0) {
+      s = d ? ip + "." + fp.slice(0, d) : ip;
+    }
+  }
+  return (neg ? "-" : "") + s;
+}
+const fmtT = (sec) => pyFixed(sec, 1).padStart(6);        // "%6.1f"
+
+// repr(str) ของ Python
+function pyStrRepr(s) {
+  const q = s.includes("'") && !s.includes('"') ? '"' : "'";
+  let out = q;
+  for (const ch of s) {
+    const c = ch.codePointAt(0);
+    if (ch === q || ch === "\\") out += "\\" + ch;
+    else if (ch === "\t") out += "\\t";
+    else if (ch === "\n") out += "\\n";
+    else if (ch === "\r") out += "\\r";
+    else if (c < 0x20 || c === 0x7f) out += "\\x" + hex(c, 2);
+    else if (c < 0x7f || !NOT_PRINTABLE.test(ch)) out += ch;
+    else if (c <= 0xff) out += "\\x" + hex(c, 2);
+    else if (c <= 0xffff) out += "\\u" + hex(c, 4);
+    else out += "\\U" + hex(c, 8);
+  }
+  return out + q;
+}
+
+// repr() และ str() ของค่าที่ได้จาก pyJsonLoads
+function pyRepr(v) {
+  if (v === null) return "None";
+  if (v === true) return "True";
+  if (v === false) return "False";
+  if (typeof v === "bigint") return v.toString();
+  if (v instanceof PyFloat) return pyFloatRepr(v.v);
+  if (typeof v === "number") return Number.isSafeInteger(v) ? String(v) : pyFloatRepr(v);
+  if (typeof v === "string") return pyStrRepr(v);
+  if (Array.isArray(v)) return "[" + v.map(pyRepr).join(", ") + "]";
+  if (v instanceof Map) return "{" + Array.from(v, ([k, x]) => pyStrRepr(k) + ": " + pyRepr(x)).join(", ") + "}";
+  return "?";
+}
+const pyStr = (v) => (typeof v === "string" ? v : pyRepr(v));
+
+// json.dumps ของ Python (ค่าเริ่มต้น: ", " ": " และ ensure_ascii)
+function pyJsonStr(s) {
+  let out = '"';
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c === 0x22) out += '\\"';
+    else if (c === 0x5c) out += "\\\\";
+    else if (c === 0x0a) out += "\\n";
+    else if (c === 0x0d) out += "\\r";
+    else if (c === 0x09) out += "\\t";
+    else if (c === 0x08) out += "\\b";
+    else if (c === 0x0c) out += "\\f";
+    else if (c < 0x20 || c > 0x7e) out += "\\u" + hex(c, 4);
+    else out += s[i];
+  }
+  return out + '"';
+}
+function pyJsonFloat(x) { return Number.isNaN(x) ? "NaN" : x === Infinity ? "Infinity" : x === -Infinity ? "-Infinity" : pyFloatRepr(x); }
+function pyDumps(v) {
+  if (v === null) return "null";
+  if (v === true) return "true";
+  if (v === false) return "false";
+  if (v instanceof PyFloat) return pyJsonFloat(v.v);
+  if (typeof v === "bigint") return v.toString();
+  if (typeof v === "number") return Number.isSafeInteger(v) ? String(v) : pyJsonFloat(v);
+  if (typeof v === "string") return pyJsonStr(v);
+  if (Array.isArray(v)) return "[" + v.map(pyDumps).join(", ") + "]";
+  const pairs = v instanceof Map ? Array.from(v) : Object.keys(v).map((k) => [k, v[k]]);
+  return "{" + pairs.map(([k, x]) => pyJsonStr(k) + ": " + pyDumps(x)).join(", ") + "}";
+}
+
+// json.loads ของ Python (ข้อความจาก broker สาธารณะเป็นของใครก็ได้: อ่านอย่างเดียว ไม่รันอะไรเลย)
+const JSON_ESC = new Map([['"', '"'], ["\\", "\\"], ["/", "/"], ["b", "\b"], ["f", "\f"], ["n", "\n"], ["r", "\r"], ["t", "\t"]]);
+const JSON_WORDS = [["null", null], ["true", true], ["false", false], ["NaN", pyFloat(NaN)], ["Infinity", pyFloat(Infinity)], ["-Infinity", pyFloat(-Infinity)]];
+const JSON_NUM = /^(-?(?:0|[1-9][0-9]*))(\.[0-9]+)?([eE][-+]?[0-9]+)?/;
+const JSON_MAX_DEPTH = 500;
+function pyJsonLoads(s) {
+  let i = 0;
+  const bad = () => { throw new SyntaxError("JSON ใช้ไม่ได้ที่ตำแหน่ง " + i); };
+  const skip = () => { while (i < s.length && " \t\n\r".includes(s[i])) i++; };
+  function text() {
+    let out = "";
+    i++;
+    for (;;) {
+      if (i >= s.length) bad();
+      const ch = s[i];
+      if (ch === '"') { i++; return out; }
+      if (ch < " ") bad();                          // ตัวควบคุมในข้อความไม่ได้ (เหมือน Python)
+      if (ch !== "\\") { out += ch; i++; continue; }
+      const e = s[i + 1];
+      if (e === "u") {
+        const h = s.slice(i + 2, i + 6);
+        if (!/^[0-9a-fA-F]{4}$/.test(h)) bad();
+        out += String.fromCharCode(parseInt(h, 16));
+        i += 6;
+      } else if (JSON_ESC.has(e)) { out += JSON_ESC.get(e); i += 2; } else bad();
+    }
+  }
+  function value(depth) {
+    if (depth > JSON_MAX_DEPTH) bad();
+    const ch = s[i];
+    if (ch === '"') return text();
+    if (ch === "{") {
+      const m = new Map();
+      i++; skip();
+      if (s[i] === "}") { i++; return m; }
+      for (;;) {
+        if (s[i] !== '"') bad();
+        const k = text();
+        skip();
+        if (s[i] !== ":") bad();
+        i++; skip();
+        m.set(k, value(depth + 1));                 // ชื่อซ้ำ: ตัวหลังชนะ อยู่ตำแหน่งเดิม (เหมือน dict)
+        skip();
+        if (s[i] === "}") { i++; return m; }
+        if (s[i] !== ",") bad();
+        i++; skip();
+      }
+    }
+    if (ch === "[") {
+      const a = [];
+      i++; skip();
+      if (s[i] === "]") { i++; return a; }
+      for (;;) {
+        a.push(value(depth + 1));
+        skip();
+        if (s[i] === "]") { i++; return a; }
+        if (s[i] !== ",") bad();
+        i++; skip();
+      }
+    }
+    for (const [word, v] of JSON_WORDS) if (s.startsWith(word, i)) { i += word.length; return v; }
+    const m = JSON_NUM.exec(s.slice(i));
+    if (!m) bad();
+    i += m[0].length;
+    return m[2] !== undefined || m[3] !== undefined ? pyFloat(Number(m[0])) : BigInt(m[1]);
+  }
+  skip();
+  const v = value(0);
+  skip();
+  if (i !== s.length) bad();
+  return v;
+}
+const isPyInt = (v) => typeof v === "bigint" || typeof v === "boolean";      // bool ของ Python เป็น int
+function pyTruthy(v) {
+  if (v === null || v === false) return false;
+  if (typeof v === "bigint") return v !== 0n;
+  if (v instanceof PyFloat) return v.v !== 0;                                  // NaN นับเป็นจริง เหมือน Python
+  if (typeof v === "number") return v !== 0;
+  if (typeof v === "string" || Array.isArray(v)) return v.length > 0;
+  if (v instanceof Map) return v.size > 0;
+  return true;
+}
+const pyEqualsZero = (v) => v === false || v === 0n || v === 0 || (v instanceof PyFloat && v.v === 0);
+
+// ===== 3) ข้อความที่ส่ง (หน้าตาเดียวกับบอร์ดจริงทุกคีย์ ลำดับคีย์เดียวกับตัว Python) =====
+const mono = () => performance.now() / 1000;                                   // time.monotonic()
+const elapsed = () => mono() - run.t0;
+
+function reportSf2_02(n) {
+  // ค่าฟาร์มแบบ sf2_02 (เลขอากาศเป็นค่าคงที่สมมติ ไม่ได้อ่านเซนเซอร์จริง)
+  return { id: run.team, n, temp_c: pyFloat(29.3), rh: pyFloat(61.2), hpa: pyFloat(1008.4), az: pyFloat(9.79),
+           soil: 55, light: 70, tank: run.tank, sim: "soil light tank", by: "timer" };
+}
+function reportSf2_03(n) {
+  // สถานะปั๊มแบบ sf2_03: pump = 1 ระหว่างที่ปั๊มยังเปิดอยู่
+  const pump = mono() < run.pumpUntil ? 1 : 0;
+  return { id: run.team, n, soil: 20, tank: run.tank, pump, sim: "soil tank" };
+}
+function alertSf2_04() {
+  // แจ้งเตือนพืชแบบ sf2_04: ร้อนไป ระดับ 2 (แย่แล้ว)
+  return { id: run.team, crop: "tomato", level: 2, alert: "hot", temp_c: pyFloat(33.5), rh: pyFloat(62.0), sun_c: 5 };
+}
+
+// ===== 4) รับคำสั่ง: ตรวจทุกคำสั่งก่อนทำ เหมือน sf2_03 =====
+// คืนข้อความบอกว่าบอร์ดจริงจะทำอะไรกับคำสั่งนี้ (กฎเดียวกับ sf2_03 และสัญญาข้อ 4)
+function handleCommand(cmd) {
+  if (!(cmd instanceof Map)) return "ไม่ใช่คำสั่งที่อ่านได้";
+  const get = (k, d) => (cmd.has(k) ? cmd.get(k) : d);
+  const act = get("cmd", ""), on = get("on", 1n);
+  let sec = get("sec", BigInt(PUMP_DEFAULT_S));
+  const pumpCmd = act === "led" || act === "pump";
+  if (act === "led" && !pyEqualsZero(get("n", 0n))) return "ไม่มีปั๊มดวงที่ " + pyStr(get("n", null));
+  if (pumpCmd && !pyTruthy(on)) {
+    run.pumpUntil = 0.0;
+    return "ปิดปั๊ม";
+  }
+  if (pumpCmd && run.tank < TANK_MIN) return "น้ำเหลือ " + run.tank + "% ไม่ยอมเปิด";
+  if (pumpCmd) {
+    if (typeof sec === "boolean" || !isPyInt(sec) || sec <= 0n) sec = BigInt(PUMP_DEFAULT_S);   // true/false ไม่ใช่จำนวนเต็ม (สัญญาข้อ 4) เหมือน sf2_03
+    if (sec > BigInt(PUMP_MAX_S)) sec = BigInt(PUMP_MAX_S);
+    run.pumpUntil = mono() + Number(sec);
+    return "เปิดปั๊ม " + sec + " วิ";
+  }
+  if (act === "beep" || act === "say" || act === "ack" || act === "set") return "รับคำสั่ง " + act + " (บอร์ดจริงทำตาม หน้านี้แค่จดไว้)";
+  return "ไม่รู้จักคำสั่ง " + cut(pyStr(act), 12);
+}
+
+function onMessage(topic, payload, packet) {
+  if (!run || run.done || run.t0 === null || topic !== run.topics.cmd) return;
+  const bytes = payload && typeof payload.subarray === "function" ? payload : new Uint8Array(0);
+  const now = mono();
+  const tooBig = bytes.length > MAX_PAYLOAD_B;
+  const text = DECODER.decode(tooBig ? bytes.subarray(0, ECHO_CHARS * 5) : bytes);
+  let result;
+  if (tooBig) {
+    result = "ยาว " + bytes.length + " ไบต์ เกิน " + MAX_PAYLOAD_B + " ไบต์ บอร์ดจริงรับไม่ครบ จึงไม่ทำตาม (สัญญาข้อ 5.7)";
+  } else {
+    let cmd = null;
+    try { cmd = pyJsonLoads(text); } catch (e) { cmd = null; }
+    result = handleCommand(cmd);
+  }
+  logPy(fmtT(elapsed()) + " วิ  คำสั่งเข้า: " + cut(text, ECHO_CHARS) + "  ->  " + result);
+  if (run.lastCmdAt !== null && now - run.lastCmdAt < CMD_GAP_S) {
+    const gap = pyFixed(now - run.lastCmdAt, 2);
+    logNote(now - run.lastCmdAt < INBOX_POLL_S
+      ? "คำสั่งนี้มาห่างจากใบก่อน " + gap + " วิ บอร์ดจริงดูกล่องรับทุก 0.1 วิ และกล่องรับมีช่องเดียว ใบก่อนหน้าอาจหายไปเลย (สัญญาข้อ 5.4)"
+      : "คำสั่งนี้มาห่างจากใบก่อน " + gap + " วิ สัญญาข้อ 5.4 ให้แอปส่งคำสั่งห่างกันอย่างน้อย " + CMD_GAP_S + " วิ", "warn");
+  }
+  if (packet && packet.retain) logNote("คำสั่งนี้ค้างอยู่บน broker (retain) บอร์ดจริงจะได้รับซ้ำทุกครั้งที่ต่อ ให้คนส่งล้างด้วยข้อความว่างแบบ retain", "warn");
+  run.lastCmdAt = now;
+  showState();
+}
+
+// ===== 5) โปรแกรมหลัก: ทุก 0.1 วิ ทำแบบเดียวกับรอบ while ของตัว Python =====
+function publish(topic, text) {
+  if (!client || !client.connected) return false;
+  client.publish(topic, text, { qos: 0, retain: false });            // สัญญาข้อ 5.1: QoS 0 ไม่ retain
+  return true;
+}
+function sendAndLog(topic, text, line) {
+  const ok = publish(topic, text);
+  logPy(line);
+  if (!ok) logNote("ใบนี้ส่งไม่ออก เพราะหลุดจาก broker อยู่ (ใบนี้หาย เหมือนบอร์ดจริง)", "warn");
+}
+function tick() {
+  if (!run || run.done || run.t0 === null) { showState(); return; }
+  if (!(elapsed() < RUN_S)) { finish("ครบ " + RUN_S + " วิ"); return; }
+  if (elapsed() >= run.nextSend) {
+    run.nextSend += SEND_S;
+    let body;
+    if (elapsed() < PHASE2_S) {
+      run.n2 += 1;
+      body = reportSf2_02(run.n2);
+    } else {
+      run.n3 += 1;
+      body = reportSf2_03(run.n3);
+    }
+    const text = pyDumps(body);
+    sendAndLog(run.topics.tel, text, fmtT(elapsed()) + " วิ  ส่ง: " + text);
+  }
+  if (!run.sw6Sent && elapsed() >= SW6_AT_S) {
+    run.sw6Sent = true;
+    sendAndLog(run.topics.evt, pyDumps({ id: run.team, event: "sw6", msg: "call" }), fmtT(elapsed()) + " วิ  กด SW6 (event)");
+  }
+  if (!run.alertSent && elapsed() >= ALERT_AT_S) {
+    run.alertSent = true;
+    sendAndLog(run.topics.evt, pyDumps(alertSf2_04()), fmtT(elapsed()) + " วิ  แจ้งเตือนพืช (event)");
+  }
+  showState();
+}
+
+function startRun() {
+  if (run && !run.done) return;
+  const team = $("team").value.trim().toLowerCase();
+  const brokerKey = $("broker").value;
+  const tankText = $("tank").value.trim();
+  if (!TEAM_RE.test(team)) return formMsg("ใส่เลขกลุ่ม team01 ถึง team99 เช่น team99 (ใช้เลขที่ไม่ชนกลุ่มอื่น)");
+  if (!Object.prototype.hasOwnProperty.call(BROKERS, brokerKey)) return formMsg("เลือก broker");
+  if (!/^[0-9]{1,3}$/.test(tankText) || Number(tankText) > 100) return formMsg("น้ำในถังต้องเป็นจำนวนเต็ม 0 ถึง 100");
+  if (typeof mqtt === "undefined") return formMsg("โหลด mqtt.js ไม่ได้ ตรวจอินเทอร์เน็ตแล้วโหลดหน้าใหม่");
+  formMsg("");
+  $("team").value = team;
+  const base = ROOT + "/" + team + "/";
+  run = { team, tank: Number(tankText), topics: { tel: base + "telemetry", evt: base + "event", cmd: base + "cmd" },
+          t0: null, nextSend: 0.0, n2: 0, n3: 0, sw6Sent: false, alertSent: false, pumpUntil: 0.0,
+          lastCmdAt: null, online: false, done: false, why: "", endAt: 0 };
+  $("log").replaceChildren();
+  // client id ห้ามซ้ำ (สัญญาข้อ 5.2): แบบเดียวกับตัว Python fake-board-<ทีม>-<สุ่ม 6 ตัว> ไม่ชนบอร์ดจริง (bento-farm-...)
+  const clientId = "fake-board-" + team + "-" + randomHex(3);
+  $("cid").textContent = clientId;
+  refreshTeamViews();
+  setRunning(true);
+  const url = BROKERS[brokerKey].url;
+  setStatus("กำลังต่อ " + BROKERS[brokerKey].name + " ...", "warn");
+  logNote("กำลังต่อ " + url + " (client id " + clientId + ")");
+  let c;
+  try {
+    c = mqtt.connect(url, { clientId, clean: true, keepalive: KEEPALIVE_S, connectTimeout: 10000, reconnectPeriod: 3000,
+                            queueQoSZero: false, resubscribe: true });
+  } catch (e) {
+    logNote("ต่อ broker ไม่ได้: " + String(e && e.message).slice(0, 120), "warn");
+    finish("ต่อ broker ไม่ได้");
+    return;
+  }
+  client = c;
+  c.on("connect", () => onConnect(c));
+  c.on("message", (t, p, pk) => { if (c === client) onMessage(t, p, pk); });
+  c.on("reconnect", () => { if (c === client) setStatus("กำลังต่อใหม่ ...", "warn"); });
+  c.on("close", () => onClose(c));
+  c.on("error", (err) => { if (c === client) setStatus("ผิดพลาด: " + String(err && err.message).slice(0, 120), "bad"); });
+  timer = setInterval(tick, TICK_MS);
+  showState();
+}
+
+function onConnect(c) {
+  if (c !== client || !run || run.done) return;
+  c.subscribe(run.topics.cmd, { qos: 0 });                               // ทุกครั้งที่ต่อ (ต่อใหม่ก็ยังได้ยินคำสั่ง)
+  run.online = true;
+  setStatus("ต่อแล้ว กำลังจำลอง " + run.team, "ok");
+  if (run.t0 !== null) { logNote("ต่อ broker ได้อีกครั้ง ฟังคำสั่งต่อ"); return; }
+  run.t0 = mono();
+  logPy("บอร์ดจำลอง " + run.team + " ส่งเข้า " + run.topics.tel + " | ฟัง " + run.topics.cmd + " | กดปุ่ม หยุด เพื่อหยุด");
+  tick();
+}
+function onClose(c) {
+  if (c !== client || !run || run.done) return;
+  if (run.online) logNote("หลุดจาก broker กำลังต่อใหม่ (ระหว่างนี้ส่งไม่ออก และไม่ได้ยินคำสั่ง)", "warn");
+  run.online = false;
+  setStatus(run.t0 === null ? "ต่อ broker ไม่ติด กำลังลองใหม่ ..." : "หลุด กำลังต่อใหม่ ...", "bad");
+}
+
+function finish(why) {
+  if (!run || run.done) return;
+  run.endAt = run.t0 === null ? 0 : Math.min(elapsed(), RUN_S);
+  run.done = true;
+  run.why = why;
+  if (timer) clearInterval(timer);
+  timer = null;
+  const c = client;
+  client = null;
+  if (c) c.end();                                                         // ตัดการเชื่อมต่อทุกครั้งที่จบ (สัญญาข้อ 5.2)
+  logPy("จบการจำลอง");
+  setRunning(false);
+  setStatus("หยุดแล้ว (" + why + ")", "");
+  showState();
+}
+function stopRun() { finish("กดหยุด"); }
+
+// ===== 6) หน้าจอ =====
+function randomHex(nBytes) {
+  const b = new Uint8Array(nBytes);
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for (let i = 0; i < nBytes; i++) b[i] = Math.floor(Math.random() * 256);
+  return Array.from(b, (x) => hex(x, 2)).join("");
+}
+function setStatus(text, kind) {
+  $("status").textContent = text;
+  $("status").style.color = kind ? "var(--" + kind + ")" : "";
+}
+function formMsg(text) { $("formMsg").textContent = text; }
+function setRunning(on) {
+  $("cfg").disabled = on;
+  $("startBtn").disabled = on;
+  $("stopBtn").disabled = !on;
+}
+function addLine(text, cls) {
+  const row = document.createElement("div");
+  row.className = cls;
+  row.textContent = text;                                                  // textContent เสมอ ใครส่งอะไรมาก็ไม่ถูกรันเป็นโค้ด
+  const log = $("log");
+  const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 40;      // เลื่อนตามเฉพาะตอนดูบรรทัดล่าสุดอยู่
+  log.append(row);
+  while (log.children.length > MAX_LOG) log.firstElementChild.remove();
+  if (atEnd) log.scrollTop = log.scrollHeight;
+}
+const logPy = (text) => addLine(text, "py");                               // บรรทัดที่ตัว Python พิมพ์
+function logNote(text, cls) {                                              // บรรทัดที่หน้าเว็บบอกเพิ่ม
+  const at = run && run.t0 !== null && !run.done ? fmtT(elapsed()) + " วิ  " : "";
+  addLine(at + "หมายเหตุ: " + text, cls || "note");
+}
+function showState() {
+  const live = run && !run.done && run.t0 !== null;
+  const t = !run || run.t0 === null ? 0 : run.done ? run.endAt : Math.min(elapsed(), RUN_S);
+  $("elapsed").textContent = pyFixed(t, 1) + " วิ";
+  $("runOf").textContent = "จาก " + RUN_S + " วิ";
+  let phase = "ยังไม่เริ่ม";
+  if (run && run.done) phase = "จบแล้ว";
+  else if (run && run.t0 === null) phase = "รอต่อ broker";
+  else if (run) phase = t < PHASE2_S ? "1 · แบบ sf2_02" : "2 · แบบ sf2_03";
+  $("phase").textContent = phase;
+  const leftMs = live ? Math.round((run.pumpUntil - mono()) * 1000) : 0;          // ปัดเป็นมิลลิวินาทีก่อน (แสดงผลอย่างเดียว)
+  $("pump").textContent = leftMs > 0 ? "เปิด อีก " + Math.ceil(leftMs / 1000) + " วิ" : "ปิด";   // ปัดขึ้นแบบ sf2_03
+  $("pump").dataset.on = leftMs > 0 ? "1" : "0";
+  let next = "";
+  if (live) {
+    const steps = [[SW6_AT_S, "กด SW6", !run.sw6Sent], [PHASE2_S, "เปลี่ยนเป็นแบบ sf2_03", true],
+                   [ALERT_AT_S, "แจ้งเตือนพืช", !run.alertSent], [RUN_S, "จบ", true]];
+    const n = steps.find(([at, , todo]) => todo && at > t);
+    if (n) next = "ถัดไป: " + n[1] + " ที่ " + n[0] + " วิ";
+  } else if (run && run.done) next = "จบเพราะ" + run.why + " · กด เริ่ม เพื่อจำลองใหม่ (n เริ่ม 1 ใหม่ เหมือนรันไฟล์บอร์ดใหม่)";
+  $("next").textContent = next;
+}
+function refreshTeamViews() {
+  const t = run && !run.done ? run.team : $("team").value.trim().toLowerCase();
+  const team = TEAM_RE.test(t) ? t : "";
+  const shown = team || "<ทีม>";
+  $("tTel").textContent = ROOT + "/" + shown + "/telemetry";
+  $("tEvt").textContent = ROOT + "/" + shown + "/event";
+  $("tCmd").textContent = ROOT + "/" + shown + "/cmd";
+  const q = team ? "?team=" + team : "";
+  $("farmLink").href = "farm_web.html" + q;
+  $("farmLink").textContent = "farm_web.html" + (q || " (ใส่เลขกลุ่มก่อน)");
+  $("dashLink").href = "mqtt_dashboard.html" + q;
+  $("dashLink").textContent = "mqtt_dashboard.html" + q;
+  $("brokerNote").hidden = $("broker").value === BROKER_DEFAULT;
+}
+function showTimeline() {
+  const items = [
+    "0 ถึง " + PHASE2_S + " วิ: ค่าฟาร์มแบบ sf2_02 ทุก " + SEND_S + " วิ (ดินชื้น 55 % เลขอากาศเป็นค่าสมมติ) -> telemetry",
+    "วินาทีที่ " + SW6_AT_S + ": กด SW6 หนึ่งครั้ง (เรียกคนที่ฟาร์ม) -> event",
+    PHASE2_S + " วิขึ้นไป: สถานะปั๊มแบบ sf2_03 ทุก " + SEND_S + " วิ (ดินแห้ง 20 % ให้แอปสั่งรดน้ำ) -> telemetry",
+    "วินาทีที่ " + ALERT_AT_S + ": แจ้งเตือนพืช 1 ใบแบบ sf2_04 (มะเขือเทศ ร้อนไป ระดับ 2) -> event",
+    "ตลอดเวลา: ฟัง cmd แล้วทำตามกฎของ sf2_03 (ไม่ใส่ sec = " + PUMP_DEFAULT_S + " วิ สูงสุด " + PUMP_MAX_S + " วิ ถังต่ำกว่า " + TANK_MIN + " % ไม่เปิด) บันทึกบอกว่าบอร์ดจริงจะทำอะไร",
+    "ครบ " + RUN_S + " วิ: หยุดเองและตัดการเชื่อมต่อ",
+  ];
+  $("timeline").replaceChildren(...items.map((t) => { const li = document.createElement("li"); li.textContent = t; return li; }));
+}
+
+// ค่าจากลิงก์: ?team= (ไม่ใส่ = team99) และ ?broker=hivemq|mosquitto
+(function init() {
+  const params = new URLSearchParams(location.search);
+  const qTeam = params.get("team"), qBroker = params.get("broker");
+  $("team").value = TEAM_DEFAULT;
+  $("tank").value = String(TANK_DEFAULT);
+  $("broker").value = BROKER_DEFAULT;
+  const notes = [];
+  if (qTeam !== null) {
+    const t = qTeam.trim().toLowerCase();
+    $("team").value = cut(t, 20);
+    if (!TEAM_RE.test(t)) notes.push("เลขกลุ่มในลิงก์ใช้ไม่ได้: \"" + cut(qTeam, 20) + "\" ต้องเป็น team01 ถึง team99 แก้ในช่องก่อนกดเริ่ม");
+  }
+  if (qBroker !== null) {
+    if (Object.prototype.hasOwnProperty.call(BROKERS, qBroker)) $("broker").value = qBroker;
+    else notes.push("ไม่รู้จัก broker \"" + cut(qBroker, 20) + "\" ในลิงก์ ใช้ HiveMQ แทน (ใช้ได้: hivemq, mosquitto)");
+  }
+  formMsg(notes.join(" · "));
+  showTimeline();
+  refreshTeamViews();
+  showState();
+  $("startBtn").addEventListener("click", startRun);
+  $("stopBtn").addEventListener("click", stopRun);
+  $("team").addEventListener("input", refreshTeamViews);
+  $("broker").addEventListener("change", refreshTeamViews);
+  // ปิดแท็บ = บอร์ดจำลองหยุด ตัดการเชื่อมต่อให้เรียบร้อยเหมือนบอร์ด
+  if (typeof addEventListener === "function") addEventListener("pagehide", () => { if (client) client.end(true); });
+})();
+</script>
+</body>
+</html>

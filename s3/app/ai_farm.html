@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<!--
+  s3/app/ai_farm.html - หน้าเว็บของทีมสำหรับ "ภารกิจ AI ในฟาร์ม" คาบ 3 ไม่ต้องติดตั้งอะไร เปิดในเบราว์เซอร์ได้เลย (มือถือก็ได้)
+  เปิดแบบนี้: .../s3/app/ai_farm.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+    ?mission=barn   เลือกภารกิจไว้ก่อนบอร์ดส่งข้อมูล (pump siren barn night voice worker drill)
+    ?broker=mosquitto   ใช้ broker สำรองเมื่อผู้สอนประกาศ
+    ?sim=1   เปิดบอร์ดจำลองทันที (ไม่มีบอร์ด หรือใช้ BENTO Emulator ที่ไม่มีโมเดลจาก Store)
+  ฟัง  bento-aiot/<ทีม>/ai  /event  /plc/state   ส่ง  ai/cmd (รับทราบ) และ ai/feedback (คนตอบว่าเตือนถูกไหม)
+  ทุกอย่างตามสัญญา s2/app/MQTT_CONTRACT_th.md ข้อ 2, 3.9, 3.10, 3.11, 4.2 และ 5
+  บอร์ดจำลองในหน้านี้ส่งข้อความแบบเดียวกับ sf3_08 (ข้อ 3.11) ด้วย client id ของตัวเอง หน้าแจ้งเตือนและแอปของกลุ่มจึงเห็นเหมือนบอร์ดจริง
+  broker สาธารณะ ใครก็อ่านและส่งได้: หน้านี้ตรวจทุกค่าที่รับมา และแสดงด้วย textContent เท่านั้น ห้ามส่งชื่อคนหรือข้อมูลส่วนตัว
+  ผู้สอนแก้ค่าได้ที่ SETTINGS / MISSIONS / SIM ต้นสคริปต์
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ภารกิจ AI ในฟาร์ม</title>
+<style>
+  /* หน้านี้ใช้ชุดสีเดียวกับ s2/app/farm_web.html (บล็อกข้างล่างคัดลอกมาตรงตัว ไม่ได้แก้) */
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  [hidden] { display: none !important; }
+  :root { --alarm-ink: #ffffff; --run: #7b4fc9; --jump: #c4621d; }
+  @media (prefers-color-scheme: dark) { :root { --alarm-ink: #2a0b07; --run: #b79af0; --jump: #f0a46a; } }
+  a { color: var(--water); overflow-wrap: anywhere; }
+  p { margin: 0 0 10px; }
+  h3 { font-size: 15px; margin: 16px 0 8px; }
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) {
+    .layout { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+    .wide { grid-column: 1 / -1; }
+  }
+  .col { display: grid; gap: 16px; min-width: 0; }
+  .check { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; cursor: pointer; font-size: 14px; }
+  .check input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
+  .field { display: grid; gap: 4px; min-width: 0; margin-bottom: 12px; }
+  .field select { width: 100%; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  /* แถบขั้นตอน 1-7: ติ๊กเองเมื่อเห็นหลักฐาน */
+  .journey { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .journey li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; min-width: 0;
+    border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--line); font-size: 14px; line-height: 1.35; }
+  .journey .dot { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+    font-size: 13px; background: var(--surface-2); border: 1px solid var(--line); color: var(--dim); }
+  .journey li[data-done="1"] { border-color: var(--accent); }
+  .journey li[data-done="1"] .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .journey small { display: block; color: var(--dim); font-size: 12px; overflow-wrap: anywhere; }
+  /* การ์ดภารกิจ */
+  .mhead { display: flex; gap: 14px; align-items: center; margin-bottom: 12px; }
+  .micon { width: 58px; height: 58px; flex: none; border-radius: 16px; display: grid; place-items: center; font-size: 30px;
+    background: var(--surface-2); border: 1px solid var(--line); }
+  .mname { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .mcode { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+  .problem { font-size: 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2); border-left: 4px solid var(--bad); }
+  .facts { display: grid; gap: 10px; margin: 12px 0; }
+  .facts div { min-width: 0; }
+  .facts dt { font-size: 13px; color: var(--dim); }
+  .facts dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-flex; gap: 6px; align-items: baseline; padding: 2px 10px; border-radius: 999px; font-size: 13px;
+    background: var(--surface-2); border: 1px solid var(--line); }
+  .tag code { background: transparent; padding: 0; }
+  .idea { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px dashed var(--accent); background: var(--surface-2); }
+  .idea b { color: var(--accent); }
+  .warnline { color: var(--warn); font-weight: 600; }
+  /* ผลสด */
+  .statebar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .live-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .side { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 14px; min-width: 0; }
+  .side .k { color: var(--dim); font-size: 13px; overflow-wrap: anywhere; }
+  .big { font-size: clamp(24px, 6vw, 32px); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+  .meter { position: relative; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; margin: 8px 0 6px; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 5px; transition: width .3s; }
+  .meter .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); opacity: .6; }
+  .meter.low i { background: var(--dim); }
+  .meter.over i { background: var(--bad); }
+  .live[data-state="silent"] .live-grid, .live[data-state="silent"] .agree { opacity: .45; filter: grayscale(1); }
+  .agree { display: grid; grid-template-columns: minmax(64px, auto) minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin-top: 14px; }
+  .agree .hd { font-size: 12px; color: var(--dim); text-align: center; align-self: end; }
+  .agree .rh { font-size: 12px; color: var(--dim); align-self: center; text-align: right; padding-right: 4px; }
+  .cell { border-radius: var(--radius-sm); border: 2px solid var(--line); padding: 8px; min-height: 76px; background: var(--surface-2);
+    display: grid; align-content: center; gap: 2px; text-align: center; opacity: .5; min-width: 0; transition: opacity .2s; }
+  .cell b { font-size: 14px; }
+  .cell span { font-size: 12px; color: var(--dim); }
+  .cell .cnt { font-variant-numeric: tabular-nums; }
+  .cell[data-on="1"] { opacity: 1; }
+  .cell.both[data-on="1"] { border-color: var(--bad); background: var(--surface); background: color-mix(in srgb, var(--bad) 16%, var(--surface)); }
+  .cell.one[data-on="1"] { border-color: var(--warn); background: var(--surface); background: color-mix(in srgb, var(--warn) 18%, var(--surface)); }
+  .cell.none[data-on="1"] { border-color: var(--ok); background: var(--surface); background: color-mix(in srgb, var(--ok) 14%, var(--surface)); }
+  .lvl { display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 999px; font-weight: 700; font-size: 14px;
+    border: 2px solid var(--line); color: var(--dim); background: var(--surface); }
+  .lvl[data-lvl="2"] { background: var(--bad); border-color: var(--bad); color: var(--alarm-ink); }
+  .lvl[data-lvl="1"] { border-color: var(--warn); color: var(--ink); background: color-mix(in srgb, var(--warn) 22%, var(--surface)); }
+  .lvl[data-lvl="0"] { border-color: var(--ok); color: var(--ok); }
+  .alarm { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 14px 16px;
+    border-radius: var(--radius); background: var(--bad); color: var(--alarm-ink); margin-bottom: 16px; box-shadow: var(--shadow); }
+  .alarm[hidden] { display: none; }
+  .alarm b { font-size: 18px; }
+  .alarm button { background: var(--alarm-ink); color: var(--bad); border-color: var(--alarm-ink); }
+  @media (prefers-reduced-motion: no-preference) { .alarm { animation: pulse 1.6s ease-in-out infinite; } }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(192, 57, 43, .35); } }
+  .simbanner { margin-bottom: 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface);
+    border: 2px solid var(--warn); font-weight: 600; }
+  .simbanner[hidden] { display: none; }
+  /* สถิติ */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-width: 0; }
+  .stat .name { color: var(--dim); font-size: 13px; }
+  .stat .n { font-size: 26px; font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .stat[data-warn="1"] { border-color: var(--bad); }
+  .stat[data-warn="1"] .n { color: var(--bad); }
+  .spark { display: flex; align-items: flex-end; gap: 3px; height: 54px; padding: 4px; margin-top: 10px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .spark i { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; }
+  .timeline { display: flex; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); margin-top: 10px; }
+  .timeline i { display: block; height: 100%; min-width: 2px; background: var(--line); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--dim); margin-top: 6px; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px;
+    background: currentColor; vertical-align: -1px; }
+  .c-standing { color: var(--water); } .timeline .c-standing { background: var(--water); }
+  .c-walking { color: var(--accent); } .timeline .c-walking { background: var(--accent); }
+  .c-running { color: var(--run); } .timeline .c-running { background: var(--run); }
+  .c-sitting { color: var(--warn); } .timeline .c-sitting { background: var(--warn); }
+  .c-jumping { color: var(--jump); } .timeline .c-jumping { background: var(--jump); }
+  .c-other { color: var(--dim); } .timeline .c-other { background: var(--line); }
+  .rainhint { font-weight: 700; color: var(--water); }
+  #eventLog, #voiceLog, #checkinLog, #drillLog, #rainLog, #simLog { white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin: 0; }
+  #eventLog:empty::before, #voiceLog:empty::before, #checkinLog:empty::before, #drillLog:empty::before, #rainLog:empty::before,
+  #simLog:empty::before { content: "(ยังไม่มี)"; color: var(--dim); }
+  .log > div { padding: 2px 0; border-bottom: 1px solid var(--line); }
+  .log > div:last-child { border-bottom: 0; }
+  /* ประวัติ */
+  .hist { display: grid; gap: 8px; }
+  .row { display: grid; gap: 6px 12px; grid-template-columns: minmax(0, 1fr) auto; align-items: start; padding: 10px 12px;
+    border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2); }
+  .row[data-alarm="1"] { border-left: 4px solid var(--bad); }
+  .row .what { font-weight: 600; overflow-wrap: anywhere; }
+  .row .meta { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+  .fb { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; }
+  .fb button { min-height: 38px; padding: 6px 12px; font-size: 14px; }
+  .fb button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .fb button.f-false[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: var(--alarm-ink); }
+  .fb button.f-unsure[aria-pressed="true"] { background: var(--warn); border-color: var(--warn); color: var(--bg); }
+  .csvbox { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  /* บอร์ดจำลอง */
+  .sim { border: 2px dashed var(--warn); }
+  .sim[data-on="1"] { border-style: solid; }
+  .simwarn { padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface-2); border-left: 4px solid var(--warn); }
+  .scen { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 12px 0; }
+  .scen button { min-height: 64px; display: grid; gap: 2px; text-align: left; }
+  .scen button small { font-weight: 400; font-size: 12px; color: var(--dim); }
+  .scen button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+  .how { margin-top: 12px; color: var(--dim); font-size: 14px; }
+  .how summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/><path d="M12 16v-4"/><path d="M12 12c0-2.2 1.6-3.8 3.8-3.8 0 2.2-1.6 3.8-3.8 3.8z"/></svg>
+    </div>
+    <div><h1>ภารกิจ AI ในฟาร์ม</h1><p class="sub">Smart Farm · Session 3 · AI บนบอร์ดคู่กับกฎที่เราเขียนเอง แล้วให้คนตอบว่าเตือนถูกไหม</p></div>
+  </div>
+  <div class="conn">
+    <label class="bar" for="team"><span class="muted small">ทีม</span>
+      <input id="team" size="7" maxlength="6" placeholder="team05" autocomplete="off" spellcheck="false" aria-label="เลขทีม เช่น team05"></label>
+    <select id="broker" aria-label="broker (ต้องตรงกับ BROKER บนบอร์ด)"></select>
+    <button id="go" class="primary" type="button">ต่อ</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้ต่อ</b>
+  </div>
+</header>
+
+<ol id="journey" class="journey" aria-label="เส้นทางของภารกิจ 7 ขั้น">
+  <li id="j1"><span id="j1dot" class="dot">1</span><span><b>เลือกภารกิจ</b><small id="j1note">เลือกในการ์ดภารกิจ หรือแก้ MISSION ในไฟล์บอร์ด</small></span></li>
+  <li id="j2"><span id="j2dot" class="dot">2</span><span><b>Deploy โมเดลจาก <a id="storeLink" href="#" target="_blank" rel="noopener noreferrer">Edge AI Store</a></b><small id="j2note">ติ๊กเองเมื่อบอร์ดรายงานชื่อโมเดลของภารกิจ</small></span></li>
+  <li id="j3"><span id="j3dot" class="dot">3</span><span><b>รัน <a id="sf308Link" href="#" target="_blank" rel="noopener noreferrer">sf3_08</a></b><small id="j3note">ติ๊กเมื่อได้ข้อความที่มีคีย์ m</small></span></li>
+  <li id="j4"><span id="j4dot" class="dot">4</span><span><b>ดูหน้านี้</b><small id="j4note">ติ๊กเมื่อหน้านี้ได้ผล AI ใบแรก</small></span></li>
+  <li id="j5"><span id="j5dot" class="dot">5</span><span><b>มือถือเด้ง</b><small><a id="notifyLink" href="notify/index.html" target="_blank" rel="noopener noreferrer">เปิดหน้าแจ้งเตือนเข้ามือถือ</a></small></span></li>
+  <li id="j6"><span id="j6dot" class="dot">6</span><span><b>ตอบกลับ</b><small id="j6note">กด เหตุจริง / เตือนผิด / ไม่แน่ใจ ในประวัติ</small></span></li>
+  <li id="j7"><span id="j7dot" class="dot">7</span><span><b>CSV → Trainer</b><small id="j7note">ดาวน์โหลด CSV แล้วส่งเข้า BENTO Edge AI Trainer</small></span></li>
+</ol>
+
+<div id="simBanner" class="simbanner" role="status" hidden></div>
+
+<div id="alarm" class="alarm" role="alert" hidden>
+  <div><b id="alarmTitle">บอร์ดกำลังเตือน</b><div id="alarmText" class="small"></div></div>
+  <div class="bar"><button id="ackBtn" type="button">รับทราบ (ส่ง ack)</button><span id="ackNote" class="small" aria-live="polite"></span></div>
+</div>
+
+<main class="layout">
+<div class="col">
+  <section id="missionCard" class="panel" aria-labelledby="h-mission">
+    <h2 id="h-mission">ภารกิจ <span id="missionSrc" class="hint">เลือกได้ก่อนบอร์ดส่งข้อมูล</span></h2>
+    <label class="field" for="missionPick"><span class="muted small">ภารกิจของทีม</span><select id="missionPick"></select></label>
+    <div class="mhead">
+      <div id="mIcon" class="micon" aria-hidden="true">?</div>
+      <div><div id="mName" class="mname">ยังไม่ได้เลือกภารกิจ</div><div id="mCode" class="mcode"></div></div>
+    </div>
+    <p id="mProblem" class="problem">เลือกภารกิจด้านบน หรือรอบอร์ดส่งข้อความแรก แล้วการ์ดนี้จะบอกว่าภารกิจแก้ปัญหาอะไรในฟาร์ม</p>
+    <dl class="facts">
+      <div><dt>โมเดล (ชื่อที่บอร์ดรายงาน)</dt><dd id="mModel">-</dd></div>
+      <div><dt>ป้ายที่นับเป็นเหตุ</dt><dd id="mLabels" class="chips">-</dd></div>
+      <div><dt>กฎคู่ (ความเห็นที่สองที่เราเขียนเอง)</dt><dd id="mRule">-</dd></div>
+      <div><dt>มุมของ System Integrator</dt><dd id="mSi">-</dd></div>
+    </dl>
+    <p class="idea"><b>ถ้าเป็นฟาร์มของเรา…</b> <span id="mPrompt">ลองคิดว่าเอาภารกิจนี้ไปใช้กับอะไรได้อีก</span></p>
+    <p id="mMismatch" class="warnline" hidden></p>
+  </section>
+
+  <section id="live" class="panel live" aria-labelledby="h-live" data-state="wait">
+    <h2 id="h-live">ผลสด <span class="hint">AI บนบอร์ด เทียบกับกฎที่เขียนเอง</span></h2>
+    <div class="statebar"><b id="aiState" class="chip">รอข้อความแรกจากบอร์ด</b><span id="lvlBadge" class="lvl">ระดับ: -</span></div>
+    <div class="live-grid">
+      <div class="side">
+        <div class="k">ฝั่ง AI · <span id="aiModel">-</span></div>
+        <div id="aiLabel" class="big">-</div>
+        <div id="aiCode" class="mcode"></div>
+        <div id="confMeter" class="meter"><i id="confBar"></i><span id="confMark" class="mark"></span></div>
+        <div class="small"><span id="aiConf">มั่นใจ -</span> · <span id="aiMs">เวลาคิด -</span></div>
+        <div id="aiSecond" class="small muted">อันดับสอง -</div>
+      </div>
+      <div class="side">
+        <div class="k">ฝั่งกฎ · <span id="ruleKind">-</span></div>
+        <div id="ruleValue" class="big">-</div>
+        <div id="ruleMeter" class="meter"><i id="ruleBar"></i><span id="ruleMark" class="mark"></span></div>
+        <div id="ruleText" class="small">-</div>
+      </div>
+    </div>
+    <div class="agree" role="group" aria-label="ตาราง AI เทียบกับกฎ">
+      <span></span><span class="hd">AI: เกิดเหตุ</span><span class="hd">AI: ปกติ</span>
+      <span class="rh">กฎ: เกิดเหตุ</span>
+      <div id="cBoth" class="cell both"><b>ยืนยันสองทาง</b><span>เตือนจริง · ระดับ 2</span><span id="nBoth" class="cnt">0 ข้อความ</span></div>
+      <div id="cRule" class="cell one"><b>กฎฝ่ายเดียว</b><span>ให้คนไปดู · ระดับ 1</span><span id="nRule" class="cnt">0 ข้อความ</span></div>
+      <span class="rh">กฎ: ปกติ</span>
+      <div id="cAi" class="cell one"><b>AI ฝ่ายเดียว</b><span>ให้คนไปดู · ระดับ 1</span><span id="nAi" class="cnt">0 ข้อความ</span></div>
+      <div id="cNone" class="cell none"><b>ปกติ</b><span>ไม่มีใครบอก · ระดับ 0</span><span id="nNone" class="cnt">0 ข้อความ</span></div>
+    </div>
+    <p id="agreeNote" class="small muted" style="margin-top:8px"></p>
+    <p id="liveMeta" class="small muted">ข้อความที่ - · ได้ยินล่าสุด -</p>
+  </section>
+</div>
+
+<div class="col">
+  <section class="panel" aria-labelledby="h-panel">
+    <h2 id="h-panel">แผงของภารกิจ <span id="panelHint" class="hint"></span></h2>
+    <div id="pBarn" hidden>
+      <div class="stats">
+        <div class="stat"><div class="name">ไอใน 10 นาที (บอร์ดนับ)</div><div id="barn10" class="n">-</div></div>
+        <div class="stat"><div class="name">ไอใน 1 ชั่วโมง (หน้านี้นับ)</div><div id="barn60" class="n">0</div></div>
+        <div class="stat"><div class="name">ก๊อกเปิดนานสุด</div><div id="barnTap" class="n">-</div></div>
+      </div>
+      <div id="barnSpark" class="spark" role="img" aria-label="จำนวนเสียงไอทุก 5 นาที ย้อนหลัง 1 ชั่วโมง"></div>
+      <p class="small muted">แต่ละแท่ง = เสียงไอที่หน้านี้นับได้ใน 5 นาที ย้อนหลัง 1 ชั่วโมง (ขวาสุด = ตอนนี้)</p>
+    </div>
+    <div id="pWorker" hidden>
+      <p id="workerAsk" class="warnline" hidden></p>
+      <div id="workerMins" class="stats"></div>
+      <div id="workerTimeline" class="timeline" role="img" aria-label="ไทม์ไลน์กิจกรรม 10 นาทีล่าสุด"></div>
+      <div class="legend"><span class="c-standing">ยืน</span><span class="c-walking">เดิน</span><span class="c-running">วิ่ง</span><span class="c-sitting">นั่ง</span><span class="c-jumping">กระโดด</span><span class="c-other">อื่น ๆ</span></div>
+      <h3>บันทึกเช็กอิน</h3>
+      <div id="checkinLog" class="log"></div>
+      <p class="small muted" style="margin-top:8px">ความเป็นส่วนตัว: ไม่ใส่ชื่อคนงาน ขอความยินยอมก่อนติดบอร์ด ส่งแค่รหัสทีม</p>
+    </div>
+    <div id="pVoice" hidden>
+      <div class="stats">
+        <div class="stat"><div class="name">ปั๊ม (จาก plc/state)</div><div id="plcPump" class="n">-</div></div>
+        <div class="stat"><div class="name">ดับเองในอีก</div><div id="plcLeft" class="n">-</div></div>
+      </div>
+      <p id="plcWhy" class="small" style="margin-top:8px">ยังไม่ได้ยิน PLC</p>
+      <h3>ได้ยิน → ทำ / ไม่ทำ</h3>
+      <div id="voiceLog" class="log"></div>
+      <p class="small" style="margin-top:8px">ดูปั๊มเดินจริง: เปิด <a id="plcLink" href="#" target="_blank" rel="noopener noreferrer">PLC Simulator ใน farm_web.html</a> ทีมเดียวกัน แล้วกด "เริ่ม PLC Simulator"</p>
+    </div>
+    <div id="pDrill" hidden>
+      <div class="stats">
+        <div class="stat"><div class="name">รูที่เจาะทะลุ (ตั้งแต่บอร์ดเริ่มรัน)</div><div id="drillHoles" class="n">0</div></div>
+        <div class="stat"><div class="name">วัสดุล่าสุด</div><div id="drillMat" class="n">-</div></div>
+      </div>
+      <h3>บันทึกงาน (drill_done)</h3>
+      <div id="drillLog" class="log"></div>
+    </div>
+    <div id="pNight" hidden>
+      <p id="rainHint" class="rainhint">ยังไม่ได้ยินฝน</p>
+      <h3>ฝนตก (event rain)</h3>
+      <div id="rainLog" class="log"></div>
+    </div>
+    <p id="pOther" class="muted small">ภารกิจนี้ดูที่ "ผลสด" ได้เลย: ค่าของกฎ (rv) เทียบเกณฑ์ (rl) คู่กับผล AI</p>
+    <h3>เหตุการณ์ล่าสุด (หัวข้อ event)</h3>
+    <div id="eventLog" class="log" role="log"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-stats">
+    <h2 id="h-stats">สถิติ <span class="hint">นับตั้งแต่เปิดหน้านี้ · คำตอบนับจากประวัติ</span></h2>
+    <div class="stats">
+      <div id="sAlarmBox" class="stat"><div class="name">เตือนใน 60 นาทีล่าสุด</div><div id="sAlarm" class="n">0</div><div id="sAlarmGuide" class="small muted"></div></div>
+      <div class="stat"><div class="name">AI กับกฎเห็นตรงกัน</div><div id="sAgree" class="n">-</div><div id="sAgreeN" class="small muted">0 ข้อความ</div></div>
+      <div class="stat"><div class="name">ตอบ เหตุจริง</div><div id="sTrue" class="n">0</div></div>
+      <div class="stat"><div class="name">ตอบ เตือนผิด</div><div id="sFalse" class="n">0</div></div>
+      <div class="stat"><div class="name">ตอบ ไม่แน่ใจ</div><div id="sUnsure" class="n">0</div></div>
+      <div class="stat"><div class="name">สัดส่วนเตือนผิด</div><div id="sFalseShare" class="n">-</div><div class="small muted">เตือนผิด ÷ (เหตุจริง + เตือนผิด)</div></div>
+    </div>
+    <p id="sAlarmNote" class="small" style="margin-top:10px"></p>
+  </section>
+</div>
+
+<section class="panel wide" aria-labelledby="h-hist">
+  <h2 id="h-hist">ประวัติ + คนตอบกลับ <span class="hint">ทุกครั้งที่ระดับ ≥ 1 หรือบอร์ดเตือน · ตอบแล้วเปลี่ยนใจได้</span></h2>
+  <div id="hist" class="hist"></div>
+  <p id="histEmpty" class="muted small">ยังไม่มีเหตุการณ์ เมื่อระดับขึ้นเป็น 1 หรือ 2 จะมีแถวขึ้นที่นี่ให้กด เหตุจริง / เตือนผิด / ไม่แน่ใจ</p>
+  <div class="csvbox">
+    <div class="bar">
+      <button id="csvBtn" type="button" class="primary">ดาวน์โหลด CSV</button>
+      <button id="clearHist" type="button" class="danger">ล้างประวัติ</button>
+      <span id="csvNote" class="small muted"></span>
+    </div>
+    <p class="small" style="margin-top:10px"><b>ส่งไฟล์นี้เข้า BENTO Edge AI Trainer เพื่อฝึกโมเดลของฟาร์มเรา</b> <span id="trainerWrap"></span>
+      · หนึ่งแถว = หนึ่งเหตุการณ์ที่บอร์ดเตือน หรือที่คนในทีมตอบแล้ว · คอลัมน์ <code>v</code> คือคำตอบของคน
+      (<code>true</code> เหตุจริง · <code>false</code> เตือนผิด · <code>unsure</code> ไม่แน่ใจ · ว่าง = ยังไม่ตอบ)
+      · แถวที่ตอบ <code>false</code> คือตัวอย่างที่โมเดลยังสับสน มีค่าที่สุดสำหรับการฝึกรอบหน้า · เปิดใน Excel ภาษาไทยไม่เพี้ยน</p>
+    <p id="storeNote" class="small warnline" hidden></p>
+  </div>
+</section>
+
+<section id="sim" class="panel sim wide" aria-labelledby="h-sim" data-on="0">
+  <h2 id="h-sim">บอร์ดจำลอง <span class="hint">ไม่มีบอร์ด หรือใช้ BENTO Emulator (ไม่มีโมเดลจาก Store) ก็เดินครบทุกขั้น</span></h2>
+  <p class="simwarn"><b>อย่าเปิดพร้อมบอร์ดจริงที่ใช้เลขทีมเดียวกัน</b> บอร์ดจำลองส่งข้อความขึ้น broker จริงในชื่อทีมนี้ (หัวข้อ ai, event และ plc/cmd)
+     หน้าแจ้งเตือนและแอปของกลุ่มจะเห็นเหมือนบอร์ดจริง · ถ้ามีบอร์ดจริงส่งเข้าทีมเดียวกันด้วย ข้อมูลจะปนกันจนอ่านไม่ออก</p>
+  <div class="bar">
+    <button id="simToggle" type="button" class="primary" aria-pressed="false">เปิดบอร์ดจำลอง</button>
+    <label class="bar" for="simMission"><span class="muted small">ภารกิจ (MISSION)</span><select id="simMission"></select></label>
+    <label class="check" for="simRuleOnly"><input type="checkbox" id="simRuleOnly"> ไม่มีโมเดล (rule-only)</label>
+  </div>
+  <p id="simState" class="small muted" style="margin-top:10px" aria-live="polite">ปิดอยู่</p>
+  <div id="simScen" class="scen" role="group" aria-label="เหตุการณ์จำลอง"></div>
+  <div class="bar"><button id="simSw6" type="button" class="water">SW6</button><button id="simSw5" type="button">SW5</button><span id="simSw6Hint" class="small muted"></span></div>
+  <details class="how">
+    <summary>บอร์ดจำลองทำอะไร และส่งอะไรออกไป</summary>
+    <p>ทำตัวเหมือน <code>sf3_08</code> บนบอร์ด (ตรรกะเดียวกันทีละฟังก์ชัน): ได้ผล AI ใหม่ทุก 0.25 วินาที (ป้ายสลับไปมาและความมั่นใจไม่เป๊ะเหมือนของจริง)
+       ฝั่ง AI บอกเกิดเหตุเมื่อป้ายของภารกิจชนะด้วยความมั่นใจอย่างน้อย 60 % ใน 3 ของ 5 ผลล่าสุด แล้วเทียบกับกฎของภารกิจ
+       · SW6 = รับทราบ (worker: ฉันโอเค · voice: ยืนยัน go หรือ stop) · SW5 = พัก/ทำต่อ (voice: go แทนเสียง)
+       ส่งสถานะทาง <code>ai</code> ทุก 2 วินาที และทันทีที่ป้าย ระดับ หรือการเตือนเปลี่ยน (ห่างกันอย่างน้อย 200 ms ไม่เกิน 255 ไบต์)
+       ส่ง event ตามข้อ 3.11 · รับ <code>{"cmd":"ack"}</code> <code>{"cmd":"stop"}</code> <code>{"cmd":"run"}</code> ทาง <code>ai/cmd</code>
+       · ภารกิจ voice ส่ง <code>plc/cmd</code> ห่างกันอย่างน้อย 3 วินาที ให้ PLC Simulator ใน
+       <a id="farmLink" href="#" target="_blank" rel="noopener noreferrer">farm_web.html</a> ทีมเดียวกันทำงาน</p>
+    <div id="simLog" class="log" role="log"></div>
+  </details>
+</section>
+</main>
+<p class="small muted" style="margin-top:16px">ลิงก์: <a id="classLink" href="#" target="_blank" rel="noopener noreferrer">ผู้สอนดูทั้งห้อง (ai_class.html)</a>
+  · <a id="contractLink" href="#" target="_blank" rel="noopener noreferrer">สัญญา MQTT ข้อ 3.11</a>
+  · broker สาธารณะ ใครก็อ่านได้ ห้ามส่งชื่อคนหรือข้อมูลส่วนตัว</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+// ===== 0) ค่าตั้ง: ผู้สอนแก้ที่นี่ หรือส่งลิงก์ ?team=team05&broker=mosquitto&mission=barn&sim=1 =====
+const SETTINGS = {
+  ROOT: "bento-aiot",                                             // ต้นชื่อหัวข้อ (สัญญาข้อ 2)
+  BROKERS: {                                                      // ต้องตรงกับ BROKER บนบอร์ด (สัญญาข้อ 1) · เลือกด้วย ?broker=<ชื่อ>
+    hivemq: { url: "wss://broker.hivemq.com:8884/mqtt", th: "HiveMQ" },
+    mosquitto: { url: "wss://test.mosquitto.org:8081/mqtt", th: "Mosquitto (สำรอง)" },
+  },
+  DEFAULT_BROKER: "hivemq",
+  AI_SILENT_S: 6,                 // ไม่ได้ยินผล AI เกินนี้ = "AI เงียบ" (สัญญาข้อ 3.9)
+  CONF_MIN: 60,                   // เส้นเกณฑ์บนแถบความมั่นใจ (สัญญาข้อ 3.11: อย่างน้อย 60 %)
+  ALARMS_PER_HOUR_GUIDE: 6,       // แนวทาง ISA-18.2: ราว 6 การเตือนต่อชั่วโมงต่อผู้ดูแลหนึ่งคน
+  CMD_GAP_MS: 3000,               // คำสั่งทาง ai/cmd ห่างกันอย่างน้อย 3 วิ (สัญญาข้อ 3.10 · ข้อ 5.4 ขั้นต่ำ 1 วิ)
+  PLC_STALE_S: 15,                // plc/state เงียบเกินนี้ = PLC หลุด (สัญญาข้อ 3.6)
+  MAX_PAYLOAD_B: 2048,            // ข้อความใหญ่กว่านี้ไม่อ่าน
+  HISTORY_MAX: 500,               // แถวประวัติที่เก็บในเบราว์เซอร์ (เก่าสุดหลุดก่อน)
+  HISTORY_SHOW: 40,               // แถวที่แสดงบนหน้า (CSV ได้ครบทุกแถวที่เก็บ)
+  LOG_MAX: 30,                    // บรรทัดในบันทึกแต่ละกล่อง
+  NOTIFY_URL: "notify/index.html",                                // หน้าแจ้งเตือนเข้ามือถือ (s3/app/notify/)
+  FARM_WEB_URL: "../../s2/app/farm_web.html",                     // PLC Simulator (s2/app/farm_web.html)
+  STORE_URL: "https://edgeai-store.tesaiot.dev/",                 // Edge AI Store (deploy โมเดลลงบอร์ด)
+  SF3_08_URL: "https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py",
+  TRAINER_URL: "",                // ลิงก์ BENTO Edge AI Trainer ที่ผู้สอนแจก (ว่าง = ไม่ขึ้นลิงก์)
+  CLASS_URL: "ai_class.html",                                    // หน้ารวมของผู้สอน: ดูทั้งห้อง
+  CONTRACT_URL: "https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md",
+  STORE_PREFIX: "ai-farm",        // ชื่อที่เก็บในเบราว์เซอร์ (ประวัติและขั้นตอน แยกตามทีม)
+};
+
+// ภารกิจ 7 แบบ ตรงกับตารางสัญญาข้อ 3.11 (model = ชื่อที่บอร์ดรายงาน · fallback = ตัวสำรองในตัวเมื่อยังไม่ได้ deploy / ใน Emulator)
+// rule = กฎคู่เป็นภาษาคน (ค่าเริ่มต้นตาม sf3_08) · prompt = "ถ้าเป็นฟาร์มของเรา…" · si = มุมของ System Integrator
+const MISSIONS = {
+  pump: { th: "หมอปั๊มน้ำ", icon: "💧", model: "AnomalousVibration", fallback: "Motion Detection", fallbackLabels: ["shaking"],
+    labels: ["anomaly"], rk: ["vib"], events: [], note: "",
+    problem: "ปั๊มน้ำเสียโดยไม่มีใครรู้ กว่าจะเห็นอีกที พืชก็แห้งไปแล้ว",
+    rule: "ค่าสั่น (vib) เกินค่าปกติ × 3 · บอร์ดเรียนค่าปกติใน 5 วินาทีแรก (วางนิ่งไว้)",
+    prompt: "ติดกับเครื่องเติมอากาศบ่อกุ้ง / พัดลมโรงเรือนไก่ / เครื่องสีข้าว",
+    si: "บำรุงรักษาเชิงพยากรณ์ (predictive maintenance): ซ่อมก่อนพัง ไม่ต้องรอให้หยุดงาน" },
+  siren: { th: "ยามฟังไซเรน", icon: "🚨", model: "SirenDetection", fallback: "Siren Detection", fallbackLabels: [],
+    labels: ["sirens"], rk: ["loud"], events: [], note: "",
+    problem: "รถพยาบาล / รถดับเพลิงมาถึงหน้าประตูฟาร์ม · ไซเรนเตือนภัยของหมู่บ้าน",
+    rule: "เสียงดังต่อเนื่อง (loud) อย่างน้อย 2 วินาที",
+    prompt: "ไซเรนเตือนน้ำท่วม → ต้อนสัตว์ขึ้นที่สูง",
+    si: "ตอบสนองเหตุฉุกเฉิน (emergency response): เปิดประตู แจ้งทุกคนพร้อมกัน" },
+  barn: { th: "หูโรงเรือน", icon: "🐖", model: "HomeSounds", fallback: "Cough Detection", fallbackLabels: ["cough"],
+    labels: ["cough", "water_tap", "baby_cry"], rk: ["rate", "dur"], events: [], note: "", durTh: "ก๊อกเปิดมาแล้ว",
+    problem: "สัตว์ไอ = โรคทางเดินหายใจเริ่มระบาด · ก๊อกน้ำเปิดทิ้ง · เด็กร้องในบ้านพักคนงาน",
+    rule: "ไอถี่: ไอถึง 10 ครั้งใน 10 นาที (rate) · ก๊อกเปิดทิ้ง: ได้ยินก๊อกต่อเนื่อง 30 วินาที (dur)",
+    prompt: "อัดเสียงไอหมูจริงไปฝึกใน Trainer",
+    si: "สุขภาพฝูงสัตว์ + KPI น้ำสูญเปล่า" },
+  night: { th: "ยามกลางคืน", icon: "🌙", model: "Environment Sounds", fallback: "Alarm Detection", fallbackLabels: ["alarm"],
+    labels: ["chainsaw", "crackling_fire", "dog"], rk: ["loud"], events: ["rain"], note: "ทดลอง",
+    problem: "ขโมยตัดไม้ด้วยเลื่อยยนต์ · ไฟไหม้กองฟาง · สุนัขเห่า · ส่วนฝนตกเป็นข่าวดี งดรดน้ำได้",
+    rule: "เสียงดังต่อเนื่อง (loud) อย่างน้อย 2 วินาที ในช่วงเวลาเฝ้า (รันไฟล์ตอนเฝ้า)",
+    prompt: "ฝนตก = งดรดน้ำอัตโนมัติ",
+    si: "ความปลอดภัยของฟาร์ม (security)" },
+  voice: { th: "สั่งปั๊มด้วยเสียง", icon: "🗣️", model: "Voice Commands", fallback: "", fallbackLabels: [],
+    labels: ["go", "stop"], rk: ["btn"], events: ["voice_cmd"], note: "ทดลอง",
+    problem: "มือเปื้อนดิน กดปุ่มไม่ได้",
+    rule: "go ต้องยืนยันภายใน 3 วินาที: พูด go ซ้ำ หรือกด SW6 (btn) · stop ทำทันที · บอร์ดส่ง plc/cmd สั่งปั๊ม",
+    prompt: "สั่งไฟโรงเรือน / เลือกแปลง A หรือ B",
+    si: "สั่งงานไม่ต้องใช้มือ (hands-free HMI) + interlock กันสั่งผิด" },
+  worker: { th: "คนงานปลอดภัย", icon: "🦺", model: "HumanActivity", fallback: "", fallbackLabels: [],
+    labels: ["sitting", "standing"], rk: ["dur"], events: ["check_in"], note: "ติดบอร์ดที่หน้าอก", durTh: "ไม่ขยับมาแล้ว",
+    problem: "คนงานทำงานคนเดียว เป็นลมเพราะแดดร้อน ไม่มีใครเห็น",
+    rule: "ไม่ขยับ 30 วินาที (dur) → บอร์ดถามให้กด SW6 ว่าโอเค (AI เห็นด้วย = ระดับ 2) · ไม่ตอบใน 30 วินาที = เตือน",
+    prompt: "ปลอกคอวัว / แพะ ต้องเก็บข้อมูลอะไรเพิ่ม",
+    si: "ความปลอดภัยของคนทำงานคนเดียว (lone worker) · ความเป็นส่วนตัว: ไม่ใช้ชื่อคน ขอความยินยอมก่อน ส่งแค่รหัสทีม" },
+  drill: { th: "ช่างซ่อมโรงเรือน", icon: "🔩", model: "DrillMaterialMic", fallback: "", fallbackLabels: [],
+    labels: ["wood_out", "plastic_out"], rk: ["loud"], events: ["drill_done"], note: "ผู้สอนสาธิตเท่านั้น",
+    problem: "เจาะทะลุชิ้นงานโดยไม่รู้ตัว",
+    rule: "เสียงดัง (loud) 1 วินาที = สว่านเดินอยู่ · AI ได้ยินทะลุแล้ว บอร์ดส่ง drill_done นับรูแยกวัสดุ",
+    prompt: "AI รู้ว่างานเสร็จ",
+    si: "ตรวจคุณภาพ (QC) + บันทึกงานอัตโนมัติ" },
+};
+
+// ความหมายไทยของป้าย (ตัวเล็ก) · ป้ายที่ไม่อยู่ในนี้แสดงชื่อเดิม
+const LABEL_TH = {
+  anomaly: "สั่นผิดปกติ", unlabeled: "ปกติ", unlabelled: "ปกติ", sirens: "เสียงไซเรน", cough: "เสียงไอ",
+  baby_cry: "เด็กร้อง", crying_baby: "เด็กร้อง", water_tap: "ก๊อกน้ำเปิด", chainsaw: "เลื่อยยนต์", crackling_fire: "ไฟไหม้",
+  dog: "สุนัขเห่า", rain: "ฝนตก", background: "เสียงพื้นหลัง", sneezing: "จาม", helicopter: "เฮลิคอปเตอร์",
+  go: "ไป", stop: "หยุด", up: "ขึ้น", down: "ลง", left: "ซ้าย", right: "ขวา",
+  standing: "ยืน", walking: "เดิน", running: "วิ่ง", sitting: "นั่ง", jumping: "กระโดด",
+  air: "สว่านหมุนลอย", wood: "เจาะไม้", wood_out: "ไม้ทะลุแล้ว", plastic: "เจาะพลาสติก", plastic_out: "พลาสติกทะลุแล้ว",
+  idle: "นิ่ง", circle: "วาดวงกลม", shaking: "เขย่า", alarm: "เสียงสัญญาณเตือน", "-": "ยังไม่มีผล",
+};
+
+// ชนิดของกฎ rk (สัญญาข้อ 3.11) · dp = ทศนิยมที่แสดง
+const RK = {
+  vib: { th: "ค่าสั่น", unit: "m/s²", dp: 2 },
+  loud: { th: "เสียงดังต่อเนื่อง", unit: "วินาที", dp: 1 },
+  rate: { th: "นับใน 10 นาที", unit: "ครั้ง/10 นาที", dp: 0 },
+  dur: { th: "สถานะค้างมาแล้ว", unit: "วินาที", dp: 1 },
+  btn: { th: "คนกดยืนยัน", unit: "", dp: 0 },
+};
+
+// บอร์ดจำลอง: ชื่อและค่าเดียวกับ s3/sf3_08_farm_ai_missions.py (ถ้าแก้ในไฟล์บอร์ด แก้ที่นี่ให้ตรงกัน)
+const SIM = {
+  RESULT_MS: 250,          // บอร์ดจำลองได้ผล AI ใหม่ทุกเท่านี้ (โมเดลจริงเร็ว/ช้าต่างกัน)
+  CONF_MIN: 60,            // มั่นใจไม่ถึงกี่ % ไม่นับเป็นเหตุ
+  CONFIRM_N: 3, WINDOW_N: 5,   // ป้ายของภารกิจอย่างน้อย 3 ใน 5 ผลล่าสุด
+  HEARTBEAT_MS: 2000,      // สถานะไม่เปลี่ยน ก็ส่งซ้ำทุกเท่านี้
+  GAP_MS: 200,             // ห้ามส่งสถานะถี่กว่านี้
+  MAX_BYTES: 255,          // ข้อความสถานะไม่เกินกี่ไบต์
+  CMD_MAX: 200,            // คำสั่ง ai/cmd ยาวเกินนี้ไม่สนใจ
+  CMD_GAP_MS: 3000,        // select / stop / run ถี่กว่านี้ไม่ทำ (ack ทำเสมอ)
+  ACK_REARM_MS: 10000,     // รับทราบแล้ว จะเตือนใหม่เมื่อเหตุสงบต่อเนื่องนานเท่านี้
+  LEARN_MS: 5000,          // pump: เรียนค่าสั่นปกติกี่ ms แรก
+  MIN_BASE: 0.05,          // pump: ค่าปกติต่ำสุด (m/s²)
+  K_VIB: 3,                // pump: เกินค่าปกติกี่เท่า = เกิดเหตุ
+  QUIET_GAP_MS: 400,       // เงียบสั้นกว่านี้ยังนับว่าดังต่อเนื่อง
+  LOUD_S: { siren: 2, night: 2, drill: 1 },   // ดังต่อเนื่องกี่วินาที = เกิดเหตุ
+  COUGH_MAX: 10,           // barn: ไอกี่ครั้งใน RATE_MS = ไอถี่
+  RATE_MS: 600000,         // barn: นับย้อนหลัง 10 นาที
+  TAP_S: 30,               // barn: ได้ยินก๊อกต่อเนื่องกี่วินาที = เปิดทิ้ง
+  STILL_S: 30,             // worker: ไม่ขยับกี่วินาที = ถาม "โอเคไหม"
+  CHECKIN_S: 30,           // worker: ถามแล้วไม่ตอบกี่วินาที = เตือน
+  PUMP_SEC: 10, PUMP_MAX_S: 30,   // voice: go = {"pump":1,"sec":10} (สัญญาข้อ 4.2)
+  GO_CONFIRM_MS: 3000,     // voice: go ต้องยืนยันภายในเท่านี้ (go ซ้ำ หรือ SW6)
+  PLC_GAP_MS: 3000,        // voice: plc/cmd ของ go ห่างกันอย่างน้อยเท่านี้ (stop ไม่ต้องรอ)
+  MS: { pump: [8, 14], siren: [30, 55], barn: [30, 55], night: [35, 60], voice: [25, 40], worker: [4, 9], drill: [30, 50] },
+};
+
+// ===== 1) ตัวช่วยเล็ก ๆ =====
+const $ = (id) => document.getElementById(id);
+const MISSION_KEYS = Object.keys(MISSIONS);
+const TEAM_RE = /^team(0[1-9]|[1-9][0-9])$/;                     // team01..team99
+const LABEL_RE = /^[A-Za-z][A-Za-z0-9_. -]{0,31}$/;              // ป้ายจากบอร์ด (หรือ "-")
+const MODEL_RE = /^[A-Za-z][A-Za-z0-9_. /-]{0,47}$/;             // ชื่อโมเดล (หรือ "" = หยุดอยู่)
+const EVENT_RE = /^[a-z0-9_]{1,32}$/;
+const WHY_TH = { start: "PLC เพิ่งเปิด", on: "เปิดตามคำสั่ง", off: "ปิดตามคำสั่ง", timeout: "ครบเวลา ดับเอง",
+                 blocked_tank: "ถังต่ำกว่า 10 % ไม่ยอมเปิด", bad_cmd: "คำสั่งอ่านไม่ได้", stop: "หยุดฉุกเฉินที่ PLC", tick: "รายงานตามรอบ" };
+
+function nowMs() { return performance.now(); }               // นาฬิกาจับเวลา ไม่เพี้ยนเมื่อมีคนเปลี่ยนเวลาเครื่อง
+function has(o, k) { return o !== null && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
+function get(o, k) { return has(o, k) ? o[k] : undefined; }
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function pad2(n) { return String(n).padStart(2, "0"); }
+function clock(ms) { const d = new Date(ms); return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds()); }
+function stamp(ms) { const d = new Date(ms); return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) + " " + clock(ms); }
+function rnd(n) { let s = ""; while (s.length < n) s += Math.random().toString(16).slice(2); return s.slice(0, n); }
+function fmt(v, dp) { return v === null || v === undefined ? "-" : String(Number(Number(v).toFixed(dp))); }
+function thLabel(l) { if (typeof l !== "string") return "-"; const k = l.toLowerCase(); return has(LABEL_TH, k) ? LABEL_TH[k] : l; }
+function topic(kind) { return SETTINGS.ROOT + "/" + team + "/" + kind; }
+function utf8Bytes(text) { return new TextEncoder().encode(text).length; }
+
+// อ่านค่าที่รับมาแบบไม่ไว้ใจ: ชนิดหรือช่วงผิด = null (ถือว่าไม่มีค่านั้น)
+function vStr(o, k, re) { const v = get(o, k); return typeof v === "string" && re.test(v) ? v : null; }
+function vInt(o, k, lo, hi) { const v = get(o, k); return Number.isInteger(v) && v >= lo && v <= hi ? v : null; }
+function vNum(o, k, lo, hi) { const v = get(o, k); return typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? v : null; }
+function vOne(o, k, list) { const v = get(o, k); return list.includes(v) ? v : null; }
+function isMission(m) { return typeof m === "string" && has(MISSIONS, m); }
+function isLabel(v) { return v === "-" || (typeof v === "string" && LABEL_RE.test(v)); }
+
+// ข้อความจาก broker: ต้องเป็น JSON object ข้อความเดียว UTF-8 ไม่ใหญ่เกิน
+function readJson(payload) {
+  if (!payload || payload.length > SETTINGS.MAX_PAYLOAD_B) return null;
+  let d;
+  try { d = JSON.parse(typeof payload === "string" ? payload : new TextDecoder("utf-8", { fatal: true }).decode(payload)); } catch (e) { return null; }
+  return d && typeof d === "object" && !Array.isArray(d) ? d : null;
+}
+
+// ===== 2) ตรวจข้อความสถานะ ai (สัญญาข้อ 3.9 / 3.10 / 3.11) =====
+// คืน null = ไม่ใช่ผล AI ตามสัญญา (ไม่สนใจทั้งใบ) · คีย์อื่นที่ผิดชนิด = null รายช่อง (หน้าขึ้นว่าไม่ทราบ)
+function parseStatus(d, forTeam) {
+  if (has(d, "id") && d.id !== forTeam) return null;               // ข้อความของทีมอื่น
+  const model = get(d, "model"), label = get(d, "label");
+  if (typeof model !== "string" || !(model === "" || MODEL_RE.test(model))) return null;
+  if (!isLabel(label)) return null;
+  const conf = vNum(d, "conf", 0, 100), c2 = vNum(d, "c2", 0, 100);
+  const s = {
+    n: vInt(d, "n", 0, 1e9), m: vOne(d, "m", MISSION_KEYS), model, label,
+    conf: conf === null ? null : Math.round(conf),
+    p2: isLabel(get(d, "p2")) ? d.p2 : null, c2: c2 === null ? null : Math.round(c2),
+    ms: vInt(d, "ms", 0, 600000), rk: vOne(d, "rk", Object.keys(RK)), rule: vOne(d, "rule", [0, 1]),
+    rv: vNum(d, "rv", -1e6, 1e6), rl: vNum(d, "rl", -1e6, 1e6),
+    agree: vOne(d, "agree", ["both", "ai", "rule", "none"]), lvl: vOne(d, "lvl", [0, 1, 2]), alarm: vOne(d, "alarm", [0, 1]),
+  };
+  s.kind = model === "" ? "stopped" : model === "rule-only" ? "ruleonly" : label === "-" ? "nores" : "result";
+  if (s.lvl === null && s.agree !== null) s.lvl = lvlOf(s.agree);   // บอร์ดไม่ส่ง lvl แต่ส่ง agree: คิดระดับจาก agree
+  return s;
+}
+
+// event (สัญญาข้อ 3.10 / 3.11 และ event ของคาบ 2) · คีย์ที่ผิดชนิด = null
+function parseEvent(d, forTeam) {
+  if (has(d, "id") && d.id !== forTeam) return null;
+  const event = vStr(d, "event", EVENT_RE);
+  if (!event) return null;
+  const conf = vNum(d, "conf", 0, 100);
+  return {
+    event, m: vOne(d, "m", MISSION_KEYS), model: vStr(d, "model", MODEL_RE), label: isLabel(get(d, "label")) ? d.label : null,
+    conf: conf === null ? null : Math.round(conf), lvl: vOne(d, "lvl", [0, 1, 2]), by: vOne(d, "by", ["ack", "clear"]),
+    cmd: vOne(d, "cmd", ["go", "stop"]), ok: vOne(d, "ok", [0, 1]), why: vOne(d, "why", ["", "unconfirmed", "gap"]),
+    mat: vOne(d, "mat", ["wood", "plastic"]), holes: vInt(d, "holes", 0, 1e6),
+  };
+}
+
+// plc/state (สัญญาข้อ 3.6)
+function parsePlc(d) {
+  const pump = vOne(d, "pump", [0, 1]);
+  if (pump === null) return null;
+  return { pump, left: vInt(d, "left_s", 0, 3600), why: vOne(d, "why", Object.keys(WHY_TH)), n: vInt(d, "n", 0, 1e9) };
+}
+
+// ===== 3) ตรรกะตัดสินของบอร์ด: พอร์ตจาก s3/sf3_08_farm_ai_missions.py ทีละฟังก์ชัน (ฟังก์ชันล้วน ไม่มี DOM ไม่มี MQTT) =====
+// alert_rule: จำผล n ครั้งล่าสุด (1 = เหตุ) · เกิดเหตุเมื่ออย่างน้อย k ครั้ง · หายเมื่อทั้งหน้าต่างกลับมาปกติหมด (กันกะพริบ)
+function alertRule(hist, alerting, hit, k, n) {
+  const h = hist.concat([hit ? 1 : 0]).slice(-n);
+  const hits = h.reduce((x, y) => x + y, 0);
+  return { hist: h, on: hits >= k || (alerting && hits > 0) };
+}
+// agreement: ตาราง 2x2 -> [agree, lvl] · ทั้งคู่ = ระดับ 2 · ฝ่ายเดียว = 1 · ไม่มีใคร = 0
+function agreement(ai, rule) { return ai && rule ? ["both", 2] : ai ? ["ai", 1] : rule ? ["rule", 1] : ["none", 0]; }
+function lvlOf(agree) { return agree === "both" ? 2 : agree === "none" ? 0 : 1; }
+// should_send: ห่างครั้งก่อนพอ และ (มีอะไรเปลี่ยน หรือ ถึงเวลา heartbeat)
+function shouldSend(changed, sinceMs, gapMs, heartbeatMs) { return sinceMs >= gapMs && (changed || sinceMs >= heartbeatMs); }
+// Alarm: เตือนเมื่อ want (ปกติ = ระดับ 2 · worker = ถามแล้วไม่ตอบ) · หายเองเมื่อ gone ("clear") · คนรับทราบ ("ack")
+// รับทราบแล้ว จะเตือนใหม่ได้ก็ต่อเมื่อเหตุสงบ (ไม่ want) ต่อเนื่อง rearmMs (ACK_REARM_MS) กันเตือนซ้ำตอนป้ายสลับไปมา
+function newAlarm() { return { on: false, acked: false, count: 0, calmT: null }; }
+function alarmUpdate(a, want, gone, now, rearmMs) {
+  if (a.acked) {
+    if (want) a.calmT = null;                       // ยังไม่สงบ: เริ่มนับใหม่
+    else if (a.calmT === null) a.calmT = now;
+    else if (now - a.calmT >= rearmMs) a.acked = false;   // สงบนานพอ: เตือนใหม่ได้
+  }
+  if (!a.on && want && !a.acked) { a.on = true; a.count += 1; return "start"; }
+  if (a.on && gone) { a.on = false; return "clear"; }
+  return "";
+}
+function alarmAck(a) { if (!a.on) return false; a.on = false; a.acked = true; a.calmT = null; return true; }
+// VoiceGate (ภารกิจ voice บอร์ดเป็น Gateway สั่ง PLC) · คืน [cmd, ok, why, plc/cmd หรือ null] · ok null = ได้ยิน go แล้ว รอยืนยัน
+// stop = ทำทันทีเสมอ ไม่ต้องยืนยัน ไม่รอช่วงห่าง · stop ซ้ำในช่วงห่างไม่ส่ง plc/cmd ซ้ำ
+// go = ต้องยืนยันภายใน GO_CONFIRM_MS (ได้ยิน go ซ้ำ หรือกด SW6) และห่าง plc/cmd ก่อนหน้าอย่างน้อย PLC_GAP_MS
+// tOk = เวลาที่ยืนยัน go ล่าสุด (กฎ btn) · tAi = เวลาที่ AI ได้ยินคำล่าสุด (ปุ่มแทนเสียงไม่นับเป็น AI)
+function newGate() { return { wait: null, tPlc: null, last: null, tOk: null, tAi: null }; }
+function gateGo(g, now, c) {
+  if (g.tPlc !== null && now - g.tPlc < c.PLC_GAP_MS) return ["go", 0, "gap", null];
+  g.tPlc = now; g.last = "go";
+  return ["go", 1, "", { pump: 1, sec: Math.min(c.PUMP_SEC, c.PUMP_MAX_S) }];
+}
+function gateStop(g, now, c) {
+  if (g.last === "stop" && now - g.tPlc < c.PLC_GAP_MS) return ["stop", 1, "", null];
+  g.tPlc = now; g.last = "stop";
+  return ["stop", 1, "", { pump: 0 }];
+}
+function gateHeard(g, word, now, c, byAi) {
+  if (byAi) g.tAi = now;
+  if (word === "stop") { g.wait = null; return gateStop(g, now, c); }
+  if (g.wait !== null && now - g.wait <= c.GO_CONFIRM_MS) { g.wait = null; g.tOk = now; return gateGo(g, now, c); }   // go ซ้ำทันเวลา = ยืนยัน
+  g.wait = now;
+  return ["go", null, "wait", null];
+}
+function gateConfirm(g, now, c) { if (g.wait === null) return null; g.wait = null; g.tOk = now; return gateGo(g, now, c); }
+function gateExpire(g, now, c) {
+  if (g.wait !== null && now - g.wait > c.GO_CONFIRM_MS) { g.wait = null; return ["go", 0, "unconfirmed", null]; }
+  return null;
+}
+// เกิดภายใน GO_CONFIRM_MS ที่ผ่านมาไหม (1/0) · กฎ btn = gateRecent(tOk) · ฝั่ง AI = gateRecent(tAi)
+function gateRecent(t, now, c) { return t !== null && now - t < c.GO_CONFIRM_MS ? 1 : 0; }
+// worker_step: ไม่ขยับครบเกณฑ์ (rule) -> ถาม · ไม่ตอบใน CHECKIN_S -> check_in ok 0 (ระดับยังมาจากตาราง 2x2 ตามปกติ
+// AI + กฎว่านิ่ง = ระดับ 2) · การเตือนของ worker มาจากการไม่ตอบเท่านั้น จึงเตือนได้แม้ไม่มีโมเดล · คืน { ask, fail }
+function newCheckIn() { return { asked: null, failed: false }; }
+function workerStep(ck, paused, rule, now, c) {
+  const out = { ask: false, fail: false };
+  if (paused || !rule) { ck.asked = null; ck.failed = false; }
+  else if (ck.asked === null && !ck.failed) { ck.asked = now; out.ask = true; }
+  else if (ck.asked !== null && now - ck.asked >= c.CHECKIN_S * 1000) { ck.asked = null; ck.failed = true; out.fail = true; }
+  return out;
+}
+// fit: ข้อความสถานะไม่เกิน maxBytes ไบต์ · เกินตัด p2/c2 ก่อน แล้วตัด ms · ทางสุดท้ายตัดท้ายชื่อโมเดล
+function fitStatus(msg, maxBytes) {
+  let line = JSON.stringify(msg);
+  for (const keys of [["p2", "c2"], ["ms"]]) {
+    if (utf8Bytes(line) <= maxBytes) return line;
+    for (const k of keys) delete msg[k];
+    line = JSON.stringify(msg);
+  }
+  while (utf8Bytes(line) > maxBytes && msg.model) { msg.model = msg.model.slice(0, -1); line = JSON.stringify(msg); }
+  return line;
+}
+
+// สถิติ
+function alarmsInWindow(times, now, windowMs) { return times.filter((t) => t <= now && now - t < windowMs).length; }
+function agreementRate(c) { const total = c.both + c.ai + c.rule + c.none; return total ? (c.both + c.none) / total : null; }
+function falseShare(f) { const d = f.true + f.false; return d ? f.false / d : null; }
+
+// CSV สำหรับ BENTO Edge AI Trainer: UTF-8 มี BOM (Excel อ่านไทยถูก) · ช่องที่มี " , หรือขึ้นบรรทัดใหม่ ครอบด้วย "
+const CSV_COLUMNS = ["time", "team", "m", "model", "n", "label", "conf", "p2", "c2", "rk", "rv", "rl", "agree", "lvl", "alarm", "v"];
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  let t = String(v);
+  if (/^[=+@\t\r]/.test(t)) t = "'" + t;                            // กัน Excel อ่านเป็นสูตร
+  return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+function csvRow(r) {
+  return [stamp(r.t), r.team, r.m, r.model, r.n, r.label, r.conf, r.p2, r.c2, r.rk, r.rv, r.rl, r.agree, r.lvl, r.alarm, r.v].map(csvCell).join(",");
+}
+// แถวที่ลง CSV: ตอบแล้วหรือบอร์ดเตือน · n เดียวกันเหลือแถวที่ตอบล่าสุด (สัญญาข้อ 3.11: นับคำตอบล่าสุดของ n นั้น)
+// n เริ่ม 1 ใหม่ทุกครั้งที่บอร์ดรัน จึงแยกตามรอบที่หน้านี้เห็น (run) ไม่งั้นข้อความที่ 42 ของเมื่อวานจะทับของวันนี้
+function csvPick(rows) {
+  const best = new Map();
+  for (const r of rows) {
+    if (!(r.v || r.alarm) || r.n === null) continue;
+    const k = r.run + ":" + r.n, prev = best.get(k);
+    if (!prev || (r.vAt || 0) >= (prev.vAt || 0)) best.set(k, r);
+  }
+  return rows.filter((r) => (r.v || r.alarm) && (r.n === null || best.get(r.run + ":" + r.n) === r));
+}
+function buildCsv(rows) { return "\uFEFF" + [CSV_COLUMNS.join(",")].concat(rows.map(csvRow)).join("\r\n") + "\r\n"; }
+
+// ===== 4) สถานะของหน้า =====
+let team = "", brokerKey = SETTINGS.DEFAULT_BROKER, viewer = null;
+function freshView() {
+  return {
+    chosen: null, boardM: null, last: null, lastAt: null, lastWall: null, silent: false,
+    agreeCounts: { both: 0, ai: 0, rule: 0, none: 0 },
+    alarmOn: false, alarmTimes: [], alarmInfo: null, openRow: null,
+    rows: [], journey: {}, lastN: null,
+    barn: { lastRate: null, rate10: null, coughs: [], tapMax: null },
+    worker: { secs: {}, segs: [], lastLabel: null, lastT: null },
+    plc: null, plcAt: null, holes: {}, mat: null, rainAt: null, run: newUid(),
+    cmdLastAt: -1e12, cmdTimer: null, foreignAt: null,
+  };
+}
+let view = freshView();
+let storageOk = true;
+
+// ===== 5) เก็บในเบราว์เซอร์ (ห่อ try ทุกครั้ง: โหมดส่วนตัวหรือปิดคุกกี้ก็ยังใช้หน้านี้ได้) =====
+function storeGet(key) {
+  try { return localStorage.getItem(key); } catch (e) { storageFail(); return null; }
+}
+function storeSet(key, val) {
+  try { localStorage.setItem(key, val); return true; } catch (e) { storageFail(); return false; }
+}
+function storageFail() {
+  if (!storageOk) return;
+  storageOk = false;
+  $("storeNote").hidden = false;
+  $("storeNote").textContent = "เบราว์เซอร์นี้จำประวัติไม่ได้ (โหมดส่วนตัว?) ปิดหน้าแล้วประวัติหาย ดาวน์โหลด CSV เก็บไว้ก่อน";
+}
+function keyFor(kind) { return SETTINGS.STORE_PREFIX + "-" + team + "-" + kind; }
+function newUid() { return rnd(10); }
+// แถวที่อ่านคืนจากเบราว์เซอร์ก็ตรวจซ้ำ (หน้าอื่นในเว็บเดียวกันเขียนทับได้)
+function sanitizeRow(o) {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  const t = vNum(o, "t", 0, 1e14);
+  if (t === null) return null;
+  const model = get(o, "model");
+  return {
+    uid: vStr(o, "uid", /^[a-z0-9]{1,16}$/) || newUid(), t, team: vStr(o, "team", TEAM_RE) || team,
+    run: vStr(o, "run", /^[a-z0-9]{1,16}$/) || "old", vAt: vNum(o, "vAt", 0, 1e14),
+    m: vOne(o, "m", MISSION_KEYS), model: typeof model === "string" && (model === "" || MODEL_RE.test(model)) ? model : null,
+    n: vInt(o, "n", 0, 1e9), label: isLabel(get(o, "label")) ? o.label : null, conf: vInt(o, "conf", 0, 100),
+    p2: isLabel(get(o, "p2")) ? o.p2 : null, c2: vInt(o, "c2", 0, 100), rk: vOne(o, "rk", Object.keys(RK)),
+    rv: vNum(o, "rv", -1e6, 1e6), rl: vNum(o, "rl", -1e6, 1e6), agree: vOne(o, "agree", ["both", "ai", "rule", "none"]),
+    lvl: vOne(o, "lvl", [0, 1, 2]), alarm: vOne(o, "alarm", [0, 1]) || 0, v: vOne(o, "v", ["true", "false", "unsure"]) || "",
+  };
+}
+function loadTeamState() {
+  let rows = [], journey = {};
+  try { rows = JSON.parse(storeGet(keyFor("rows")) || "[]"); } catch (e) { rows = []; }
+  try { journey = JSON.parse(storeGet(keyFor("journey")) || "{}"); } catch (e) { journey = {}; }
+  view.rows = (Array.isArray(rows) ? rows : []).map(sanitizeRow).filter(Boolean).slice(-SETTINGS.HISTORY_MAX);
+  view.journey = {};
+  if (journey && typeof journey === "object") for (let i = 1; i <= 7; i++) if (journey[i] === true) view.journey[i] = true;
+}
+function saveRows() { if (TEAM_RE.test(team)) storeSet(keyFor("rows"), JSON.stringify(view.rows.slice(-SETTINGS.HISTORY_MAX))); }
+function saveJourney() { if (TEAM_RE.test(team)) storeSet(keyFor("journey"), JSON.stringify(view.journey)); }
+
+// ===== 6) วาดหน้าจอ (textContent เท่านั้น) =====
+function setStatus(text, tone) { $("status").textContent = text; $("status").style.color = "var(--" + tone + ")"; }
+function logLine(boxId, text) {
+  const box = $(boxId), line = el("div", "", text);
+  box.prepend(line);
+  while (box.children.length > SETTINGS.LOG_MAX) box.lastElementChild.remove();
+}
+function currentMission() {
+  if (view.boardM && !view.silent) return view.boardM;
+  return view.chosen || view.boardM;
+}
+function tick(step) {
+  if (view.journey[step]) return;
+  view.journey[step] = true;
+  saveJourney();
+  renderJourney();
+}
+function renderJourney() {
+  for (let i = 1; i <= 7; i++) {
+    const done = !!view.journey[i];
+    $("j" + i).setAttribute("data-done", done ? "1" : "0");
+    $("j" + i + "dot").textContent = done ? "✓" : String(i);
+  }
+  $("notifyLink").href = SETTINGS.NOTIFY_URL + (TEAM_RE.test(team) ? "?team=" + team : "");
+  $("plcLink").href = $("farmLink").href = SETTINGS.FARM_WEB_URL + (TEAM_RE.test(team) ? "?team=" + team : "");
+  const mis = MISSIONS[currentMission()], s = view.last;
+  let j2 = "ติ๊กเองเมื่อบอร์ดรายงานชื่อโมเดลของภารกิจ";
+  if (mis && s && s.model === mis.model) j2 = "บอร์ดรายงาน " + mis.model + " แล้ว";
+  else if (mis && s && mis.fallback && s.model === mis.fallback) j2 = "บอร์ดใช้ตัวสำรอง " + mis.fallback + " อยู่ ยังไม่ได้ deploy " + mis.model;
+  else if (mis && s && s.kind === "ruleonly") j2 = "ยังไม่มีโมเดล (rule-only) deploy " + mis.model + " จาก Store";
+  else if (mis) j2 = "deploy " + mis.model + " ลงบอร์ด";
+  $("j2note").textContent = j2;
+}
+function renderMission() {
+  const key = currentMission(), mis = MISSIONS[key];
+  $("missionPick").value = key || "";
+  $("missionSrc").textContent = view.boardM && key === view.boardM ? "ตามที่บอร์ดบอก (m)" : "เลือกเอง / จากลิงก์";
+  if (!mis) return;
+  $("mIcon").textContent = mis.icon;
+  $("mName").textContent = mis.th;
+  $("mCode").textContent = "m = " + key + (mis.note ? " · " + mis.note : "");
+  $("mProblem").textContent = mis.problem;
+  $("mModel").textContent = mis.model + (mis.fallback ? " · ตัวสำรองในตัว: " + mis.fallback + (mis.fallbackLabels.length ? " (" + mis.fallbackLabels.join(", ") + ")" : "")
+    : " · ไม่มีตัวสำรอง: บอร์ดที่ยังไม่มีโมเดลทำงานแบบ rule-only");
+  const chips = $("mLabels");
+  chips.replaceChildren();
+  for (const l of mis.labels) {
+    const t = el("span", "tag", thLabel(l) + " ");
+    t.append(el("code", "", l));
+    chips.append(t);
+  }
+  $("mRule").textContent = mis.rule;
+  $("mSi").textContent = mis.si;
+  $("mPrompt").textContent = mis.prompt;
+  const mm = $("mMismatch");
+  mm.hidden = !(view.boardM && view.chosen && view.boardM !== view.chosen);
+  mm.textContent = mm.hidden ? "" : "บอร์ดรันภารกิจ " + MISSIONS[view.boardM].th + " (" + view.boardM + ") อยู่ ไม่ตรงกับที่เลือกไว้ ("
+    + view.chosen + ") · แก้ MISSION ในไฟล์ sf3_08 ถ้าอยากเปลี่ยน";
+}
+function stateOf() {
+  const s = view.last;
+  if (!s) return ["wait", "รอข้อความแรกจากบอร์ด", "dim"];
+  if (view.silent) return ["silent", "AI เงียบ: ไม่ได้ยินเกิน " + SETTINGS.AI_SILENT_S + " วินาที", "dim"];
+  if (s.kind === "stopped") return ["stopped", "หยุดโมเดลอยู่ (stop) · บอร์ดยังส่งทุก 2 วินาที", "warn"];
+  if (s.kind === "ruleonly") return ["ruleonly", "ภารกิจทำงานแบบไม่มีโมเดล (rule-only) · ใช้กฎอย่างเดียว", "water"];
+  if (s.kind === "nores") return ["nores", "โมเดลทำงาน ยังไม่มีผล", "dim"];
+  return ["live", "AI ทำงานอยู่", "ok"];
+}
+function setMeter(barId, meterId, pct, cls) {
+  $(barId).style.width = Math.max(0, Math.min(100, pct)) + "%";
+  $(meterId).className = "meter" + (cls ? " " + cls : "");
+}
+function renderLive() {
+  const s = view.last, [state, text, tone] = stateOf(), mis = MISSIONS[currentMission()];
+  $("live").setAttribute("data-state", state);
+  $("aiState").textContent = text;
+  $("aiState").style.color = "var(--" + tone + ")";
+  $("confMark").style.left = SETTINGS.CONF_MIN + "%";
+  $("ruleMark").style.left = "50%";
+  if (!s) return;
+  // ฝั่ง AI
+  let badge = "";
+  if (s.kind === "stopped") badge = "(หยุดอยู่)";
+  else if (mis && s.model === mis.model) badge = s.model + " · จาก Store";
+  else if (mis && mis.fallback && s.model === mis.fallback) badge = s.model + " · ตัวสำรองในตัว";
+  else badge = s.model;
+  $("aiModel").textContent = badge;
+  if (s.kind === "ruleonly") {
+    $("aiLabel").textContent = "ไม่มีโมเดล";
+    $("aiCode").textContent = "rule-only · ฝั่ง AI ไม่ออกความเห็น ดูฝั่งกฎ";
+  } else if (s.kind === "stopped") {
+    $("aiLabel").textContent = "หยุดอยู่";
+    $("aiCode").textContent = "model \"\" · ส่ง {\"cmd\":\"run\"} ทาง ai/cmd เพื่อเดินต่อ";
+  } else {
+    $("aiLabel").textContent = thLabel(s.label);
+    $("aiCode").textContent = s.label;
+  }
+  const conf = s.conf === null ? 0 : s.conf;
+  setMeter("confBar", "confMeter", conf, conf < SETTINGS.CONF_MIN ? "low" : "");
+  $("aiConf").textContent = "มั่นใจ " + (s.conf === null ? "ไม่ทราบ" : s.conf + " %");
+  $("aiMs").textContent = s.ms ? "คิด " + s.ms + " ms" : "เวลาคิด: ไม่รู้";
+  $("aiSecond").textContent = s.p2 && s.p2 !== "-"
+    ? "อันดับสอง: " + thLabel(s.p2) + " (" + s.p2 + ") " + (s.c2 === null ? "?" : s.c2) + " % · ยิ่งใกล้อันดับหนึ่ง โมเดลยิ่งลังเล"
+    : "อันดับสอง: -";
+  // ฝั่งกฎ
+  if (s.rk) {
+    const r = RK[s.rk];
+    $("ruleKind").textContent = r.th + (s.rk === "dur" && mis && mis.durTh ? " (" + mis.durTh + ")" : "") + " · rk = " + s.rk;
+    if (s.rk === "btn") $("ruleValue").textContent = s.rv === null ? "ไม่ทราบ" : s.rv >= 1 ? "ยืนยันแล้ว" : "ยังไม่ยืนยัน";
+    else $("ruleValue").textContent = s.rv === null ? "ไม่ทราบ" : fmt(s.rv, r.dp) + " " + r.unit;
+    const verdict = s.rule === 1 ? "เกิดเหตุ" : s.rule === 0 ? "ปกติ" : "ไม่ทราบ";
+    $("ruleText").textContent = "เกณฑ์ " + (s.rl === null ? "ไม่ทราบ" : fmt(s.rl, r.dp) + (r.unit ? " " + r.unit : "")) + " · กฎบอกว่า " + verdict;
+    const pct = s.rv !== null && s.rl ? (s.rv / (s.rl * 2)) * 100 : 0;
+    setMeter("ruleBar", "ruleMeter", pct, s.rule === 1 ? "over" : "");
+  } else {
+    $("ruleKind").textContent = "-";
+    $("ruleValue").textContent = "-";
+    $("ruleText").textContent = "บอร์ดนี้ไม่ส่งผลของกฎ (เช่น sf3_06) · รัน sf3_08 จึงจะเห็นกฎคู่";
+    setMeter("ruleBar", "ruleMeter", 0, "");
+  }
+  // ตาราง 2x2 + ระดับ
+  const lit = { both: "cBoth", ai: "cAi", rule: "cRule", none: "cNone" };
+  for (const [k, id] of Object.entries(lit)) {
+    $(id).setAttribute("data-on", s.agree === k ? "1" : "0");
+    $("n" + id.slice(1)).textContent = view.agreeCounts[k] + " ข้อความ";
+  }
+  $("agreeNote").textContent = s.agree ? "" : "บอร์ดนี้ไม่ส่ง agree จึงไม่รู้ว่าอยู่ช่องไหน";
+  const lvlText = { 2: "ระดับ 2 · ยืนยันสองทาง", 1: "ระดับ 1 · ฝ่ายเดียว ให้คนไปดู", 0: "ระดับ 0 · ปกติ" };
+  $("lvlBadge").setAttribute("data-lvl", s.lvl === null ? "" : String(s.lvl));
+  $("lvlBadge").textContent = s.lvl === null ? "ระดับ: ไม่ทราบ" : lvlText[s.lvl];
+  $("liveMeta").textContent = "ข้อความที่ " + (s.n === null ? "?" : s.n) + " · ได้ยินล่าสุด " + clock(view.lastWall);
+}
+function renderAlarm() {
+  const box = $("alarm");
+  box.hidden = !view.alarmOn;
+  if (!view.alarmOn) return;
+  const a = view.alarmInfo || {}, mis = MISSIONS[a.m || currentMission()];
+  $("alarmTitle").textContent = "บอร์ดกำลังเตือน" + (mis ? ": " + mis.th : "");
+  $("alarmText").textContent = (a.label ? thLabel(a.label) + " (" + a.label + ")" : "")
+    + (a.conf !== null && a.conf !== undefined ? " · มั่นใจ " + a.conf + " %" : "")
+    + " · มีคนไปดูแล้วกด รับทราบ" + (view.silent ? " · AI เงียบอยู่ สถานะนี้อาจไม่ใช่ปัจจุบัน" : "");
+}
+function feedbackCounts() {
+  const f = { true: 0, false: 0, unsure: 0 };
+  for (const r of view.rows) if (r.v) f[r.v] += 1;
+  return f;
+}
+function renderStats() {
+  const now = nowMs(), n = alarmsInWindow(view.alarmTimes, now, 3600e3), guide = SETTINGS.ALARMS_PER_HOUR_GUIDE;
+  $("sAlarm").textContent = String(n);
+  $("sAlarmGuide").textContent = "แนวทาง ISA-18.2 ราว " + guide + " ครั้ง/ชม.";
+  $("sAlarmBox").setAttribute("data-warn", n > guide ? "1" : "0");
+  $("sAlarmNote").textContent = n > guide
+    ? "เตือนถี่เกินแนวทาง คนเฝ้าจะเริ่มไม่สนใจ (alarm fatigue) ลองปรับกฎ เกณฑ์ หรือฝึกโมเดลใหม่จากแถวที่ตอบว่าเตือนผิด"
+    : "เตือนไม่เกินราว " + guide + " ครั้งต่อชั่วโมง คนเฝ้ายังรับไหว";
+  const c = view.agreeCounts, rate = agreementRate(c), total = c.both + c.ai + c.rule + c.none;
+  $("sAgree").textContent = rate === null ? "-" : Math.round(rate * 100) + " %";
+  $("sAgreeN").textContent = total + " ข้อความ (สองทาง + ปกติ)";
+  const f = feedbackCounts(), share = falseShare(f);
+  $("sTrue").textContent = String(f.true);
+  $("sFalse").textContent = String(f.false);
+  $("sUnsure").textContent = String(f.unsure);
+  $("sFalseShare").textContent = share === null ? "-" : Math.round(share * 100) + " %";
+}
+function rowWhat(r) {
+  const mis = MISSIONS[r.m];
+  return (mis ? mis.th + " · " : "") + (r.label && r.label !== "-" ? thLabel(r.label) + " (" + r.label + ")" : "ไม่มีป้าย")
+    + (r.conf !== null ? " " + r.conf + " %" : "");
+}
+function rowMeta(r) {
+  const agreeTh = { both: "ยืนยันสองทาง", ai: "AI ฝ่ายเดียว", rule: "กฎฝ่ายเดียว", none: "ไม่มีใครบอก" };
+  return stamp(r.t) + " · ข้อความที่ " + (r.n === null ? "?" : r.n) + " · ระดับ " + (r.lvl === null ? "?" : r.lvl)
+    + (r.agree ? " · " + agreeTh[r.agree] : "") + (r.rk ? " · " + r.rk + " " + fmt(r.rv, 2) + " / " + fmt(r.rl, 2) : "")
+    + (r.alarm ? " · บอร์ดเตือน" : "");
+}
+const FB = [["true", "เหตุจริง", "f-true"], ["false", "เตือนผิด", "f-false"], ["unsure", "ไม่แน่ใจ", "f-unsure"]];
+let histSig = null;
+function renderHistory() {
+  const box = $("hist");
+  const show = view.rows.slice(-SETTINGS.HISTORY_SHOW).reverse();
+  const sig = show.map((r) => [r.uid, r.n, r.lvl, r.alarm, r.v, r.label, r.conf].join(":")).join("|");
+  if (sig === histSig) return;
+  histSig = sig;
+  box.replaceChildren();
+  for (const r of show) {
+    const row = el("div", "row");
+    row.setAttribute("data-uid", r.uid);
+    row.setAttribute("data-alarm", r.alarm ? "1" : "0");
+    const left = el("div");
+    left.append(el("div", "what", rowWhat(r)), el("div", "meta", rowMeta(r)));
+    const tag = el("span", "lvl", r.lvl === null ? "?" : "ระดับ " + r.lvl);
+    tag.setAttribute("data-lvl", r.lvl === null ? "" : String(r.lvl));
+    const fb = el("div", "fb");
+    for (const [v, th, cls] of FB) {
+      const b = el("button", cls, th);
+      b.type = "button";
+      b.setAttribute("data-v", v);
+      b.setAttribute("aria-pressed", r.v === v ? "true" : "false");
+      b.addEventListener("click", () => answer(r.uid, v));
+      fb.append(b);
+    }
+    row.append(left, tag, fb);
+    box.append(row);
+  }
+  $("histEmpty").hidden = view.rows.length > 0;
+  const answered = csvPick(view.rows).length;
+  $("csvNote").textContent = view.rows.length + " เหตุการณ์ · ลง CSV " + answered + " แถว (ที่ตอบแล้วหรือบอร์ดเตือน)";
+}
+function renderPanel() {
+  const key = currentMission();
+  const show = { pBarn: "barn", pWorker: "worker", pVoice: "voice", pDrill: "drill", pNight: "night" };
+  let any = false;
+  for (const [id, m] of Object.entries(show)) { $(id).hidden = key !== m; any = any || key === m; }
+  $("pOther").hidden = any;
+  $("panelHint").textContent = MISSIONS[key] ? MISSIONS[key].th : "";
+  const now = nowMs();
+  if (key === "barn") {
+    const b = view.barn;
+    b.coughs = b.coughs.filter((t) => now - t < 3600e3);
+    $("barn10").textContent = b.rate10 === null ? "-" : String(b.rate10);
+    $("barn60").textContent = String(b.coughs.length);
+    $("barnTap").textContent = b.tapMax === null ? "-" : fmt(b.tapMax, 0) + " วินาที";
+    const bins = new Array(12).fill(0);
+    for (const t of b.coughs) bins[Math.min(11, 11 - Math.floor((now - t) / 300e3))] += 1;
+    const max = Math.max(1, ...bins), spark = $("barnSpark");
+    spark.replaceChildren();
+    bins.forEach((c, i) => {
+      const bar = el("i");
+      bar.style.height = Math.round((c / max) * 100) + "%";
+      bar.title = (i === 11 ? "5 นาทีล่าสุด" : (11 - i) * 5 + "–" + (12 - i) * 5 + " นาทีก่อน") + ": ไอ " + c + " ครั้ง";
+      spark.append(bar);
+    });
+  } else if (key === "worker") {
+    const w = view.worker, box = $("workerMins"), s = view.last;
+    const asking = !!(s && s.m === "worker" && !view.silent && s.rule === 1 && s.alarm === 0);
+    $("workerAsk").hidden = !asking;
+    $("workerAsk").textContent = asking ? "นิ่งครบเกณฑ์แล้ว บอร์ดกำลังถามคนงานว่าโอเคไหม (กด SW6 ภายใน 30 วินาที ไม่ตอบ = เตือน)" : "";
+    box.replaceChildren();
+    const names = ["standing", "walking", "running", "sitting", "jumping"].concat(Object.keys(w.secs).filter((k) => !["standing", "walking", "running", "sitting", "jumping"].includes(k)));
+    for (const k of names) {
+      const st = el("div", "stat");
+      st.append(el("div", "name", thLabel(k) + (k === "-" ? "" : " (" + k + ")")), el("div", "n", fmt((w.secs[k] || 0) / 60, 1) + " นาที"));
+      box.append(st);
+    }
+    const tl = $("workerTimeline");
+    tl.replaceChildren();
+    for (const seg of w.segs) {
+      const known = ["standing", "walking", "running", "sitting", "jumping"].includes(seg.label);
+      const i = el("i", known ? "c-" + seg.label : "c-other");
+      i.style.flexGrow = String(Math.max(0.1, seg.s));
+      i.title = thLabel(seg.label) + " " + fmt(seg.s, 0) + " วินาที";
+      tl.append(i);
+    }
+  } else if (key === "voice") {
+    const p = view.plc, stale = view.plcAt === null || now - view.plcAt > SETTINGS.PLC_STALE_S * 1000;
+    $("plcPump").textContent = !p ? "-" : stale ? "ไม่ทราบ" : p.pump ? "เดิน" : "หยุด";
+    $("plcLeft").textContent = !p || stale || p.left === null ? "-" : p.left + " วินาที";
+    $("plcWhy").textContent = !p ? "ยังไม่ได้ยิน PLC (plc/state) · เปิด PLC Simulator ใน farm_web.html ทีมเดียวกัน"
+      : stale ? "PLC เงียบเกิน " + SETTINGS.PLC_STALE_S + " วินาที ถือว่าหลุด" : "PLC บอกว่า: " + (p.why ? WHY_TH[p.why] + " (" + p.why + ")" : "-");
+  } else if (key === "drill") {
+    const h = view.holes;
+    $("drillHoles").textContent = (h.wood || h.plastic) ? "ไม้ " + (h.wood || 0) + " · พลาสติก " + (h.plastic || 0) : "0";
+    $("drillMat").textContent = view.mat ? thLabel(view.mat) + " (" + view.mat + ")" : "-";
+  } else if (key === "night") {
+    $("rainHint").textContent = view.rainAt === null ? "ยังไม่ได้ยินฝน" : "ฝนตกเมื่อ " + clock(view.rainAt) + " · งดรดน้ำได้";
+  }
+}
+function renderAll() { renderJourney(); renderMission(); renderLive(); renderAlarm(); renderPanel(); renderStats(); renderHistory(); }
+
+// ===== 7) ประวัติ: ทุกช่วงที่ระดับ ≥ 1 และทุกการเตือน = หนึ่งแถว ให้คนตอบ =====
+function rowFrom(s, wall) {
+  return { uid: newUid(), t: wall, team, run: view.run, m: s.m, model: s.model, n: s.n, label: s.label, conf: s.conf, p2: s.p2, c2: s.c2,
+           rk: s.rk, rv: s.rv, rl: s.rl, agree: s.agree, lvl: s.lvl, alarm: 0, v: "", vAt: null };   // alarm ติดโดย alarmBegin
+}
+function pushRow(r) {
+  view.rows.push(r);
+  if (view.rows.length > SETTINGS.HISTORY_MAX) view.rows.splice(0, view.rows.length - SETTINGS.HISTORY_MAX);
+  view.openRow = r;
+  saveRows();
+}
+function trackEpisode(s, wall) {
+  if (s.lvl === null) {                         // บอร์ดรุ่น 3.9 / 3.10 ไม่มี lvl: ใช้ alarm เปิด/ปิดแถว
+    if (s.alarm === 1 && !view.openRow) pushRow(rowFrom(s, wall));
+    if (s.alarm === 0) view.openRow = null;
+    return;
+  }
+  if (s.lvl === 0) { view.openRow = null; return; }
+  const r = view.openRow;
+  if (!r) { pushRow(rowFrom(s, wall)); return; }
+  if (s.lvl > (r.lvl || 0)) {
+    if (r.v) { pushRow(rowFrom(s, wall)); return; }          // ตอบแถวเดิมไปแล้ว ระดับขึ้นอีก = แถวใหม่
+    Object.assign(r, rowFrom(s, r.t), { uid: r.uid, run: r.run, alarm: r.alarm });   // ยึดข้อความที่ระดับสูงสุด
+    saveRows();
+  }
+}
+// การเตือนครั้งใหม่ (จาก event ai_alarm_start หรือ alarm 0 -> 1 ในสถานะ อย่างไหนมาก่อน) นับครั้งเดียว และเป็นหนึ่งแถว:
+// ติดกับแถวของช่วงที่เปิดอยู่ · ช่วงนั้นเคยเตือนไปแล้ว (รับทราบแล้วเตือนใหม่) = แถวใหม่ · ไม่มีช่วงเปิด = แถวใหม่
+function alarmBegin(info, wall, s) {
+  const fresh = !view.alarmOn;
+  view.alarmOn = true;
+  view.alarmInfo = info;
+  if (!fresh) return;
+  view.alarmTimes.push(nowMs());
+  if (view.openRow && !view.openRow.alarm) { view.openRow.alarm = 1; saveRows(); return; }
+  pushRow(rowFrom(s || { m: info.m, model: info.model, n: view.lastN, label: info.label, conf: info.conf, p2: null, c2: null,
+                         rk: null, rv: null, rl: null, agree: null, lvl: info.lvl }, wall));
+  view.openRow.alarm = 1;
+  saveRows();
+}
+function answer(uid, v) {
+  const r = view.rows.find((x) => x.uid === uid);
+  if (!r || r.v === v) return;
+  r.v = v;
+  r.vAt = Date.now();
+  saveRows();
+  // ส่งตามสัญญาข้อ 3.11 ลำดับคีย์ตามตัวอย่าง (บอร์ดไม่ฟัง หน้าอื่นของทีมฟังได้)
+  const msg = JSON.stringify({ id: r.team, n: r.n, m: r.m, v, lvl: r.lvl, agree: r.agree, label: r.label, conf: r.conf });
+  if (viewer && viewer.connected && r.team === team) {
+    viewer.publish(topic("ai/feedback"), msg, { qos: 0, retain: false });
+    setStatus("ส่งคำตอบแล้ว (ai/feedback)", "ok");
+  } else {
+    setStatus("บันทึกคำตอบในเครื่องแล้ว แต่ยังไม่ได้ต่อ broker จึงไม่ได้ส่ง ai/feedback", "warn");
+  }
+  tick(6);
+  renderHistory();
+  renderStats();
+}
+
+// ===== 8) MQTT ของหน้า: ฟัง ai / event / plc/state =====
+function handleStatus(s, now, wall) {
+  view.last = s;
+  view.lastAt = now;
+  view.lastWall = wall;
+  view.silent = false;
+  if (s.n !== null && view.lastN !== null && s.n < view.lastN) { view.run = newUid(); view.openRow = null; }   // n เริ่มใหม่ = บอร์ดรันใหม่
+  if (s.n !== null) view.lastN = s.n;
+  if (s.m) { view.boardM = s.m; tick(1); tick(3); }
+  tick(4);
+  const mis = MISSIONS[currentMission()];
+  if (mis && s.model === mis.model) tick(2);
+  if (s.agree && s.kind !== "stopped") view.agreeCounts[s.agree] += 1;
+  trackEpisode(s, wall);
+  if (s.alarm === 1) alarmBegin({ m: s.m, model: s.model, label: s.label, conf: s.conf, lvl: s.lvl }, wall, s);
+  else if (s.alarm === 0) view.alarmOn = false;
+  panelFromStatus(s, now);
+  renderAll();
+}
+function panelFromStatus(s, now) {
+  if (s.m === "barn") {
+    const b = view.barn;
+    if (s.rk === "rate" && s.rv !== null) {
+      const rate = Math.round(s.rv);
+      if (b.lastRate !== null && rate > b.lastRate) for (let i = 0; i < Math.min(20, rate - b.lastRate); i++) b.coughs.push(now);
+      b.lastRate = rate;
+      b.rate10 = rate;
+    }
+    if (s.rk === "dur" && s.rv !== null) b.tapMax = Math.max(b.tapMax === null ? 0 : b.tapMax, s.rv);
+  }
+  if (s.m === "worker") {
+    const w = view.worker;
+    if (w.lastLabel !== null) {
+      const dt = Math.min((now - w.lastT) / 1000, SIM.HEARTBEAT_MS * 2.5 / 1000);   // ช่วงเงียบนานไม่นับ
+      w.secs[w.lastLabel] = (w.secs[w.lastLabel] || 0) + dt;
+      const last = w.segs[w.segs.length - 1];
+      if (last && last.label === w.lastLabel) last.s += dt; else w.segs.push({ label: w.lastLabel, s: dt });
+      let total = w.segs.reduce((a, x) => a + x.s, 0);
+      while (w.segs.length > 1 && total - w.segs[0].s >= 600) total -= w.segs.shift().s;   // ไทม์ไลน์ 10 นาทีล่าสุด
+    }
+    w.lastLabel = s.kind === "result" ? s.label : "-";
+    w.lastT = now;
+  }
+}
+function handleEvent(e, wall) {
+  const mis = MISSIONS[e.m];
+  let text = e.event;
+  if (e.event === "ai_alarm_start") {
+    alarmBegin({ m: e.m, model: e.model, label: e.label, conf: e.conf, lvl: e.lvl }, wall);
+    text = "บอร์ดเริ่มเตือน" + (mis ? " · " + mis.th : "") + (e.label ? " · " + thLabel(e.label) : "") + (e.conf !== null ? " " + e.conf + " %" : "");
+  } else if (e.event === "ai_alarm_end") {
+    view.alarmOn = false;
+    text = "หายเตือน" + (e.by === "ack" ? " · มีคนรับทราบ" : e.by === "clear" ? " · เหตุหายไปเอง" : "");
+  } else if (e.event === "rain") {
+    view.rainAt = wall;
+    text = "ฝนตก" + (e.conf !== null ? " (มั่นใจ " + e.conf + " %)" : "") + " · งดรดน้ำได้";
+    logLine("rainLog", clock(wall) + "  ฝนตก" + (e.conf !== null ? " " + e.conf + " %" : "") + " · งดรดน้ำได้");
+  } else if (e.event === "voice_cmd" && e.cmd && e.ok !== null && e.why !== null
+             && (e.ok === 1 ? e.why === "" : e.why !== "" && e.cmd === "go")) {
+    const whyTh = { unconfirmed: "ยังไม่มีคนกดยืนยัน", gap: "สั่งถี่เกิน 3 วินาที", "": "" };
+    text = "ได้ยิน " + e.cmd + " (" + thLabel(e.cmd) + ") → " + (e.ok ? (e.cmd === "go" ? "ทำแล้ว: สั่งปั๊มเปิด" : "ทำแล้ว: สั่งปั๊มหยุด")
+      : "ไม่ทำ" + (e.why ? ": " + whyTh[e.why] + " (" + e.why + ")" : ""));
+    logLine("voiceLog", clock(wall) + "  " + text);
+  } else if (e.event === "check_in" && e.ok !== null) {
+    text = e.ok ? "คนงานกด SW6 ว่าโอเค" : "ไม่ตอบใน 30 วินาที → เตือน";
+    logLine("checkinLog", clock(wall) + "  " + text);
+  } else if (e.event === "drill_done" && e.mat && e.holes !== null) {
+    view.holes[e.mat] = e.holes;
+    view.mat = e.mat;
+    text = (e.mat === "wood" ? "เจาะไม้ทะลุแล้ว" : "เจาะพลาสติกทะลุแล้ว") + " · " + thLabel(e.mat).replace(/^เจาะ/, "") + "รูที่ " + e.holes;
+    logLine("drillLog", clock(wall) + "  " + text);
+  } else {
+    text = "event " + e.event;
+  }
+  logLine("eventLog", clock(wall) + "  " + text);
+  renderAll();
+}
+function onViewerMessage(tp, payload) {
+  const base = SETTINGS.ROOT + "/" + team + "/";
+  const kind = tp === base + "ai" ? "ai" : tp === base + "event" ? "event" : tp === base + "plc/state" ? "plc" : "";
+  if (!kind) return;
+  const d = readJson(payload);
+  if (!d) return;
+  const now = nowMs(), wall = Date.now();
+  if (kind === "ai") {
+    const s = parseStatus(d, team);
+    if (!s) return;
+    if (sim.on && !sim.sent.includes(JSON.stringify(d))) view.foreignAt = now;   // มีบอร์ดอื่นส่งเข้าทีมนี้ด้วย
+    handleStatus(s, now, wall);
+    renderSimBanner();
+  } else if (kind === "event") {
+    const e = parseEvent(d, team);
+    if (e) handleEvent(e, wall);
+  } else {
+    const p = parsePlc(d);
+    if (p) { view.plc = p; view.plcAt = now; renderPanel(); }
+  }
+}
+function connect() {
+  const t = $("team").value.trim().toLowerCase();
+  if (!TEAM_RE.test(t)) { setStatus("ใส่เลขทีม team01–team99 เช่น team05", "bad"); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ เช็กเน็ตแล้วโหลดหน้าใหม่", "bad"); return; }
+  const b = $("broker").value;
+  brokerKey = has(SETTINGS.BROKERS, b) ? b : SETTINGS.DEFAULT_BROKER;
+  if (t !== team) {
+    const auto = sim.auto;
+    simStop();
+    sim.auto = auto;
+    histSig = null;
+    team = t;
+    const chosen = view.chosen;
+    view = freshView();
+    view.chosen = chosen;
+    storageOk = true;
+    loadTeamState();
+    if (chosen) tick(1);
+  }
+  storeSet(SETTINGS.STORE_PREFIX + "-team", team);
+  if (viewer) viewer.end(true);
+  // client id สุ่มท้ายเสมอ (สัญญาข้อ 5.2) ถ้าซ้ำกับบอร์ดหรือแอปอื่น broker จะเตะตัวที่ต่อก่อนหลุด
+  const c = mqtt.connect(SETTINGS.BROKERS[brokerKey].url, { clientId: "ai-farm-" + team + "-" + rnd(6), clean: true, keepalive: 30,
+    connectTimeout: 10000, reconnectPeriod: 3000, protocolVersion: 4 });
+  viewer = c;
+  c.on("connect", () => {
+    if (viewer !== c) return;
+    c.subscribe([topic("ai"), topic("event"), topic("plc/state")], { qos: 0 });
+    setStatus("ต่อแล้ว · " + SETTINGS.ROOT + "/" + team + " (" + SETTINGS.BROKERS[brokerKey].th + ")", "ok");
+    if (sim.auto) { sim.auto = false; simStart(); }
+  });
+  c.on("reconnect", () => { if (viewer === c) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  c.on("offline", () => { if (viewer === c) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  c.on("message", (tp, payload) => { if (viewer === c) onViewerMessage(tp, payload); });
+  setStatus("กำลังต่อ " + SETTINGS.BROKERS[brokerKey].th + " ...", "warn");
+  renderAll();
+}
+// รับทราบ: {"cmd":"ack"} ทาง ai/cmd · ห่างจากคำสั่งก่อนหน้าอย่างน้อย CMD_GAP_MS (กดรัวก็ส่งใบเดียว)
+function sendAck() {
+  if (!viewer || !viewer.connected) { $("ackNote").textContent = "ยังไม่ได้ต่อ broker"; return; }
+  if (view.cmdTimer) { $("ackNote").textContent = "กำลังรอส่ง ack ใบก่อน"; return; }
+  const wait = view.cmdLastAt + SETTINGS.CMD_GAP_MS - nowMs();
+  if (wait > 0) {
+    view.cmdTimer = setTimeout(() => { view.cmdTimer = null; publishAck(); }, wait);
+    $("ackNote").textContent = "รออีก " + Math.ceil(wait / 1000) + " วินาที (คำสั่งต้องห่างกัน " + SETTINGS.CMD_GAP_MS / 1000 + " วินาที)";
+    return;
+  }
+  publishAck();
+}
+function publishAck() {
+  if (!viewer || !viewer.connected) return;
+  viewer.publish(topic("ai/cmd"), JSON.stringify({ cmd: "ack" }), { qos: 0, retain: false });
+  view.cmdLastAt = nowMs();
+  $("ackNote").textContent = "ส่ง ack แล้ว " + clock(Date.now()) + " · รอบอร์ดตอบ alarm 0";
+}
+// ทุกครึ่งวินาที: AI เงียบไหม · สถิติต่อชั่วโมงเลื่อน · PLC เงียบไหม
+function checkSilent() {
+  const now = nowMs();
+  if (view.lastAt !== null && !view.silent && now - view.lastAt > SETTINGS.AI_SILENT_S * 1000) {
+    view.silent = true;
+    renderAll();
+    return;
+  }
+  renderStats();
+  if (currentMission() === "voice" || currentMission() === "barn") renderPanel();
+}
+
+// ===== 9) CSV =====
+function downloadCsv() {
+  const rows = csvPick(view.rows);
+  if (!rows.length) { $("csvNote").textContent = "ยังไม่มีแถวที่ตอบแล้วหรือที่บอร์ดเตือน"; return; }
+  const blob = new Blob([buildCsv(rows)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a"), d = new Date();
+  a.href = url;
+  a.download = "ai_farm_" + (team || "team") + "_" + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + "-" + pad2(d.getHours()) + pad2(d.getMinutes()) + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  $("csvNote").textContent = "ดาวน์โหลด " + a.download + " แล้ว (" + rows.length + " แถว)";
+  tick(7);
+}
+function clearHistory() {
+  if (!view.rows.length || !confirm("ล้างประวัติและคำตอบทั้งหมดของ " + team + " ในเครื่องนี้? (ดาวน์โหลด CSV ก่อนถ้ายังอยากเก็บ)")) return;
+  view.rows = [];
+  view.openRow = null;
+  histSig = null;
+  saveRows();
+  renderHistory();
+  renderStats();
+}
+
+// ===== 10) บอร์ดจำลอง: ลูปเดียวกับ watch() ของ sf3_08 (อ่าน -> ตัดสิน -> เตือน -> ปุ่ม/คำสั่ง -> ส่ง) ด้วย client id ของตัวเอง =====
+let simRand = Math.random;                         // การทดสอบแทนด้วยตัวสุ่มที่กำหนดเมล็ดได้
+const ri = (lo, hi) => lo + Math.floor(simRand() * (hi - lo + 1));
+const chance = (p) => simRand() < p;
+// ผล AI หนึ่งครั้ง: ป้าย ความมั่นใจ อันดับสอง และค่าที่กฎใช้ (raw: vib ค่าสั่น · loud ดังไหม · still นิ่งไหม)
+function R(label, conf, p2, raw) {
+  const c = Math.max(0, Math.min(100, conf));
+  return { label, conf: c, p2, c2: Math.round((100 - c) * (0.55 + simRand() * 0.4)), raw: raw || {} };
+}
+const vibOk = () => ({ vib: 0.42 + simRand() * 0.16 });
+const BASE = {
+  pump: () => (chance(0.06) ? R("anomaly", ri(42, 63), "unlabeled", vibOk()) : R("unlabeled", ri(80, 96), "anomaly", vibOk())),
+  siren: () => R("background", ri(85, 97), "sirens", { loud: false }),
+  barn: () => R("background", ri(80, 96), chance(0.5) ? "cough" : "water_tap", {}),
+  night: () => R("background", ri(84, 97), chance(0.5) ? "dog" : "rain", { loud: false }),
+  voice: () => R("unlabeled", ri(70, 95), chance(0.5) ? "go" : "stop", {}),
+  worker: () => (chance(0.7) ? R("walking", ri(65, 92), "standing", { still: false }) : R("standing", ri(45, 62), "walking", { still: false })),
+  drill: () => R("air", ri(40, 60), "wood", { loud: false }),
+};
+// ปุ่มเหตุการณ์ของแต่ละภารกิจ · gen(t) = ผล AI ที่เวลา t ms หลังกดปุ่ม (จบแล้วกลับเป็น BASE เอง)
+const SCENARIOS = {
+  pump: [
+    { key: "normal", th: "ปั๊มปกติ", hint: "เปิดบอร์ดจำลองแล้วรอ 5 วินาที ให้เรียนค่าสั่นปกติก่อน", gen: () => BASE.pump() },
+    { key: "fault", th: "ปั๊มสั่นผิดปกติ", hint: "ป้ายสลับ anomaly ↔ unlabeled ค่าสั่นเกินเกณฑ์ = ยืนยันสองทาง",
+      gen: () => { const raw = { vib: 2 + simRand() * 0.6 }; return chance(0.7) ? R("anomaly", ri(62, 95), "unlabeled", raw) : R("unlabeled", ri(52, 75), "anomaly", raw); } },
+    { key: "blip", th: "สั่นแป๊บเดียว", hint: "AI เห็นสั่นราว 1.5 วินาที ค่าสั่นไม่เกิน = AI ฝ่ายเดียว",
+      gen: (t) => (t < 1500 ? R("anomaly", ri(68, 90), "unlabeled", { vib: 0.6 + simRand() * 0.3 }) : BASE.pump()) },
+  ],
+  siren: [
+    { key: "quiet", th: "เงียบ", hint: "ไม่มีเสียงอะไร", gen: () => BASE.siren() },
+    { key: "pass", th: "ไซเรนผ่าน", hint: "ไซเรนดังราว 10 วินาที แล้วจางไป = ยืนยันสองทาง",
+      gen: (t) => (t < 1000 ? R("background", ri(55, 75), "sirens", { loud: t >= 600 })
+        : t < 11000 ? (chance(0.75) ? R("sirens", ri(62, 96), "background", { loud: true }) : R("background", ri(50, 68), "sirens", { loud: true }))
+        : BASE.siren()) },
+    { key: "loud", th: "เสียงดังแต่ไม่ใช่ไซเรน", hint: "รถไถผ่าน กฎบอกดัง AI บอกไม่ใช่ = กฎฝ่ายเดียว",
+      gen: (t) => (t < 8000 ? (chance(0.15) ? R("sirens", ri(40, 55), "background", { loud: true }) : R("background", ri(60, 88), "sirens", { loud: true }))
+        : BASE.siren()) },
+  ],
+  barn: [
+    { key: "cough1", th: "หมูไอ 1 ครั้ง", hint: "ไอครั้งเดียว ยังไม่ถึงเกณฑ์ไอถี่ = AI ฝ่ายเดียว",
+      gen: (t) => (t < 1000 ? R("cough", ri(70, 92), "background", {}) : BASE.barn()) },
+    { key: "coughs", th: "ไอถี่ 10 นาที", hint: "จำลองว่าไอไปแล้ว 8 ครั้งใน 10 นาที แล้วไอต่ออีก 4 ชุด",
+      start: (now) => { sim.coughs = [9, 8, 7, 6, 5, 4, 3, 2].map((m) => now - m * 60000); },
+      gen: (t) => (t < 16000 && t % 4000 < 1000 ? R("cough", ri(68, 92), "background", {}) : BASE.barn()) },
+    { key: "tap", th: "ก๊อกเปิดทิ้ง", hint: "ฟังต่อเนื่อง 30 วินาที กฎ dur จึงบอกเกิดเหตุ",
+      gen: (t) => (t < 40000 ? (chance(0.9) ? R("water_tap", ri(65, 90), "background", {}) : R("background", ri(50, 70), "water_tap", {})) : BASE.barn()) },
+  ],
+  night: [
+    { key: "quiet", th: "กลางคืนเงียบ", hint: "จิ้งหรีดร้องเบา ๆ", gen: () => BASE.night() },
+    { key: "chainsaw", th: "เลื่อยยนต์", hint: "ดังต่อเนื่อง 20 วินาที = ยืนยันสองทาง",
+      gen: (t) => (t < 20000 ? (chance(0.8) ? R("chainsaw", ri(64, 93), "background", { loud: true }) : R("background", ri(50, 66), "chainsaw", { loud: true })) : BASE.night()) },
+    { key: "fire", th: "ไฟไหม้", hint: "เสียงไฟปะทุไม่ดังต่อเนื่อง กฎไม่เห็น = AI ฝ่ายเดียว ให้คนไปดู",
+      gen: (t) => (t < 20000 ? (chance(0.8) ? R("crackling_fire", ri(61, 88), "background", { loud: false }) : R("background", ri(50, 70), "crackling_fire", { loud: false })) : BASE.night()) },
+    { key: "rain", th: "ฝนตก", hint: "ฝนดัง กฎเห็น แต่ AI รู้ว่าเป็นฝน (event rain) · ข่าวดี งดรดน้ำได้",
+      gen: (t) => (t < 25000 ? (chance(0.85) ? R("rain", ri(66, 90), "background", { loud: true }) : R("background", ri(50, 70), "rain", { loud: true })) : BASE.night()) },
+    { key: "dog", th: "สุนัขเห่า", hint: "เห่าเป็นช่วง ๆ ไม่ถึง 2 วินาที = AI ฝ่ายเดียว",
+      gen: (t) => (t < 15000 ? (t % 2500 < 1500 ? R("dog", ri(65, 90), "background", { loud: true }) : R("background", ri(55, 75), "dog", { loud: false })) : BASE.night()) },
+  ],
+  voice: [
+    { key: "go", th: "พูด go", hint: "AI ได้ยิน go แต่ไม่มีใครยืนยันใน 3 วินาที = AI ฝ่ายเดียว ไม่ทำ (unconfirmed)",
+      gen: (t) => (t < 1000 ? R("go", ri(66, 90), "stop", {}) : BASE.voice()) },
+    { key: "go2", th: "พูด go ซ้ำ (ยืนยัน)", hint: "go อีกครั้งภายใน 3 วินาที = ยืนยันสองทาง ระดับ 2 เปิดปั๊ม 10 วินาที",
+      // คำละ 1 วินาที (ได้ 3-4 ผล ไม่ว่ากดตรงจังหวะไหน) · คำที่สองเริ่มหลังหน้าต่างของคำแรกว่างหมด จึงเป็นขอบขาขึ้นใหม่ภายใน 3 วินาที
+      gen: (t) => ((t < 1000 || (t >= 2250 && t < 3250)) ? R("go", ri(66, 90), "stop", {}) : BASE.voice()) },
+    { key: "stop", th: "พูด stop", hint: "ปิดปั๊มทันที ไม่ต้องยืนยัน",
+      gen: (t) => (t < 1000 ? R("stop", ri(70, 92), "go", {}) : BASE.voice()) },
+  ],
+  worker: [
+    { key: "walk", th: "เดินทำงาน", hint: "ขยับตลอด", gen: () => BASE.worker() },
+    { key: "rest", th: "นั่งพัก", hint: "นั่งนิ่ง แต่ขยับตัวทุก 8 วินาที กฎไม่ถึงเกณฑ์ = AI ฝ่ายเดียว",
+      gen: (t) => R(chance(0.85) ? "sitting" : "standing", ri(68, 92), "walking", { still: t % 8000 >= 1000 }) },
+    { key: "still", th: "นิ่งนาน", hint: "นิ่ง 30 วินาที: AI + กฎ = ระดับ 2 บอร์ดถาม · ไม่กด SW6 ใน 30 วินาที = เตือน",
+      gen: () => R(chance(0.6) ? "sitting" : "standing", ri(62, 90), "walking", { still: true }) },
+  ],
+  drill: [
+    { key: "wood", th: "เจาะไม้", hint: "สว่านเดิน = กฎฝ่ายเดียว", start: () => { sim.drillMat = "wood"; },
+      gen: () => (chance(0.85) ? R("wood", ri(70, 92), "wood_out", { loud: true }) : R("air", ri(45, 65), "wood", { loud: true })) },
+    { key: "plastic", th: "เจาะพลาสติก", hint: "สว่านเดิน = กฎฝ่ายเดียว", start: () => { sim.drillMat = "plastic"; },
+      gen: () => (chance(0.85) ? R("plastic", ri(70, 92), "plastic_out", { loud: true }) : R("air", ri(45, 65), "plastic", { loud: true })) },
+    { key: "through", th: "ทะลุแล้ว", hint: "เสียงเปลี่ยนตอนทะลุ (drill_done) แล้วปล่อยไก",
+      gen: (t) => { const m = sim.drillMat, o = m + "_out";
+        return t < 1500 ? (chance(0.9) ? R(o, ri(65, 90), m, { loud: true }) : R(m, ri(55, 70), o, { loud: true }))
+          : t < 2000 ? R("air", ri(60, 80), o, { loud: true }) : BASE.drill(); } },
+  ],
+};
+// ป้ายที่นับเป็นเหตุของบอร์ด = ป้ายของภารกิจ + ป้ายของตัวสำรอง (เหมือน MISSIONS ใน sf3_08)
+function simHits(m) { return MISSIONS[m].labels.concat(MISSIONS[m].fallbackLabels); }
+function newSimAi() {
+  return { hist: [], on: false, rainHist: [], rainOn: false, label: "-", conf: 0, p2: "-", c2: 0, ms: 0, hit: "-", hitConf: 0 };
+}
+const sim = {
+  on: false, auto: false, client: null, timer: null, mission: "pump", ruleOnly: false, scen: null, scenAt: 0,
+  sent: [], log: [], oversize: 0, drillMat: "wood",
+  // State ของ sf3_08
+  n: 0, tSent: -1e12, sentKey: null, force: true, paused: false, aiOff: false, tCmd: -1e12,
+  rule: 0, rk: "", rv: 0, rl: 0, agree: "none", lvl: 0, alarm: newAlarm(), gate: newGate(), ck: newCheckIn(), holes: {},
+  ai: newSimAi(),
+  // Rules ของ sf3_08
+  vib: 0, base: null, learnSum: 0, learnN: 0, tLearn: 0, loudT: null, lastLoud: null, coughs: [], tapT: null, stillT: 0,
+};
+function simLog(text) {
+  sim.log.unshift(clock(Date.now()) + "  " + text);
+  sim.log.length = Math.min(sim.log.length, SETTINGS.LOG_MAX);
+  logLine("simLog", sim.log[0]);
+}
+function simRulesReset(now) {             // Rules.reset: pump เรียนค่าปกติใหม่ทุกครั้งที่เริ่มหรือทำต่อ
+  Object.assign(sim, { vib: 0, base: null, learnSum: 0, learnN: 0, tLearn: now, loudT: null, lastLoud: null, coughs: [], tapT: null, stillT: now });
+}
+function simReset(now) {                  // เหมือนกด Run ไฟล์บอร์ดใหม่
+  Object.assign(sim, { n: 0, tSent: -1e12, sentKey: null, force: true, paused: false, aiOff: false, tCmd: -1e12,
+    rule: 0, rk: MISSIONS[sim.mission].rk[0], rv: 0, rl: 0, agree: "none", lvl: 0, alarm: newAlarm(), gate: newGate(),
+    ck: newCheckIn(), holes: {}, ai: newSimAi(), scen: null, scenAt: now });
+  simRulesReset(now);
+}
+function simModel() {                     // "" = หยุดอยู่ (ข้อ 3.10 · พักด้วย SW5 ก็ "") · "rule-only" = ไม่มีโมเดล (ข้อ 3.11)
+  if (sim.paused) return "";
+  if (sim.ruleOnly) return "rule-only";
+  return sim.aiOff ? "" : MISSIONS[sim.mission].model;
+}
+function simAiRunning() { return !sim.ruleOnly && !sim.aiOff && !sim.paused; }
+function simPublish(kind, obj) {
+  const text = kind === "ai" ? fitStatus(obj, SIM.MAX_BYTES) : JSON.stringify(obj);
+  if (utf8Bytes(text) > SIM.MAX_BYTES) { sim.oversize += 1; simLog("ไม่ส่ง: ยาวเกิน " + SIM.MAX_BYTES + " ไบต์ (" + kind + ")"); return false; }
+  if (!sim.client || !sim.client.connected) return false;
+  sim.client.publish(topic(kind), text, { qos: 0, retain: false });
+  if (kind === "ai") { sim.sent.push(text); if (sim.sent.length > 64) sim.sent.shift(); }
+  simLog(kind + "  " + text);
+  return true;
+}
+function simEvent(name, keys) { simPublish("event", Object.assign({ id: team, event: name, m: sim.mission }, keys || {})); }
+// Ai.poll: ผลใหม่ -> ป้าย / อันดับสอง / นับ 3 ใน 5 (และฝนของ night)
+function simPollAi(g) {
+  const a = sim.ai, ms = SIM.MS[sim.mission];
+  a.label = g.label; a.conf = g.conf; a.p2 = g.p2; a.c2 = g.c2; a.ms = ri(ms[0], ms[1]);
+  const hit = simHits(sim.mission).includes(a.label) && a.conf >= SIM.CONF_MIN;
+  if (hit) { a.hit = a.label; a.hitConf = a.conf; }
+  ({ hist: a.hist, on: a.on } = alertRule(a.hist, a.on, hit, SIM.CONFIRM_N, SIM.WINDOW_N));
+  if (sim.mission === "night") {
+    ({ hist: a.rainHist, on: a.rainOn } = alertRule(a.rainHist, a.rainOn, a.label === "rain" && a.conf >= SIM.CONF_MIN, SIM.CONFIRM_N, SIM.WINDOW_N));
+  }
+}
+// Rules.read: ค่าสั่น (pump) · นิ่งไหม (worker) · ดังต่อเนื่อง (siren night drill)
+function simReadRules(raw, now) {
+  const k = sim.mission;
+  if (k === "pump") {
+    sim.vib = raw.vib || 0;
+    if (sim.base === null) {
+      sim.learnSum += sim.vib; sim.learnN += 1;
+      if (now - sim.tLearn >= SIM.LEARN_MS) sim.base = Math.max(SIM.MIN_BASE, sim.learnSum / Math.max(1, sim.learnN));
+    }
+  } else if (k === "worker") {
+    if (!raw.still) sim.stillT = now;                       // ขยับ (ค่าสั่นเกิน MOVE_VIB): เริ่มนับนิ่งใหม่
+  } else if (k === "siren" || k === "night" || k === "drill") {
+    if (raw.loud) { if (sim.loudT === null) sim.loudT = now; sim.lastLoud = now; }
+    else if (sim.loudT !== null && now - sim.lastLoud > SIM.QUIET_GAP_MS) sim.loudT = null;
+  }
+}
+// Rules.judge -> [rule, rk, rv, rl]
+function simRuleJudge(now, edge) {
+  const k = sim.mission, a = sim.ai;
+  if (k === "pump") {
+    if (sim.base === null) return [0, "vib", Number(sim.vib.toFixed(2)), 0];
+    const rl = sim.base * SIM.K_VIB;
+    return [sim.vib > rl ? 1 : 0, "vib", Number(sim.vib.toFixed(2)), Number(rl.toFixed(2))];
+  }
+  if (k === "siren" || k === "night" || k === "drill") {
+    const secs = sim.loudT === null ? 0 : (now - sim.loudT) / 1000, lim = SIM.LOUD_S[k];
+    return [secs >= lim ? 1 : 0, "loud", Number(secs.toFixed(1)), lim];
+  }
+  if (k === "worker") {
+    const secs = (now - sim.stillT) / 1000;
+    return [secs >= SIM.STILL_S ? 1 : 0, "dur", Number(secs.toFixed(1)), SIM.STILL_S];
+  }
+  // barn: rate = ครั้งที่ AI ยืนยันเสียงไอ (ขอบขาขึ้น) ใน 10 นาที · dur = ได้ยินก๊อกต่อเนื่องกี่วินาที
+  if (edge && a.hit === "cough") sim.coughs.push(now);
+  sim.coughs = sim.coughs.filter((t) => now - t <= SIM.RATE_MS);
+  if (a.on && a.hit === "water_tap") { if (sim.tapT === null) sim.tapT = now; } else sim.tapT = null;
+  const busy = sim.coughs.length >= SIM.COUGH_MAX;
+  if (sim.tapT !== null) {
+    const secs = (now - sim.tapT) / 1000;
+    return [secs >= SIM.TAP_S || busy ? 1 : 0, "dur", Number(secs.toFixed(1)), SIM.TAP_S];
+  }
+  return [busy ? 1 : 0, "rate", sim.coughs.length, SIM.COUGH_MAX];
+}
+// voice_do: ผลของ VoiceGate -> event voice_cmd + plc/cmd
+function simVoiceDo(res) {
+  if (!res) return;
+  const [cmd, ok, why, plc] = res;
+  if (ok === null) { simLog("ได้ยิน go: รอ go ซ้ำ หรือกด SW6 ภายใน " + SIM.GO_CONFIRM_MS / 1000 + " วินาที"); return; }
+  simEvent("voice_cmd", { cmd, ok, why });
+  if (plc) simPublish("plc/cmd", plc);
+}
+function simEndAlarm(by) { simEvent("ai_alarm_end", { by }); sim.force = true; }
+function simAck(now) {                     // SW6 หรือ {"cmd":"ack"}
+  if (!alarmAck(sim.alarm)) { simLog("ไม่มีการเตือนให้รับทราบ"); return; }
+  simEndAlarm("ack");
+  sim.ck.failed = false;
+  sim.stillT = now;                         // worker: เริ่มนับนิ่งใหม่
+}
+// judge: กฎ + AI -> agree / lvl · แล้วงานเฉพาะภารกิจ
+function simJudge(now, edge, wasRain) {
+  let aiOn = sim.ai.on;
+  if (sim.mission === "voice") {
+    if (edge && (sim.ai.hit === "go" || sim.ai.hit === "stop")) simVoiceDo(gateHeard(sim.gate, sim.ai.hit, now, SIM, true));   // คำที่ AI ได้ยิน
+    simVoiceDo(gateExpire(sim.gate, now, SIM));
+    aiOn = sim.ai.on || (simAiRunning() && gateRecent(sim.gate.tAi, now, SIM) === 1);   // AI ได้ยินคำภายใน 3 วินาที
+  }
+  if (sim.paused) [sim.rule, sim.rk, sim.rv, sim.rl] = [0, MISSIONS[sim.mission].rk[0], 0, 0];
+  else if (sim.mission === "voice") { const on = gateRecent(sim.gate.tOk, now, SIM); [sim.rule, sim.rk, sim.rv, sim.rl] = [on, "btn", on, 1]; }   // ยืนยันแล้ว: go ซ้ำ หรือ SW6
+  else [sim.rule, sim.rk, sim.rv, sim.rl] = simRuleJudge(now, edge);
+  [sim.agree, sim.lvl] = agreement(aiOn, sim.rule === 1);
+  if (sim.mission === "night" && sim.ai.rainOn && !wasRain) simEvent("rain", { conf: sim.ai.conf });
+  else if (sim.mission === "worker") {
+    const w = workerStep(sim.ck, sim.paused, sim.rule === 1, now, SIM);
+    if (w.ask) simLog("บอร์ดร้อง: นิ่งนาน " + SIM.STILL_S + " วินาที โอเคไหม? กด SW6");
+    if (w.fail) simEvent("check_in", { ok: 0 });
+  } else if (sim.mission === "drill" && edge && (sim.ai.hit === "wood_out" || sim.ai.hit === "plastic_out")) {
+    const mat = sim.ai.hit.slice(0, -4);
+    sim.holes[mat] = (sim.holes[mat] || 0) + 1;      // จำนวนรูของวัสดุนั้นตั้งแต่เริ่มรัน
+    simEvent("drill_done", { mat, holes: sim.holes[mat] });
+  }
+}
+function simAlarmStep(now) {
+  // ปกติ: เตือนเมื่อระดับ 2 หายเมื่อระดับ 0 · worker: เตือนเมื่อถามแล้วไม่ตอบ (alarm ไม่ขึ้นกับระดับ)
+  const act = sim.mission === "worker" ? alarmUpdate(sim.alarm, sim.ck.failed, !sim.ck.failed, now, SIM.ACK_REARM_MS)
+    : alarmUpdate(sim.alarm, sim.lvl === 2, sim.lvl === 0, now, SIM.ACK_REARM_MS);
+  if (act === "start") {
+    const on = sim.ai.on;
+    simEvent("ai_alarm_start", { model: simModel(), label: on ? sim.ai.hit : "-", conf: on ? sim.ai.hitConf : 0, lvl: sim.lvl });
+    sim.force = true;
+  } else if (act === "clear") simEndAlarm("clear");
+}
+// report: ทุก HEARTBEAT_MS และทันทีที่ label / lvl / alarm เปลี่ยน ห่างกันอย่างน้อย GAP_MS
+function simReport(now) {
+  const key = [sim.ai.label, sim.lvl, sim.alarm.on].join("|");
+  if (!shouldSend(sim.force || key !== sim.sentKey, now - sim.tSent, SIM.GAP_MS, SIM.HEARTBEAT_MS)) return;
+  if (!sim.client || !sim.client.connected) return;
+  sim.n += 1;
+  const a = sim.ai;
+  simPublish("ai", { id: team, n: sim.n, m: sim.mission, model: simModel(), label: a.label, conf: a.conf, p2: a.p2, c2: a.c2, ms: a.ms,
+    rk: sim.rk, rule: sim.rule, rv: sim.rv, rl: sim.rl, agree: sim.agree, lvl: sim.lvl, alarm: sim.alarm.on ? 1 : 0 });
+  sim.tSent = now; sim.sentKey = key; sim.force = false;
+}
+function simTick() {
+  if (!sim.on) return;
+  const now = nowMs(), was = sim.ai.on, wasRain = sim.ai.rainOn;
+  const g = sim.scen ? sim.scen.gen(now - sim.scenAt) : BASE[sim.mission]();
+  if (!sim.paused) {                                         // 1) อ่าน: AI + เซนเซอร์ของกฎ
+    if (!sim.ruleOnly && !sim.aiOff) simPollAi(g);
+    simReadRules(g.raw, now);
+  }
+  const edge = sim.ai.on && !was;                            // AI เพิ่งยืนยันเหตุ (ขอบขาขึ้น)
+  simJudge(now, edge, wasRain);                              // 2) ตัดสิน
+  if (sim.mission !== "voice") simAlarmStep(now);            // 3) เตือน (voice ไม่มีการเตือน มีแต่คำสั่ง)
+  simReport(now);                                            // 4) ส่ง
+  renderSim();
+}
+function simPause(now) {
+  sim.paused = true;
+  if (alarmAck(sim.alarm)) simEndAlarm("ack");               // คนกดปุ่มที่บอร์ด = รับทราบ
+  sim.ai = newSimAi();
+  sim.ck = newCheckIn();
+  sim.force = true;
+  simLog("SW5: พักอยู่ AI และกฎหยุด (model \"\")");
+}
+function simResume(now) {
+  sim.paused = false;
+  sim.ai = newSimAi();
+  simRulesReset(now);
+  sim.force = true;
+  simLog("SW5: ทำต่อ");
+}
+// ปุ่มบนบอร์ดจำลอง (press ของ sf3_08) · voice: SW5 = ได้ยิน go · SW6 = ยืนยัน go ที่รอ / ไม่มีรอ = stop
+function simButton(which) {
+  if (!sim.on) return;
+  const now = nowMs();
+  if (sim.mission === "voice") {
+    if (which === 5) simVoiceDo(gateHeard(sim.gate, "go", now, SIM));
+    else simVoiceDo(gateConfirm(sim.gate, now, SIM) || gateHeard(sim.gate, "stop", now, SIM));
+  } else if (which === 5) {
+    if (sim.paused) simResume(now); else simPause(now);
+  } else if (sim.mission === "worker" && sim.ck.asked !== null) {
+    sim.ck.asked = null;
+    sim.stillT = now;
+    simEvent("check_in", { ok: 1 });
+  } else if (sim.mission === "worker" && !sim.alarm.on) {
+    sim.stillT = now;
+    simLog("SW6: โอเค เริ่มนับนิ่งใหม่");
+  } else simAck(now);
+  simReport(now);
+  renderSim();
+}
+// inbox: ai/cmd · ack ทำเสมอ · stop / run / select ต้องมีโมเดล และห่างกันอย่างน้อย CMD_GAP_MS
+function simOnMessage(tp, payload) {
+  if (tp !== topic("ai/cmd")) return;
+  if (!payload || payload.length > SIM.CMD_MAX) { simLog("ai/cmd ยาวเกิน " + SIM.CMD_MAX + " ไบต์ ไม่สนใจ"); return; }
+  const d = readJson(payload), now = nowMs();
+  if (!d) return;
+  const act = get(d, "cmd");
+  if (!["ack", "stop", "run", "select"].includes(act) || (act === "select" && typeof get(d, "model") !== "string")) return;
+  if (act === "ack") { simAck(now); simLog("ได้ ack ทาง ai/cmd"); }
+  else if (sim.ruleOnly) { simLog("ไม่มีโมเดล: ไม่ทำคำสั่ง " + act); return; }
+  else if (now - sim.tCmd < SIM.CMD_GAP_MS) { simLog("คำสั่งถี่เกิน " + SIM.CMD_GAP_MS / 1000 + " วินาที: ไม่ทำ"); return; }
+  else {
+    sim.tCmd = now;
+    if (act === "stop") { sim.aiOff = true; sim.ai = newSimAi(); simLog("แอปสั่งหยุดโมเดล (กฎยังทำงาน)"); }
+    else if (act === "run") { sim.aiOff = false; if (sim.paused) simResume(now); simLog("แอปสั่งเดินโมเดลต่อ"); }
+    else if (d.model === MISSIONS[sim.mission].model) { sim.aiOff = false; sim.paused = false; sim.ai = newSimAi(); simRulesReset(now); simLog("select " + d.model); }
+    else { simLog("ไม่มีโมเดลชื่อนี้ในภารกิจ: ไม่ทำ"); return; }
+  }
+  sim.force = true;                                          // ตอบรับ: ส่งสถานะทันที
+  simReport(now);
+  renderSim();
+}
+function simStart() {
+  if (sim.on) return;
+  if (!TEAM_RE.test(team) || !viewer) { $("simState").textContent = "ใส่เลขทีมแล้วกด ต่อ ก่อนเปิดบอร์ดจำลอง"; sim.auto = true; return; }
+  sim.mission = isMission($("simMission").value) ? $("simMission").value : sim.mission;
+  sim.ruleOnly = $("simRuleOnly").checked;
+  simReset(nowMs());
+  // client id ของบอร์ดจำลองเอง ไม่ชนกับหน้านี้และบอร์ดจริง (สัญญาข้อ 5.2)
+  const c = mqtt.connect(SETTINGS.BROKERS[brokerKey].url, { clientId: "ai-sim-" + team + "-" + rnd(4), clean: true, keepalive: 30,
+    connectTimeout: 10000, reconnectPeriod: 3000, protocolVersion: 4 });
+  sim.client = c;
+  sim.on = true;
+  view.foreignAt = null;
+  c.on("connect", () => { if (sim.client === c) { c.subscribe(topic("ai/cmd"), { qos: 0 }); simLog("บอร์ดจำลองต่อแล้ว ฟัง ai/cmd"); } });
+  c.on("message", (tp, payload) => { if (sim.client === c) simOnMessage(tp, payload); });
+  sim.timer = setInterval(simTick, SIM.RESULT_MS);
+  renderSimButtons();
+  renderSim();
+  renderSimBanner();
+}
+function simStop() {
+  sim.auto = false;
+  if (!sim.on) return;
+  if (sim.alarm.on) simEndAlarm("clear");
+  clearInterval(sim.timer);
+  sim.timer = null;
+  if (sim.client) sim.client.end(false);            // เหมือนบอร์ด: จบโปรแกรมแล้วตัดการเชื่อมต่อเอง (สัญญาข้อ 5.2)
+  sim.client = null;
+  sim.on = false;
+  renderSimButtons();
+  renderSim();
+  renderSimBanner();
+}
+function simSetMission(m) {
+  if (!isMission(m)) return;
+  if (sim.on && sim.alarm.on) simEndAlarm("clear");
+  sim.mission = m;
+  if (sim.on) { simReset(nowMs()); simLog("รันไฟล์ใหม่ด้วย MISSION = \"" + m + "\""); }
+  renderSimButtons();
+  renderSim();
+}
+function simPick(s) {
+  if (!sim.on) return;
+  const now = nowMs();
+  sim.scen = s;
+  sim.scenAt = now;
+  if (s.start) s.start(now);
+  simLog("เหตุการณ์จำลอง: " + s.th);
+  renderSimButtons();
+}
+function renderSimButtons() {
+  const box = $("simScen");
+  box.replaceChildren();
+  for (const s of SCENARIOS[sim.mission]) {
+    const b = el("button");
+    b.type = "button";
+    b.setAttribute("data-scen", s.key);
+    b.setAttribute("aria-pressed", sim.on && sim.scen === s ? "true" : "false");
+    b.disabled = !sim.on;
+    b.append(el("span", "", s.th), el("small", "", s.hint));
+    b.addEventListener("click", () => simPick(s));
+    box.append(b);
+  }
+  const voice = sim.mission === "voice", worker = sim.mission === "worker";
+  $("simSw6").textContent = voice ? "SW6: ยืนยัน go / stop" : worker ? "SW6: ฉันโอเค" : "SW6: รับทราบ";
+  $("simSw5").textContent = voice ? "SW5: go (ปุ่มแทนเสียง)" : "SW5: พัก / ทำต่อ";
+  $("simSw6Hint").textContent = voice ? "ปุ่มแทนเสียง (ไม่นับเป็น AI): SW5 = go · SW6 = ยืนยัน go ที่รออยู่ภายใน 3 วินาที · ไม่มี go รอ = stop"
+    : worker ? "เมื่อบอร์ดถาม กดภายใน 30 วินาที · ตอนเตือนอยู่ = รับทราบ" : "รับทราบการเตือนที่ตัวบอร์ด (เหมือนส่ง ack จากหน้านี้)";
+  $("simSw6").disabled = $("simSw5").disabled = !sim.on;
+  $("simToggle").textContent = sim.on ? "ปิดบอร์ดจำลอง" : "เปิดบอร์ดจำลอง";
+  $("simToggle").className = sim.on ? "danger" : "primary";
+  $("simToggle").setAttribute("aria-pressed", sim.on ? "true" : "false");
+  $("sim").setAttribute("data-on", sim.on ? "1" : "0");
+  $("simMission").value = sim.mission;
+}
+function renderSim() {
+  if (!sim.on) { $("simState").textContent = "ปิดอยู่ · เลือกภารกิจแล้วกด เปิดบอร์ดจำลอง"; return; }
+  const now = nowMs(), ask = sim.ck.asked !== null ? Math.max(0, Math.ceil((sim.ck.asked + SIM.CHECKIN_S * 1000 - now) / 1000)) : null;
+  const learn = sim.mission === "pump" && sim.base === null ? Math.max(0, Math.ceil((sim.tLearn + SIM.LEARN_MS - now) / 1000)) : null;
+  $("simState").textContent = "ทำงาน · " + MISSIONS[sim.mission].th + " · model \"" + simModel() + "\" · ส่งสถานะแล้ว " + sim.n + " ข้อความ"
+    + " · ระดับ " + sim.lvl + (sim.alarm.on ? " · กำลังเตือน" : "") + (sim.paused ? " · พักอยู่ (SW5)" : "")
+    + (learn !== null ? " · กำลังเรียนค่าสั่นปกติ อีก " + learn + " วินาที (วางนิ่ง)" : "")
+    + (ask !== null ? " · รอคนงานกด SW6 อีก " + ask + " วินาที" : "");
+}
+function renderSimBanner() {
+  const b = $("simBanner");
+  b.hidden = !sim.on;
+  if (!sim.on) return;
+  const foreign = view.foreignAt !== null && nowMs() - view.foreignAt < 30000;
+  b.style.borderColor = foreign ? "var(--bad)" : "";
+  b.textContent = foreign
+    ? "พบข้อความ ai จากที่อื่นในทีม " + team + " (บอร์ดจริง หรือหน้านี้อีกแท็บ) ข้อมูลกำลังปนกัน · ปิดบอร์ดจำลอง หรือเปลี่ยนเลขทีม"
+    : "บอร์ดจำลองกำลังส่งข้อมูลเข้าทีม " + team + " · อย่าเปิดพร้อมบอร์ดจริงเลขทีมเดียวกัน";
+}
+
+// ===== 11) ต่อปุ่มและเริ่มหน้า =====
+function fillSelect(sel, withBlank) {
+  sel.replaceChildren();
+  if (withBlank) { const o = el("option", "", "— เลือกภารกิจ —"); o.value = ""; sel.append(o); }
+  for (const k of MISSION_KEYS) { const o = el("option", "", MISSIONS[k].icon + " " + MISSIONS[k].th + " (" + k + ")"); o.value = k; sel.append(o); }
+}
+function init() {
+  const p = new URLSearchParams(location.search);
+  const pTeam = (p.get("team") || "").trim().toLowerCase(), pBroker = (p.get("broker") || "").trim().toLowerCase();
+  const pMission = (p.get("mission") || "").trim().toLowerCase();
+  const bsel = $("broker");
+  for (const [k, b] of Object.entries(SETTINGS.BROKERS)) { const o = el("option", "", b.th); o.value = k; bsel.append(o); }
+  bsel.value = has(SETTINGS.BROKERS, pBroker) ? pBroker : SETTINGS.DEFAULT_BROKER;
+  fillSelect($("missionPick"), true);
+  fillSelect($("simMission"), false);
+  $("storeLink").href = SETTINGS.STORE_URL;
+  $("sf308Link").href = SETTINGS.SF3_08_URL;
+  $("classLink").href = SETTINGS.CLASS_URL;
+  $("contractLink").href = SETTINGS.CONTRACT_URL;
+  if (SETTINGS.TRAINER_URL) {
+    const a = el("a", "", "เปิด BENTO Edge AI Trainer");
+    a.href = SETTINGS.TRAINER_URL; a.target = "_blank"; a.rel = "noopener noreferrer";
+    $("trainerWrap").append(a);
+  }
+  const remembered = storeGet(SETTINGS.STORE_PREFIX + "-team") || "";
+  const t = TEAM_RE.test(pTeam) ? pTeam : TEAM_RE.test(remembered) ? remembered : "";
+  $("team").value = t;
+  const farm = SETTINGS.FARM_WEB_URL + (t ? "?team=" + t : "");
+  $("plcLink").href = farm;
+  $("farmLink").href = farm;
+  if (isMission(pMission)) { view.chosen = pMission; sim.mission = pMission; }
+  if (p.get("sim") === "1") sim.auto = true;
+  $("go").addEventListener("click", connect);
+  $("team").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+  $("ackBtn").addEventListener("click", sendAck);
+  $("csvBtn").addEventListener("click", downloadCsv);
+  $("clearHist").addEventListener("click", clearHistory);
+  $("notifyLink").addEventListener("click", () => tick(5));
+  $("missionPick").addEventListener("change", () => {
+    const m = $("missionPick").value;
+    view.chosen = isMission(m) ? m : null;
+    if (view.chosen) { tick(1); if (!sim.on) { sim.mission = view.chosen; renderSimButtons(); } }
+    renderAll();
+  });
+  $("simToggle").addEventListener("click", () => (sim.on ? simStop() : simStart()));
+  $("simMission").addEventListener("change", () => simSetMission($("simMission").value));
+  $("simRuleOnly").addEventListener("change", () => { sim.ruleOnly = $("simRuleOnly").checked; if (sim.on) { simReset(nowMs()); simLog(sim.ruleOnly ? "ไม่มีโมเดล: ส่ง model \"rule-only\"" : "มีโมเดล " + simModel()); } renderSim(); });
+  $("simSw6").addEventListener("click", () => simButton(6));
+  $("simSw5").addEventListener("click", () => simButton(5));
+  setInterval(checkSilent, 500);
+  if (t) { team = t; loadTeamState(); if (view.chosen) tick(1); }
+  renderSimButtons();
+  renderSim();
+  renderAll();
+  if (t) connect();
+}
+init();
+</script>
+</body>
+</html>

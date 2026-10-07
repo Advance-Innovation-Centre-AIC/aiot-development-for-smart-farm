@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<!--
+  s3/app/notify/index.html - ส่งแจ้งเตือนฟาร์มเข้ามือถือผ่าน ntfy (และ Telegram ถ้าตั้งไว้) จากหน้าเว็บ ไม่ต้องรัน Python
+  เปิดแบบนี้: .../s3/app/notify/index.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม) หรือพิมพ์เลขกลุ่มในช่องบนหน้า
+  วิธีใช้ทีละขั้น: README_th.md ในโฟลเดอร์นี้
+  พอร์ตมาจาก apps/notify/ntfy_bridge.py ตัวเดิม (เลิกใช้แล้ว นิสิตไม่ต้องรัน Python): ฟัง bento-aiot/<ทีม>/event (และ /telemetry ถ้าเปิดกฎ telemetry)
+    แปลเป็นข้อความไทยชุดเดียวกัน ระดับความสำคัญ (priority) และ tag เดียวกัน เว้นต่อเรื่องและมีเพดานต่อชั่วโมงเหมือนกัน
+    แล้วส่งเข้าหัวข้อ ntfy ของกลุ่ม มือถือที่ติดตั้งแอป ntfy และ subscribe หัวข้อนั้นจะเด้งทันที
+  ใช้ได้กับไฟล์บอร์ด S2 (sf2_02 sf2_03 sf2_04 sf2_06) และ S3: sf3_06 (ผล AI ทางหัวข้อ ai อย่างเดียว ไม่ส่ง event)
+    และ sf3_08 (ภารกิจ AI ในฟาร์ม 7 ภารกิจ สัญญาข้อ 3.11)
+  เพิ่มจากตัว Python (ตามสัญญาข้อ 3.9 / 3.10 / 3.11):
+    - ฟัง bento-aiot/<ทีม>/ai (เปิดเป็นค่าเริ่มต้น ปิดได้)
+    - บอร์ดที่ตัดสินเอง (ส่งคีย์ alarm: sf3_08 และบอร์ดข้อ 3.10) เชื่อบอร์ดก่อน: หนึ่งเหตุการณ์ = แจ้งเตือนหนึ่งใบ
+      เตือนจาก event ai_alarm_start · ถ้า event ไม่มาใน 3 วินาที (เปิดหน้ากลางทาง หรือ event หาย) จึงเตือนจาก alarm ที่เปลี่ยนเป็น 1
+    - บอร์ดที่ไม่ส่ง alarm (sf3_06 ข้อ 3.9) หน้านี้นับเอง: ป้ายอันตรายอย่างน้อย 3 ใน 5 ผลล่าสุด
+    - หัวข้อและข้อความบอกภารกิจ (m) ความหมายของป้าย และค่าของกฎเทียบเกณฑ์ (rv / rl) เป็นภาษาไทย
+    - event ของภารกิจ: rain voice_cmd check_in drill_done · AI เงียบเกิน 6 วินาที · ตัวเลขและชื่อป้ายแก้ได้ในหน้า
+    - ตัว Python ส่ง event ของ S3 เป็น "เหตุการณ์: ..." ทั่วไป และไม่ฟังหัวข้อ ai
+  ข้อจำกัด: หน้านี้ต้องเปิดค้างไว้บนเครื่องที่ต่อเน็ต ปิดหน้าเมื่อไร แจ้งเตือนก็หยุด (เหมือนตัว Python ที่ต้องรันค้างไว้)
+  อ้างอิง ntfy (Publish as JSON): https://docs.ntfy.sh/publish/  POST JSON ไปที่ราก https://ntfy.sh/ ไม่ใช่ https://ntfy.sh/<topic>
+  อ้างอิง Telegram: https://core.telegram.org/bots/api#sendmessage
+  ความเป็นส่วนตัว: broker และ ntfy.sh เป็นบริการสาธารณะ ชื่อหัวข้อ ntfy คือรหัสผ่าน ห้ามส่งชื่อคน เบอร์โทร ที่อยู่ หรือรหัสผ่าน
+  TODO ของกลุ่ม: แก้ข้อความไทยใน Translator ให้เป็นภาษาของกลุ่ม / เพิ่ม event ของกลุ่มเองให้มีหัวข้อแจ้งเตือนสวย ๆ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แจ้งเตือนฟาร์ม</title>
+<style>
+  /* หน้านี้ใช้ชุดสีเดียวกับ s2/app/farm_web.html (บล็อกข้างล่างคัดลอกมาตรงตัว ไม่ได้แก้) */
+  /* ชุดสีและรูปแบบเดียวกันทั้งสามหน้าใน s2/app (farm_web, mqtt_dashboard, my_first_reader)
+     แต่ละไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง ไม่แยกเป็นไฟล์ .css */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  /* แถบบน: ชื่อหน้า + ทีม + สถานะการเชื่อมต่อ */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  /* ชิปสถานะ: จุดสีตามสีตัวอักษร สคริปต์ตั้ง style.color อยู่แล้ว จุดจึงเปลี่ยนตามเอง */
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  /* ปุ่มและช่องกรอก: สูงพอให้กดด้วยนิ้วบนมือถือ */
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 42px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"], select, textarea {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; } }
+  .col { display: grid; gap: 16px; min-width: 0; }
+  form, fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+  fieldset { display: grid; gap: 16px; }
+  fieldset:disabled { opacity: .72; }
+  h3 { font-size: 15px; margin: 16px 0 8px; }
+  p { margin: 0 0 10px; }
+  .field { display: grid; gap: 4px; min-width: 0; margin-bottom: 10px; }
+  .field > span { font-size: 14px; color: var(--dim); }
+  .field input, .field select { width: 100%; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0 14px; }
+  .grow { flex: 1 1 200px; min-width: 0; }
+  input[type="password"], input[type="url"] {
+    min-height: 42px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #topic { font-family: var(--mono); }
+  /* ช่องติ๊ก: ทั้งแถวกดได้ สูงพอสำหรับนิ้ว */
+  .check { display: flex; align-items: center; gap: 10px; min-height: 42px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; flex: none; accent-color: var(--accent); margin: 0; }
+  .hint { font-size: 13px; color: var(--dim); margin: 0 0 10px; }
+  .steps { margin: 6px 0 12px; padding-left: 22px; font-size: 14px; }
+  .steps li { margin-bottom: 4px; }
+  a { color: var(--water); overflow-wrap: anywhere; }
+  .notice { border-left: 4px solid var(--warn); }
+  .notice p:last-child { margin-bottom: 0; }
+  #formMsg { color: var(--bad); font-weight: 600; margin: 10px 0 0; }
+  #formMsg:empty { display: none; }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  /* ตัวนับ: ตัวเลขกว้างเท่ากันทุกหลัก อ่านง่ายทั้งไทยและเลข */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; margin: 14px 0 6px; }
+  .stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; min-width: 0; }
+  .stat .name { color: var(--dim); font-size: 13px; }
+  .stat .n { font-size: 26px; font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  #cErr { color: var(--bad); }
+  #log { white-space: pre-wrap; max-height: 360px; overflow-y: auto; margin: 0; }
+  #log:empty::before { content: "(ยังไม่มี)"; color: var(--dim); }
+  #log > div { padding: 2px 0; border-bottom: 1px solid var(--line); }
+  #log > div:last-child { border-bottom: 0; }
+  .privacy { margin: 0; padding-left: 20px; }
+  .privacy li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+    </div>
+    <div><h1>แจ้งเตือนฟาร์มเข้ามือถือ</h1><p class="sub">Smart Farm · S2 + S3 · ฟัง MQTT ของกลุ่ม แล้วส่งต่อเข้ามือถือ (ntfy · Telegram)</p></div>
+  </div>
+  <div class="conn">
+    <button id="go" class="primary" type="button">เริ่มส่งแจ้งเตือน</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้เริ่ม</b>
+  </div>
+</header>
+
+<section class="panel notice" aria-labelledby="h-awake" style="margin-bottom:16px">
+  <h2 id="h-awake">หน้านี้ต้องเปิดค้างไว้</h2>
+  <p>หน้านี้คือ "ตัวส่ง" แจ้งเตือน ต้องเปิดค้างไว้บน <b>โน้ตบุ๊กหรือมือถือที่ต่อเน็ต</b> ตลอดเวลาที่อยากได้แจ้งเตือน
+     ปิดแท็บ ปิดเครื่อง เครื่องหลับ หรือมือถือจอดับเมื่อไร แจ้งเตือนก็หยุด
+     · มือถือที่ <b>รับ</b> แจ้งเตือนผ่านแอป ntfy ไม่ต้องเปิดหน้านี้</p>
+  <p class="hint">ดีที่สุด: โน้ตบุ๊กเสียบปลั๊ก ตั้งไม่ให้เครื่องหลับ (แท็บนี้อยู่เบื้องหลังได้) · บนมือถือต้องเปิดหน้านี้ไว้หน้าสุด เสียบสายชาร์จ และติ๊กกันหน้าจอดับ</p>
+  <label class="check" for="wake"><input type="checkbox" id="wake"> กันหน้าจอดับ (ขณะหน้านี้เปิดอยู่)</label>
+  <p id="wakeNote" class="hint" aria-live="polite"></p>
+</section>
+
+<main class="layout">
+<form id="settings" class="col" novalidate>
+<fieldset id="cfg">
+  <section class="panel" aria-labelledby="h-team">
+    <h2 id="h-team">1. กลุ่มและ broker</h2>
+    <div class="grid2">
+      <label class="field" for="team"><span>เลขกลุ่ม (team01–team99)</span>
+        <input id="team" placeholder="team05" maxlength="6" autocomplete="off" spellcheck="false"></label>
+      <label class="field" for="broker"><span>broker (ต้องตรงกับ BROKER บนบอร์ด)</span>
+        <select id="broker">
+          <option value="hivemq">HiveMQ (ค่าเริ่มต้น)</option>
+          <option value="mosquitto">Mosquitto (สำรอง เมื่อผู้สอนประกาศ)</option>
+        </select></label>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-ntfy">
+    <h2 id="h-ntfy">2. ปลายทาง: แอป ntfy บนมือถือ</h2>
+    <label class="field" for="topic"><span>ชื่อหัวข้อ ntfy (อังกฤษ ตัวเลข - _ ไม่เกิน 64 ตัว)</span></label>
+    <div class="bar" style="margin-bottom:10px">
+      <input id="topic" class="grow" maxlength="64" placeholder="กด สุ่มชื่อใหม่" autocomplete="off" spellcheck="false">
+      <button id="newTopic" type="button">สุ่มชื่อใหม่</button>
+      <button id="copyTopic" type="button">คัดลอก</button>
+    </div>
+    <p class="hint">ชื่อหัวข้อนี้ <b>คือรหัสผ่าน</b> ใครรู้ชื่อก็อ่านแจ้งเตือนของกลุ่มได้ ตั้งให้ยาวและเดายาก แชร์เฉพาะคนในกลุ่ม</p>
+    <p id="subWrap" hidden>ลิงก์ subscribe: <a id="subLink" target="_blank" rel="noopener noreferrer"></a></p>
+    <ol class="steps">
+      <li>ติดตั้งแอป <b>ntfy</b> บนมือถือ (Google Play / App Store)</li>
+      <li>เปิดแอป กด <b>+</b> แล้ววางชื่อหัวข้อข้างบน (server ใช้ ntfy.sh ตามเดิม) กด Subscribe
+          · หรือเปิดลิงก์ subscribe บนมือถือ</li>
+      <li>ส่งชื่อหัวข้อไปมือถือตัวเองทางแชตส่วนตัวเท่านั้น ไม่ใช่แชตกลุ่มใหญ่</li>
+      <li>iPhone: อนุญาตแจ้งเตือนของแอป ntfy ในการตั้งค่าของเครื่องด้วย</li>
+      <li>กด <b>ส่งทดสอบ</b> (กล่อง "ทำงาน") ต้องเด้งบนมือถือภายในไม่กี่วินาที แล้วจึงกด <b>เริ่มส่งแจ้งเตือน</b></li>
+    </ol>
+    <label class="field" for="server"><span>ntfy server (เปลี่ยนเฉพาะเมื่อมี server ของตัวเอง)</span>
+      <input id="server" type="url" value="https://ntfy.sh" autocomplete="off" spellcheck="false"></label>
+  </section>
+
+  <section class="panel" aria-labelledby="h-rules">
+    <h2 id="h-rules">3. เตือนเรื่องอะไร</h2>
+    <p class="hint">ใช้ได้กับไฟล์บอร์ด S2 (sf2_02 sf2_03 sf2_04 sf2_06) และ S3 (sf3_06 · sf3_08 ภารกิจ AI ดูข้อ 4)
+       · เตือนเสมอ: กดปุ่มเรียก SW6 · PLC หลุด · Gateway รดน้ำเอง · ปั๊มไม่ยอมเปิดเพราะถังต่ำ · พืชเครียด / แย่ / กลับมาปกติ
+       · event อื่นของกลุ่ม</p>
+    <label class="check" for="allEvents"><input type="checkbox" id="allEvents"> เด้งทุกครั้งที่ปั๊มเปิด/ปิดด้วย (เยอะ)</label>
+    <label class="check" for="telemetry"><input type="checkbox" id="telemetry"> เตือนจากค่า telemetry ด้วย (ดินแห้ง ถังต่ำ ร้อนเกิน บอร์ดเงียบ)</label>
+    <div class="grid2">
+      <label class="field" for="soilMin"><span>ดินแห้ง: ต่ำกว่า (%)</span><input id="soilMin" type="number" step="any" value="30"></label>
+      <label class="field" for="tankMin"><span>ถังใกล้หมด: ต่ำกว่า (%)</span><input id="tankMin" type="number" step="any" value="15"></label>
+      <label class="field" for="tempMax"><span>ร้อนเกิน: สูงกว่า (°C)</span><input id="tempMax" type="number" step="any" value="35"></label>
+      <label class="field" for="silentS"><span>บอร์ดเงียบเกิน (วินาที)</span><input id="silentS" type="number" step="1" min="0" value="60"></label>
+    </div>
+    <p class="hint">เว้นช่องว่าง = ไม่ใช้กฎนั้น · เตือนตอนเพิ่งข้ามเกณฑ์ แล้วรอจนกลับมาปกติก่อนเตือนใหม่ · บอร์ดเงียบนับอย่างน้อย 15 วินาที</p>
+    <div class="grid2">
+      <label class="field" for="cooldown"><span>เรื่องเดิมเด้งซ้ำได้เมื่อพ้น (วินาที)</span><input id="cooldown" type="number" step="1" min="0" value="120"></label>
+      <label class="field" for="perHour"><span>เด้งรวมไม่เกิน (ครั้งต่อชั่วโมง)</span><input id="perHour" type="number" step="1" min="1" value="30"></label>
+    </div>
+    <p class="hint">ntfy.sh ให้ส่งได้ราววันละ 250 ข้อความต่อผู้ส่ง (นับตามเน็ตที่ใช้ ห้องเรียนที่ใช้เน็ตเดียวกันจึงใช้โควตาร่วมกัน) ช่วงเว้นและเพดานนี้จึงสำคัญ</p>
+    <label class="field" for="click"><span>แตะแจ้งเตือนแล้วเปิดลิงก์นี้</span>
+      <input id="click" type="url" autocomplete="off" spellcheck="false"></label>
+    <p class="hint">ค่าเริ่มต้นคือหน้า ai_farm.html ของกลุ่ม (โฟลเดอร์ s3/app) · ต้องเปิดหน้านี้จากลิงก์ https (GitHub Pages) ลิงก์จึงใช้บนมือถือได้
+       · ลบให้ว่าง = แตะแล้วไม่เปิดอะไร</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-ai">
+    <h2 id="h-ai">4. ผล AI และภารกิจ AI บนบอร์ด <span class="hint">sf3_06 · sf3_08 (S3) · หัวข้อ ai</span></h2>
+    <label class="check" for="aiOn"><input type="checkbox" id="aiOn" checked> ฟังผล AI ด้วย (หัวข้อ bento-aiot/&lt;ทีม&gt;/ai)</label>
+    <h3>บอร์ดที่ตัดสินเอง (ส่งคีย์ alarm: sf3_08 สัญญาข้อ 3.11 · บอร์ดข้อ 3.10)</h3>
+    <p class="hint">หน้านี้เชื่อบอร์ดก่อน <b>หนึ่งเหตุการณ์ = แจ้งเตือนหนึ่งใบ</b>: เตือนจาก event ai_alarm_start (ยืนยันสองทาง lvl 2 = ด่วนที่สุด)
+       แล้วอีกหนึ่งใบตอนจบ (รับทราบแล้ว / กลับมาปกติ) · ไม่นับ 3 ใน 5 เองซ้ำ</p>
+    <div class="grid2">
+      <label class="field" for="alarmWaitS"><span>รอ event จากบอร์ดก่อนเตือนจาก alarm (วินาที)</span><input id="alarmWaitS" type="number" step="1" min="0" max="60" value="3"></label>
+    </div>
+    <p class="hint">ถ้า alarm เปลี่ยนเป็น 1 แต่ไม่มี ai_alarm_start ในเวลานี้ (เปิดหน้ากลางทาง หรือ event หาย) จึงเตือนจาก alarm แทน</p>
+    <label class="check" for="lvl1On"><input type="checkbox" id="lvl1On" checked> เตือนเบา ๆ เมื่อเห็นฝ่ายเดียว (lvl 1) ให้คนไปดู</label>
+    <label class="check" for="voiceOk"><input type="checkbox" id="voiceOk"> แจ้งทุกคำสั่งเสียงที่บอร์ดทำตาม (voice_cmd ok=1)</label>
+    <label class="check" for="drillDone"><input type="checkbox" id="drillDone"> แจ้งเมื่อเจาะเสร็จ (drill_done)</label>
+    <p class="hint">เตือนเสมอ: ฝนตก งดรดน้ำได้ · ไม่ทำตามคำสั่งเสียง · คนงานไม่ตอบ!</p>
+    <h3>บอร์ดที่ไม่ส่ง alarm (sf3_06 สัญญาข้อ 3.9): หน้านี้นับเอง</h3>
+    <label class="field" for="dangerLabels"><span>ป้ายที่ถือว่าอันตราย (คั่นด้วย , · ตัวเล็กตัวใหญ่ถือว่าเหมือนกัน · ว่าง = ไม่นับป้าย)</span>
+      <input id="dangerLabels" value="anomaly, shaking, sirens, cough, baby_cry, chainsaw, crackling_fire, alarm" autocomplete="off" spellcheck="false"></label>
+    <div class="grid2">
+      <label class="field" for="aiNeed"><span>เตือนเมื่อป้ายอันตรายอย่างน้อย (ผล)</span><input id="aiNeed" type="number" step="1" min="1" value="3"></label>
+      <label class="field" for="aiWin"><span>ใน ... ผลล่าสุด</span><input id="aiWin" type="number" step="1" min="1" max="20" value="5"></label>
+      <label class="field" for="aiSilentS"><span>AI เงียบเกิน (วินาที)</span><input id="aiSilentS" type="number" step="1" min="1" value="6"></label>
+    </div>
+    <p class="hint">ระหว่างเขย่า ป้ายสลับ anomaly ↔ unlabeled ทุก 1–2 วินาที จึงเตือนเมื่อนับได้ตามจำนวนข้างบน (ค่าเริ่มต้น 3 ใน 5 ผลล่าสุด)
+       ไม่ใช่ทุกครั้งที่เห็นป้ายเดียว · "AI กลับมาปกติ" ส่งเมื่อนับได้ต่ำกว่าเกณฑ์ติดกันครบจำนวนผลที่นับ (ค่าเริ่มต้น 5 ผล)
+       · model ว่าง = หยุดโมเดลอยู่ ไม่นับ · ป้าย "-" = ยังไม่มีผล ไม่นับ · model "rule-only" = ภารกิจที่ไม่มีโมเดล ไม่ได้หยุด
+       · AI เงียบนับหลังได้ยินผลแรกแล้วเท่านั้น (ใช้กับบอร์ดทุกแบบ)</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-tg">
+    <h2 id="h-tg">5. Telegram <span class="hint">ไม่บังคับ · ส่งพร้อม ntfy</span></h2>
+    <div class="grid2">
+      <label class="field" for="tgToken"><span>Bot token (จาก @BotFather)</span>
+        <input id="tgToken" type="password" autocomplete="off" spellcheck="false"></label>
+      <label class="field" for="tgChat"><span>Chat id</span>
+        <input id="tgChat" inputmode="numeric" placeholder="เช่น 123456789" autocomplete="off" spellcheck="false"></label>
+    </div>
+    <label class="check" for="remember"><input type="checkbox" id="remember"> จำไว้ในเบราว์เซอร์นี้ (ติ๊กเฉพาะเครื่องส่วนตัว)</label>
+    <p class="hint">token คือกุญแจของบอท ใครได้ไปก็ส่งข้อความในชื่อบอทได้ ห้ามวางในแชตกลุ่มหรือในไฟล์ · ไม่ติ๊ก = ปิดหน้าแล้ว token หาย ต้องใส่ใหม่
+       · หน้านี้ไม่แสดง token ในบันทึก</p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-dry">
+    <h2 id="h-dry">6. ลองก่อนใช้จริง</h2>
+    <label class="check" for="dryRun"><input type="checkbox" id="dryRun"> ลองเฉย ๆ (dry-run): เขียนลงบันทึกว่าจะส่งอะไร ไม่ส่งไป ntfy หรือ Telegram</label>
+    <p class="hint">ระหว่างทำงาน ช่องตั้งค่าจะล็อกไว้ กด หยุด ก่อนแล้วค่อยแก้</p>
+  </section>
+</fieldset>
+</form>
+
+<div class="col">
+  <section class="panel" aria-labelledby="h-run">
+    <h2 id="h-run">ทำงาน</h2>
+    <div class="bar">
+      <button id="testBtn" type="button" class="water">ส่งทดสอบ</button>
+      <span class="muted small">ส่งหนึ่งใบไปมือถือ (ไม่ต้องกดเริ่มก่อน)</span>
+    </div>
+    <p id="formMsg" role="alert"></p>
+    <div class="stats">
+      <div class="stat"><div class="name">รับข้อความ</div><div id="cRx" class="n">0</div></div>
+      <div class="stat"><div class="name">ส่งแล้ว</div><div id="cSent" class="n">0</div></div>
+      <div class="stat"><div class="name">พักไว้ (ช่วงเว้น)</div><div id="cCool" class="n">0</div></div>
+      <div class="stat"><div class="name">พักไว้ (เพดาน/ชม.)</div><div id="cCap" class="n">0</div></div>
+      <div class="stat"><div class="name">ผิดพลาด</div><div id="cErr" class="n">0</div></div>
+    </div>
+    <h3>แจ้งเตือนบนเครื่องนี้ (เสริม)</h3>
+    <div class="bar">
+      <button id="askNotify" type="button">อนุญาตแจ้งเตือน</button>
+      <label class="check" for="localNotify"><input type="checkbox" id="localNotify"> ขึ้นบนเครื่องนี้ด้วย</label>
+    </div>
+    <p id="notifyNote" class="hint" aria-live="polite"></p>
+    <h3>บันทึก <span class="muted small">(ใหม่อยู่บน · เก็บ 100 บรรทัดล่าสุด)</span></h3>
+    <div id="log" class="log" role="log"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-privacy">
+    <h2 id="h-privacy">ความเป็นส่วนตัว</h2>
+    <ul class="privacy">
+      <li>broker MQTT และ ntfy.sh เป็นบริการ <b>สาธารณะ</b> ใครก็อ่านได้ถ้ารู้ชื่อหัวข้อ</li>
+      <li>ชื่อหัวข้อ ntfy <b>คือรหัสผ่าน</b> ของแจ้งเตือนกลุ่ม อย่าโพสต์ในที่สาธารณะ ถ้าหลุดให้กด สุ่มชื่อใหม่ แล้ว subscribe ใหม่</li>
+      <li>ห้ามส่งชื่อคน เบอร์โทร ที่อยู่ หรือรหัสผ่านใด ๆ ผ่านบอร์ด แอป หรือหน้านี้</li>
+      <li>ค่าที่ตั้งเก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น (Telegram token เก็บเฉพาะเมื่อติ๊ก "จำไว้")</li>
+    </ul>
+  </section>
+</div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+// ===== 0) ค่าตั้งต้น (แก้ได้) =====
+const ROOT = "bento-aiot";                                       // ต้นชื่อหัวข้อ (สัญญาข้อ 2)
+const BROKERS = {                                                 // ต้องตรงกับ BROKER บนบอร์ด (สัญญาข้อ 1)
+  hivemq: "wss://broker.hivemq.com:8884/mqtt",
+  mosquitto: "wss://test.mosquitto.org:8081/mqtt",
+};
+// หน้าที่เปิดเมื่อแตะแจ้งเตือน (ค่าเริ่มต้น): หน้า ai_farm.html ของกลุ่ม ในโฟลเดอร์ s3/app เหนือหน้านี้หนึ่งชั้น
+// คิดจากที่อยู่ของหน้านี้เอง (ไม่เขียนชื่อเว็บตายตัว) ดู autoClick()
+const TEAM_PAGE = "../ai_farm.html";
+const TEAM_RE = /^team(0[1-9]|[1-9][0-9])$/;                     // team01..team99 เหมือนตัว Python
+const TOPIC_RE = /^[A-Za-z0-9_-]{1,64}$/;                        // ชื่อหัวข้อ ntfy ที่ใช้ได้ (ตามเอกสาร ntfy)
+const TG_TOKEN_RE = /^[0-9]{5,16}:[A-Za-z0-9_-]{30,64}$/;        // รูปแบบ token จาก @BotFather (กันอักษรแปลกเข้าไปใน URL)
+const TG_CHAT_RE = /^(-?[0-9]{1,20}|@[A-Za-z0-9_]{5,32})$/;
+const STALE_S = 15;                                               // สัญญาข้อ 3.6 / 3.7
+const MAX_PAYLOAD_B = 2048;                                       // ข้อความใหญ่กว่านี้ไม่อ่าน (เหมือนตัว Python)
+const QUEUE_MAX = 50;                                             // คิวรอส่ง เต็มแล้วทิ้ง (เหมือนตัว Python)
+const LOG_MAX = 100;                                              // บรรทัดบันทึกที่เก็บไว้
+const TEST_GAP_MS = 5000;                                         // กดส่งทดสอบซ้ำได้เมื่อพ้น 5 วินาที (กันเผลอกดรัวจนโควตาหมด)
+const STORE_KEY = "farm-notify-settings";                         // ชื่อที่เก็บค่าตั้งในเบราว์เซอร์
+// คำไทย ชุดเดียวกับ ntfy_bridge.py ทุกตัวอักษร
+const CROP_TH = { tomato: "มะเขือเทศ", lettuce: "ผักสลัด", mushroom: "เห็ดนางฟ้า", orchid: "กล้วยไม้" };
+const ALERT_TH = { ok: "ปกติ", cold: "หนาวไป", hot: "ร้อนไป", dry: "แห้งไป", wet: "ชื้นไป" };
+const LEVEL_TH = ["สบายดี", "เริ่มเครียด", "แย่แล้ว"];
+const WHY_TH = { blocked_tank: "ถังต่ำกว่า 10 % ไม่ยอมเปิด", timeout: "ครบเวลา ดับเอง", on: "เปิดตามคำสั่ง",
+                 off: "ปิดตามคำสั่ง", stop: "หยุดฉุกเฉินที่ PLC", bad_cmd: "คำสั่งอ่านไม่ได้" };
+// ---- คำไทยของ S3 (สัญญาข้อ 3.11 ภารกิจ AI ในฟาร์มของ sf3_08) ----
+const MISSION_TH = { pump: "หมอปั๊มน้ำ", siren: "ยามฟังไซเรน", barn: "หูโรงเรือน", night: "ยามกลางคืน",
+                     voice: "สั่งปั๊มด้วยเสียง", worker: "คนงานปลอดภัย", drill: "ช่างซ่อมโรงเรือน" };
+const LABEL_TH = { anomaly: "สั่นผิดปกติ", sirens: "เสียงไซเรน", cough: "เสียงไอ", baby_cry: "เด็กร้อง",
+                   water_tap: "ก๊อกน้ำเปิดทิ้ง", chainsaw: "เลื่อยยนต์", crackling_fire: "ไฟไหม้", dog: "สุนัขเห่า",
+                   shaking: "สั่นผิดปกติ", alarm: "เสียงสัญญาณเตือน", sitting: "คนงานนั่งนิ่ง", standing: "คนงานยืนนิ่ง",
+                   go: "สั่งเปิดปั๊ม", stop: "สั่งปิดปั๊ม", wood_out: "เจาะทะลุไม้", plastic_out: "เจาะทะลุพลาสติก" };
+// ชนิดของกฎ (rk) -> [คำ, หน่วย] · btn คือคนกดยืนยัน 1/0 ไม่มีหน่วย
+const RULE_TH = { vib: ["ค่าสั่น", "m/s²"], loud: ["ดังต่อเนื่อง", "วินาที"], dur: ["ค้างอยู่", "วินาที"],
+                  rate: ["นับได้", "ครั้ง/10 นาที"], btn: ["ยืนยัน", ""] };
+const VOICE_WHY_TH = { unconfirmed: "ยังไม่ยืนยัน", gap: "สั่งถี่เกิน 3 วิ" };
+const VOICE_CMD_TH = { go: "go (เปิดปั๊ม)", stop: "stop (ปิดปั๊ม)" };
+const MAT_TH = { wood: "ไม้", plastic: "พลาสติก" };
+const LAST_STATE_S = 10;                                          // ข้อความสถานะล่าสุดใช้เติมค่ากฎให้ event ได้ ถ้าเพิ่งได้ยินไม่เกินกี่วินาที
+
+// ===== 1) ตัวช่วยเล็ก ๆ =====
+const $ = (id) => document.getElementById(id);
+
+// เวลาแบบนาฬิกาจับเวลา (วินาที) ไม่เพี้ยนเมื่อมีคนเปลี่ยนเวลาเครื่อง เหมือน time.monotonic() ของ Python
+function nowS() { return performance.now() / 1000; }
+
+// เวลาบนบรรทัดบันทึก ชม:นาที:วินาที
+function clock() { return new Date().toTimeString().slice(0, 8); }
+
+// ตัดข้อความตามจำนวนตัวอักษร เหมือน s[:n] ของ Python (Array.from นับอีโมจิเป็นหนึ่งตัว ไม่ตัดครึ่งตัว)
+function cut(s, n) { return Array.from(s).slice(0, n).join(""); }
+
+// มีคีย์นี้ในข้อความไหม แบบ "คีย์" in d ของ Python
+// ใช้ hasOwnProperty เพราะ d["constructor"] ของ JavaScript มีค่าเสมอ แม้ข้อความไม่มีคีย์นี้
+function has(d, key) { return Object.prototype.hasOwnProperty.call(d, key); }
+
+// อ่านคีย์แบบ d.get(คีย์, ค่าแทน) ของ Python: ไม่มีคีย์นี้ในข้อความ = ได้ค่าแทน
+function get(d, key, dflt) { return has(d, key) ? d[key] : dflt; }
+
+// รับเฉพาะตัวเลขจริงในช่วง (ข้อความจาก broker สาธารณะเป็นของใครก็ได้) เหมือน num() ของ Python
+function num(v, lo = -1e9, hi = 1e9) {
+  return typeof v === "number" && lo <= v && v <= hi ? v : null;
+}
+
+// ช่องป้ายอันตราย "anomaly, shaking" -> ["anomaly", "shaking"] (ตัวเล็กหมด เทียบแบบไม่สนตัวเล็กตัวใหญ่)
+function labelList(text) { return String(text).split(/[\s,]+/).filter(Boolean).map((x) => x.toLowerCase()); }
+
+// เขียนค่าเป็นข้อความแบบ str() ของ Python ข้อความแจ้งเตือนจะตรงกับ ntfy_bridge.py
+// null หรือไม่มีค่า -> "None" · true -> "True" · ข้อเดียวที่ต่าง: 30.0 เบราว์เซอร์อ่านได้เป็น 30 จึงเขียน "30" (Python เขียน "30.0")
+function pyStr(v) {
+  if (v === null || v === undefined) return "None";
+  if (v === true) return "True";
+  if (v === false) return "False";
+  if (typeof v === "string") return v;
+  if (typeof v === "number") return String(v);
+  return pyJson(v);
+}
+
+// เขียน JSON แบบ json.dumps(d, ensure_ascii=False) ของ Python: มีช่องว่างหลัง , และ :
+function pyJson(v) {
+  if (Array.isArray(v)) return "[" + v.map(pyJson).join(", ") + "]";
+  if (v && typeof v === "object") {
+    return "{" + Object.keys(v).map((k) => JSON.stringify(k) + ": " + pyJson(v[k])).join(", ") + "}";
+  }
+  return JSON.stringify(v);
+}
+
+// ===== 2) แปลงข้อความจากบอร์ด -> แจ้งเตือน [key, title, message, priority, tags] หรือ null =====
+// พอร์ตจาก class Translator ใน ntfy_bridge.py ทีละฟังก์ชัน ข้อความไทย priority และ tag ชุดเดียวกัน
+// priority ของ ntfy: 1 ต่ำสุด · 2 ต่ำ · 3 ปกติ · 4 สูง · 5 ด่วนที่สุด · tag ที่ตรงชื่ออีโมจิจะขึ้นเป็นรูป
+class Translator {
+  constructor(team, opt) {
+    this.team = team;
+    this.opt = opt;              // ค่าตั้งจากฟอร์ม: allEvents, soilMin, tankMin, tempMax, dangerLabels, aiNeed, aiWin
+    this.cropLevel = new Map();  // พืช -> ระดับล่าสุด (เตือน "กลับมาปกติ" เฉพาะตอนเคยแย่)
+    this.active = {};            // กฎ telemetry ที่กำลังเข้าเงื่อนไข (เตือนตอนเพิ่งเข้าเท่านั้น)
+    // ---- เพิ่มจากตัว Python: สถานะของผล AI ----
+    this.danger = new Set(labelList(opt.dangerLabels || ""));   // ป้ายที่ถือว่าอันตราย
+    this.aiHist = [];            // ผลล่าสุดไม่เกิน aiWin ผล: true = ป้ายอันตราย
+    this.aiDanger = false;       // เตือน "AI พบความผิดปกติ" ไปแล้ว รอกลับมาปกติก่อนเตือนใหม่
+    this.aiBelow = 0;            // ระหว่างเตือน: นับต่ำกว่าเกณฑ์ติดกันกี่ผลแล้ว
+    this.aiAlarm = null;         // คีย์ alarm ล่าสุดจากบอร์ด: null = ยังไม่รู้ · 0 · 1
+    // ---- หนึ่งเหตุการณ์ = แจ้งเตือนหนึ่งใบ (บอร์ดที่ตัดสินเอง ข้อ 3.10 / 3.11) ----
+    this.lastAlertAt = -1e9;     // เวลาที่เตือนเหตุการณ์ล่าสุด (จาก event, check_in หรือ alarm)
+    this.episodeAlerted = false; // alarm = 1 รอบนี้เตือนไปแล้ว
+    this.endSent = false;        // ส่งข้อความจบของเหตุการณ์ล่าสุดไปแล้วหรือยัง
+    this.lastZeroAt = -1e9;      // เวลาล่าสุดที่บอร์ดบอก alarm = 0 (ไม่ได้เตือน)
+    this.pending = null;         // alarm เพิ่งเป็น 1 แต่ยังไม่เห็น event: { at, d } รอ alarmWaitS วินาที
+    this.lvl = null;             // lvl ล่าสุด (สำหรับเตือนฝ่ายเดียว lvl 1 ครั้งเดียวต่อรอบ)
+    this.last = null;            // ข้อความสถานะล่าสุดที่มีค่ากฎ { m, d, at } ใช้เติมรายละเอียดให้ event
+  }
+
+  // now = เวลาตอนรับข้อความ (วินาที) ใช้กับกฎ "หนึ่งเหตุการณ์ = แจ้งเตือนหนึ่งใบ"
+  event(d, now = nowS()) {
+    const e = get(d, "event"), t = this.team;
+    if (e === "sw6") {
+      return ["sw6", "มีคนกดเรียกที่ฟาร์ม", "ปุ่ม SW6 บนบอร์ด " + t, 4, ["bell"]];
+    }
+    if (e === "plc_lost") {
+      return ["plc_lost", "PLC หลุด!", "Gateway " + t + " ไม่ได้ยิน PLC เกิน 15 วินาที ไม่รู้ว่าปั๊มเดินอยู่ไหม", 5, ["rotating_light"]];
+    }
+    if (e === "auto_water") {
+      return ["auto_water", "Gateway รดน้ำเอง", "ดินแห้ง " + pyStr(num(get(d, "soil"), 0, 100)) + " % · " + t, 2, ["droplet"]];
+    }
+    if (e === "pump") {
+      const why = cut(pyStr(get(d, "why", "")), 16);
+      if (why === "blocked_tank" || this.opt.allEvents) {
+        return ["pump_" + why, "ปั๊ม: " + get(WHY_TH, why, why), "กลุ่ม " + t, why === "blocked_tank" ? 4 : 2, ["warning"]];
+      }
+      return null;                                   // ปั๊มเปิด/ปิดปกติ ไม่เด้ง (เยอะเกิน)
+    }
+    // ---- เพิ่มจากตัว Python: event ของบอร์ด AI (สัญญาข้อ 3.10 / 3.11) ----
+    if (e === "ai_alarm_start") return this.alarmStart(d, now, "event");
+    if (e === "ai_alarm_end") return this.alarmEnd(d);
+    if (e === "rain") {
+      const conf = num(get(d, "conf"), 0, 100);
+      return ["rain", "ฝนตก งดรดน้ำได้", this.prefix(d) + ": AI ได้ยินเสียงฝน" + (conf === null ? "" : " " + conf + " %") + " · " + t, 2, ["cloud_with_rain"]];
+    }
+    if (e === "voice_cmd") {
+      const ok = get(d, "ok"), cmd = this.word(VOICE_CMD_TH, get(d, "cmd"), 16, "ไม่ทราบคำสั่ง");
+      if (ok === 0) {
+        const why = this.word(VOICE_WHY_TH, get(d, "why"), 16, "ไม่ทราบเหตุผล");
+        return ["voice_cmd_no", "ไม่ทำตามคำสั่งเสียง (" + why + ")", this.prefix(d) + ": คำสั่ง " + cmd + " · " + t, 3, ["warning"]];
+      }
+      if (ok === 1 && this.opt.voiceOk) return ["voice_cmd_ok", "ทำตามคำสั่งเสียง: " + cmd, this.prefix(d) + " · " + t, 2, ["microphone"]];
+      return null;                                   // ok = 1 ไม่แจ้ง (ค่าเริ่มต้น) · ค่าอื่นไม่ใช่ตามสัญญา
+    }
+    if (e === "check_in") {
+      if (get(d, "ok") !== 0) return null;           // ok = 1 คนงานกด SW6 ว่าโอเค ไม่ต้องเด้ง
+      if (!this.newIncident(now)) return null;       // เตือนเหตุการณ์นี้ไปแล้ว
+      return ["check_in", "คนงานไม่ตอบ!", this.prefix(d) + ": ไม่มีใครกด SW6 ยืนยันภายใน 30 วินาที · " + t, 5, ["rotating_light"]];
+    }
+    if (e === "drill_done") {
+      if (!this.opt.drillDone) return null;
+      const holes = num(get(d, "holes"), 0, 1e6);
+      return ["drill_done", this.prefix(d) + ": เจาะเสร็จ", "วัสดุ " + this.word(MAT_TH, get(d, "mat"), 16, "ไม่ทราบ")
+        + (holes === null ? "" : " · " + holes + " รู") + " · " + t, 2, ["hammer_and_wrench"]];
+    }
+    if (has(d, "crop") && has(d, "level")) {        // แจ้งเตือนพืช sf2_04 (สัญญาข้อ 3.4)
+      const crop = cut(pyStr(get(d, "crop")), 16);
+      let lv = num(get(d, "level"), 0, 2);
+      if (lv === null) return null;
+      lv = Math.trunc(lv);
+      const before = this.cropLevel.get(crop);
+      this.cropLevel.set(crop, lv);
+      if (lv === 0 && !before) return null;          // สบายดีตั้งแต่แรก ไม่ต้องเด้ง
+      const why = pyStr(get(d, "alert", "")).split("+").map((x) => get(ALERT_TH, x, cut(x, 8))).join(" + ");
+      const msg = get(CROP_TH, crop, crop) + ": " + LEVEL_TH[lv] + " (" + why + ") · "
+        + pyStr(num(get(d, "temp_c"), -50, 100)) + " °C " + pyStr(num(get(d, "rh"), 0, 100)) + " %";
+      const title = lv === 0 ? "พืชกลับมาปกติ" : "พืช" + LEVEL_TH[lv];
+      return ["crop" + lv, title, msg + " · " + t, [2, 3, 5][lv], lv === 0 ? ["seedling"] : ["warning", "seedling"]];
+    }
+    if (typeof e === "string" && e) {                // event ของกลุ่มเอง เช่น too_hot, delivered
+      return ["ev_" + cut(e, 24), "เหตุการณ์: " + cut(e, 24), cut(pyJson(d), 300), 3, ["farmer"]];
+    }
+    return null;
+  }
+
+  // กฎเกณฑ์ฝั่งหน้าเว็บ: เตือนตอนเพิ่งข้ามเกณฑ์ แล้วรอจนกลับมาปกติก่อนเตือนใหม่ (ช่องเกณฑ์ว่าง = ไม่ใช้กฎนั้น)
+  telemetry(d) {
+    const o = this.opt, out = [];
+    //        key         ค่าจากบอร์ด         เกณฑ์      เทียบ  หัวข้อ             คำนำ          หน่วย  prio  tags
+    const rules = [
+      ["soil_low", get(d, "soil"),   o.soilMin, "<", "ดินแห้ง",         "ความชื้นดิน", "%",  3, ["droplet"]],
+      ["tank_low", get(d, "tank"),   o.tankMin, "<", "น้ำในถังใกล้หมด", "น้ำในถัง",    "%",  4, ["warning"]],
+      ["temp_hi",  get(d, "temp_c"), o.tempMax, ">", "ร้อนเกิน",        "อุณหภูมิ",    "°C", 4, ["thermometer"]],
+    ];
+    for (const [key, raw, limit, op, title, label, unit, prio, tags] of rules) {
+      const v = num(raw);
+      if (v === null || limit === null) continue;
+      const hit = op === "<" ? v < limit : v > limit;
+      if (hit && !this.active[key]) {
+        out.push([key, title, label + " " + pyStr(v) + " " + unit + " (เกณฑ์ " + op + " " + pyStr(limit) + ") · " + this.team, prio, tags]);
+      }
+      this.active[key] = hit;
+    }
+    return out;
+  }
+
+  // ---- เพิ่มจากตัว Python: หัวข้อ ai (สัญญาข้อ 3.9 / 3.10 / 3.11) ----
+  // คืน null = ไม่ใช่ผล AI ตามสัญญา (ไม่สนใจเลย) · [] = ได้ยินแล้วแต่ไม่ต้องเตือน · หรือรายการแจ้งเตือน
+  ai(d, now = nowS()) {
+    const model = get(d, "model"), label = get(d, "label");
+    if (typeof model !== "string" || typeof label !== "string") return null;
+    if (model === "") return [];                     // หยุดโมเดลอยู่ (ข้อ 3.10): ไม่นับ แต่แปลว่าบอร์ดไม่เงียบ
+    const alarm = get(d, "alarm");
+    if (alarm === 0 || alarm === 1) return this.boardDecides(d, alarm, now);
+    // บอร์ดที่ไม่ส่ง alarm (sf3_06 ข้อ 3.9): หน้านี้นับป้ายอันตรายเอง
+    if (label === "-") return [];                    // ยังไม่มีผล ไม่นับ
+    const o = this.opt, out = [], info = this.aiInfo(d);
+    // นับป้ายอันตรายใน aiWin ผลล่าสุด ป้ายที่สลับไปมาจะไม่ทำให้เตือนรัว
+    this.aiHist.push(this.danger.has(label.toLowerCase()));
+    if (this.aiHist.length > o.aiWin) this.aiHist.shift();
+    const n = this.aiHist.filter(Boolean).length;
+    if (!this.aiDanger && n >= o.aiNeed) {
+      this.aiDanger = true;
+      this.aiBelow = 0;
+      out.push(["ai_danger", "AI พบความผิดปกติ", info, 5, ["rotating_light"]]);
+    } else if (this.aiDanger) {
+      // กลับมาปกติเมื่อนับได้ต่ำกว่าเกณฑ์ติดกันครบ aiWin ผล ไม่ใช่ทันทีที่ต่ำกว่า
+      // เพราะป้ายที่สลับ anomaly / unlabeled ทุกผล นับได้ 3, 2, 3, 2 ... จะเด้ง "กลับมาปกติ" ทั้งที่ยังเขย่าอยู่
+      this.aiBelow = n < o.aiNeed ? this.aiBelow + 1 : 0;
+      if (this.aiBelow >= o.aiWin) {
+        this.aiDanger = false;
+        out.push(["ai_normal", "AI กลับมาปกติ", info, 2, ["white_check_mark"]]);
+      }
+    }
+    return out;
+  }
+
+  // บอร์ดที่ตัดสินเอง (ข้อ 3.10 / 3.11): เชื่อ alarm และ lvl ของบอร์ด ไม่นับ 3 ใน 5 เองซ้ำ
+  boardDecides(d, alarm, now) {
+    const o = this.opt, out = [], lvl = get(d, "lvl");
+    if (has(d, "rk") && typeof get(d, "m") === "string") this.last = { m: d.m, d, at: now };   // จำค่ากฎไว้เติมให้ event
+    // lvl 1 = เห็นฝ่ายเดียว: เตือนเบา ๆ ครั้งเดียวต่อรอบ เฉพาะตอนเพิ่งเข้ามาจากปกติ และไม่ได้อยู่ระหว่างเหตุการณ์
+    if (lvl === 0 || lvl === 1 || lvl === 2) {
+      const fromNormal = this.lvl === null || this.lvl === 0;
+      if (lvl === 1 && fromNormal && o.lvl1On && this.aiAlarm !== 1 && alarm !== 1 && now - this.lastAlertAt >= o.alarmWaitS) {
+        const agree = get(d, "agree");
+        const side = agree === "ai" ? "AI สงสัย กฎยังไม่เห็น" : agree === "rule" ? "กฎเห็น AI ยังไม่เห็น" : "ให้คนไปดู";
+        out.push(["ai_lvl1", this.prefix(d) + ": " + side, "ให้คนไปดู · " + this.missionText(d, now), 3, ["eyes"]]);
+      }
+      this.lvl = lvl;
+    }
+    if (alarm === 1 && this.aiAlarm !== 1) {         // alarm เพิ่งเป็น 1 (หรือเปิดหน้ามากลางทาง)
+      // เตือนไปแล้วหลังจากบอร์ดบอกว่าไม่เตือนครั้งล่าสุด หรือเพิ่งเตือนไม่ถึง alarmWaitS วินาที = เหตุการณ์เดียวกัน
+      this.episodeAlerted = this.lastAlertAt > this.lastZeroAt || now - this.lastAlertAt < o.alarmWaitS;
+      if (!this.episodeAlerted) this.pending = { at: now, d };       // รอ event ก่อน ไม่มาจึงเตือนจาก alarm (ดู aiTick)
+    }
+    if (alarm === 0) this.lastZeroAt = now;
+    if (alarm === 0 && this.aiAlarm === 1) {         // บอร์ดเลิกเตือน
+      this.episodeAlerted = false;
+      this.pending = null;
+    }
+    this.aiAlarm = alarm;
+    return out;
+  }
+
+  // เรียกทุก 1 วินาที: alarm เป็น 1 มาครบ alarmWaitS วินาทีแล้วยังไม่มี ai_alarm_start -> เตือนจาก alarm
+  aiTick(now) {
+    if (!this.pending || now - this.pending.at < this.opt.alarmWaitS) return [];
+    const d = this.pending.d;
+    this.pending = null;
+    const item = this.alarmStart(d, now, "state");
+    return item ? [item] : [];
+  }
+
+  // เหตุการณ์ใหม่ไหม: ไม่ใช่ ถ้าเพิ่งเตือนไปไม่ถึง alarmWaitS วินาที (เช่น check_in แล้วตามด้วย ai_alarm_start)
+  // หรือบอร์ดยังเตือน (alarm = 1) อยู่ในรอบที่เตือนไปแล้ว · ไม่ค้างตลอดไป event จบหายก็ยังเตือนเหตุการณ์ถัดไปได้
+  newIncident(now) {
+    if (now - this.lastAlertAt < this.opt.alarmWaitS) return false;
+    if (this.aiAlarm === 1 && this.episodeAlerted) return false;
+    this.lastAlertAt = now;
+    this.episodeAlerted = this.aiAlarm === 1;
+    this.endSent = false;
+    this.pending = null;
+    return true;
+  }
+
+  // เตือนเริ่มเหตุการณ์ (จาก event ai_alarm_start หรือจาก alarm ที่ event ไม่มา) · ยืนยันสองทาง lvl 2 = 5 นอกนั้น 4
+  alarmStart(d, now, from) {
+    if (from === "event") this.pending = null;
+    if (!this.newIncident(now)) return null;
+    const lvl = get(d, "lvl"), m = get(d, "m"), label = get(d, "label");
+    const what = (typeof m === "string" && m ? this.meaning(label) : this.labelText(label)) || (from === "event" ? "เริ่มเตือน" : "กำลังเตือน");
+    return ["ai_alarm_start", this.prefix(d) + ": " + what, this.body(d, now), lvl === 2 ? 5 : 4, ["rotating_light"]];
+  }
+
+  // จบเหตุการณ์: by = ack คนรับทราบ · clear เหตุหายเอง · หนึ่งข้อความต่อเหตุการณ์
+  alarmEnd(d) {
+    this.pending = null;
+    if (this.endSent) return null;                   // ส่งข้อความจบของเหตุการณ์นี้ไปแล้ว
+    this.endSent = true;
+    const by = get(d, "by");
+    const why = by === "ack" ? "มีคนรับทราบการเตือนแล้ว" : by === "clear" ? "เหตุหายไปเอง" : "บอร์ดหยุดเตือนแล้ว";
+    return ["ai_alarm_end", this.prefix(d) + ": " + (by === "ack" ? "รับทราบแล้ว" : "กลับมาปกติ"), why + " · " + this.team, 2, ["white_check_mark"]];
+  }
+
+  // ---- ข้อความภาษาไทย (ทุกช่องตรวจชนิดก่อนใช้ ข้อความจาก broker สาธารณะเป็นของใครก็ได้) ----
+  // ชื่อภารกิจจาก m (ข้อ 3.11) · ไม่มี m = บอร์ด AI ทั่วไป (ข้อ 3.10)
+  prefix(d) {
+    const m = get(d, "m");
+    return typeof m === "string" && m ? get(MISSION_TH, m, cut(m, 16)) : "บอร์ด AI";
+  }
+
+  // แปลคำจากตาราง ไม่มีในตาราง = ใช้คำเดิม (ตัดให้สั้น) · ไม่ใช่ข้อความ = คำแทน
+  word(table, v, n, dflt) { return typeof v === "string" && v ? get(table, v, cut(v, n)) : dflt; }
+
+  // ความหมายของป้ายที่เป็นเหตุ เช่น anomaly -> สั่นผิดปกติ · ป้ายอื่น (unlabeled, idle) = "" ไม่ใช่เหตุ
+  meaning(label) { return typeof label === "string" ? get(LABEL_TH, label.toLowerCase(), "") : ""; }
+
+  // ป้ายสำหรับแสดง: มีความหมายใช้ความหมาย ไม่มีใช้ชื่อป้ายเดิม · "-" = ยังไม่มีผล
+  labelText(label) { return typeof label === "string" && label && label !== "-" ? get(LABEL_TH, label.toLowerCase(), cut(label, 24)) : ""; }
+
+  // ค่าของกฎเทียบเกณฑ์ เช่น "ค่าสั่น 2.31 > 1.5 m/s²"
+  ruleText(st) {
+    const rk = get(st, "rk"), rv = num(get(st, "rv")), rl = num(get(st, "rl"));
+    if (rk === "btn") return rv === 1 ? "คนกดยืนยันแล้ว" : "ยังไม่มีคนกดยืนยัน";
+    const kind = typeof rk === "string" ? get(RULE_TH, rk) : undefined;
+    if (!kind || rv === null || rl === null) return "";
+    return kind[0] + " " + rv + " " + (rv > rl ? ">" : rv < rl ? "<" : "=") + " " + rl + (kind[1] ? " " + kind[1] : "");
+  }
+
+  // เนื้อความ: มี m (ข้อ 3.11) = บอกเหตุ + ใครเห็น (AI / กฎ) · ไม่มี m = โมเดล ป้าย ความมั่นใจ
+  body(d, now) {
+    const m = get(d, "m");
+    return typeof m === "string" && m ? this.missionText(d, now) : this.aiInfo(d);
+  }
+
+  // เช่น "สั่นผิดปกติ · ยืนยันสองทาง: AI 91 % + ค่าสั่น 2.31 > 1.5 m/s² · team05"
+  // event ไม่มีค่ากฎในตัว จึงเติมจากข้อความสถานะล่าสุดของภารกิจเดียวกัน ถ้าเพิ่งได้ยินและเห็นเหตุแล้ว (lvl 1 ขึ้นไป)
+  // สถานะที่ยังปกติ (lvl 0) เป็นของก่อนเกิดเหตุ ใช้ไม่ได้ จะได้ไม่เขียนว่า "ค่าสั่น 0.4 < 1.5" ในข้อความเตือน
+  missionText(d, now) {
+    const l = this.last, fresh = l && l.m === get(d, "m") && now - l.at <= LAST_STATE_S && num(get(l.d, "lvl"), 1, 2) !== null;
+    const recent = fresh ? l.d : null;
+    const st = has(d, "rk") ? d : recent;
+    const conf = num(get(d, "conf"), 0, 100);
+    const aiPart = get(d, "model") === "rule-only" ? "ไม่มีโมเดล" : "AI " + (conf === null ? "ไม่ทราบ" : conf + " %");
+    const rulePart = st ? this.ruleText(st) : "";
+    const agree = get(st || d, "agree");
+    let how;
+    if (agree === "both") how = "ยืนยันสองทาง: " + aiPart + (rulePart ? " + " + rulePart : "");
+    else if (agree === "ai") how = "AI ฝ่ายเดียว: " + aiPart + (rulePart ? " · กฎยังไม่ถึง (" + rulePart + ")" : "");
+    else if (agree === "rule") how = "กฎฝ่ายเดียว: " + (rulePart || "กฎบอกว่าเกิดเหตุ") + " · AI ยังไม่เห็น";
+    else how = aiPart + (rulePart ? " · " + rulePart : "");
+    const what = this.meaning(get(d, "label"));
+    return (what ? what + " · " : "") + how + " · " + this.team;
+  }
+
+  // ข้อความของ AI ข้อ 3.9 / 3.10: โมเดล ป้าย (ความหมาย) ความมั่นใจ และกลุ่ม
+  aiInfo(d) {
+    const text = (v, n) => (typeof v === "string" && v ? cut(v, n) : "ไม่ทราบ");
+    const conf = num(get(d, "conf"), 0, 100), what = this.labelText(get(d, "label"));
+    const label = text(get(d, "label"), 24);
+    return "โมเดล " + text(get(d, "model"), 40) + " · ป้าย " + label + (what && what !== label ? " (" + what + ")" : "")
+      + " · มั่นใจ " + (conf === null ? "ไม่ทราบ" : conf + " %") + " · " + this.team;
+  }
+}
+
+// ===== 3) กันสแปม: เว้นต่อเรื่อง + เพดานต่อชั่วโมง (พอร์ตจาก class RateLimit) =====
+class RateLimit {
+  constructor(cooldownS, perHour) {
+    this.cooldownS = cooldownS;
+    this.perHour = perHour;
+    this.last = new Map();       // key -> เวลาที่ส่งล่าสุด
+    this.held = new Map();       // key -> จำนวนครั้งที่พักไว้ในช่วงเว้น
+    this.sent = [];              // เวลาที่ส่งในชั่วโมงที่ผ่านมา
+  }
+
+  // คืน { ok, why, held } · why = "cooldown" (ยังอยู่ในช่วงเว้น) หรือ "cap" (ครบเพดานต่อชั่วโมง)
+  allow(key, now = nowS()) {
+    this.sent = this.sent.filter((t) => now - t < 3600);
+    const last = this.last.has(key) ? this.last.get(key) : -1e9;
+    const why = now - last < this.cooldownS ? "cooldown" : this.sent.length >= this.perHour ? "cap" : "";
+    if (why) {
+      this.held.set(key, (this.held.get(key) || 0) + 1);
+      return { ok: false, why, held: 0 };
+    }
+    this.last.set(key, now);
+    this.sent.push(now);
+    const held = this.held.get(key) || 0;
+    this.held.delete(key);
+    return { ok: true, why: "", held };
+  }
+}
+
+// ===== 4) ส่งออก: ntfy (หลัก) และ Telegram (ถ้าตั้งไว้) ทีละใบตามลำดับ เหมือนคิวของตัว Python =====
+let sendChain = Promise.resolve(), waiting = 0;
+
+function push(cfg, title, message, priority, tags) {
+  if (waiting >= QUEUE_MAX) {
+    log("คิวเต็ม ทิ้งหนึ่งใบ: " + title);
+    count("err");
+    return;
+  }
+  waiting += 1;
+  sendChain = sendChain
+    .then(() => deliver(cfg, title, message, priority, tags))
+    .catch(() => count("err"))
+    .then(() => { waiting -= 1; });
+}
+
+async function deliver(cfg, title, message, priority, tags) {
+  await sendNtfy(cfg, title, message, priority, tags);
+  if (cfg.tgToken && cfg.tgChat) await sendTelegram(cfg, title, message);
+}
+
+// ntfy "Publish as JSON": POST ไปที่ราก server ช่อง topic title message priority tags click
+// ส่งภาษาไทยใน body แบบ JSON ได้เลย ไม่ต้องเข้ารหัสใน header
+async function sendNtfy(cfg, title, message, priority, tags) {
+  const body = { topic: cfg.topic, title: cut(title, 120), message: cut(message, 1000), priority: Math.trunc(priority), tags };
+  if (cfg.click) body.click = cfg.click;
+  if (cfg.dryRun) {
+    log("[dry-run] ntfy <- " + JSON.stringify(Object.assign({}, body, { topic: "<NTFY_TOPIC>" })));   // ไม่แสดงชื่อหัวข้อ
+    return;
+  }
+  let code = 0, text = "";
+  try {
+    const res = await fetch(cfg.server + "/", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    code = res.status;
+    text = (await res.text()).slice(0, 2048);
+  } catch (e) {
+    text = (e && e.name) || "Error";                 // เน็ตหลุด หรือ server ไม่ยอมให้หน้าเว็บส่ง (CORS)
+  }
+  let msgId = "";
+  if (code === 200) {
+    try { msgId = " id=" + cut(String(JSON.parse(text).id || ""), 16); } catch (e) { /* ตอบไม่ใช่ JSON ก็ไม่เป็นไร */ }
+  }
+  const hint = code === 429 ? " (ntfy จำกัดความถี่ รอสักครู่)" : code === 0 ? " (ต่อ ntfy ไม่ได้: " + text + ")" : "";
+  log("ntfy " + code + " ส่ง: " + title + msgId + hint);
+  count(code === 200 ? "sent" : "err");
+}
+
+// Telegram sendMessage แบบฟอร์ม (application/x-www-form-urlencoded) ไม่ใช่ JSON
+// เพราะแบบฟอร์มเป็น "คำขออย่างง่าย" ของเบราว์เซอร์ ส่วน JSON ต้องถามก่อน (preflight) ซึ่ง api.telegram.org ไม่ตอบรับ
+// URL มี token อยู่ข้างใน ห้ามพิมพ์ URL นี้ลงบันทึกหรือ console เด็ดขาด
+async function sendTelegram(cfg, title, message) {
+  const text = cut(title + "\n" + message, 3500);
+  if (cfg.dryRun) {
+    log("[dry-run] telegram <- " + text.replace("\n", " / "));
+    return;
+  }
+  let code = 0;
+  try {
+    const res = await fetch("https://api.telegram.org/bot" + cfg.tgToken + "/sendMessage", {
+      method: "POST", body: new URLSearchParams({ chat_id: cfg.tgChat, text }),   // เบราว์เซอร์ใส่ Content-Type แบบฟอร์มให้เอง
+    });
+    code = res.status;
+  } catch (e) {
+    code = 0;                                        // ไม่เขียน e.message ลงบันทึก กันข้อความผิดพลาดพา URL ที่มี token ออกมา
+  }
+  const hint = { 0: " (ต่อ Telegram ไม่ได้)", 400: " (chat id ผิด หรือยังไม่ได้กด Start ในแชตกับบอท)",
+                 401: " (token ไม่ถูกต้อง)", 403: " (บอทถูกบล็อก หรือไม่ได้อยู่ในกลุ่มนั้น)", 429: " (ส่งถี่เกิน รอสักครู่)" };
+  log("telegram " + code + " ส่ง: " + title + get(hint, code, ""));
+  if (code !== 200) count("err");
+}
+
+// ===== 5) หน้าจอ: บันทึก ตัวนับ ป้ายสถานะ =====
+const counts = { rx: 0, sent: 0, cooldown: 0, cap: 0, err: 0 };
+const COUNT_IDS = { rx: "cRx", sent: "cSent", cooldown: "cCool", cap: "cCap", err: "cErr" };
+
+function count(name) {
+  counts[name] += 1;
+  $(COUNT_IDS[name]).textContent = String(counts[name]);
+}
+
+function resetCounts() {
+  for (const name of Object.keys(counts)) {
+    counts[name] = 0;
+    $(COUNT_IDS[name]).textContent = "0";
+  }
+}
+
+// ใช้ textContent เสมอ ข้อความจาก broker สาธารณะเป็นของใครก็ได้ จะไม่ถูกรันเป็นโค้ด
+function log(text) {
+  const box = $("log"), line = document.createElement("div");
+  line.textContent = clock() + "  " + text;
+  box.prepend(line);
+  while (box.children.length > LOG_MAX) box.lastElementChild.remove();
+}
+
+function setStatus(text, tone) {
+  $("status").textContent = text;
+  $("status").style.color = "var(--" + tone + ")";   // ok / warn / bad / dim
+}
+
+function showMsg(text) { $("formMsg").textContent = text; }
+
+// ===== 6) ค่าตั้ง: อ่านฟอร์ม ตรวจ เก็บ/โหลดจากเบราว์เซอร์ =====
+function numField(id) {
+  const t = $(id).value.trim();
+  return t === "" ? null : Number(t);
+}
+
+function readForm() {
+  return {
+    team: $("team").value.trim().toLowerCase(),
+    broker: $("broker").value,
+    server: $("server").value.trim().replace(/\/+$/, ""),
+    topic: $("topic").value.trim(),
+    telemetry: $("telemetry").checked,
+    soilMin: numField("soilMin"), tankMin: numField("tankMin"), tempMax: numField("tempMax"), silentS: numField("silentS"),
+    cooldown: numField("cooldown"), perHour: numField("perHour"),
+    allEvents: $("allEvents").checked,
+    aiOn: $("aiOn").checked,
+    dangerLabels: $("dangerLabels").value.trim(),
+    aiNeed: numField("aiNeed"), aiWin: numField("aiWin"), aiSilentS: numField("aiSilentS"),
+    alarmWaitS: numField("alarmWaitS"), lvl1On: $("lvl1On").checked, voiceOk: $("voiceOk").checked, drillDone: $("drillDone").checked,
+    click: $("click").value.trim(),
+    tgToken: $("tgToken").value.trim(),
+    tgChat: $("tgChat").value.trim(),
+    remember: $("remember").checked,
+    dryRun: $("dryRun").checked,
+  };
+}
+
+function isWebUrl(s) {
+  try { const u = new URL(s); return u.protocol === "https:" || u.protocol === "http:"; } catch (e) { return false; }
+}
+
+// คืนข้อความบอกว่าผิดตรงไหน ("" = ใช้ได้) · ห้ามใส่ token ในข้อความนี้
+function checkSettings(c) {
+  if (!TEAM_RE.test(c.team)) return "ใส่เลขกลุ่ม team01 ถึง team99 เช่น team05";
+  if (!get(BROKERS, c.broker)) return "เลือก broker";
+  if ((!c.dryRun || c.topic) && !TOPIC_RE.test(c.topic)) {
+    return "ตั้งชื่อหัวข้อ ntfy ก่อน (กด สุ่มชื่อใหม่) ใช้ได้เฉพาะอังกฤษ ตัวเลข - _ ไม่เกิน 64 ตัว";
+  }
+  if (!/^https:\/\//.test(c.server) || !isWebUrl(c.server)) return "ntfy server ต้องขึ้นต้นด้วย https:// เช่น https://ntfy.sh";
+  const nums = [["ดินแห้ง", c.soilMin, false, true], ["ถังใกล้หมด", c.tankMin, false, true], ["ร้อนเกิน", c.tempMax, false, true],
+                ["บอร์ดเงียบ", c.silentS, true, true], ["ช่วงเว้น", c.cooldown, true, false], ["เพดานต่อชั่วโมง", c.perHour, true, false],
+                ["ป้ายอันตรายอย่างน้อย", c.aiNeed, true, false], ["ผลล่าสุด", c.aiWin, true, false], ["AI เงียบ", c.aiSilentS, true, true],
+                ["รอ event จากบอร์ด", c.alarmWaitS, true, false]];
+  for (const [name, v, whole, emptyOk] of nums) {
+    if (v === null && emptyOk) continue;
+    if (v === null || !Number.isFinite(v) || (whole && (!Number.isInteger(v) || v < 0))) return "ช่อง " + name + " ต้องเป็นตัวเลข" + (whole ? "จำนวนเต็มไม่ติดลบ" : "");
+  }
+  if (c.perHour < 1) return "เพดานต่อชั่วโมงต้องอย่างน้อย 1";
+  if (c.alarmWaitS > 60) return "รอ event จากบอร์ดได้ไม่เกิน 60 วินาที";
+  if (c.aiWin < 1 || c.aiWin > 20 || c.aiNeed < 1 || c.aiNeed > c.aiWin) return "ผล AI: นับได้ 1 ถึง 20 ผลล่าสุด และเกณฑ์ต้องไม่เกินจำนวนผลที่นับ (เช่น 3 ใน 5)";
+  if (labelList(c.dangerLabels).some((x) => !/^[a-z0-9_.-]{1,32}$/.test(x))) {
+    return "ป้ายอันตรายใช้ได้เฉพาะอังกฤษ ตัวเลข _ . - คั่นด้วย , เช่น anomaly, shaking";
+  }
+  if (c.click && !isWebUrl(c.click)) return "ลิงก์เมื่อแตะแจ้งเตือนต้องขึ้นต้นด้วย https:// (หรือลบให้ว่าง)";
+  if (c.tgToken || c.tgChat) {
+    if (!TG_TOKEN_RE.test(c.tgToken)) return "Telegram bot token ไม่ถูกรูปแบบ (ตัวเลข:ตัวอักษร จาก @BotFather) หรือลบทั้ง token และ chat id";
+    if (!TG_CHAT_RE.test(c.tgChat)) return "Telegram chat id ต้องเป็นตัวเลข เช่น 123456789 (กลุ่มขึ้นต้นด้วย -)";
+  }
+  return "";
+}
+
+const SAVED = ["team", "broker", "server", "topic", "telemetry", "soilMin", "tankMin", "tempMax", "silentS",
+               "cooldown", "perHour", "allEvents", "aiOn", "dangerLabels", "aiNeed", "aiWin", "aiSilentS", "alarmWaitS", "lvl1On", "voiceOk", "drillDone", "click", "tgChat", "remember", "dryRun"];
+let storageOk = true;
+
+// เก็บค่าตั้งในเบราว์เซอร์ของเครื่องนี้ · token เก็บเฉพาะเมื่อผู้ใช้ติ๊ก "จำไว้" เอง (ไม่ติ๊ก = ลบที่เคยเก็บด้วย)
+function saveSettings() {
+  const c = readForm(), keep = {};
+  for (const k of SAVED) keep[k] = c[k];
+  if (c.remember) keep.tgToken = c.tgToken;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(keep)); } catch (e) { storageWarn(); }
+}
+
+function storageWarn() {
+  if (!storageOk) return;
+  storageOk = false;
+  log("เบราว์เซอร์นี้จำค่าตั้งไม่ได้ (โหมดส่วนตัว?) จดชื่อหัวข้อ ntfy ไว้เอง ปิดหน้าแล้วต้องใส่ใหม่");
+}
+
+function loadSettings() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem(STORE_KEY) || "{}") || {}; } catch (e) { storageWarn(); }
+  for (const k of SAVED.concat(["tgToken"])) {
+    const v = get(s, k);
+    if (v === undefined || (typeof v === "object" && v !== null)) continue;
+    if (k === "tgToken" && get(s, "remember") !== true) continue;   // token อ่านคืนเฉพาะเมื่อเคยติ๊ก "จำไว้"
+    const el = $(k);
+    if (el.type === "checkbox") el.checked = v === true;
+    else el.value = v === null ? "" : String(v);
+  }
+  // ?team=team05 ในลิงก์ชนะค่าที่จำไว้
+  const fromUrl = (new URLSearchParams(location.search).get("team") || "").trim().toLowerCase();
+  if (TEAM_RE.test(fromUrl)) $("team").value = fromUrl;
+  if (get(s, "click") === undefined) $("click").value = autoClick($("team").value.trim().toLowerCase());
+}
+
+// ลิงก์หน้า ai_farm.html ของกลุ่ม คิดจากที่อยู่ของหน้านี้ (บน GitHub Pages ได้ .../s3/app/ai_farm.html)
+// เปิดหน้านี้จากเครื่องตัวเอง (file:// หรือ http://localhost) มือถือเปิดลิงก์นั้นไม่ได้ จึงเว้นว่าง
+// ถ้าช่องลิงก์ยังเป็นค่าอัตโนมัติ เปลี่ยนเลขกลุ่มแล้วลิงก์เปลี่ยนตาม
+function teamPageBase() {
+  try {
+    const u = new URL(TEAM_PAGE, location.href);
+    return u.protocol === "https:" ? u.origin + u.pathname : "";
+  } catch (e) { return ""; }
+}
+function autoClick(team) {
+  const base = teamPageBase();
+  return base && TEAM_RE.test(team) ? base + "?team=" + team : base;
+}
+function isAutoClick(v) {
+  const base = teamPageBase(), p = base + "?team=";
+  return !!base && (v === base || (v.startsWith(p) && /^team\d{2}$/.test(v.slice(p.length))));
+}
+
+// ชื่อหัวข้อสุ่มด้วย crypto.getRandomValues (สุ่มแบบเดายาก ไม่ใช่ Math.random) 12 ไบต์ = เลขฐานสิบหก 24 ตัว
+function randomTopic(team) {
+  const bytes = new Uint8Array(12);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return "farm-" + (TEAM_RE.test(team) ? team + "-" : "") + hex;
+}
+
+function updateSubLink() {
+  const topic = $("topic").value.trim(), server = $("server").value.trim().replace(/\/+$/, "");
+  const ok = TOPIC_RE.test(topic) && isWebUrl(server);
+  $("subWrap").hidden = !ok;
+  if (ok) {
+    $("subLink").href = server + "/" + topic;
+    $("subLink").textContent = server + "/" + topic;
+  }
+}
+
+// ===== 7) ทำงาน: ต่อ MQTT ฟังหัวข้อของกลุ่ม แปล กันสแปม แล้วส่ง =====
+let run = null;                  // ตอนทำงาน: { cfg, tr, limit, client, timer, lastTelemetry, silent, lastAi, aiSilent }
+
+function notify(item) {
+  let [key, title, message, prio, tags] = item;
+  const r = run.limit.allow(key);
+  if (!r.ok) {
+    count(r.why);
+    log((r.why === "cap" ? "พักไว้ (ครบ " + run.cfg.perHour + " ครั้งในชั่วโมงนี้แล้ว): " : "พักไว้ (ยังอยู่ในช่วงเว้น): ") + title);
+    return;
+  }
+  if (r.held) message += " · (ช่วงก่อนหน้าพักไว้ " + r.held + " ครั้ง)";
+  push(run.cfg, title, message, prio, tags);
+  showLocal(key, title, message);
+}
+
+function onMessage(client, topic, payload) {
+  if (!run || run.client !== client) return;
+  const base = ROOT + "/" + run.cfg.team + "/";
+  // รับเฉพาะหัวข้อของกลุ่มเราเท่านั้น ชื่อต้องตรงทุกตัวอักษร
+  const kind = topic === base + "event" ? "event"
+    : topic === base + "ai" && run.cfg.aiOn ? "ai"
+    : topic === base + "telemetry" && run.cfg.telemetry ? "telemetry" : "";
+  if (!kind) return;
+  count("rx");
+  if (payload.length > MAX_PAYLOAD_B) return;
+  let d;
+  try { d = JSON.parse(new TextDecoder("utf-8").decode(payload)); } catch (e) { return; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return;   // ต้องเป็น JSON object เท่านั้น (สัญญาข้อ 3)
+  if (kind === "event") {
+    const item = run.tr.event(d, nowS());
+    log("event: " + cut(pyJson(d), 120) + " -> " + (item ? item[1] : "ไม่เด้ง"));
+    if (item) notify(item);
+  } else if (kind === "ai") {
+    const items = run.tr.ai(d, nowS());
+    if (items === null) return;                      // ไม่ใช่ผล AI ตามสัญญา
+    run.lastAi = nowS();                             // ได้ยินแล้ว ("หยุดอยู่" และ "rule-only" ก็นับ: ข้อ 3.10 / 3.11 ส่งมาเพื่อบอกว่าไม่ได้เงียบ)
+    if (run.aiSilent) {
+      run.aiSilent = false;
+      log("AI กลับมาส่งผลแล้ว (" + run.cfg.team + ")");
+    }
+    for (const item of items) {                      // ai ส่งทุก 2 วินาที บันทึกเฉพาะตอนต้องเตือน
+      log("ai: " + cut(pyJson(d), 120) + " -> " + item[1]);
+      notify(item);
+    }
+  } else {
+    run.lastTelemetry = nowS();
+    if (run.silent) {
+      run.silent = false;
+      notify(["back", "บอร์ดกลับมาแล้ว", "ได้ยิน telemetry ของ " + run.cfg.team + " อีกครั้ง", 2, ["white_check_mark"]]);
+    }
+    for (const item of run.tr.telemetry(d)) notify(item);
+  }
+}
+
+// เช็กทุก 1 วินาที: บอร์ดเงียบเกินที่ตั้งไว้ (อย่างน้อย 15 วินาที) ไหม และ AI เงียบไหม
+function checkSilent() {
+  if (!run) return;
+  const c = run.cfg, last = run.lastTelemetry;
+  if (c.telemetry && c.silentS !== null && last !== null && !run.silent && nowS() - last > Math.max(c.silentS, STALE_S)) {
+    run.silent = true;
+    notify(["silent", "บอร์ดเงียบ", "ไม่ได้ยิน telemetry ของ " + c.team + " เกิน " + c.silentS + " วินาที", 4, ["warning"]]);
+  }
+  // alarm เป็น 1 มาแล้วแต่ event ai_alarm_start ไม่มา -> เตือนจาก alarm (หนึ่งเหตุการณ์ยังเป็นหนึ่งใบ)
+  if (c.aiOn) {
+    for (const item of run.tr.aiTick(nowS())) {
+      log("ai: alarm = 1 แต่ไม่มี ai_alarm_start ใน " + c.alarmWaitS + " วินาที -> " + item[1]);
+      notify(item);
+    }
+  }
+  // AI เงียบ: นับเฉพาะหลังได้ยินผลแรกแล้ว เตือนครั้งเดียว ได้ยินใหม่จึงเตือนได้อีก (สัญญาข้อ 3.9 แนะนำราว 6 วินาที)
+  if (c.aiOn && c.aiSilentS !== null && run.lastAi !== null && !run.aiSilent && nowS() - run.lastAi > c.aiSilentS) {
+    run.aiSilent = true;
+    notify(["ai_silent", "AI เงียบ", "ไม่ได้ยินผล AI ของ " + c.team + " เกิน " + c.aiSilentS + " วินาที", 4, ["warning"]]);
+  }
+}
+
+function start() {
+  const cfg = readForm(), err = checkSettings(cfg);
+  showMsg(err);
+  if (err) { setStatus("ตั้งค่ายังไม่ครบ", "bad"); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ เช็กเน็ตแล้วโหลดหน้าใหม่", "bad"); return; }
+  saveSettings();
+  resetCounts();
+  const base = ROOT + "/" + cfg.team + "/";
+  const subs = [base + "event"].concat(cfg.telemetry ? [base + "telemetry"] : [], cfg.aiOn ? [base + "ai"] : []);
+  if (cfg.topic && cfg.topic.length < 16) log("ระวัง: ชื่อหัวข้อ ntfy สั้น เดาง่าย ใครรู้ชื่อก็อ่านแจ้งเตือนของกลุ่มได้ (ควรยาว 16 ตัวขึ้นไป)");
+  log((cfg.dryRun ? "ntfy: dry-run ไม่ส่งจริง" : "ntfy: หัวข้อตั้งแล้ว (ยาว " + cfg.topic.length + " ตัว ไม่แสดงชื่อ)")
+      + " | Telegram: " + (cfg.tgToken && cfg.tgChat ? "เปิด" : "ไม่ได้ตั้ง"));
+  // client id สุ่มท้ายเสมอ ถ้าซ้ำกับบอร์ดหรือแอปอื่น broker จะเตะตัวที่ต่อก่อนหลุด (สัญญาข้อ 5.2)
+  const clientId = "farm-ntfy-" + cfg.team + "-" + Math.random().toString(16).slice(2, 8).padEnd(6, "0");
+  let client;
+  try {
+    client = mqtt.connect(BROKERS[cfg.broker], { clientId, clean: true, keepalive: 30, connectTimeout: 10000,
+      reconnectPeriod: 3000, resubscribe: false, protocolVersion: 4 });   // หลุดแล้วต่อใหม่เองทุก 3 วิ
+  } catch (e) {
+    setStatus("ต่อ broker ไม่ได้", "bad");
+    return;
+  }
+  run = { cfg, tr: new Translator(cfg.team, cfg), limit: new RateLimit(cfg.cooldown, cfg.perHour),
+          client, timer: setInterval(checkSilent, 1000), lastTelemetry: null, silent: false, lastAi: null, aiSilent: false };
+  // ต่อใหม่เมื่อไรต้อง subscribe ใหม่ จึงอยู่ใน "connect"
+  client.on("connect", () => {
+    if (!run || run.client !== client) return;
+    client.subscribe(subs, { qos: 0 });
+    setStatus("ต่อแล้ว · ฟัง " + subs.length + " หัวข้อของ " + cfg.team, "ok");
+    log("ต่อแล้ว ฟัง " + subs.join(", ") + " | กด หยุด เพื่อหยุด");
+  });
+  client.on("reconnect", () => { if (run && run.client === client) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  client.on("offline", () => { if (run && run.client === client) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  client.on("message", (topic, payload) => onMessage(client, topic, payload));
+  setStatus("กำลังต่อ " + BROKERS[cfg.broker].replace(/^wss:\/\//, "").replace(/\/mqtt$/, "") + " ...", "warn");
+  $("cfg").disabled = true;
+  $("go").textContent = "หยุด";
+  $("go").className = "danger";
+}
+
+function stop() {
+  if (!run) return;
+  clearInterval(run.timer);
+  run.client.end(true);
+  run = null;
+  $("cfg").disabled = false;
+  $("go").textContent = "เริ่มส่งแจ้งเตือน";
+  $("go").className = "primary";
+  setStatus("หยุดแล้ว", "dim");
+  log("หยุดแล้ว");
+}
+
+// ส่งทดสอบหนึ่งใบ (เหมือน --test ของตัว Python) ไม่ผ่านช่วงเว้นและเพดาน
+function sendTest() {
+  const cfg = run ? run.cfg : readForm(), err = checkSettings(cfg);
+  showMsg(err);
+  if (err) return;
+  saveSettings();
+  const title = "ทดสอบแจ้งเตือนฟาร์ม", message = "ถ้าเห็นข้อความนี้บนมือถือ แปลว่าต่อ ntfy ได้แล้ว · " + cfg.team;
+  push(cfg, title, message, 3, ["seedling"]);
+  showLocal("test", title, message);
+  $("testBtn").disabled = true;
+  setTimeout(() => { $("testBtn").disabled = false; }, TEST_GAP_MS);
+}
+
+// ===== 8) ช่องทางเสริม: แจ้งเตือนบนเครื่องนี้ และกันหน้าจอดับ =====
+let localWarned = false;
+
+function notifySupport() {
+  if (!("Notification" in window)) return "เบราว์เซอร์นี้ไม่มีแจ้งเตือนของหน้าเว็บ ใช้แอป ntfy บนมือถือแทน";
+  if (!window.isSecureContext) return "ต้องเปิดหน้านี้ผ่าน https:// หรือ http://localhost จึงขอแจ้งเตือนได้";
+  return "";
+}
+
+function updateNotifyNote() {
+  const no = notifySupport();
+  const perm = no ? "" : Notification.permission;
+  $("askNotify").disabled = !!no || perm !== "default";
+  $("notifyNote").textContent = no
+    || (perm === "granted" ? "อนุญาตแล้ว · แจ้งเตือนขึ้นบนเครื่องนี้เฉพาะตอนหน้านี้เปิดอยู่ (เหมาะกับโน้ตบุ๊ก)"
+      : perm === "denied" ? "ถูกปฏิเสธ แก้ได้ที่การตั้งค่าเว็บไซต์ของเบราว์เซอร์"
+      : "กด อนุญาตแจ้งเตือน ก่อน · มือถือ Android ส่วนใหญ่ไม่ขึ้นแจ้งเตือนจากหน้าแบบนี้ ใช้แอป ntfy เป็นหลัก");
+}
+
+async function askNotify() {
+  if (notifySupport()) return;
+  try { await Notification.requestPermission(); } catch (e) { /* Safari รุ่นเก่า */ }
+  if (Notification.permission === "granted") $("localNotify").checked = true;
+  updateNotifyNote();
+}
+
+function showLocal(key, title, message) {
+  if (!$("localNotify").checked || notifySupport() || Notification.permission !== "granted") return;
+  try {
+    new Notification(title, { body: message, tag: "farm-" + key });
+  } catch (e) {                                      // Android Chrome ไม่ยอมให้สร้างแจ้งเตือนจากหน้าแบบนี้
+    if (!localWarned) { localWarned = true; log("เครื่องนี้ขึ้นแจ้งเตือนจากหน้าเว็บไม่ได้ ใช้แอป ntfy บนมือถือแทน"); }
+  }
+}
+
+let wakeLock = null;
+
+// navigator.wakeLock ขอให้จอไม่ดับขณะหน้านี้อยู่หน้าสุด สลับแอปหรือพับจอแล้วเบราว์เซอร์คืนสิทธิ์เอง กลับมาจึงขอใหม่
+const WAKE_NO = "เบราว์เซอร์นี้กันจอดับให้ไม่ได้ (ต้องเปิดผ่าน https และเป็นเบราว์เซอร์รุ่นใหม่) ตั้งเวลาปิดหน้าจอของเครื่องเป็น \"ไม่ปิด\" เอง และเสียบสายชาร์จ";
+
+async function setWake(on) {
+  if (!("wakeLock" in navigator)) return;
+  if (!on) {
+    if (wakeLock) { try { await wakeLock.release(); } catch (e) { /* คืนไปแล้ว */ } }
+    wakeLock = null;
+    $("wakeNote").textContent = "";
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    $("wakeNote").textContent = "กันจอดับอยู่ (ถ้าสลับไปแอปอื่น กลับมาหน้านี้แล้วจะกันให้ใหม่)";
+  } catch (e) {
+    $("wake").checked = false;
+    $("wakeNote").textContent = "ขอกันจอดับไม่ได้ (" + ((e && e.name) || "Error") + ") เช่น แบตเหลือน้อยหรือโหมดประหยัดพลังงาน";
+  }
+}
+
+// ===== 9) ต่อปุ่มและช่องต่าง ๆ =====
+$("go").addEventListener("click", () => (run ? stop() : start()));
+$("testBtn").addEventListener("click", sendTest);
+$("settings").addEventListener("submit", (e) => e.preventDefault());   // กด Enter ในช่องไม่ให้โหลดหน้าใหม่
+$("settings").addEventListener("input", (e) => {
+  if (e.target === $("team") && isAutoClick($("click").value.trim())) {
+    $("click").value = autoClick($("team").value.trim().toLowerCase());
+  }
+  updateSubLink();
+  saveSettings();
+});
+$("settings").addEventListener("change", saveSettings);
+$("newTopic").addEventListener("click", () => {
+  if ($("topic").value.trim() && !confirm("เปลี่ยนชื่อหัวข้อแล้ว ต้อง subscribe ชื่อใหม่ในแอป ntfy อีกครั้ง เปลี่ยนเลยไหม?")) return;
+  $("topic").value = randomTopic($("team").value.trim().toLowerCase());
+  updateSubLink();
+  saveSettings();
+  showMsg("");
+});
+$("copyTopic").addEventListener("click", async () => {
+  const topic = $("topic").value.trim();
+  if (!topic) return;
+  try { await navigator.clipboard.writeText(topic); showMsg(""); log("คัดลอกชื่อหัวข้อแล้ว (วางในแอป ntfy)"); }
+  catch (e) { showMsg("คัดลอกให้ไม่ได้ เลือกข้อความในช่องชื่อหัวข้อแล้วคัดลอกเอง"); }
+});
+$("askNotify").addEventListener("click", askNotify);
+$("wake").addEventListener("change", () => setWake($("wake").checked));
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && $("wake").checked && (!wakeLock || wakeLock.released)) setWake(true);
+});
+
+loadSettings();
+updateSubLink();
+updateNotifyNote();
+if (!("wakeLock" in navigator)) {                    // บอกตั้งแต่แรกว่าเครื่องนี้กันจอดับไม่ได้
+  $("wake").disabled = true;
+  $("wakeNote").textContent = WAKE_NO;
+}
+</script>
+</body>
+</html>

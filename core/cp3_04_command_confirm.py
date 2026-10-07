@@ -3,15 +3,15 @@
 # หลักการ  : ส่งคำสั่งแล้วไม่ได้แปลว่าของจริงทำตาม (ข้อความหาย PLC ปฏิเสธ หรือ PLC ดับอยู่)
 #            ส่ง -> รอคำยืนยันภายใน TIMEOUT_MS -> เงียบ = ส่งซ้ำ RETRIES ครั้ง -> ยังเงียบ = สั่งปิด ถือว่า "ไม่รู้"
 #            สถานะปั๊มบนจอมาจาก plc/state เท่านั้น ไม่ใช่จากปุ่มที่เรากด
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM (ตรงกับ field_sim.py)
-# ลองเล่น  : เปิด field_sim.py บนโน้ตบุ๊ก กด SW5 = ขอเปิดปั๊ม SW6 = ขอปิด ดูขั้นบนจอ
-#            ปิด field_sim.py แล้วกดอีกที ดูทางถอย · น้ำในถังต่ำกว่า 10 % แล้วขอเปิด: PLC ตอบ blocked_tank
+# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS และ TEAM (ตรงกับเลขกลุ่มที่เปิด s2/app/farm_web.html)
+# ลองเล่น  : เปิด PLC Simulator ใน s2/app/farm_web.html (กด "ต่อ" แล้ว "เริ่ม PLC Simulator") กด SW5 = ขอเปิดปั๊ม SW6 = ขอปิด ดูขั้นบนจอ
+#            กด "หยุด Simulator" แล้วกดอีกที ดูทางถอย · เลื่อนถังจำลองต่ำกว่า 10 % แล้วขอเปิด: PLC ตอบ blocked_tank
 # สัญญา    : ส่ง bento-aiot/<TEAM>/plc/cmd  {"pump": 1, "sec": 10} หรือ {"pump": 0}
 #            ฟัง bento-aiot/<TEAM>/plc/state {"pump": 0/1, "left_s", "why", "n"}
 #            PLC ตอบทุกคำสั่งด้วย why = on / off / blocked_tank / bad_cmd (tick / start / timeout / stop ไม่นับ)
 #            plc/state ไม่มีเลขคำสั่ง จึงจับคู่ด้วย why + pump
 # ปลอดภัย  : ทางถอยสั่งปิดได้เมื่อสายยังดีเท่านั้น ชั้นสุดท้ายคือ PLC (เปิดครั้งละไม่เกิน 30 วิ ไม่เปิดถ้าถังต่ำกว่า 10 %)
-# บอร์ด    : TESAIoT Dev Kit และ BENTO Emulator (ใน Emulator field_sim ตอบไม่ได้ จึงเห็นทางถอยทุกครั้ง)
+# บอร์ด    : TESAIoT Dev Kit และ BENTO Emulator (Emulator ต่อ broker สาธารณะจริง จึงคุยกับ PLC Simulator ได้ · ถ้าไม่ได้เปิด PLC Simulator จะเห็นทางถอยทุกครั้ง)
 
 import buttons
 import json
@@ -23,7 +23,7 @@ import wifi
 # ---- 1) ตั้งค่า (แก้ได้) ----
 WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"   # ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค
 WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"   # อย่างน้อย 8 ตัว - อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร
-TEAM = "teamXX"                       # เลขกลุ่ม ต้องตรงกับ TEAM ใน field_sim.py
+TEAM = "teamXX"                       # เลขกลุ่ม ต้องตรงกับเลขกลุ่มที่เปิด farm_web.html
 PUMP_SEC = 10        # SW5 ขอเปิดปั๊มกี่วินาที (PLC ตัดเองที่ 30)
 TIMEOUT_MS = 3000    # รอคำยืนยันนานเท่านี้ต่อครั้ง
 RETRIES = 1          # เงียบแล้วส่งซ้ำกี่ครั้ง ก่อนยอมแพ้
@@ -31,9 +31,9 @@ SAMPLE_MS = 20       # อ่านปุ่มและกล่องรับ
 RUN_MS = 300000      # เล่นนาน 5 นาทีแล้วจบเอง
 SPEAKER = 40         # ความดังลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป)
 VOLUME = 25          # ความดังเสียง 0-127
-BTN_NAMES = ("SW5", "SW6")   # SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
-BROKER = "broker.hivemq.com"          # ต้องตรงกับ BROKER ใน field_sim.py
+BROKER = "broker.hivemq.com"          # ต้องเป็น broker เดียวกับที่ farm_web.html ต่อ (HiveMQ)
 CLIENT_ID = "bento-cmd-" + TEAM        # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
 T_CMD = "bento-aiot/" + TEAM + "/plc/cmd"
 T_STATE = "bento-aiot/" + TEAM + "/plc/state"
@@ -168,7 +168,7 @@ def main():
                 show_link(w, False)
             now = time.ticks_ms()
             for i in (0, 1):                   # i = 0 คือ SW5 (เปิด), i = 1 คือ SW6 (ปิด)
-                d = buttons.pressed(i)
+                d = buttons.pressed(1 - i)     # SW5 = pressed(1), SW6 = pressed(0)
                 if d and not down[i] and want is None:   # เพิ่งกด และไม่มีคำสั่งค้างอยู่
                     want, tries, t_sent = 1 - i, 1, now
                     send_cmd(want)             # ขั้น 1: ส่ง -> ขั้น 2: รอ
@@ -217,6 +217,6 @@ def main():
 main()
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
-# 1) เดาก่อนรัน: ปิด field_sim.py แล้วกด SW5 นานเท่าไรจอจึงขึ้น "ยอมแพ้: สั่งปิด" (ดู TIMEOUT_MS กับ RETRIES)
+# 1) เดาก่อนรัน: กด "หยุด Simulator" ใน farm_web.html แล้วกด SW5 นานเท่าไรจอจึงขึ้น "ยอมแพ้: สั่งปิด" (ดู TIMEOUT_MS กับ RETRIES)
 # 2) ตั้ง RETRIES = 0 แล้วลองอีกที การส่งซ้ำมีข้อดีข้อเสียอะไร ถ้าคำสั่งแรกถึงแล้วแต่คำตอบหาย จะเกิดอะไร
 # 3) ตั้ง PUMP_SEC = 999 แล้วกด SW5 ปั๊มเปิดนานกี่วินาที ใครเป็นคนตัด (ดู left_s ที่ PLC ตอบ)

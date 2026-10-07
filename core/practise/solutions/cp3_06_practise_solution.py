@@ -31,7 +31,7 @@ SAMPLE_MS = 20       # อ่านปุ่มทุกกี่ ms (เฟิ�
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -121,7 +121,7 @@ def main():
     t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         for i in (0, 1):                  # i = 0 คือ SW5, i = 1 คือ SW6
-            d = buttons.pressed(i)
+            d = buttons.pressed(1 - i)    # SW5 = pressed(1), SW6 = pressed(0)
             if d and not down[i]:         # ขอบกด
                 n += 1
                 arg = want if i else 3

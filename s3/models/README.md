@@ -4,6 +4,8 @@
 
 อยากลองโมเดลไหนก็ได้บนหน้าจอเดียว ให้ใช้ [`../sf3_07_ai_model_lab.py`](../sf3_07_ai_model_lab.py) (AI Model Lab)
 
+อยากใช้โมเดลเป็น "ภารกิจในฟาร์ม" ที่ตัดสินด้วยกฎ + AI แล้วส่งผลขึ้น MQTT ให้หน้าเว็บและมือถือ ให้ใช้ [`../sf3_08_farm_ai_missions.py`](../sf3_08_farm_ai_missions.py) (7 ภารกิจ ใช้คู่กับ `s3/app/ai_farm.html`)
+
 ## สถานะการทดสอบ
 
 - **ทดสอบแล้ว:** TESAIoT Dev Kit เฟิร์มแวร์ 2.4.2 รันด้วยปุ่ม Run ของ BENTO IDE ทุกไฟล์ผ่าน 3 ใน 3 รอบ ขณะทดสอบไม่มีเสียงหรือท่าทางกระตุ้น จึงยืนยันได้ว่าไฟล์รันและวาดหน้าจอครบ แต่ยังไม่ได้วัดความแม่นของแต่ละโมเดล
@@ -29,6 +31,14 @@
 | [`environment_sounds.py`](environment_sounds.py) | Environment Sounds (Store, ทดลอง) | ห้องทดลองความสับสนของโมเดล: แตะช่อง แล้วเปิดเสียงนั้น 10 วินาที |
 | [`yes_no.py`](yes_no.py) | Yes / No (Store, ทดลอง) | ยืนยันด้วยเสียง: แตะ Ask แล้วพูด yes หรือ no ภายใน 5 วินาที |
 | [`voice_commands.py`](voice_commands.py) | Voice Commands (Store, ทดลอง) | บังคับรถเข็นด้วยคำสั่งเสียง |
+
+**ชื่อใน Store กับชื่อบนบอร์ดต่างกัน 3 ตัว:** โค้ดหาโมเดลด้วยชื่อที่บอร์ดรายงาน (`edge_ai.models()`) ไม่ใช่ชื่อการ์ดใน Store
+
+| ชื่อใน Edge AI Store | ชื่อบนบอร์ด (ใช้ในโค้ด) |
+|---|---|
+| Siren | SirenDetection |
+| EnvironmentSounds_ST | Environment Sounds |
+| VoiceCommands | Voice Commands |
 
 ## ก่อนเริ่ม
 

@@ -93,16 +93,16 @@ https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm
 
   VR1--VR4                `pots.read(0)`--`pots.read(3)`   ตั้ง threshold หรือจำลองค่า
 
-  SW5 / SW6               `buttons.pressed(0)` /           เปิด/ปิด, รับทราบ, สั่งงาน
-                          `buttons.pressed(1)`             
+  SW5 / SW6               `buttons.pressed(1)` /           เปิด/ปิด, รับทราบ, สั่งงาน
+                          `buttons.pressed(0)`             
 
   Speaker                 `ui.tone()`                      เสียงเตือน
 
   Wi-Fi + MQTT            `wifi` / `mqtt`                  รายงานและรับคำสั่ง
   --------------------------------------------------------------------------------
 
-> **ปุ่ม:** SW5 = ปุ่มล่าง = `buttons.pressed(0)` · SW6 = ปุ่มบน =
-> `buttons.pressed(1)`\
+> **ปุ่ม:** SW5 = ปุ่มล่าง = `buttons.pressed(1)` · SW6 = ปุ่มบน =
+> `buttons.pressed(0)`\
 > อย่าใช้ชื่อ `SW2` บนฐานบอร์ดเป็นปุ่มของกิจกรรมนี้ เพราะ SW2 เป็นสวิตช์ตัดไฟ
 
 ------------------------------------------------------------------------
@@ -395,7 +395,7 @@ https://edgeai-store.tesaiot.dev
 
 -   [ ] แก้ `WIFI_SSID`, `WIFI_PASS`, `TEAM`
 -   [ ] ทดลองให้บอร์ดส่งผล AI
--   [ ] ดูข้อความในแอป/แดชบอร์ด
+-   [ ] ดูข้อความในแอป/แดชบอร์ด และเปิด [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__) (ใส่เลขทีมเดียวกัน)
 -   [ ] เปลี่ยน `HEARTBEAT_MS` แล้วดูผล
 
 **ถ้า heartbeat ห่างขึ้น ข้อดี:**
@@ -403,6 +403,38 @@ https://edgeai-store.tesaiot.dev
 
 **ข้อเสีย:**
 \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+## 9.5 ภารกิจ AI ในฟาร์ม --- กฎ + AI = ความเห็นที่สอง
+
+**ไฟล์:**
+[`sf3_08_farm_ai_missions.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py)
+· หน้าทีม [`ai_farm.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__)
+· [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__)
+
+ทีมละ 1 ภารกิจ: `pump` หมอปั๊มน้ำ · `siren` ยามฟังไซเรน · `barn` หูโรงเรือน · `night` ยามกลางคืน · `voice` สั่งปั๊มด้วยเสียง · `worker` คนงานปลอดภัย · `drill` ช่างซ่อมโรงเรือน (ผู้สอนสาธิต)
+
+-   [ ] Deploy โมเดลของภารกิจจาก [Edge AI Store](https://edgeai-store.tesaiot.dev) ลงบอร์ด
+-   [ ] แก้ `MISSION`, `TEAM`, `WIFI_SSID`, `WIFI_PASS` แล้วรัน
+-   [ ] เปิดหน้าทีมและหน้าแจ้งเตือน ใส่เลขทีมเดียวกัน
+-   [ ] ทำให้เกิดเหตุจริง แล้วกด **เหตุจริง / เตือนผิด / ไม่แน่ใจ** ให้ครบ 10 ครั้ง
+-   [ ] ดาวน์โหลด CSV จากหน้าทีม (ไว้ฝึกโมเดลใน BENTO Edge AI Trainer)
+
+**ไม่มีบอร์ด:** เปิดหน้าทีมต่อท้าย `&sim=1` แล้วกดปุ่มเหตุการณ์ของภารกิจ หรือรัน `sf3_08` ใน BENTO Emulator (ใช้โมเดลในตัวแทน)
+
+  ภารกิจ       โมเดล (ชื่อบนบอร์ด)   เตือนทั้งหมด   เหตุจริง   เตือนผิด   ไม่แน่ใจ
+  ------------ --------------------- -------------- ---------- ---------- ----------
+  \_\_\_\_\_\_\_\_   \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_   \_\_\_\_\_      \_\_\_\_   \_\_\_\_   \_\_\_\_
+
+### คิด
+
+**AI กับกฎเห็นต่างกันตอนไหน (lvl 1) และใครถูก:**
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+**ถ้าเป็นฟาร์มจริง จะติดบอร์ดไว้ตรงไหน และจะเก็บเสียง/ท่าทางอะไรไปฝึกโมเดลเพิ่ม:**
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
+
+**รวมสองภารกิจ หรือภารกิจกับกิจกรรม 5 แล้วได้อะไรใหม่ (เช่น ฝน + Gateway = งดรดน้ำ):**
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
 ------------------------------------------------------------------------
 
@@ -665,6 +697,12 @@ https://edgeai-store.tesaiot.dev
   [`sf3_06_ai_to_mqtt.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py)             ส่งผล AI ขึ้น MQTT
 
   [`sf3_07_ai_model_lab.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_07_ai_model_lab.py)         ห้องทดลองโมเดล AI
+
+  [`sf3_08_farm_ai_missions.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py) 7 ภารกิจ AI: กฎ + AI → MQTT → เว็บทีม + มือถือ
+
+  [`ai_farm.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__)                        หน้าทีม + บอร์ดจำลอง + CSV ผลตอบกลับ
+
+  [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__)              ntfy / Telegram จากเบราว์เซอร์
   --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------

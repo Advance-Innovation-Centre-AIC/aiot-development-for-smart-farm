@@ -2,7 +2,7 @@
 #
 # ภารกิจ   : ฟัง field/+ (โหนด) plc/state (PLC) cmd (แอป) · ดิน < 30 % และน้ำพอ -> ส่ง plc/cmd รดน้ำ 10 วิ
 #            แอปเรียกคนที่ฟาร์ม (beep) และส่งข้อความขึ้นจอไฟ RGB (say) ได้เหมือน sf2_03
-# ลองเล่น  : รัน app/field_sim.py บนโน้ตบุ๊ก หรืออีกกลุ่มรัน sf2_07_field_station.py (TEAM เดียวกัน)
+# ลองเล่น  : เปิด PLC Simulator ใน app/farm_web.html หรืออีกกลุ่มรัน sf2_07_field_station.py (TEAM เดียวกัน)
 # บนจอ     : ไฟ PLC กับ RGB_BLUE ตาม plc/state ที่ PLC รายงาน ไม่ใช่ที่เราสั่ง
 
 import buttons
@@ -114,7 +114,7 @@ def app_request(cmd, tank):
         if tank is None or tank < TANK_MIN:
             return None, None, "ถังน้ำไม่พอ"
         sec = cmd.get("sec", PUMP_SEC)
-        sec = min(sec, PUMP_MAX_S) if isinstance(sec, int) and sec > 0 else PUMP_SEC
+        sec = min(sec, PUMP_MAX_S) if isinstance(sec, int) and not isinstance(sec, bool) and sec > 0 else PUMP_SEC
         return {"pump": 1, "sec": sec}, None, "รดน้ำ %d วิ" % sec
     if act == "auto":
         return None, 1 if cmd.get("on", 1) else 0, "ตั้งออโต้"
@@ -380,6 +380,6 @@ finally:
         pass
 
 # ----- ตาคุณ -----
-# 1) ปิด field_sim.py แล้ว Gateway รู้ตัวในกี่วิ ถ้า PLC หลุดตอนปั๊มเดิน อะไรกันน้ำท่วม
-# 2) เพิ่มโหนด field/light ใน field_sim.py แล้วแก้ should_water ไม่ให้รดตอนแดดจัด
+# 1) กด "จำลอง PLC หลุด" ใน farm_web.html แล้ว Gateway รู้ตัวในกี่วิ ถ้า PLC หลุดตอนปั๊มเดิน อะไรกันน้ำท่วม
+# 2) เพิ่มโหนด field/light (แก้ PLC Simulator ใน farm_web.html หรือ sf2_07 ให้ส่งค่าแสง) แล้วแก้ should_water ไม่ให้รดตอนแดดจัด
 # 3) ตั้ง COOLDOWN_MS = 5000 แล้ว 1 นาทีสั่ง PLC กี่ครั้ง ทำไมต้องรอ

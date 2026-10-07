@@ -63,7 +63,7 @@ def read_climate():
 
 
 class Button:
-    # ปุ่มบนฐาน (0 = SW5 ล่าง, 1 = SW6 บน) ที่ไม่พลาดการกดสั้น ๆ
+    # ปุ่มบนฐาน (1 = SW5 ล่าง ขา P17.7, 0 = SW6 บน ขา P17.5) ที่ไม่พลาดการกดสั้น ๆ
     # เฟิร์มแวร์กรองสั่น 50 ms จึงต้องอ่านบ่อย ๆ ระหว่างรอ (wait_ms)
 
     def __init__(self, index):
@@ -290,7 +290,7 @@ def main():
     if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
-    sw5 = Button(0)
+    sw5 = Button(1)
     temp_rec, hum_rec = MinMax(), MinMax()
     p_start = None
     shown = None
@@ -328,4 +328,4 @@ main()
 # 3) คำนวณ "ดัชนีความร้อน" แบบง่าย: t + 0.1 * (h - 50) เขียนเป็นฟังก์ชันในส่วน 3)
 #    แล้วโชว์เพิ่มอีกบรรทัดในการ์ดความกดอากาศ
 # 4) ให้จอไฟ RGB โชว์ความชื้นแทนอุณหภูมิ เมื่อกด SW6 (ปุ่มบน) ค้างไว้
-#    ใบ้: sw6 = Button(1) ใส่ใน wait_ms(TICK_MS, (sw5, sw6)) แล้วดู sw6.down
+#    ใบ้: sw6 = Button(0) ใส่ใน wait_ms(TICK_MS, (sw5, sw6)) แล้วดู sw6.down

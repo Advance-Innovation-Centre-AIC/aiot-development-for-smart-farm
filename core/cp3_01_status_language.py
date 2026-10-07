@@ -11,7 +11,7 @@
 #            ค้างไว้ที่ "อันตราย" นับว่าเสียงดังซ้ำทุกกี่วินาที แล้วกด SW5 (ปุ่มล่าง) = รับทราบ
 # ของบนบอร์ด: VR1 = ตัวเลือกสถานะ 0-3 (แทนผลตัดสินจาก Part 2) · ไฟ RGB_GREEN / RGB_BLUE / RGB_RED
 #            (เหลือง = RGB_RED + RGB_GREEN ติดพร้อมกัน) · จอไฟ RGB 16x8 · ลำโพง
-#            SW5 (ปุ่มล่าง) = buttons.pressed(0) = รับทราบ
+#            SW5 (ปุ่มล่าง) = buttons.pressed(1) = รับทราบ
 #            ไฟ RGB ใช้แค่ on()/off() และจังหวะกะพริบ: เฟิร์มแวร์มี led.brightness(0-100) ด้วย
 #            แต่ไฟล์นี้ไม่ใช้เป็นภาษาสถานะ เพราะ Emulator แสดงไฟหรี่ค้างไว้ไม่ได้
 # ในฟาร์ม  : ไฟเสาบนตู้ควบคุมปั๊ม ไฟหน้าโรงเรือน และแจ้งเตือนในแอป ใช้ภาษาเดียวกันหมด
@@ -39,7 +39,7 @@ TICK_MS = 1000       # อัปเดตตัวนับถอยหลัง
 RUN_MS = 180000      # เล่นนาน 3 นาทีแล้วจบเอง
 SPEAKER = 40             # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 VOLUME = 25              # ความดังเสียง 0-127 (≈20%) ใช้กับทุกเสียงในไฟล์นี้
-BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน = pressed(1)
+BTN_NAMES = ("SW5", "SW6")   # ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 
 COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
 COL_CARD = 0x171B22
@@ -169,7 +169,7 @@ def main():
             lit, t_blink = not lit, now                        # 3) จังหวะกะพริบ: ไฟ RGB กับ Led บนจอพร้อมกัน
             show_light(leds, LEDS[state], lit)
             w["led"].value(1 if lit else 0)
-        down = buttons.pressed(0)                              # SW5 กรองสั่นทุกครั้งที่อ่าน จึงอ่านทุก 20 ms
+        down = buttons.pressed(1)                              # SW5 กรองสั่นทุกครั้งที่อ่าน จึงอ่านทุก 20 ms
         if down and not was and state >= 2 and not acked:     # ขอบกด SW5 = รับทราบ
             acked = True
             w["msg"].text("รับทราบ: เงียบ ไฟยังอยู่")

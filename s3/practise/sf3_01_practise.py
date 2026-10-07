@@ -15,7 +15,7 @@ MIN_CM, SPAN_CM = 50, 200  # VR3 ตั้งเขตเตือนได้ 5
 CONFIRM_N = 3  # ต้องเห็นติดกันกี่รอบถึงเชื่อ (1 ขึ้นไป)
 THRESH_DB = 4.0  # เป้าต้องแรงกว่าฉากนิ่งกี่ dB (0.1-60)
 MAX_CM = 300  # ระยะไกลสุดบนแถบ ไม้บรรทัด กราฟ (cm)
-BTN_NAMES = ("SW5", "SW6")  # ชื่อบนบอร์ด: SW5 = ปุ่มล่าง = pressed(0), SW6 = ปุ่มบน
+BTN_NAMES = ("SW5", "SW6")  # ชื่อบนบอร์ด: SW5 = ปุ่มล่าง = pressed(1), SW6 = ปุ่มบน = pressed(0)
 VOLUME = 25  # ความดังเสียง 0-127
 SPEAKER = 40  # ความดังลำโพงรวม 0-100% (fw 2.4.2+)
 RUN_MS = 180000  # เวลาเล่นต่อรอบ ms (3 นาที)
@@ -64,7 +64,7 @@ def calibrate_radar():
 
 
 class Button:
-    # 0 = SW5, 1 = SW6 · อ่านบ่อยใน wait_ms() จะไม่พลาดการแตะสั้น
+    # 1 = SW5 (ล่าง ขา P17.7), 0 = SW6 (บน ขา P17.5) · อ่านบ่อยใน wait_ms() จะไม่พลาดการแตะสั้น
 
     def __init__(self, index):
         self.index = index
@@ -322,7 +322,7 @@ def main():
         return
     w = build_screen()
     start_guard(w)
-    g, sw5 = Guard(), Button(0)  # SW5
+    g, sw5 = Guard(), Button(1)  # SW5
     every = TICK_MS // SAMPLE_MS  # TICK_MS ต้อง >= SAMPLE_MS
     tick, t0 = 0, time.ticks_ms()
     try:

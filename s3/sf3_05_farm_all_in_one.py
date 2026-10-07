@@ -159,7 +159,7 @@ def app_request(raw):
         return None, 0
     if act == "pump" and cmd.get("on", 1):
         sec = cmd.get("sec", 10)
-        return act, min(sec, 30) if isinstance(sec, int) and sec > 0 else 10
+        return act, min(sec, 30) if isinstance(sec, int) and not isinstance(sec, bool) and sec > 0 else 10
     return (act, 0) if act in ("pump", "ack", "beep") else (None, 0)
 
 
@@ -321,7 +321,7 @@ def main():
     if not radar_start():
         w["cmd"].text("เรดาร์ไม่ตอบ")
     beep(72, 79)
-    water, ack = Button(0), Button(1)
+    water, ack = Button(1), Button(0)
     t0 = t_tick = t_rep = time.ticks_ms()
     try:
         while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
@@ -352,5 +352,5 @@ main()
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) decide(): มีผู้บุกรุก ห้ามเปิดปั๊ม + ส่ง event บอกแอปว่าทำไม
 # 2) แอป (s2/app/): รายงานหายเกิน 15 วิ = เตือน "บอร์ดเงียบ"
-# 3) PLC: รัน s2/app/field_sim.py ให้ tick() ส่ง {"pump":1,"sec":10} / {"pump":0}
+# 3) PLC: เปิด PLC Simulator ใน s2/app/farm_web.html ให้ tick() ส่ง {"pump":1,"sec":10} / {"pump":0}
 #    เข้า "plc/cmd" ตอนปั๊มเปิด/ปิด ดูคำตอบใน plc/state

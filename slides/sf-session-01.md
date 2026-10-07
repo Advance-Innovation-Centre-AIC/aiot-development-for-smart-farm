@@ -433,12 +433,12 @@ section table { font-size: .7em; }
 | ของบนบอร์ด | ในโค้ด | ในฟาร์มใช้ทำอะไร | กิจกรรม |
 |---|---|---|---|
 | 🎛️ ลูกบิด **VR1–VR4** | `pots.read(0)` … `pots.read(3)` | แทนเซนเซอร์ที่ยังไม่มี: ความชื้นดิน น้ำในถัง | 3 · ภารกิจ |
-| 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(0)`, `buttons.pressed(1)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | 1 · 3 · 4 · ภารกิจ |
+| 🔘 ปุ่ม **SW5** (ล่าง), **SW6** (บน) บนฐานบอร์ด | `buttons.pressed(1)`, `buttons.pressed(0)` | สั่งปั๊มเอง ตั้งศูนย์ ล้างตัวนับ | 1 · 3 · 4 · ภารกิจ |
 | 💡 ไฟ LED สีบนโมดูล SoM (RGB_RED / RGB_BLUE) | `gpio.led(...)` | ไฟแดง = พืช/แท็งก์มีปัญหา · ไฟฟ้า = ปั๊มเดิน (คนละอย่างกับจอไฟ RGB 16×8) | 2 · 3 · 4 · ภารกิจ |
 | 🔊 ลำโพง | `beep("tap")` → `ui.tone(...)` ตั้งความดังรวมที่ `SPEAKER` (0-100%) และความดังแต่ละเสียงที่ `VOLUME` | เสียงเตือน เสียงยืนยัน | ทุกกิจกรรม |
 | 🖥️ จอสัมผัส | `ui` | แผงหน้าปัดฟาร์ม | ทุกกิจกรรม |
 
-<div class="src">SW5 (ปุ่มล่าง) = P17.5 · SW6 (ปุ่มบน) = P17.7 · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
+<div class="src">SW5 (ปุ่มล่าง) = P17.7 · SW6 (ปุ่มบน) = P17.5 · VR1–VR4 = <code>pots.read(0)</code>–<code>pots.read(3)</code> ค่า 0–4095 · จอไฟ RGB = DFR0522 ที่ I²C 0x10 · ข้อมูลฮาร์ดแวร์: TESAIoT Dev Kit SDK — tesaiot.github.io/tesaiot-pse84-devkit-sdk</div>
 
 <div class="warn">
 
@@ -568,7 +568,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
    - **ENVIRONMENT** เลื่อน TEMP / HUMIDITY / PRESSURE แทนการเป่าลม
    - **TILT · BMI270** ลากลูกบอลแทนการเอียงบอร์ด · ปุ่ม **Shake** แทนการกระแทก
 3. **TESAIoT DEV KIT** (แถวล่างสุด) — **ลูกบิด VR1–VR4, ปุ่มคู่ของฐานบอร์ด, จอไฟ RGB 16×8**
-   <span class="src">แผง Emulator พิมพ์ชื่อปุ่มเป็น SW4 / SW5 — ปุ่มซ้ายของแผง = <b>SW5</b> (ปุ่มล่างบนบอร์ด) · ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</span>
+   <span class="src">แผง Emulator ตอนนี้พิมพ์ชื่อปุ่มเป็น SW5 / SW6 ตรงกับบอร์ด (ภาพทางซ้ายถ่ายตอนแผงยังพิมพ์ SW4 / SW5) — ปุ่มซ้ายของแผง = <b>SW5</b> (ปุ่มล่างบนบอร์ด) · ปุ่มขวา = <b>SW6</b> (ปุ่มบน)</span>
 
 <div class="warn">
 
@@ -594,7 +594,7 @@ macOS → ไฟล์ `…_universal.dmg` · Windows → ไฟล์ `…_x64-
 <div class="think">
 
 **ปุ่มคู่บนฐานบอร์ด:** **SW5 = ปุ่มล่าง** · **SW6 = ปุ่มบน**
-ในโค้ดของเรา: `buttons.pressed(0)` = **SW5** (ล่าง) · `buttons.pressed(1)` = **SW6** (บน)
+ในโค้ดของเรา: `buttons.pressed(1)` = **SW5** (ล่าง) · `buttons.pressed(0)` = **SW6** (บน)
 
 </div>
 
@@ -960,7 +960,7 @@ HUM_FIX = True       # ... แปลงความชื้นเป็นข�
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         t, t_raw, h, p = read_climate()                  # 1) อ่าน
         rounds += 1
-        if sw5.pressed_now():                             # 2) SW5 (ปุ่มล่าง) = เริ่มแข่งใหม่
+        if sw5.pressed_now():  # 2) SW5 = เริ่มแข่งใหม่
             temp_rec.reset()
             hum_rec.reset()
             beep("tap")

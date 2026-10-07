@@ -248,7 +248,7 @@ def main():
     show_link(w, True)
     w["led"].value(1)
     show_note(w, "ส่งเข้า " + TOPIC, COL_OK)
-    send_btn, call_btn = Button(0), Button(1)
+    send_btn, call_btn = Button(1), Button(0)
     sent, last_t, first = 0, None, True
     t_read = t_send = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:

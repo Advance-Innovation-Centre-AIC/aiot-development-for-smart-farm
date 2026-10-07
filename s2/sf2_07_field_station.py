@@ -114,7 +114,7 @@ def plc_decide(raw, tank):
     if tank < PLC_TANK_MIN:
         return None, "blocked_tank"
     sec = cmd.get("sec", PLC_DEFAULT_S)
-    if not isinstance(sec, int) or sec <= 0:
+    if isinstance(sec, bool) or not isinstance(sec, int) or sec <= 0:  # true/false ใน JSON ไม่ใช่จำนวนเต็ม (สัญญาข้อ 4) แม้ Python นับ bool เป็น int
         sec = PLC_DEFAULT_S
     return min(sec, PLC_MAX_S), "on"
 
