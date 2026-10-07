@@ -62,14 +62,15 @@
   <div class="simGrid">
     <div class="simBox"><div class="simLabel">PLC</div><div id="plcSimOnline" class="simValue">OFF</div></div>
     <div class="simBox"><div class="simLabel">ปั๊ม</div><div id="plcSimPump" class="simValue">OFF</div></div>
-    <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">60 %</div></div>
+    <div class="simBox"><div class="simLabel">ดินจำลอง</div><div id="plcSimSoil" class="simValue">45 %</div></div>
     <div class="simBox"><div class="simLabel">ถังน้ำจำลอง</div><div id="plcSimTank" class="simValue">80 %</div></div>
   </div>
   <div class="bar">
-    <label>ตั้งดินจำลอง <input id="plcSimSoilSet" type="range" min="0" max="100" value="60"></label>
+    <label>ตั้งดินจำลอง <input id="plcSimSoilSet" type="range" min="0" max="100" value="45"></label>
     <label>ตั้งถังน้ำจำลอง <input id="plcSimTankSet" type="range" min="0" max="100" value="80"></label>
   </div>
-  <p class="simHint">เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
+  <p id="plcSimWhy" class="simValue" style="font-size:16px"></p>
+  <p class="simHint">กดเริ่มทุกครั้งแปลงกลับไปที่ดิน 45 % ถัง 80 % · เลื่อนดินลงต่ำกว่า 30 % เพื่อให้ Gateway สั่งรดน้ำเอง · เลื่อนถังลงต่ำกว่า 10 % เพื่อดู PLC ไม่ยอมเปิดปั๊ม</p>
   <p class="simHint">คำสั่งจาก Gateway ใช้ topic <code>.../plc/cmd</code> ตาม contract เดียวกับ <code>field_sim.py</code> เช่น <code>{"pump":1,"sec":10}</code> และ Simulator รายงาน <code>plc/state</code> + <code>field/soil</code> + <code>field/tank</code> ในรูปแบบเดียวกัน</p>
 </section>
 <p>
@@ -99,7 +100,10 @@ const telemetryRows = [];
 
 // ----- PLC / field simulator -----
 let plcSimTimer = null;
-let plcSimState = { online: false, pump: 0, soil: 60, tank: 80, pumpUntil: 0, why: "start", n: 0, lastStateAt: -Infinity };
+// ค่าเริ่มต้นเท่ากับ field_sim.py (SOIL_START, TANK_START) และกด "เริ่ม PLC Simulator" ทุกครั้งจะกลับมาที่ค่านี้
+const SOIL_START = 45;
+const TANK_START = 80;
+let plcSimState = { online: false, pump: 0, soil: SOIL_START, tank: TANK_START, pumpUntil: 0, why: "start", n: 0, lastStateAt: -Infinity, lastCmdAt: -Infinity };
 const PLC_SIM_PERIOD_MS = 1000;
 const FIELD_SIM_PERIOD_MS = 5000;
 const PLC_MAX_S = 30;
@@ -108,6 +112,11 @@ const SOIL_DRY_PER_S = 0.4;
 const SOIL_WET_PER_S = 2.0;
 const TANK_USE_PER_S = 1.0;
 const TANK_FILL_PER_S = 0.05;
+// ค่าของฝั่ง Gateway (sf2_06_smart_gateway.py: SOIL_MIN, COOLDOWN_MS, TANK_MIN) ใช้แค่อธิบายบนหน้านี้ว่าทำไมปั๊มยังหยุด
+// ถ้านักเรียนแก้ค่าใน sf2_06 ข้อความนี้จะไม่รู้ จึงเขียนว่า "ค่าเริ่มต้นของ sf2_06"
+const GW_SOIL_MIN = 30;
+const GW_COOLDOWN_S = 60;
+const GW_TANK_MIN = 10;
 
 function simTopic(kind) { return ROOT + "/" + team + "/" + kind; }
 
@@ -135,7 +144,27 @@ function drainBoardQueue() {
 function simPublish(kind, obj) {
   return toBoard(simTopic(kind), obj);
 }
+// บอกเป็นคำว่าตอนนี้ทำไมปั๊มเดินหรือหยุด: ระบบถูกต้องแต่ต้องรอเงื่อนไข ถ้าไม่บอก ผู้เรียนเห็นแค่ "ปั๊ม OFF" แล้วคิดว่าพัง
+function plcSimWhyText() {
+  const s = plcSimState;
+  if (!s.online) return "";
+  const soil = Math.round(s.soil), tank = Math.round(s.tank);
+  if (s.pump) {
+    const left = s.pumpUntil ? Math.max(0, Math.ceil((s.pumpUntil - Date.now()) / 1000)) : 0;
+    return "ปั๊มเดิน อีก " + left + " วิ ตามคำสั่ง plc/cmd จาก Gateway · ดินเพิ่ม ถังลด";
+  }
+  const fill = " · ถังเติมเองช้า ๆ " + Math.round(TANK_FILL_PER_S * 60) + " %/นาที (ฝน/ประปา)";
+  if (soil >= GW_SOIL_MIN) {
+    return "ปั๊มหยุด: ดิน " + soil + " % ยังไม่ต่ำกว่า " + GW_SOIL_MIN + " % (ค่าเริ่มต้นของ sf2_06) · ดินแห้งลงเองช้า ๆ"
+      + " หรือเลื่อน \"ตั้งดินจำลอง\" ลง หรือกด \"รดน้ำ 10 วินาที\"" + fill;
+  }
+  if (tank < GW_TANK_MIN) return "ปั๊มหยุด: ดินแห้งแล้ว แต่ถังเหลือ " + tank + " % ต่ำกว่า " + GW_TANK_MIN + " % Gateway จึงไม่สั่ง" + fill;
+  const wait = Math.ceil(GW_COOLDOWN_S - (Date.now() - s.lastCmdAt) / 1000);
+  if (wait > 0) return "ดินแห้งแล้ว แต่ Gateway เพิ่งสั่งไป ต้องเว้น " + GW_COOLDOWN_S + " วิ ก่อนสั่งใหม่ (อีกราว " + wait + " วิ)";
+  return "ดินแห้งแล้ว (" + soil + " %) รอ Gateway สั่งรดน้ำ · ถ้าไม่สั่ง ดูว่าบอร์ดรัน sf2_06 และเปิดโหมดออโต้อยู่";
+}
 function updatePlcSimUi() {
+  $("plcSimWhy").textContent = plcSimWhyText();
   $("plcSimOnline").textContent = plcSimState.online ? "ONLINE" : "OFF";
   $("plcSimPump").textContent = plcSimState.pump ? "ON" : "OFF";
   $("plcSimSoil").textContent = Math.round(plcSimState.soil) + " %";
@@ -229,6 +258,8 @@ function startPlcSimulator() {
   if (!/^team\d{2}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีมก่อนเริ่ม PLC Simulator", false); return; }
   if (!client || !client.connected) { setStatus("กด ต่อ ก่อนเริ่ม PLC Simulator", false); return; }
   stopPlcSimulator(false);
+  // เริ่มใหม่ทุกครั้งจากแปลงค่าเริ่มต้น: ดิน 45 % ถัง 80 % ไม่ใช่ค่าที่ค้างจากรอบก่อน (เช่นถังที่ใช้จนเหลือน้อย)
+  Object.assign(plcSimState, { soil: SOIL_START, tank: TANK_START, lastCmdAt: -Infinity, n: 0, why: "start" });
   plcSimState.online = true;
   plcSimTicks = 0;
   plcSimPending = { soil: false, tank: false };
@@ -326,6 +357,7 @@ function connect() {
     // PLC Simulator รับคำสั่งจาก Gateway โดยตรง
     // field_sim.py contract: {"pump": 1, "sec": 10} หรือ {"pump": 0}
     if (plcSimState.online && topic.endsWith("/plc/cmd") && data && typeof data === "object" && !Array.isArray(data)) {
+      plcSimState.lastCmdAt = Date.now();    // ใช้บอกเวลาเว้นของ Gateway (GW_COOLDOWN_S)
       if ("pump" in data) {
         let why = "off";
 
