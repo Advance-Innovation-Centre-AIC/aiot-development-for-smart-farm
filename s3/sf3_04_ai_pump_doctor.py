@@ -37,7 +37,8 @@ WINDOW_N = 5             # ดูผลย้อนหลังกี่คร�
 STALL_MS = 8000          # ไม่มีคำตอบใหม่นานเท่านี้ = บอกบนจอ
 MUTE_MS = 800            # โมเดลที่ฟังไมค์: ไม่เชื่อผลช่วงนี้หลังบอร์ดส่งเสียงเอง
 MATRIX_MS = 3000         # ส่งภาพจอไฟ RGB ซ้ำทุกกี่ ms (กันภาพหล่นหาย)
-MAX_CLASSES = 4          # โมเดลในตัวมีไม่เกิน 3 คลาส เผื่อไว้ 4 แถว
+ROWS = 4                 # จอแสดงคะแนน 4 แถว: คลาสที่คะแนนสูงสุด 4 อันดับ (โมเดลจาก Store มีได้ถึง 8 คลาส)
+MAX_CLASSES = 8          # แกน AI รายงานได้ไม่เกิน 8 คลาส · จอไฟ RGB วาดแท่งได้ครบทุกคลาส
 SENSOR_MIC = 2           # ค่าช่อง "sensor" ของโมเดลที่ฟังไมโครโฟน
 RUN_MS = 120000
 TICK_MS = 500
@@ -165,6 +166,11 @@ def alert_rule(hist, alerting, danger):
     return hist, hits >= CONFIRM_N or (alerting and hits > 0)
 
 
+def top_rows(scores, n=ROWS):
+    # เลขคลาสที่คะแนนสูงสุด n อันดับ เรียงจากมากไปน้อย (คลาสที่ชนะอยู่แถวบนสุดเสมอ)
+    return sorted(range(len(scores)), key=lambda i: -scores[i])[:n]
+
+
 def score_frame(scores, top, alerting):
     # ภาพของจอไฟ RGB: ความสูงแท่ง 0-8 แถวต่อคลาส + คลาสที่ชนะ + กำลังเตือนไหม
     return tuple(min(8, round(s * 8)) for s in scores[:MAX_CLASSES]), top, alerting
@@ -196,7 +202,7 @@ def build_answer(w):
 def build_scores(w):
     card(402, 64, 378, 172, "คะแนนทุกคลาส (%)")
     w["names"], w["bars"] = [], []
-    for i in range(MAX_CLASSES):
+    for i in range(ROWS):
         w["names"].append(ui.Label(" ", x=414, y=96 + i * 34, color=COL_TEXT, value=16))
         bar = ui.Bar(x=512, y=98 + i * 34, w=256, h=18, min=0, max=100, value=0)
         bar.color(COL_DIM)
@@ -228,6 +234,7 @@ def say(w, text, color):
 
 def show_model(w, name, labels, mic):
     w["model"].text("โมเดล: " + name + ("  (ฟังไมค์)" if mic else ""))
+    w["labels"] = list(labels)                     # ชื่อคลาสทั้งหมด ใช้ตอนเรียงแถวตามคะแนน
     for i, lb in enumerate(w["names"]):
         lb.text(labels[i] if i < len(labels) else " ")
 
@@ -242,10 +249,17 @@ def show_result(w, r, conf, alerting, hist, alerts):
     w["conf"].text("มั่นใจ %d %%" % conf)
     w["led"].value(1 if alerting else 0)
     hot = COL_BAD if alerting else COL_OK
-    for i, bar in enumerate(w["bars"]):
-        if i < len(r["scores"]):
+    labels = w.get("labels") or []
+    rows = top_rows(r["scores"])                   # มีมากกว่า 4 คลาส: แสดง 4 อันดับแรก ชื่อเปลี่ยนตามคะแนน
+    for row, bar in enumerate(w["bars"]):
+        if row < len(rows):
+            i = rows[row]
+            w["names"][row].text(labels[i] if i < len(labels) else str(i))
             bar.value(int(r["scores"][i] * 100))
             bar.color(hot if i == r["top"] else COL_DIM)
+        else:
+            w["names"][row].text(" ")
+            bar.value(0)
     w["lat"].text("ใช้เวลาคิด %.1f ms" % r["latency_ms"])
     w["streak"].text("อันตราย %d/%d  เตือนแล้ว %d ครั้ง" % (sum(hist), len(hist), alerts))   # 2/5 = อันตราย 2 ใน 5 ผลล่าสุด
     w["chart"].set_next(0, conf)
