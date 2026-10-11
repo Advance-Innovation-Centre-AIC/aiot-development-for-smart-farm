@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<!--
+  idea_web.html - หน้าเว็บตั้งต้นของโปรเจกต์ทีม (ไอเดีย 1-8 ใน PROJECT_BRIEF_lite_th.md) เปิดบนมือถือได้เลย ไม่ต้องติดตั้งอะไร
+  เปิดแบบนี้: idea_web.html?idea=3&team=team05   (idea = เลขไอเดีย 1-8 · team = เลขกลุ่ม)
+              ไม่ใส่ idea = หน้าเลือกไอเดีย · ไม่ใส่ team = พิมพ์เลขกลุ่มในช่องด้านบนแล้วกด "ต่อ"
+  ฟัง  bento-aiot/<ทีม>/telemetry กับ /event  และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd  (สัญญาเดียวกับบอร์ด: s2/app/MQTT_CONTRACT_th.md)
+  โครงมาจาก s2/app/farm_web.html: การ์ดค่า ปุ่มคำสั่ง CSV และหน้าตาเดียวกัน
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ · ทุกค่าที่รับมาแสดงด้วย textContent เท่านั้น
+  ต่อยอด: แก้ IDEAS ในสคริปต์แรกข้างล่าง (ป้ายไทย หน่วย จริง/จำลอง กราฟ ปุ่ม กฎ) ส่วนที่เหลือของไฟล์ไม่ต้องแตะ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เว็บของทีม</title>
+<script>
+// ======================================================================
+//  IDEAS — ทีมแก้ตรงนี้ที่เดียว (ด้วยตัวเอง หรือวางส่วนนี้ + MQTT_CONTRACT_th.md ให้ AI ช่วยแก้)
+// ======================================================================
+//  แต่ละไอเดียมี:
+//    title, problem : ชื่อโปรเจกต์ และปัญหาในหนึ่งประโยค (ขึ้นหัวหน้าเว็บ)
+//    base           : ไฟล์ตั้งต้นของบอร์ด (บอกเฉย ๆ)
+//    keys           : คีย์ที่บอร์ดส่ง -> { label: ชื่อไทย, unit: หน่วย, src: "real" (วัดจริง) | "sim" (จำลองด้วยลูกบิด) | ไม่ใส่ = ค่าตั้ง/คำนวณ,
+//                     fmt: "level" (0/1/2) | "onoff" (0/1) | "alert" (cold+hot...) | ไม่ใส่ = ตัวเลข/ข้อความตามจริง,
+//                     names: ชื่อแทนค่า (ใช้กับ level/onoff), max: ใส่แล้วการ์ดมีแถบระดับ 0..max }
+//                     คีย์ที่บอร์ดส่งมาแต่ไม่อยู่ใน keys ก็ยังขึ้นการ์ด (ใช้ชื่ออังกฤษ)
+//    chart          : คีย์ตัวเลขที่อยากเห็นเป็นกราฟ (10 นาทีล่าสุด)
+//    commands       : ปุ่มสั่งบอร์ด -> { label, cmd: JSON ที่ส่งไป .../cmd, style: "water" | "primary" | "danger",
+//                     input: { key, type: "int" | "ascii", min, max, maxlength, placeholder } ถ้าปุ่มต้องมีช่องกรอก }
+//    rules          : กฎฝั่งเว็บ (เตือนบนหน้าเว็บ ไม่ได้สั่งบอร์ด) -> { key, op, value, level: "warn" | "bad", text }
+//                     op: "==" "!=" ">" "<" ">=" "<=" · "seen" = คีย์นี้เพิ่งมา (ภายใน withinS วินาที) · "silent" = บอร์ดเงียบเกิน sec วินาที
+//                     withinS: ใช้กฎกับค่าที่มาไม่เกินกี่วินาที (เหมาะกับ event) · กฎของคีย์เดียวกันขึ้นเฉพาะข้อแรกที่เป็นจริง (เรียงข้อแรงไว้ก่อน)
+//    note           : หมายเหตุใต้การ์ด
+//  คำเตือน: ชื่อคีย์และคำสั่งต้องตรงกับไฟล์บอร์ดของทีม (ตกลงกับคนที่ 1) ห้ามแต่งเอง
+// ----------------------------------------------------------------------
+
+// คีย์ของ sf2_04 (สัญญาข้อ 3.4): ส่งทาง event เฉพาะตอนระดับเปลี่ยน ไม่มีรอบ 5 วิ
+const SF2_04_KEYS = {
+  level:  { label: "ระดับ", fmt: "level", names: ["สบาย", "เริ่มเครียด", "แย่แล้ว"] },
+  alert:  { label: "ปัญหา", fmt: "alert" },
+  temp_c: { label: "อุณหภูมิ (รวมแดดจำลอง)", unit: "°C", src: "real" },
+  rh:     { label: "ความชื้นอากาศ", unit: "%", src: "real", max: 100 },
+  sun_c:  { label: "ความร้อนจำลอง VR3", unit: "°C", src: "sim", max: 10 },
+  crop:   { label: "ชุดเกณฑ์ (CROP)" }
+};
+// คีย์ของ sf2_03 (สัญญาข้อ 3.2): telemetry ทุก 5 วิ
+const SF2_03_KEYS = {
+  soil: { label: "ความชื้นดิน VR1", unit: "%", src: "sim", max: 100 },
+  tank: { label: "น้ำในถัง VR4", unit: "%", src: "sim", max: 100 },
+  pump: { label: "ปั๊ม", fmt: "onoff", names: ["ปิด", "เปิด"] },
+  n:    { label: "ลำดับข้อความ" }
+};
+// ปุ่มที่ใช้ซ้ำ (สัญญาข้อ 4)
+const CMD_ACK     = { label: "รับทราบแจ้งเตือน (ack)", cmd: { cmd: "ack" }, style: "primary" };
+const CMD_SET_THI = { label: "ตั้งเกณฑ์ร้อน t_hi", cmd: { cmd: "set" },
+                      input: { key: "t_hi", type: "int", min: 1, max: 45, placeholder: "เช่น 28" } };
+const CMD_PUMP10  = { label: "เปิดปั๊ม 10 วินาที", cmd: { cmd: "pump", on: 1, sec: 10 }, style: "water" };
+const CMD_PUMPOFF = { label: "ปิดปั๊ม", cmd: { cmd: "pump", on: 0 }, style: "danger" };
+const CMD_BEEP    = { label: "เรียกคนที่บอร์ด (beep)", cmd: { cmd: "beep" } };
+const CMD_SAY     = { label: "ส่งข้อความวิ่ง (say)", cmd: { cmd: "say" },
+                      input: { key: "text", type: "ascii", maxlength: 20, placeholder: "อังกฤษ เช่น HELLO" } };
+// กฎที่ใช้ซ้ำ
+const RULE_SILENT = { op: "silent", sec: 15, level: "warn", text: "บอร์ดเงียบเกิน 15 วินาที: ดู WiFi ของบอร์ด หรือกด Run ใหม่" };
+const NOTE_SF2_04 = "บอร์ดไฟล์ตระกูล sf2_04 ส่งเฉพาะตอนระดับเปลี่ยน (รอบแรกส่งเสมอ) เงียบนานจึงไม่ได้แปลว่าหลุด · ระดับ 2 บอร์ดร้องซ้ำจนมีคนกดรับทราบ";
+
+const IDEAS = {
+  1: {
+    title: "กล่องขนส่งห้องเย็น",
+    problem: "ผลผลิตในกล่องร้อนเกินระหว่างขนส่ง คนขับไม่รู้จนถึงปลายทาง ของเสียทั้งกล่อง",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      temp_c: { label: "อุณหภูมิในกล่อง (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      rh:     { label: "ความชื้นในกล่อง", unit: "%", src: "real", max: 100 },
+      sun_c:  { label: "ความร้อนภายนอกจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "กล่องร้อน/ชื้นเกินมาก: โทรบอกคนขับ แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "กล่องเริ่มออกนอกช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  2: {
+    title: "รถส่งผลผลิตถึงตลาด",
+    problem: "ผักในกระบะร้อนระหว่างทาง และไม่มีหลักฐานว่าส่งถึงมือลูกค้าเมื่อไร",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      temp_c: { label: "อุณหภูมิกระบะ (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนถนนจำลอง VR3", unit: "°C", src: "sim", max: 10 },
+      trip_min: { label: "เวลาเดินทางถึงลูกค้า", unit: "นาที" },
+      by:     { label: "ยืนยันรับของจาก" } },
+    chart: ["temp_c"],
+    commands: [{ label: "ลูกค้ารับของแล้ว (ack)", cmd: { cmd: "ack" }, style: "primary" }, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "กระบะร้อนเกินมาก: หาที่ร่มหรือรีบส่ง" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "กระบะเริ่มร้อน: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04 + " · เวลารับของดูได้จากบันทึกเหตุการณ์และไฟล์ CSV"
+  },
+  3: {
+    title: "ไซโลข้าวเปลือก",
+    problem: "ข้าวเปลือกในไซโลชื้นเกิน ขึ้นราและเสียน้ำหนัก คนงานรู้ตอนสายไป",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      rh:     { label: "ความชื้นในไซโล", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในไซโล (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["rh", "temp_c"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "ไซโลชื้น/ร้อนเกินมาก: เปิดพัดลมระบาย แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "ไซโลเริ่มออกนอกช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  4: {
+    title: "โรงเรือนอัจฉริยะ",
+    problem: "ดินในโรงเรือนแห้งโดยไม่มีใครเห็น คนงานต้องเดินไปเปิดน้ำเองทุกแปลง",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS },
+    chart: ["soil", "tank"],
+    commands: [CMD_PUMP10, CMD_PUMPOFF, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "น้ำในถังต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดปั๊ม" },
+      { key: "soil", op: "<", value: 30, level: "warn", text: "ดินแห้ง (ต่ำกว่า 30 %): กดเปิดปั๊ม 10 วินาที" }
+    ],
+    note: "ปั๊มบนบอร์ดคือไฟ RGB สีฟ้า · เปิดได้นานสุด 30 วินาทีแล้วดับเอง"
+  },
+  5: {
+    // คีย์ตรงกับ idea_5_night_pen.py: event = intruder / clear / ack / armed · cm · count · on · by
+    title: "คอกปศุสัตว์กลางคืน",
+    problem: "สัตว์ถูกขโมยหรือสัตว์อื่นเข้าคอกตอนกลางคืน คนเฝ้าหลับ ไม่มีใครรู้จนเช้า",
+    base: "sf3_01 + MQTT",
+    keys: {
+      event: { label: "เหตุการณ์ล่าสุด" },
+      cm:    { label: "ระยะผู้บุกรุก (เรดาร์)", unit: "cm", src: "real", max: 300 },
+      count: { label: "นับผู้บุกรุก", unit: "ครั้ง" },
+      on:    { label: "การเฝ้า", fmt: "onoff", names: ["ไม่เฝ้า", "เฝ้าอยู่"] },
+      by:    { label: "รับทราบจาก" }
+    },
+    chart: ["cm"],
+    commands: [CMD_ACK],
+    rules: [
+      { key: "event", op: "==", value: "intruder", withinS: 60, level: "bad", text: "มีผู้บุกรุกที่คอกใน 1 นาทีที่ผ่านมา: ไปตรวจดู แล้วกดรับทราบ" },
+      { key: "on", op: "==", value: 0, level: "warn", text: "ระบบเฝ้าปิดอยู่ (SW5 บนบอร์ด)" }
+    ],
+    note: "ขั้นสูง: ใช้เรดาร์จากคาบ 3 · บอร์ดส่งเฉพาะตอนมีเหตุการณ์ หน้าเว็บจึงไม่เตือนเรื่องบอร์ดเงียบ"
+  },
+
+  6: {
+    title: "หอถังน้ำของฟาร์ม",
+    problem: "น้ำในหอถังหมดโดยไม่มีใครรู้ ปั๊มเดินตัวเปล่าจนพัง และแปลงขาดน้ำ",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      tank: { label: "ระดับน้ำในหอถัง VR4", unit: "%", src: "sim", max: 100 },
+      soil: { label: "ความชื้นแปลงปลายทาง VR1", unit: "%", src: "sim", max: 100 } },
+    chart: ["tank"],
+    commands: [CMD_PUMP10, CMD_PUMPOFF, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "น้ำต่ำกว่า 10 %: บอร์ดไม่ยอมเปิดปั๊ม ต้องเติมน้ำก่อน" },
+      { key: "tank", op: "<", value: 30, level: "warn", text: "น้ำเหลือน้อย (ต่ำกว่า 30 %): เตรียมเติมน้ำ" }
+    ],
+    note: "ปั๊มบนบอร์ดคือไฟ RGB สีฟ้า · บอร์ดไม่เปิดปั๊มเมื่อน้ำต่ำกว่า 10 %"
+  },
+  7: {
+    // คีย์ตรงกับ idea_7_pump_doctor.py: telemetry vib · vib_bad (0/1) · event = vib พร้อม bad
+    title: "หมอฟังปั๊ม",
+    problem: "ปั๊มน้ำสั่นผิดปกติก่อนพัง แต่ไม่มีใครได้ยินที่โรงสูบ ซ่อมหลังพังแพงกว่ามาก",
+    base: "sf2_03 + vib",
+    keys: { ...SF2_03_KEYS,
+      vib:   { label: "ค่าสั่นของปั๊ม (IMU)", unit: "m/s²", src: "real" },
+      vib_bad: { label: "สถานะการสั่น", fmt: "onoff", names: ["ปกติ", "ผิดปกติ"] },
+      bad:     { label: "event: สั่นผิดปกติ", fmt: "onoff", names: ["หายแล้ว", "เริ่มผิดปกติ"] },
+      event:   { label: "เหตุการณ์ล่าสุด" } },
+    chart: ["vib", "soil", "tank"],
+    commands: [CMD_PUMP10, CMD_PUMPOFF, CMD_BEEP],
+    rules: [
+      RULE_SILENT,
+      { key: "vib_bad", op: "==", value: 1, level: "bad", text: "ปั๊มสั่นผิดปกติ: บอร์ดหยุดปั๊มและไม่ยอมเปิด ไปตรวจที่โรงสูบ" },
+      { key: "tank", op: "<", value: 10, level: "bad", text: "น้ำในถังต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดปั๊ม" }
+    ],
+    note: "เกณฑ์ \"สั่นผิดปกติ\" ตัดสินบนบอร์ด (เทียบกับค่าปกติที่เรียนรู้) หน้าเว็บแค่แสดงและเตือนตาม event"
+  },
+  8: {
+    title: "เล้าไก่กันเครียดฝูง",
+    problem: "เล้าร้อนและชื้นเกิน ไก่เครียด กินน้อย ตาย เจ้าของรู้ช้า",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      temp_c: { label: "อุณหภูมิในเล้า (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      rh:     { label: "ความชื้นในเล้า", unit: "%", src: "real", max: 100 },
+      sun_c:  { label: "แดดบนหลังคาเล้าจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "เล้าร้อน/ชื้นเกินมาก: เปิดพัดลมและพ่นหมอก แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "เล้าเริ่มออกนอกช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  }
+};
+// ===== จบส่วนที่ทีมแก้ =====
+</script>
+<style>
+  /* ชุดสีและรูปแบบเดียวกับ s2/app/farm_web.html ไฟล์เปิดเดี่ยว ๆ ได้ จึงใส่ CSS ไว้ในไฟล์เอง */
+  :root {
+    color-scheme: light dark;
+    --bg: #f3f6f2; --surface: #ffffff; --surface-2: #eef3ee; --line: #d9e1d8;
+    --ink: #17211b; --dim: #5d6b62; --accent: #1e8a4c; --accent-ink: #ffffff;
+    --water: #1f6fd1; --warn: #a86a12; --ok: #1e8a4c; --bad: #c0392b;
+    --shadow: 0 1px 2px rgba(23, 33, 27, .06), 0 4px 14px rgba(23, 33, 27, .06);
+    --radius: 14px; --radius-sm: 10px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", "Leelawadee UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1412; --surface: #171e1a; --surface-2: #1f2823; --line: #2c3731;
+      --ink: #e7eee9; --dim: #93a299; --accent: #4cc282; --accent-ink: #08170e;
+      --water: #6aa8f0; --warn: #e3b341; --ok: #4cc282; --bad: #f08a80;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 16px; }
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-bottom: 16px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center;
+    background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: 20px; }
+  h1 { font-size: 22px; line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h2 .hint { font-size: 13px; font-weight: 400; color: var(--dim); }
+  .conn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--dim); font-size: 14px; font-weight: 600;
+    max-width: 100%; overflow-wrap: anywhere; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; flex: none; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .muted { color: var(--dim); }
+  .small { font-size: 13px; }
+  button, input, select, textarea { font: inherit; font-size: 15px; color: var(--ink); }
+  button { min-height: 44px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface-2); cursor: pointer; font-weight: 600; transition: background .15s, border-color .15s, transform .05s; }
+  button:hover { border-color: var(--dim); }
+  button:active { transform: translateY(1px); }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.water { background: var(--water); border-color: var(--water); color: #fff; }
+  button.danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  input[type="text"], input:not([type]), input[type="number"] {
+    min-height: 44px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+    background: var(--surface); max-width: 100%; }
+  code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+  .log { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--mono);
+    font-size: 13px; padding: 10px 12px; overflow-wrap: anywhere; }
+  /* ---- เฉพาะหน้านี้ ---- */
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } .wide { grid-column: 1 / -1; } }
+  .problem { margin: 0 0 16px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--surface);
+    border: 1px solid var(--line); border-left: 4px solid var(--accent); font-weight: 600; }
+  /* แถบกฎฝั่งเว็บ */
+  #alerts { display: grid; gap: 8px; margin-bottom: 16px; }
+  .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: 17px;
+    border: 1px solid var(--line); background: var(--surface); border-left: 6px solid var(--dim); }
+  .alert[data-level="warn"] { border-left-color: var(--warn); color: var(--warn); }
+  .alert[data-level="bad"] { border-left-color: var(--bad); color: var(--bad); }
+  .alert[data-level="ok"] { border-left-color: var(--ok); color: var(--dim); font-weight: 600; font-size: 15px; }
+  /* การ์ดค่า: ใหญ่ อ่านได้จากมือถือ */
+  #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .card { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0;
+    border-left: 4px solid var(--line); }
+  .card[data-level="warn"] { border-left-color: var(--warn); }
+  .card[data-level="bad"] { border-left-color: var(--bad); }
+  .card .name { color: var(--dim); font-size: 13px; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+  .badge { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 999px; border: 1px solid currentColor; line-height: 18px; }
+  .badge.real { color: var(--ok); }
+  .badge.sim { color: var(--warn); }
+  .badge.new { color: var(--dim); }
+  .card .num { font-size: clamp(26px, 7vw, 36px); font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .card .num .unit { font-size: 15px; font-weight: 600; color: var(--dim); margin-left: 4px; }
+  .card .num.is-text { font-size: 20px; padding-top: 6px; }
+  .card .num.is-unknown, .card .num.is-wait { font-size: 18px; padding-top: 6px; color: var(--dim); }
+  .card .num.is-unknown { color: var(--warn); }
+  .card .num.is-on { color: var(--water); }
+  .card .num.lv-0 { color: var(--ok); }
+  .card .num.lv-1 { color: var(--warn); }
+  .card .num.lv-2 { color: var(--bad); }
+  .card .meter { height: 6px; border-radius: 3px; background: var(--line); margin-top: 8px; overflow: hidden; }
+  .card .meter i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .4s; }
+  .card .age { color: var(--dim); font-size: 12px; margin-top: 4px; }
+  .note { margin: 12px 0 0; color: var(--dim); font-size: 13px; }
+  .note:empty { display: none; }
+  /* กราฟ */
+  #charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .chart { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
+  .chart .head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--dim); }
+  .chart .head b { color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .chart svg { display: block; width: 100%; height: 90px; margin-top: 6px; }
+  .chart .ln { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .chart .dot { fill: var(--accent); }
+  .chart .grid { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .chart .range { font-size: 12px; color: var(--dim); }
+  /* ปุ่มคำสั่ง */
+  .cmds { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+  .cmdIn { display: grid; gap: 6px; margin-top: 12px; }
+  .cmdIn .bar input { flex: 1; min-width: 120px; }
+  #cmdMsg { margin: 12px 0 0; min-height: 1.5em; }
+  #events { white-space: pre-wrap; min-height: 3em; max-height: 220px; overflow-y: auto; }
+  /* หน้าเลือกไอเดีย */
+  #chooser ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  #chooser a { display: block; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface-2);
+    color: var(--ink); text-decoration: none; min-height: 44px; }
+  #chooser a:hover { border-color: var(--accent); }
+  #chooser a b { display: block; font-size: 17px; }
+  #chooser a span { display: block; color: var(--dim); font-size: 14px; margin-top: 4px; }
+  footer { margin: 20px 0 8px; color: var(--dim); font-size: 14px; }
+  footer a { color: var(--accent); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <div class="logo" id="logo" aria-hidden="true">?</div>
+    <div><h1 id="title">เว็บของทีม</h1><p class="sub" id="subtitle">Smart Farm · โปรเจกต์ทีม</p></div>
+  </div>
+  <div class="conn">
+    <label class="bar" for="team"><span class="muted small">ทีม</span>
+      <input id="team" size="9" value="" placeholder="team05" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="เลขทีม เช่น team05"></label>
+    <button id="go" class="primary">ต่อ</button>
+    <b id="status" class="chip" role="status">ยังไม่ได้ต่อ</b>
+    <b id="alive" class="chip" aria-live="polite">บอร์ด: ยังไม่ได้ยิน</b>
+  </div>
+</header>
+
+<section id="chooser" class="panel" aria-labelledby="h-choose" hidden>
+  <h2 id="h-choose">เลือกไอเดียของทีม <span class="hint">ตามตารางข้อ 3 ใน PROJECT_BRIEF_lite_th.md</span></h2>
+  <ol id="ideaList"></ol>
+</section>
+
+<div id="dash" hidden>
+<p class="problem" id="problem"></p>
+<div id="alerts" aria-live="polite"></div>
+
+<main class="layout">
+<section class="panel" aria-labelledby="h-cards">
+  <h2 id="h-cards">ค่าจากบอร์ด <span class="hint">จาก telemetry และ event ล่าสุด · ป้าย จริง/จำลอง ตาม IDEAS และคีย์ sim ของบอร์ด</span></h2>
+  <div id="cards"></div>
+  <p class="note" id="note"></p>
+</section>
+
+<section class="panel" aria-labelledby="h-cmd">
+  <h2 id="h-cmd">สั่งงานบอร์ด <span class="hint">ส่งไป <code id="cmdTopic">.../cmd</code> ห่างกันอย่างน้อย 1 วินาที</span></h2>
+  <div class="cmds" id="cmds"></div>
+  <div id="cmdInputs"></div>
+  <p id="cmdMsg" class="muted small" aria-live="polite"></p>
+</section>
+
+<section class="panel wide" aria-labelledby="h-chart">
+  <h2 id="h-chart">กราฟ <span class="hint">10 นาทีล่าสุดที่หน้านี้ได้รับ (เปิดหน้าใหม่ = เริ่มนับใหม่ เพราะบอร์ดไม่เก็บค่าค้างบน broker)</span></h2>
+  <div id="charts"></div>
+</section>
+
+<section class="panel wide" aria-labelledby="h-log">
+  <h2 id="h-log">บันทึกข้อมูล</h2>
+  <div class="bar">
+    <button id="downloadCsv">ดาวน์โหลด CSV</button>
+    <button id="clearCsv">ล้างข้อมูลที่เก็บไว้</button>
+    <span id="logStatus" class="muted small">ยังไม่มีข้อมูล</span>
+  </div>
+  <p class="muted small" style="margin:14px 0 6px">เหตุการณ์ล่าสุด (ใหม่อยู่บน)</p>
+  <div id="events" class="log">(ยังไม่มี)</div>
+</section>
+</main>
+</div>
+
+<footer>
+  <p>ต่อยอด: แก้ IDEAS ด้านบนของไฟล์นี้ ด้วยตัวเองหรือด้วย vibe coding โดยวาง MQTT_CONTRACT_th.md ให้ AI ก่อน</p>
+  <p class="small"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a>
+    · หน้าสำรอง <a id="farmWebLink" href="../s2/app/farm_web.html">farm_web.html</a>
+    · ทดสอบโดยไม่มีบอร์ด <a href="../s2/app/fake_board.html?team=team99">fake_board.html</a>
+    · <a id="chooseLink" href="?">เลือกไอเดียอื่น</a></p>
+</footer>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+// ===== ส่วนทำงาน (ไม่ต้องแก้ ถ้าแค่เปลี่ยนป้าย ปุ่ม หรือกฎ ให้แก้ IDEAS ข้างบน) =====
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";   // สำรอง: "wss://test.mosquitto.org:8081/mqtt" (ต้องเปลี่ยนพร้อมบอร์ด)
+const ROOT = "bento-aiot";
+const BOARD_GAP_MS = 1000;      // คำสั่งถึงบอร์ดห่างกันอย่างน้อย 1 วิ (สัญญาข้อ 5.4: กล่องรับของบอร์ดมีช่องเดียว)
+const CMD_MAX_BYTES = 255;      // บอร์ดรับข้อความไม่เกิน 255 ไบต์ (สัญญาข้อ 5.7)
+const IN_MAX_BYTES = 2048;      // ข้อความเข้าใหญ่กว่านี้ทิ้ง (broker สาธารณะ ใครก็ส่งขยะมาได้)
+const MAX_KEYS = 30;            // การ์ดไม่เกินเท่านี้ กันคนส่งคีย์มั่ว ๆ มาท่วมหน้า
+const CHART_WINDOW_MS = 10 * 60 * 1000;
+const CHART_MAX_POINTS = 300;
+const CSV_MAX_ROWS = 5000;
+const KEY_RE = /^[A-Za-z0-9_]{1,24}$/;
+// รับ team01..team99 และชื่อทดสอบเช่น teamtest · ตัวเล็ก ตัวเลข _ เท่านั้น (กัน + # / ที่เป็น wildcard ของ MQTT)
+const TEAM_RE = /^team[a-z0-9_]{2,30}$/;
+// ชื่อไทยของคีย์ทั่วไปที่ไม่ได้อยู่ใน IDEAS ของไอเดียนั้น
+const GENERIC_LABELS = { event: "เหตุการณ์ล่าสุด", msg: "ข้อความ", by: "ส่งโดย", n: "ลำดับข้อความ", temp_c: "อุณหภูมิ", rh: "ความชื้น",
+                         soil: "ดิน", tank: "ถังน้ำ", pump: "ปั๊ม", level: "ระดับ", alert: "ปัญหา" };
+const ALERT_TH = { ok: "ปกติ", cold: "หนาวไป", hot: "ร้อนไป", dry: "แห้งไป", wet: "ชื้นไป" };
+const SKIP_KEYS = new Set(["id", "sim"]);   // id = เลขทีม · sim = รายชื่อคีย์จำลอง (ใช้ทำป้าย ไม่ขึ้นการ์ด)
+
+const $ = (id) => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const ideaParam = params.get("idea") || "";
+const ideaNo = /^[1-8]$/.test(ideaParam) && Object.prototype.hasOwnProperty.call(IDEAS, ideaParam) ? ideaParam : null;
+const IDEA = ideaNo ? IDEAS[ideaNo] : null;
+let team = (params.get("team") || "").trim();
+let client = null;
+
+const latest = new Map();       // key -> { v, at }
+const cardEls = new Map();      // key -> { card, num, age, badge, meter }
+const hist = new Map();         // key -> [{ t, v }]
+const chartEls = new Map();
+const csvRows = [];             // { t, topic, data }
+const csvExtraKeys = [];        // คีย์ที่ไม่อยู่ใน IDEAS ตามลำดับที่เจอ
+const events = [];
+let simKeys = new Set();        // คีย์ที่บอร์ดประกาศว่าเป็นค่าจำลอง (คีย์ sim)
+let lastBoardAt = 0;
+
+function own(o, k) { return o && Object.prototype.hasOwnProperty.call(o, k); }
+function validTeam(t) { return TEAM_RE.test(t) && t !== "team00"; }
+function topic(kind) { return ROOT + "/" + team + "/" + kind; }
+function setStatus(text, ok) { $("status").textContent = text; $("status").style.color = ok ? "var(--ok)" : "var(--bad)"; }
+function agoText(ms) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return s < 60 ? s + " วิ ก่อน" : s < 3600 ? Math.floor(s / 60) + " นาที ก่อน" : Math.floor(s / 3600) + " ชม. ก่อน";
+}
+
+// ---------- หน้าเลือกไอเดีย ----------
+function showChooser() {
+  $("chooser").hidden = false;
+  $("title").textContent = "เลือกไอเดียของทีม";
+  $("subtitle").textContent = "Smart Farm · โปรเจกต์ทีม · เปิดลิงก์แล้วบันทึกไว้ในมือถือ";
+  const list = $("ideaList");
+  list.replaceChildren();
+  for (const no of Object.keys(IDEAS)) {
+    const li = document.createElement("li"), a = document.createElement("a"), b = document.createElement("b"), s = document.createElement("span");
+    const q = new URLSearchParams({ idea: no });
+    if (validTeam(team)) q.set("team", team);
+    a.href = "?" + q.toString();
+    b.textContent = no + " · " + IDEAS[no].title;
+    s.textContent = IDEAS[no].problem + " (ไฟล์ตั้งต้น " + IDEAS[no].base + ")";
+    a.append(b, s);
+    li.append(a);
+    list.append(li);
+  }
+}
+
+// ---------- การ์ด ----------
+function specOf(key) { return own(IDEA.keys, key) ? IDEA.keys[key] : null; }
+
+function makeCard(key) {
+  if (cardEls.has(key)) return cardEls.get(key);
+  if (cardEls.size >= MAX_KEYS) return null;
+  const spec = specOf(key);
+  const card = document.createElement("div"), name = document.createElement("div"), label = document.createElement("span");
+  const badge = document.createElement("span"), num = document.createElement("div"), age = document.createElement("div");
+  card.className = "card"; name.className = "name"; num.className = "num is-wait"; age.className = "age";
+  card.dataset.key = key;
+  label.textContent = spec && spec.label ? spec.label : (GENERIC_LABELS[key] || key);
+  badge.className = "badge";
+  name.append(label, badge);
+  num.textContent = "รอค่า";
+  card.append(name, num, age);
+  let meter = null;
+  if (spec && typeof spec.max === "number" && spec.max > 0) {
+    meter = document.createElement("div");
+    meter.className = "meter";
+    meter.append(document.createElement("i"));
+    meter.firstChild.style.width = "0%";
+    card.append(meter);
+  }
+  $("cards").append(card);
+  const el = { card, num, age, badge, meter };
+  cardEls.set(key, el);
+  updateBadge(key);
+  return el;
+}
+
+function updateBadge(key) {
+  const el = cardEls.get(key);
+  if (!el) return;
+  const spec = specOf(key);
+  let cls = "", text = "";
+  if (simKeys.has(key) || (spec && spec.src === "sim")) { cls = "sim"; text = "จำลอง"; }
+  else if (spec && spec.src === "real") { cls = "real"; text = "จริง"; }
+  else if (!spec) { cls = "new"; text = "ไม่อยู่ใน IDEAS"; }
+  el.badge.className = "badge " + cls;
+  el.badge.textContent = text;
+  el.badge.hidden = !text;
+}
+
+function renderValue(key) {
+  const el = makeCard(key);
+  const cur = latest.get(key);
+  if (!el || !cur) return;
+  const spec = specOf(key) || {};
+  const v = cur.v, num = el.num;
+  num.className = "num";
+  num.replaceChildren();
+  // null = บอร์ดอ่านค่าไม่ได้รอบนั้น (สัญญาข้อ 3.1) ขึ้นว่าไม่ทราบ ห้ามเดาเป็น 0 หรือ "ปิด"
+  if (v === null) { num.textContent = "ไม่ทราบ"; num.classList.add("is-unknown"); }
+  else if (spec.fmt === "level" && (v === 0 || v === 1 || v === 2)) {
+    const names = Array.isArray(spec.names) ? spec.names : ["ปกติ", "เริ่มเสี่ยง", "อันตราย"];
+    num.textContent = v + " · " + (names[v] || "");
+    num.classList.add("lv-" + v);
+  } else if (spec.fmt === "onoff" && (typeof v === "number" || typeof v === "boolean")) {
+    const names = Array.isArray(spec.names) ? spec.names : ["ปิด", "เปิด"];
+    num.textContent = v ? names[1] : names[0];
+    if (v) num.classList.add("is-on");
+  } else if (spec.fmt === "alert" && typeof v === "string") {
+    num.textContent = v.split("+").map((c) => ALERT_TH[c] || c).join(" + ").slice(0, 40);
+    num.classList.add("is-text");
+  } else if (typeof v === "number") {
+    num.textContent = String(Math.round(v * 100) / 100);
+    if (spec.unit) { const u = document.createElement("span"); u.className = "unit"; u.textContent = spec.unit; num.append(u); }
+  } else {
+    num.textContent = String(v).slice(0, 40);
+    num.classList.add("is-text");
+  }
+  if (el.meter) {
+    const pct = typeof v === "number" ? Math.max(0, Math.min(100, (v / spec.max) * 100)) : 0;
+    el.meter.firstChild.style.width = pct + "%";
+  }
+}
+
+function updateAges(now) {
+  for (const [key, el] of cardEls) {
+    const cur = latest.get(key);
+    el.age.textContent = cur ? "ได้มา " + agoText(now - cur.at) : "";
+  }
+}
+
+// ---------- รับข้อความ ----------
+// ค่าที่ใช้ได้: ตัวเลขจริง ข้อความ (ตัดสั้น) true/false และ null · อย่างอื่น (object ซ้อน, array) ไม่ใช้
+function cleanValue(v) {
+  if (v === null) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : undefined;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  if (typeof v === "string") return v.slice(0, 80);
+  return undefined;
+}
+
+function onBoardMessage(kind, data) {
+  const now = Date.now();
+  lastBoardAt = now;
+  if (typeof data.sim === "string") {
+    simKeys = new Set(data.sim.split(/\s+/).filter((k) => KEY_RE.test(k)).slice(0, MAX_KEYS));
+    for (const k of cardEls.keys()) updateBadge(k);
+  }
+  const row = {};
+  for (const key of Object.keys(data).slice(0, MAX_KEYS)) {
+    if (SKIP_KEYS.has(key) || !KEY_RE.test(key)) continue;
+    const v = cleanValue(data[key]);
+    if (v === undefined) continue;
+    if (!latest.has(key) && latest.size >= MAX_KEYS) continue;
+    latest.set(key, { v, at: now });
+    row[key] = v;
+    renderValue(key);
+    if (typeof v === "number" && IDEA.chart.includes(key)) addPoint(key, now, v);
+  }
+  recordRow(now, kind, row);
+  updateAges(now);
+  updateAlive(now);
+  evalRules(now);
+}
+
+// ---------- กราฟ (SVG ทำเอง ไม่ใช้ไลบรารีเพิ่ม) ----------
+const SVG_NS = "http://www.w3.org/2000/svg";
+const CW = 300, CH = 90;
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, String(v));
+  return e;
+}
+function buildCharts() {
+  const box = $("charts");
+  box.replaceChildren();
+  for (const key of IDEA.chart) {
+    const spec = specOf(key) || {};
+    const wrap = document.createElement("div"), head = document.createElement("div"), name = document.createElement("span");
+    const last = document.createElement("b"), range = document.createElement("div");
+    wrap.className = "chart"; head.className = "head"; range.className = "range";
+    name.textContent = (spec.label || GENERIC_LABELS[key] || key) + (spec.unit ? " (" + spec.unit + ")" : "");
+    last.textContent = "-";
+    head.append(name, last);
+    const svg = svgEl("svg", { viewBox: "0 0 " + CW + " " + CH, preserveAspectRatio: "none", role: "img" });
+    svg.setAttribute("aria-label", "กราฟ " + name.textContent);
+    svg.append(svgEl("line", { class: "grid", x1: 0, y1: CH / 2, x2: CW, y2: CH / 2 }));
+    const ln = svgEl("polyline", { class: "ln", points: "" });
+    const dot = svgEl("circle", { class: "dot", r: 3, cx: -10, cy: -10 });
+    svg.append(ln, dot);
+    range.textContent = "ยังไม่มีข้อมูล";
+    wrap.append(head, svg, range);
+    box.append(wrap);
+    chartEls.set(key, { ln, dot, last, range });
+  }
+  $("h-chart").parentElement.hidden = IDEA.chart.length === 0;
+}
+function addPoint(key, t, v) {
+  const h = hist.get(key) || [];
+  h.push({ t, v });
+  while (h.length > CHART_MAX_POINTS || (h.length && t - h[0].t > CHART_WINDOW_MS)) h.shift();
+  hist.set(key, h);
+  drawChart(key);
+}
+function drawChart(key) {
+  const el = chartEls.get(key), h = hist.get(key) || [];
+  if (!el || !h.length) return;
+  const spec = specOf(key) || {};
+  let lo = Math.min(...h.map((p) => p.v)), hi = Math.max(...h.map((p) => p.v));
+  if (typeof spec.max === "number") { lo = Math.min(lo, 0); hi = Math.max(hi, spec.max); }
+  if (hi - lo < 1e-6) { hi += 1; lo -= 1; }
+  const t0 = h[0].t, span = Math.max(1, h[h.length - 1].t - t0);
+  const xy = h.map((p) => [4 + ((p.t - t0) / span) * (CW - 8), CH - 4 - ((p.v - lo) / (hi - lo)) * (CH - 8)]);
+  if (xy.length === 1) xy[0][0] = CW - 4;
+  el.ln.setAttribute("points", xy.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "));
+  const end = xy[xy.length - 1];
+  el.dot.setAttribute("cx", end[0].toFixed(1));
+  el.dot.setAttribute("cy", end[1].toFixed(1));
+  const r2 = (x) => String(Math.round(x * 100) / 100);
+  el.last.textContent = r2(h[h.length - 1].v) + (spec.unit ? " " + spec.unit : "");
+  el.range.textContent = "ต่ำสุด " + r2(Math.min(...h.map((p) => p.v))) + " · สูงสุด " + r2(Math.max(...h.map((p) => p.v))) + " · " + h.length + " จุด";
+}
+
+// ---------- กฎฝั่งเว็บ ----------
+function ruleHit(rule, now) {
+  if (rule.op === "silent") {
+    const sec = typeof rule.sec === "number" ? rule.sec : 15;
+    // ยังไม่เคยได้ยินบอร์ดเลย = ยังไม่เตือน (อาจยังไม่ได้กดรัน) แต่แสดงที่ชิป "บอร์ด" แทน
+    return lastBoardAt > 0 && now - lastBoardAt > sec * 1000;
+  }
+  const cur = latest.get(rule.key);
+  if (!cur) return false;
+  if (typeof rule.withinS === "number" && now - cur.at > rule.withinS * 1000) return false;
+  if (rule.op === "seen") return typeof rule.withinS !== "number" || now - cur.at <= rule.withinS * 1000;
+  const v = cur.v, x = rule.value;
+  if (v === null) return false;
+  switch (rule.op) {
+    case "==": return v === x;
+    case "!=": return v !== x;
+    case ">":  return typeof v === "number" && v > x;
+    case "<":  return typeof v === "number" && v < x;
+    case ">=": return typeof v === "number" && v >= x;
+    case "<=": return typeof v === "number" && v <= x;
+    default:   return false;
+  }
+}
+function evalRules(now) {
+  const box = $("alerts"), active = [], usedKeys = new Set(), cardLevel = new Map();
+  for (const rule of IDEA.rules || []) {
+    const k = rule.op === "silent" ? "__silent" : rule.key;
+    if (usedKeys.has(k) || !ruleHit(rule, now)) continue;
+    usedKeys.add(k);
+    active.push(rule);
+    if (rule.key) cardLevel.set(rule.key, rule.level === "bad" ? "bad" : "warn");
+  }
+  box.replaceChildren();
+  for (const rule of active) {
+    const d = document.createElement("div");
+    d.className = "alert";
+    d.dataset.level = rule.level === "bad" ? "bad" : "warn";
+    d.textContent = (rule.level === "bad" ? "อันตราย: " : "เฝ้าระวัง: ") + String(rule.text || "");
+    box.append(d);
+  }
+  if (!active.length) {
+    const d = document.createElement("div");
+    d.className = "alert"; d.dataset.level = "ok";
+    d.textContent = (IDEA.rules || []).length ? "กฎฝั่งเว็บ: ยังไม่มีข้อไหนเข้าเงื่อนไข" : "ยังไม่มีกฎฝั่งเว็บ (เพิ่มได้ที่ rules ใน IDEAS)";
+    box.append(d);
+  }
+  for (const [key, el] of cardEls) {
+    if (cardLevel.has(key)) el.card.dataset.level = cardLevel.get(key); else delete el.card.dataset.level;
+  }
+}
+
+function updateAlive(now) {
+  const chip = $("alive");
+  if (!lastBoardAt) { chip.textContent = "บอร์ด: ยังไม่ได้ยิน"; chip.style.color = "var(--dim)"; return; }
+  const silent = (IDEA.rules || []).find((r) => r.op === "silent");
+  const quiet = now - lastBoardAt;
+  chip.textContent = "บอร์ดส่งล่าสุด " + agoText(quiet);
+  chip.style.color = silent && quiet > (silent.sec || 15) * 1000 ? "var(--bad)" : "var(--ok)";
+}
+
+// ---------- CSV ----------
+function recordRow(t, kind, row) {
+  for (const k of Object.keys(row)) if (!own(IDEA.keys, k) && !csvExtraKeys.includes(k)) csvExtraKeys.push(k);
+  csvRows.push({ t, topic: kind, data: row });
+  if (csvRows.length > CSV_MAX_ROWS) csvRows.shift();
+  updateLogStatus();
+}
+function updateLogStatus() {
+  $("logStatus").textContent = csvRows.length ? "เก็บแล้ว " + csvRows.length + " แถว (สูงสุด " + CSV_MAX_ROWS + ")" : "ยังไม่มีข้อมูล";
+}
+function csvCell(value) {
+  if (value === undefined || value === null) return "";
+  let text = String(value);
+  // ข้อความที่ขึ้นต้นด้วย = + - @ Excel จะถือเป็นสูตร (ใครก็ส่งมาได้) จึงเติม ' นำหน้า
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+function downloadCsv() {
+  if (!csvRows.length) { setStatus("ยังไม่มีข้อมูลให้ดาวน์โหลด", false); return; }
+  const cols = [...Object.keys(IDEA.keys), ...csvExtraKeys];
+  const lines = [["time", "topic", ...cols].join(",")];
+  for (const r of csvRows) lines.push([new Date(r.t).toISOString(), r.topic, ...cols.map((c) => r.data[c])].map(csvCell).join(","));
+  // UTF-8 BOM ให้ Excel เปิดภาษาไทยได้ถูก
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url;
+  a.download = "idea" + ideaNo + "_" + team + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setStatus("ดาวน์โหลด " + a.download + " แล้ว", true);
+}
+function clearCsv() { csvRows.length = 0; updateLogStatus(); setStatus("ล้างข้อมูลที่เก็บไว้แล้ว", true); }
+
+// ---------- คำสั่ง ----------
+const boardQueue = [];
+let boardLastAt = -Infinity, boardTimer = null;
+function drainBoardQueue() {
+  if (boardTimer || !boardQueue.length) return;
+  const wait = boardLastAt + BOARD_GAP_MS - Date.now();
+  if (wait > 0) { boardTimer = setTimeout(() => { boardTimer = null; drainBoardQueue(); }, wait); return; }
+  const [t, text] = boardQueue.shift();
+  if (client && client.connected) {
+    client.publish(t, text);
+    $("cmdMsg").textContent = new Date().toLocaleTimeString() + " ส่งแล้ว " + text + " · ดูผลที่บอร์ดหรือในค่ารอบถัดไป";
+  }
+  boardLastAt = Date.now();
+  drainBoardQueue();
+}
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ กด ต่อ ก่อน", false); return false; }
+  const text = JSON.stringify(obj);
+  if (new TextEncoder().encode(text).length > CMD_MAX_BYTES) { $("cmdMsg").textContent = "คำสั่งยาวเกิน " + CMD_MAX_BYTES + " ไบต์ บอร์ดไม่รับ"; return false; }
+  if (boardQueue.length >= 5) { $("cmdMsg").textContent = "กดถี่เกินไป รอคำสั่งก่อนหน้าออกก่อน"; return false; }
+  boardQueue.push([topic("cmd"), text]);
+  if (boardQueue.length > 1 || Date.now() - boardLastAt < BOARD_GAP_MS) $("cmdMsg").textContent = "รอคิวส่ง (ห่างกัน 1 วินาที)...";
+  drainBoardQueue();
+  return true;
+}
+// อ่านช่องกรอกตามชนิดที่ IDEAS บอก คืน [ค่า, ""] หรือ [undefined, ข้อความผิด]
+function readInput(spec, raw) {
+  const s = String(raw).trim();
+  if (spec.type === "int") {
+    if (!/^-?\d{1,6}$/.test(s)) return [undefined, "ใส่จำนวนเต็ม"];
+    const n = Number(s);
+    if (typeof spec.min === "number" && n < spec.min) return [undefined, "ต้องไม่น้อยกว่า " + spec.min];
+    if (typeof spec.max === "number" && n > spec.max) return [undefined, "ต้องไม่เกิน " + spec.max];
+    return [n, ""];
+  }
+  // ascii: บอร์ดแสดงได้เฉพาะอักษรอังกฤษ ตัวเลข เครื่องหมาย (สัญญาข้อ 4 คำสั่ง say)
+  const clean = Array.from(s).filter((c) => c >= " " && c <= "~").join("").trim().slice(0, spec.maxlength || 20);
+  if (!clean) return [undefined, "ใส่อักษรอังกฤษหรือตัวเลข (ภาษาไทยบอร์ดแสดงไม่ได้)"];
+  return [clean, ""];
+}
+function buildCommands() {
+  const btnBox = $("cmds"), inBox = $("cmdInputs");
+  btnBox.replaceChildren(); inBox.replaceChildren();
+  for (const c of IDEA.commands || []) {
+    if (!c || typeof c.cmd !== "object") continue;
+    const b = document.createElement("button");
+    b.textContent = c.label || JSON.stringify(c.cmd);
+    if (c.style) b.className = c.style;
+    if (!c.input) {
+      b.addEventListener("click", () => send(JSON.parse(JSON.stringify(c.cmd))));
+      btnBox.append(b);
+      continue;
+    }
+    const lab = document.createElement("label"), cap = document.createElement("span"), row = document.createElement("span"), inp = document.createElement("input");
+    lab.className = "cmdIn"; cap.className = "muted small"; row.className = "bar";
+    inp.id = "in_" + c.input.key;
+    lab.htmlFor = inp.id;
+    inp.type = c.input.type === "int" ? "number" : "text";
+    if (c.input.type === "int") { inp.inputMode = "numeric"; if (typeof c.input.min === "number") inp.min = c.input.min; if (typeof c.input.max === "number") inp.max = c.input.max; }
+    else inp.maxLength = c.input.maxlength || 20;
+    inp.placeholder = c.input.placeholder || "";
+    cap.textContent = c.label + " → " + JSON.stringify(Object.assign({}, c.cmd, { [c.input.key]: "..." }));
+    b.addEventListener("click", () => {
+      const [v, err] = readInput(c.input, inp.value);
+      if (err) { $("cmdMsg").textContent = err; return; }
+      send(Object.assign({}, c.cmd, { [c.input.key]: v }));
+    });
+    row.append(inp, b);
+    lab.append(cap, row);
+    inBox.append(lab);
+  }
+  $("cmdTopic").textContent = validTeam(team) ? topic("cmd") : ROOT + "/<ทีม>/cmd";
+}
+
+// ---------- ต่อ broker ----------
+function connect() {
+  const t = $("team").value.trim().toLowerCase();
+  if (!validTeam(t)) { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  team = t;
+  $("team").value = team;
+  // จำทีมไว้ในลิงก์ จะได้บันทึกหน้านี้ไว้ในมือถือแล้วเปิดใหม่ได้เลย
+  const q = new URLSearchParams(location.search);
+  q.set("team", team);
+  history.replaceState(null, "", "?" + q.toString());
+  $("farmWebLink").href = "../s2/app/farm_web.html?" + new URLSearchParams({ team }).toString();
+  $("cmdTopic").textContent = topic("cmd");
+  $("chooseLink").href = "?" + new URLSearchParams({ team }).toString();
+  if (client) client.end(true);
+  // client id สุ่มทุกครั้ง ถ้าซ้ำกับบอร์ด broker จะเตะบอร์ดหลุด (สัญญาข้อ 5.2)
+  // ใช้ค่าเริ่มต้นของ mqtt.js (รอต่อได้ 30 วิ) เหมือน farm_web: เน็ตมือถือ/broker สาธารณะบางทีตอบช้ากว่า 10 วิ
+  const c = mqtt.connect(BROKER_URL, { clientId: "idea-web-" + Math.random().toString(16).slice(2, 10) });
+  client = c;
+  setStatus("กำลังต่อ...", true);
+  // c !== client = ตัวเก่าที่เพิ่งปิดไป (เปลี่ยนทีม) ไม่ต้องแตะสถานะบนหน้า
+  c.on("connect", () => {
+    if (c !== client) return;
+    setStatus("ต่อแล้ว (" + ROOT + "/" + team + ")", true);
+    c.subscribe([topic("telemetry"), topic("event")]);
+  });
+  c.on("reconnect", () => { if (c === client) setStatus("กำลังต่อใหม่...", false); });
+  c.on("offline", () => { if (c === client) setStatus(navigator.onLine === false ? "มือถือไม่มีเน็ต" : "หลุดจาก broker", false); });
+  c.on("close", () => { if (c === client && !c.connected) setStatus("หลุด กำลังต่อใหม่...", false); });
+  c.on("error", (e) => { if (c === client) setStatus("ต่อไม่ได้: " + String((e && e.message) || e).slice(0, 60), false); });
+  c.on("message", (tp, payload) => {
+    if (c !== client) return;
+    if (payload.length > IN_MAX_BYTES) return;
+    const kind = tp === topic("telemetry") ? "telemetry" : tp === topic("event") ? "event" : null;
+    if (!kind) return;
+    const text = payload.toString();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* ไม่ใช่ JSON: ขึ้นในบันทึกเหตุการณ์อย่างเดียว */ }
+    if (kind === "event") {
+      events.unshift(new Date().toLocaleTimeString() + "  " + text.slice(0, 160));
+      events.length = Math.min(events.length, 8);
+      $("events").textContent = events.join("\n");
+    }
+    if (data && typeof data === "object" && !Array.isArray(data)) onBoardMessage(kind, data);
+  });
+}
+
+// ---------- เริ่ม ----------
+$("team").value = team;
+window.addEventListener("offline", () => setStatus("มือถือไม่มีเน็ต", false));
+window.addEventListener("online", () => setStatus(client && client.connected ? "ต่อแล้ว (" + ROOT + "/" + team + ")" : "เน็ตกลับมาแล้ว กำลังต่อใหม่...", !!(client && client.connected)));
+$("go").addEventListener("click", () => { if (!IDEA) { team = $("team").value.trim().toLowerCase(); showChooser(); } else connect(); });
+$("team").addEventListener("keydown", (e) => { if (e.key === "Enter") $("go").click(); });
+$("downloadCsv").addEventListener("click", downloadCsv);
+$("clearCsv").addEventListener("click", clearCsv);
+
+if (!IDEA) {
+  showChooser();
+  if (ideaParam) setStatus("ไม่มีไอเดีย " + ideaParam.slice(0, 8) + " เลือก 1–8", false);
+  $("alive").hidden = true;
+} else {
+  $("dash").hidden = false;
+  document.title = "ไอเดีย " + ideaNo + " · " + IDEA.title;
+  $("logo").textContent = ideaNo;
+  $("title").textContent = IDEA.title;
+  $("subtitle").textContent = "ไอเดีย " + ideaNo + " · ไฟล์ตั้งต้น " + IDEA.base + " · Smart Farm";
+  $("problem").textContent = "ปัญหา: " + IDEA.problem;
+  $("note").textContent = IDEA.note || "";
+  IDEA.keys = IDEA.keys && typeof IDEA.keys === "object" ? IDEA.keys : {};
+  IDEA.rules = Array.isArray(IDEA.rules) ? IDEA.rules : [];
+  IDEA.chart = Array.isArray(IDEA.chart) ? IDEA.chart.filter((k) => KEY_RE.test(k)) : [];
+  for (const key of Object.keys(IDEA.keys || {})) if (KEY_RE.test(key) && !SKIP_KEYS.has(key)) makeCard(key);
+  buildCharts();
+  buildCommands();
+  updateLogStatus();
+  evalRules(Date.now());
+  setInterval(() => { const now = Date.now(); updateAges(now); updateAlive(now); evalRules(now); }, 1000);
+  if (team && validTeam(team.toLowerCase())) connect();
+  else if (team) setStatus("เลขทีมในลิงก์ใช้ไม่ได้ ใส่ใหม่ เช่น team05", false);
+}
+</script>
+</body>
+</html>
