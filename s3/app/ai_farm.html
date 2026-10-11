@@ -424,6 +424,8 @@ const SETTINGS = {
     mosquitto: { url: "wss://test.mosquitto.org:8081/mqtt", th: "Mosquitto (สำรอง)" },
   },
   DEFAULT_BROKER: "hivemq",
+  CONNECT_TIMEOUT_MS: 10000,      // broker ไม่ตอบรับใน 10 วิ = เลิกรอ แล้วลองใหม่ (HiveMQ สาธารณะเงียบไปเฉย ๆ เป็นพัก ๆ)
+  RECONNECT_MS: 2000,             // หลุดแล้วรอเท่านี้ก่อนต่อใหม่ · ทุกครั้งใช้ client id ใหม่ ไม่ต่อด้วยชื่อที่ broker ยังค้างอยู่
   AI_SILENT_S: 6,                 // ไม่ได้ยินผล AI เกินนี้ = "AI เงียบ" (สัญญาข้อ 3.9)
   CONF_MIN: 60,                   // เส้นเกณฑ์บนแถบความมั่นใจ (สัญญาข้อ 3.11: อย่างน้อย 60 %)
   ALARMS_PER_HOUR_GUIDE: 6,       // แนวทาง ISA-18.2: ราว 6 การเตือนต่อชั่วโมงต่อผู้ดูแลหนึ่งคน
@@ -736,7 +738,7 @@ function freshView() {
     chosen: null, boardM: null, last: null, lastAt: null, lastWall: null, silent: false,
     agreeCounts: { both: 0, ai: 0, rule: 0, none: 0 },
     alarmOn: false, alarmTimes: [], alarmInfo: null, openRow: null,
-    rows: [], journey: {}, lastN: null,
+    rows: [], journey: {}, lastN: null, missed: 0, tries: 0,
     barn: { lastRate: null, rate10: null, coughs: [], tapMax: null },
     worker: { secs: {}, segs: [], lastLabel: null, lastT: null },
     plc: null, plcAt: null, holes: {}, mat: null, rainAt: null, run: newUid(),
@@ -918,7 +920,8 @@ function renderLive() {
   const lvlText = { 2: "ระดับ 2 · ยืนยันสองทาง", 1: "ระดับ 1 · ฝ่ายเดียว ให้คนไปดู", 0: "ระดับ 0 · ปกติ" };
   $("lvlBadge").setAttribute("data-lvl", s.lvl === null ? "" : String(s.lvl));
   $("lvlBadge").textContent = s.lvl === null ? "ระดับ: ไม่ทราบ" : lvlText[s.lvl];
-  $("liveMeta").textContent = "ข้อความที่ " + (s.n === null ? "?" : s.n) + " · ได้ยินล่าสุด " + clock(view.lastWall);
+  $("liveMeta").textContent = "ข้อความที่ " + (s.n === null ? "?" : s.n) + (view.missed ? " · ขาดไป " + view.missed + " ข้อความ (บอร์ดหลุดหรือเน็ตช้า)" : "")
+    + " · ได้ยินล่าสุด " + clock(view.lastWall);
 }
 function renderAlarm() {
   const box = $("alarm");
@@ -1122,7 +1125,8 @@ function handleStatus(s, now, wall) {
   view.lastAt = now;
   view.lastWall = wall;
   view.silent = false;
-  if (s.n !== null && view.lastN !== null && s.n < view.lastN) { view.run = newUid(); view.openRow = null; }   // n เริ่มใหม่ = บอร์ดรันใหม่
+  if (s.n !== null && view.lastN !== null && s.n < view.lastN) { view.run = newUid(); view.openRow = null; view.missed = 0; }   // n เริ่มใหม่ = บอร์ดรันใหม่
+  else if (s.n !== null && view.lastN !== null && s.n > view.lastN + 1) view.missed += s.n - view.lastN - 1;   // n กระโดด = ข้อความที่ไม่มาถึง
   if (s.n !== null) view.lastN = s.n;
   if (s.m) { view.boardM = s.m; tick(1); tick(3); }
   tick(4);
@@ -1237,16 +1241,24 @@ function connect() {
   if (viewer) viewer.end(true);
   // client id สุ่มท้ายเสมอ (สัญญาข้อ 5.2) ถ้าซ้ำกับบอร์ดหรือแอปอื่น broker จะเตะตัวที่ต่อก่อนหลุด
   const c = mqtt.connect(SETTINGS.BROKERS[brokerKey].url, { clientId: "ai-farm-" + team + "-" + rnd(6), clean: true, keepalive: 30,
-    connectTimeout: 10000, reconnectPeriod: 3000, protocolVersion: 4 });
+    connectTimeout: SETTINGS.CONNECT_TIMEOUT_MS, reconnectPeriod: SETTINGS.RECONNECT_MS, protocolVersion: 4 });
   viewer = c;
+  view.tries = 0;
   c.on("connect", () => {
     if (viewer !== c) return;
+    view.tries = 0;
     c.subscribe([topic("ai"), topic("event"), topic("plc/state")], { qos: 0 });
     setStatus("ต่อแล้ว · " + SETTINGS.ROOT + "/" + team + " (" + SETTINGS.BROKERS[brokerKey].th + ")", "ok");
     if (sim.auto) { sim.auto = false; simStart(); }
   });
-  c.on("reconnect", () => { if (viewer === c) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  c.on("reconnect", () => {
+    if (viewer !== c) return;
+    c.options.clientId = "ai-farm-" + team + "-" + rnd(6);      // ชื่อใหม่ทุกครั้งที่ต่อใหม่ (mqtt.js ใช้ชื่อนี้ในข้อความ CONNECT ถัดไป)
+    view.tries += 1;
+    setStatus("ยังต่อ broker ไม่ได้ · ลองใหม่ครั้งที่ " + view.tries + " (broker สาธารณะตอบช้าเป็นพัก ๆ รอได้ หน้าลองต่อเอง)", "warn");
+  });
   c.on("offline", () => { if (viewer === c) setStatus("หลุด กำลังต่อใหม่...", "warn"); });
+  c.on("error", () => {});                                      // เช่น connack timeout: mqtt.js ต่อใหม่เอง สถานะขึ้นที่ reconnect
   c.on("message", (tp, payload) => { if (viewer === c) onViewerMessage(tp, payload); });
   setStatus("กำลังต่อ " + SETTINGS.BROKERS[brokerKey].th + " ...", "warn");
   renderAll();
@@ -1628,8 +1640,10 @@ function simStart() {
   simReset(nowMs());
   // client id ของบอร์ดจำลองเอง ไม่ชนกับหน้านี้และบอร์ดจริง (สัญญาข้อ 5.2)
   const c = mqtt.connect(SETTINGS.BROKERS[brokerKey].url, { clientId: "ai-sim-" + team + "-" + rnd(4), clean: true, keepalive: 30,
-    connectTimeout: 10000, reconnectPeriod: 3000, protocolVersion: 4 });
+    connectTimeout: SETTINGS.CONNECT_TIMEOUT_MS, reconnectPeriod: SETTINGS.RECONNECT_MS, protocolVersion: 4 });
   sim.client = c;
+  c.on("reconnect", () => { if (sim.client === c) c.options.clientId = "ai-sim-" + team + "-" + rnd(4); });
+  c.on("error", () => {});
   sim.on = true;
   view.foreignAt = null;
   c.on("connect", () => { if (sim.client === c) { c.subscribe(topic("ai/cmd"), { qos: 0 }); simLog("บอร์ดจำลองต่อแล้ว ฟัง ai/cmd"); } });

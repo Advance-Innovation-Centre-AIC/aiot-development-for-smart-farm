@@ -8,6 +8,8 @@
 # บนจอ     : ชื่อโมเดลที่ใช้, ป้ายผลตัวใหญ่, วงแหวนความมั่นใจ (Arc), ไฟอันตราย (Led), ไฟ MQTT (Led), ข้อความที่ส่ง
 # แนวคิด AIoT: ส่ง "ผลสรุป" ไม่ใช่ข้อมูลดิบ = ประหยัดเน็ต และข้อมูลดิบไม่ออกนอกฟาร์ม
 #            ส่งเฉพาะตอนมีความหมาย (ป้ายเปลี่ยน) + heartbeat ให้แอปรู้ว่าบอร์ดยังอยู่ · ห่างกันอย่างน้อย 200 ms
+#            broker สาธารณะหลุดได้เสมอ: หลุดหรือส่งไม่ขึ้น = ต่อใหม่เอง รอ 5 -> 10 -> 20 -> 30 วินาที ไม่ทิ้งงานกลางทาง
+#            ระหว่างหลุด n ยังนับต่อ แอปจึงเห็นว่าขาดไปกี่ข้อความ (n กระโดด)
 # โมเดล    : หาด้วยชื่อตามลำดับ MODEL_KEYS: AnomalousVibration (ส่งลงบอร์ดจาก Edge AI Store) ก่อน
 #            ถ้าบอร์ดไม่มีหรือเลือกไม่สำเร็จจึงใช้ Motion ที่ติดมากับบอร์ด · ข้อความส่งแค่ "ชื่อ" โมเดล ไม่ส่งรหัสโมเดล
 #            ป้ายอันตราย (ไฟแดง + เสียง) ชุดเดียวกับ sf3_04 ไม่รวม Push: anomaly shaking sirens cough baby_cry chainsaw crackling_fire alarm
@@ -37,6 +39,9 @@ HEARTBEAT_MS = 2000                    # ป้ายไม่เปลี่ย
 GAP_MS = 200                           # ห้ามส่งถี่กว่านี้ (broker สาธารณะ ใช้ร่วมกันหลายกลุ่ม)
 TICK_MS = 100                          # ถามผล AI ทุก 0.1 วินาที (จอเขียนเฉพาะตอนมีผลใหม่)
 RUN_MS = 300000
+KEEPALIVE_S = 30                       # บอร์ดกับ broker ทักกันทุกเท่านี้ ยิ่งสั้น ยิ่งรู้เร็วว่าสายหลุด
+RETRY_MS = 5000                        # สายหลุด: รอเท่านี้แล้วลองต่อใหม่ ไม่สำเร็จก็รอนานขึ้นทีละเท่าตัว
+RETRY_MAX_MS = 30000                   # แต่รอไม่เกินเท่านี้ (ไม่รุม broker ที่ใช้ร่วมกันหลายกลุ่ม)
 VOLUME = 25                            # ความดังเสียง 0-127 (≈20%)
 SPEAKER = 40                           # ความดังลำโพงรวม 0-100% (ใช้ได้กับ firmware 2.4.2 ขึ้นไป)
 
@@ -79,14 +84,14 @@ def should_send(changed, since_ms):
 
 
 # ---- 4) เครือข่าย ----
-def connect_broker(w):
-    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
-    for n in (1, 2, 3):
+def connect_broker(w, tries=3):
+    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลองได้ tries ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    for n in range(1, tries + 1):
         if n > 1:
-            note(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            note(w, "ลองต่อ broker ใหม่ %d/%d" % (n, tries), COL_WARN)
             ui.poll()
         try:
-            if mqtt.connect(BROKER, port=1883, keepalive=60,
+            if mqtt.connect(BROKER, port=1883, keepalive=KEEPALIVE_S,
                             client_id=CLIENT_ID + "-%04x" % (time.ticks_ms() & 0xFFFF)):
                 return True
         except OSError:
@@ -94,28 +99,48 @@ def connect_broker(w):
     return False
 
 
+def wifi_up():
+    # WiFi ต่ออยู่และได้ IP แล้วไหม · ยังไม่ต่อ ก็ต่อเอง (เฉพาะเมื่อแก้ชื่อ Hotspot แล้ว)
+    if not wifi.is_connected():
+        if WIFI_SSID[:1] in ("<", ""):  # ห้ามส่งชื่อตัวอย่างให้ wifi.connect: รอบอร์ดต่อ WiFi ที่จำไว้เอง
+            return False
+        if not wifi.connect(WIFI_SSID, WIFI_PASS):
+            return False
+    return wifi.ip() != "0.0.0.0"
+
+
 def go_online(w):
-    # WiFi -> broker · ขั้นไหนพังคืน False แล้วทำงานต่อแบบออฟไลน์ (พิมพ์ผลลง Console)
-    # TEAM ยังเป็น teamXX = ส่งทับหัวข้อของกลุ่มอื่น จึงไม่ต่อเลย
+    # WiFi -> broker · คืน True = ออนไลน์ · False = ยังต่อไม่ได้ (เดี๋ยวลองใหม่)
+    # None = ตั้งค่ายังไม่ครบ ลองใหม่ก็ไม่ได้ผล: TEAM ยังเป็น teamXX (ส่งทับกลุ่มอื่น) หรือยังไม่ตั้ง Hotspot
     if not (len(TEAM) == 6 and TEAM[:4] == "team" and TEAM[4:].isdigit() and TEAM != "team00"):
         note(w, "แก้ TEAM ก่อน (team01-team99): ออฟไลน์", COL_WARN)
-        return False
-    if WIFI_SSID[:1] in ("<", "") and not wifi.is_connected():   # ห้ามส่งชื่อตัวอย่างให้ wifi.connect
+        return None
+    if WIFI_SSID[:1] in ("<", "") and not wifi.is_connected():
         note(w, "ตั้งชื่อ Hotspot ก่อน: ออฟไลน์", COL_WARN)
-        return False
+        return None
     note(w, "ต่อ WiFi...", COL_WARN)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     step = "WiFi"                      # บอกให้ชัดว่าพังขั้นไหน: WiFi หรือ broker
     try:
-        if (wifi.is_connected() or wifi.connect(WIFI_SSID, WIFI_PASS)) and wifi.ip() != "0.0.0.0":
+        if wifi_up():
             step = "broker"
             if connect_broker(w):
                 note(w, "ออนไลน์ " + TOPIC, COL_OK)
                 return True
     except OSError:
         pass
-    note(w, "ต่อ " + step + " ไม่ได้: ออฟไลน์ (ทำงานต่อ)", COL_WARN)
+    note(w, "ต่อ " + step + " ไม่ได้: จะลองใหม่เอง (ทำงานต่อ)", COL_WARN)
     return False
+
+
+def reconnect(w):
+    # ต่อใหม่หลังหลุด: ลองครั้งเดียวต่อรอบ จอจะได้ไม่ค้างนาน (ไม่ได้ก็รอรอบหน้า)
+    note(w, "กำลังต่อใหม่...", COL_WARN)
+    ui.poll()
+    try:
+        return wifi_up() and connect_broker(w, 1)
+    except OSError:
+        return False
 
 
 def send(online, obj):
@@ -196,11 +221,13 @@ def main():
             return
         w["model"].text("โมเดล: " + name)
         online = go_online(w)
+        can_retry = online is not None                 # ตั้งค่าครบแล้วเท่านั้น จึงลองต่อใหม่เมื่อหลุด
+        online = bool(online)
         show_link(w, online)
-        seq, lab, conf, sent_lab, n = -1, None, 0, None, 0
-        t0 = t_sent = time.ticks_ms()
+        seq, lab, conf, sent_lab, n, n_ok, drops = -1, None, 0, None, 0, 0, 0
+        t0 = t_sent = t_retry = time.ticks_ms()
+        wait = RETRY_MS
         while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-            now = time.ticks_ms()
             r = read_result()
             new = bool(r) and r["seq"] != seq
             if new:                                        # 1) ผลใหม่จาก AI
@@ -213,12 +240,29 @@ def main():
                 n += 1                                     # 2) ส่งเมื่อมีความหมาย หรือถึง heartbeat
                 ok = send(online, {"id": TEAM, "n": n, "model": name, "label": lab, "conf": conf})
                 t_sent, sent_lab = time.ticks_ms(), lab           # เวลาที่ส่งจริง (เสียงบี๊บก่อนหน้ากินเวลา ~240 ms)
-                w["sent"].text(("ส่งแล้ว %d ข้อความ" if ok else "ออฟไลน์: พิมพ์ลง Console %d") % n)
+                n_ok += 1 if ok else 0
+                w["sent"].text("ส่งออกได้ %d จาก %d ข้อความ" % (n_ok, n))
                 w["json"].text("%s %d%% n=%d" % (lab, conf, n))
-            if online and not mqtt.is_connected():
+                if online and not ok:                      # ส่งไม่ออก = สายมีปัญหา แม้บอร์ดยังคิดว่าต่ออยู่
+                    try:
+                        mqtt.disconnect()                  # ปิดสายเก่าทิ้ง แล้วข้อ 3) จะนับเป็นหลุด
+                    except OSError:
+                        pass
+            if online and not mqtt.is_connected():         # 3) หลุด: ทำงานต่อแบบออฟไลน์ แล้วรอต่อใหม่
                 online = False
+                drops += 1
                 show_link(w, False)
-                note(w, "เน็ตหลุด ทำงานต่อแบบออฟไลน์", COL_WARN)
+                t_retry, wait = time.ticks_ms(), RETRY_MS
+                note(w, "เน็ตหลุด (ครั้งที่ %d) จะต่อใหม่ใน %d วินาที" % (drops, wait // 1000), COL_WARN)
+            if not online and can_retry and time.ticks_diff(time.ticks_ms(), t_retry) >= wait:
+                online = reconnect(w)                      # 4) ถึงเวลาลองต่อใหม่
+                show_link(w, online)
+                if online:
+                    wait = RETRY_MS
+                    note(w, "ต่อใหม่สำเร็จ ส่งต่อที่ n=%d (หลุดไป %d ครั้ง)" % (n + 1, drops), COL_OK)
+                else:
+                    t_retry, wait = time.ticks_ms(), min(wait * 2, RETRY_MAX_MS)
+                    note(w, "ยังต่อไม่ได้ จะลองใหม่ใน %d วินาที" % (wait // 1000), COL_WARN)
             ui.poll()
             time.sleep_ms(TICK_MS)
     finally:
