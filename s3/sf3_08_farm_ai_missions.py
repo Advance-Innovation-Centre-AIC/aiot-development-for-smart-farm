@@ -779,10 +779,10 @@ def note(w, text, col):
 
 def hint_text():
     if MISSION == "voice":
-        return "SW5 = แทนเสียง go · SW6 = ยืนยัน go / stop"
+        return "SW5 = แทนเสียง go | SW6 = ยืนยัน go / stop"
     if MISSION == "worker":
-        return "SW6 = ฉันโอเค / รับทราบ · SW5 = พัก"
-    return "SW6 = รับทราบการเตือน · SW5 = พัก/ทำต่อ"
+        return "SW6 = ฉันโอเค / รับทราบ | SW5 = พัก"
+    return "SW6 = รับทราบการเตือน | SW5 = พัก/ทำต่อ"
 
 
 def rule_text(rk):
@@ -816,7 +816,7 @@ def build_screen(thai, problem):
     time.sleep_ms(200)
     w = {"_t": {}, "_c": {}, "_v": {}}
     label("ภารกิจ AI: " + thai, 12, 6, COL_TEXT, 24)
-    label(MISSION + " · " + problem, 12, 38, COL_DIM, 16)
+    label(MISSION + " | " + problem, 12, 38, COL_DIM, 16)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = label("MQTT: ออฟไลน์", 632, 10, COL_DIM, 16)
     card(12, 64, 380, 172, "AI ตอบว่า")
@@ -946,7 +946,7 @@ def matrix(s, ai, now):
 def draw(w, s, ai, rules, now):
     put(w, "label", ai.label)
     put(w, "meaning", MEANING.get(ai.label, ai.label), COL_BAD if ai.on else COL_INFO)
-    put(w, "conf", "มั่นใจ %d %% · อันดับสอง %s %d %%" % (ai.conf, ai.p2, ai.c2) if ai.running else " ")
+    put(w, "conf", "มั่นใจ %d %% | อันดับสอง %s %d %%" % (ai.conf, ai.p2, ai.c2) if ai.running else " ")
     setv(w, "arc", ai.conf, COL_OK if ai.conf >= CONF_MIN else COL_WARN)
     put(w, "ai", *ai_status(s, ai))
     put(w, "rdesc", rule_text(s.rk))
@@ -1246,7 +1246,7 @@ def main():
             mqtt.disconnect()
         except OSError:
             pass
-        print("ภารกิจ", MISSION, "จบ: เตือน", s.alarm.count, "ครั้ง · กฎอ่านค่าไม่ได้",
+        print("ภารกิจ", MISSION, "จบ: เตือน", s.alarm.count, "ครั้ง | กฎอ่านค่าไม่ได้",
               rules.fails if rules else 0, "ครั้ง")
         ui.poll()
 
