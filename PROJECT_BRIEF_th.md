@@ -1,5 +1,7 @@
 # โจทย์โปรเจกต์ทีม — Smart HMI สำหรับฟาร์มและโลจิสติกส์เกษตร
 
+> **รุ่น 11–18 ต.ค. 2569 ใช้โจทย์ฉบับ 1 สัปดาห์:** [PROJECT_BRIEF_lite_th.md](PROJECT_BRIEF_lite_th.md) — หน้านี้เป็นฉบับเต็ม ไว้อ้างอิงเท่านั้น ไม่ต้องทำตามทุกข้อ
+
 **คอร์ส:** AIoT Development for Smart Farm — Intensive Course · **บอร์ด:** TESAIoT Dev Kit ทีมละ 1 ตัว + BENTO Emulator
 **นำเสนอ:** Project Showcase 13:00–16:00 · สาธิตบนบอร์ดจริง 5–6 นาที + ถาม-ตอบ 2 นาที
 
