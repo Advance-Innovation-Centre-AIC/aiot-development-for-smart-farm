@@ -54,7 +54,7 @@
 
 ## 2. กติกา: เรื่องละ 1 ทีม
 
-- 22 กลุ่ม เลือกจาก 25 เรื่อง **เรื่องละ 1 ทีม** · เลือกผ่านหน้า **signup.html** (ใครกดก่อนได้ก่อน เห็นผลทันทีทุกเครื่อง)
+- 22 กลุ่ม เลือกจาก 25 เรื่อง **เรื่องละ 1 ทีม** · **ผู้สอนจะแจ้งลิงก์หรือ QR Code สำหรับเลือกเรื่องในคาบ** (ใครกดก่อนได้ก่อน เห็นผลทันทีทุกเครื่อง)
 - อยากทำเรื่องของตัวเองนอกรายการก็ได้ โดยเลือกชุดเริ่มต้น A · B · C หรือ D ที่ใกล้ที่สุดไปเริ่ม แล้วแจ้งผู้สอน
 - บอกในการนำเสนอให้ชัดว่า **ส่วนไหนมาจากโค้ดเริ่มต้น และส่วนไหนทีมทำเอง** (เขียนในหัวไฟล์ด้วย)
 
@@ -114,7 +114,7 @@
 
 | เมื่อไร | คนที่ 1 · ฝั่งบอร์ด | คนที่ 2 · ฝั่งเว็บ |
 |---|---|---|
-| คาบเสนอหัวข้อ | เลือกเรื่องใน signup.html · รันไฟล์ของเรื่อง | เปิด idea_web.html เห็นค่าของกลุ่ม · กรอกใบเสนอโจทย์ (ข้อ 9) |
+| คาบเสนอหัวข้อ | เลือกเรื่องจากลิงก์ที่ผู้สอนแจ้ง · รันไฟล์ของเรื่อง | เปิด idea_web.html เห็นค่าของกลุ่ม · กรอกใบเสนอโจทย์ (ข้อ 9) |
 | วันที่ 1–2 | ต่อยอดข้อ 1: วัดค่าและตั้งเกณฑ์ | ปรับ IDEAS ในหน้าเว็บให้เป็นเรื่องของทีม |
 | วันที่ 3–4 | ต่อยอดข้อ 2: จอของผู้ใช้เรา · ส่งภาพจุดตรวจ | ต่อยอดข้อ 3 (ถ้าเลือกฝั่งเว็บ) · ส่งภาพจุดตรวจ |
 | วันที่ 5–6 | ทดสอบ 3 กรณี · อัดคลิปสำรอง | สไลด์ 3–5 หน้า · ซ้อมนำเสนอ |
@@ -180,7 +180,6 @@
 
 - โค้ดเริ่มต้นทั้ง 25 เรื่อง (project/): https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/tree/main/project
 - ตัวอย่าง Edge AI สำหรับอนาคต (ไม่อยู่ในโจทย์): https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/tree/main/project/ai_future
-- หน้าเลือกเรื่องของแต่ละกลุ่ม (signup.html): https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/project/signup.html
 - หน้าเว็บของเรื่อง (เลือกเรื่องได้ในหน้า): https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/project/idea_web.html
 - สัญญา MQTT (วางให้ AI ก่อน vibe coding): https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md
 - fake_board.html (บอร์ดจำลองสำหรับทดสอบเว็บ): https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/fake_board.html
