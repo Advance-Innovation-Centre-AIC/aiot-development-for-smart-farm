@@ -3,13 +3,11 @@ marp: true
 theme: default
 paginate: true
 title: "Special Session — หัวใจ AIoT: วัด · ตัดสิน · ทำ · โชว์ · AIoT Development for Smart Farm"
-header: "[← สารบัญคอร์ส](../index.html)"
 ---
 
 
 <!-- fit-css -->
 <style>
-section header{top:10px;left:auto;right:28px;font-size:16px}section header a{color:#1565c0;text-decoration:none}
 section { font-size: 24px; padding: 40px 52px; justify-content: flex-start; }
 section h1 { font-size: 1.45em; line-height: 1.12; margin: 0 0 .22em; }
 section h2 { font-size: 1.12em; margin: .15em 0; }
