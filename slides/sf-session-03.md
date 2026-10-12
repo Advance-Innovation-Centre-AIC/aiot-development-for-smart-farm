@@ -4,10 +4,12 @@ theme: default
 paginate: true
 math: katex
 title: "Session 3 — AI ในฟาร์ม + ลงมือทำโปรเจกต์ · AIoT Development for Smart Farm"
+header: "[← สารบัญคอร์ส](../index.html)"
 ---
 
 <!-- fit-css -->
 <style>
+section header{top:10px;left:auto;right:28px;font-size:16px}section header a{color:#1565c0;text-decoration:none}
 section { font-size: 24px; padding: 40px 52px; justify-content: flex-start; }
 section h1 { font-size: 1.45em; line-height: 1.12; margin: 0 0 .22em; }
 section h2 { font-size: 1.12em; margin: .15em 0; }
@@ -136,7 +138,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 | ▶️ **รัน** | กด Program to Device บนบอร์ด (หรือรันใน **Emulator**) |
 | 📝 **จด** | อ่านใบงาน ทำตามขั้น แล้วจดผลลงตาราง |
 
-ใบงาน: [`s3/sf-s3-th.worksheet.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf-s3-th.worksheet.md) · ครึ่งหลังของวัน = **เวลาทำโปรเจกต์ของทีม**
+ใบงาน: <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf-s3-th.worksheet.md" target="_blank" rel="noopener">`s3/sf-s3-th.worksheet.md`</a> · ครึ่งหลังของวัน = **เวลาทำโปรเจกต์ของทีม**
 
 <div class="tip">💡 ถ้าใช้บอร์ดร่วมกันหลายคน ให้ผลัดกันคุมบอร์ดทุกกิจกรรม และอีกคนอ่านใบงาน/ลองใน Emulator</div>
 
@@ -176,7 +178,7 @@ AIoT Development for Smart Farm · Intensive Course · TESAIoT Dev Kit + BENTO E
 </div>
 </div>
 
-<div class="files"><div><div class="fh">📡 ไฟล์บอร์ดจาก Session 2</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py">sf2_02_greenhouse_report.py</a> <span>— ส่ง telemetry ทุก 5 วิ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py">sf2_03_remote_pump.py</a> <span>— ฟัง cmd แล้วสั่งปั๊ม</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py">sf2_04_crop_alert.py</a> <span>— ส่ง event เมื่อสถานะเปลี่ยน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py">sf2_06_smart_gateway.py</a> <span>— Gateway สั่ง PLC</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py">sf2_07_field_station.py</a> <span>— แปลงผัก + PLC ให้ทีมข้าง ๆ</span></div></div><div><div class="fh hw">💻 แอปของทีม</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html">farm_web.html</a> <span>— แอปในเบราว์เซอร์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div></div></div>
+<div class="files"><div><div class="fh">📡 ไฟล์บอร์ดจาก Session 2</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py" target="_blank" rel="noopener">sf2_02_greenhouse_report.py</a> <span>— ส่ง telemetry ทุก 5 วิ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_03_remote_pump.py" target="_blank" rel="noopener">sf2_03_remote_pump.py</a> <span>— ฟัง cmd แล้วสั่งปั๊ม</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py" target="_blank" rel="noopener">sf2_04_crop_alert.py</a> <span>— ส่ง event เมื่อสถานะเปลี่ยน</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_06_smart_gateway.py" target="_blank" rel="noopener">sf2_06_smart_gateway.py</a> <span>— Gateway สั่ง PLC</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_07_field_station.py" target="_blank" rel="noopener">sf2_07_field_station.py</a> <span>— แปลงผัก + PLC ให้ทีมข้าง ๆ</span></div></div><div><div class="fh hw">💻 แอปของทีม</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html" target="_blank" rel="noopener">farm_web.html</a> <span>— แอปในเบราว์เซอร์</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md" target="_blank" rel="noopener">MQTT_CONTRACT_th.md</a> <span>— สัญญา MQTT หน้าเดียว</span></div></div></div>
 
 <div class="think">
 
@@ -260,7 +262,7 @@ section table { font-size: .66em; }
 
 <div class="flow"><b>เรดาร์วัดระยะ</b><i>→</i><b>ค่ากลาง 5 ค่า</b><i>→</i><b>ยืนยัน N ครั้ง</b><i>→</i><b>ไซเรน + INTRUDER</b></div>
 
-<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py">sf3_01_pen_guard.py</a> <span>— เรดาร์นับผู้บุกรุก · VR3 = เขตเตือน</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_01_practise.py">sf3_01_practise.py</a> <span>— Code Quest ระดับ 3 · เติม confirm()</span></div></div></div>
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">sf3_01_pen_guard.py</a> <span>— เรดาร์นับผู้บุกรุก · VR3 = เขตเตือน</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_01_practise.py" target="_blank" rel="noopener">sf3_01_practise.py</a> <span>— Code Quest ระดับ 3 · เติม confirm()</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ตั้งค่าให้ <b>เดินผ่านเร็ว ๆ ไม่ถูกนับ</b> แต่ <b>เดินเข้ามาในเขตคอกถูกนับทุกครั้ง</b></div>
 
@@ -312,7 +314,7 @@ def calibrate_radar():
     except OSError:
         return False
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py">sf3_01_pen_guard.py</a> · calibrate_radar()</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">sf3_01_pen_guard.py</a> · calibrate_radar()</div>
 
 </div>
 <div>
@@ -322,7 +324,7 @@ def calibrate_radar():
 
 <div class="vid" style="padding:6px">
 <iframe width="200" height="113" src="https://www.youtube.com/embed/XJ6JhB8wOPU" title="What is mmWave sensing? — Mouser Electronics" loading="lazy" frameborder="0" allowfullscreen></iframe>
-<div><b>What is mmWave sensing?</b><br>Mouser Electronics · 2:14 · EN<br><https://www.youtube.com/watch?v=XJ6JhB8wOPU></div>
+<div><b>What is mmWave sensing?</b><br>Mouser Electronics · 2:14 · EN<br><a href="https://www.youtube.com/watch?v=XJ6JhB8wOPU" target="_blank" rel="noopener">https://www.youtube.com/watch?v=XJ6JhB8wOPU</a></div>
 </div>
 
 </div>
@@ -413,7 +415,7 @@ def confirm(inside, streak, near):
         return near, 0
     return inside, streak + 1
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py">sf3_01_pen_guard.py</a> · smooth() และ confirm() ในส่วน "3) สมอง"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">sf3_01_pen_guard.py</a> · smooth() และ confirm() ในส่วน "3) สมอง"</div>
 
 - เห็น **เหมือนเดิม** → ล้างตัวนับเป็น 0 · เห็น **ต่าง** → นับเพิ่ม · ครบ `CONFIRM_N` → **เปลี่ยนสถานะ**
 - ใช้ทั้ง "เข้า" และ "ออก" — ออกจากเขตก็ต้องยืนยัน 3 รอบเหมือนกัน
@@ -476,7 +478,7 @@ def confirm(inside, streak, near):
 
 <div class="flow"><b>ไมค์ฟังยอดเสียง</b><i>→</i><b>เกินเกณฑ์ VR3</b><i>→</i><b>นับใน 30 วินาที</b><i>→</i><b>PANIC บนจอไฟ RGB</b></div>
 
-<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py">sf3_02_coop_ears.py</a> <span>— นับเสียงดังฉับพลันในเล้า</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py">sf3_02_practise.py</a> <span>— Code Quest ระดับ 3 · เติม is_event()</span></div></div></div>
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py" target="_blank" rel="noopener">sf3_02_coop_ears.py</a> <span>— นับเสียงดังฉับพลันในเล้า</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py" target="_blank" rel="noopener">sf3_02_practise.py</a> <span>— Code Quest ระดับ 3 · เติม is_event()</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> หาเกณฑ์ VR3 ที่ <b>ไม่นับเสียงคุย</b> แต่ <b>นับเสียงตบมือทุกครั้ง</b> — กลุ่มไหนหาได้ก่อน?</div>
 
@@ -593,7 +595,7 @@ def forget_old(events, now):
     while events and time.ticks_diff(now, events[0]) > WINDOW_MS:
         events.pop(0)
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py">sf3_02_coop_ears.py</a> · is_event() และ forget_old() ในส่วน "3) สมอง"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py" target="_blank" rel="noopener">sf3_02_coop_ears.py</a> · is_event() และ forget_old() ในส่วน "3) สมอง"</div>
 
 ```python
             forget_old(ears.events, now)             # 2) ตัดสิน
@@ -602,7 +604,7 @@ def forget_old(events, now):
                 beep(84, 76) if panic else beep(79, 84)
                 ears.mute()                          # ทุกครั้งที่ลำโพงดัง = ปิดหู MUTE_MS
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py">sf3_02_coop_ears.py</a> · main()</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py" target="_blank" rel="noopener">sf3_02_coop_ears.py</a> · main()</div>
 
 </div>
 <div>
@@ -632,7 +634,7 @@ def forget_old(events, now):
 
 <div class="flow"><b>IMU วัดการสั่น</b><i>→</i><b>เรียนรู้ค่าปกติ 5 วินาที</b><i>→</i><b>คะแนนการสั่น 0–100</b><i>→</i><b>เฝ้าระวัง / ผิดปกติ</b></div>
 
-<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py">sf3_03_pump_vibration.py</a> <span>— ให้คะแนนการสั่น · SW5 เรียนรู้ใหม่</span></div></div></div>
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py" target="_blank" rel="noopener">sf3_03_pump_vibration.py</a> <span>— ให้คะแนนการสั่น · SW5 เรียนรู้ใหม่</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ตั้งค่าให้ <b>เคาะโต๊ะเบา ๆ ไม่เตือน</b> แต่ <b>เขย่าแรงเตือนทุกครั้ง</b> — ลองห้าครั้ง ถูกกี่ครั้ง?</div>
 
@@ -676,7 +678,7 @@ def forget_old(events, now):
 </div>
 <div class="vid" style="flex:0 0 auto;padding:6px">
 <iframe width="200" height="113" src="https://www.youtube.com/embed/BPMjYJ_HoWk" title="Vibration Analysis for beginners 1 — ADASH" loading="lazy" frameborder="0" allowfullscreen></iframe>
-<div><b>Vibration Analysis for beginners 1</b><br>ADASH · 9:09 · EN<br><https://www.youtube.com/watch?v=BPMjYJ_HoWk></div>
+<div><b>Vibration Analysis for beginners 1</b><br>ADASH · 9:09 · EN<br><a href="https://www.youtube.com/watch?v=BPMjYJ_HoWk" target="_blank" rel="noopener">https://www.youtube.com/watch?v=BPMjYJ_HoWk</a></div>
 </div>
 </div>
 
@@ -763,7 +765,7 @@ def classify(vib, base):
     # 0 = ปกติ, 1 = เฝ้าระวัง (เกิน K_WARN เท่าของปกติ), 2 = ผิดปกติ (เกิน K_BAD เท่า)
     return 2 if vib > base * K_BAD else (1 if vib > base * K_WARN else 0)
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py">sf3_03_pump_vibration.py</a> · magnitude() ในส่วน "2) ฮาร์ดแวร์" · classify() ในส่วน "3) สมอง"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py" target="_blank" rel="noopener">sf3_03_pump_vibration.py</a> · magnitude() ในส่วน "2) ฮาร์ดแวร์" · classify() ในส่วน "3) สมอง"</div>
 
 </div>
 <div class="c40">
@@ -788,7 +790,7 @@ def classify(vib, base):
 
 <div class="flow"><b>ส่งโมเดลจาก Edge AI Store</b><i>→</i><b>IMU</b><i>→</i><b>โมเดล AI บนบอร์ด (เรียกด้วยชื่อ)</b><i>→</i><b>มั่นใจพอไหม · อันตราย 3 ใน 5 ไหม</b><i>→</i><b>เสียง + LED แดง + จอไฟ RGB</b></div>
 
-<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://edgeai-store.tesaiot.dev">edgeai-store.tesaiot.dev</a> <span>— Edge AI model catalog: Deploy AnomalousVibration ลงบอร์ด</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> <span>— ให้ AI บนบอร์ดตัดสินแทนกฎ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_07_ai_model_lab.py">sf3_07_ai_model_lab.py</a> <span>— ลองโมเดลไหนก็ได้บนจอเดียว: เลือก รัน/หยุด ปรับเกณฑ์</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py">sf3_06_ai_to_mqtt.py</a> <span>— ส่งผล AI ขึ้น MQTT ให้แอปของทีม</span></div></div></div>
+<div class="files"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://edgeai-store.tesaiot.dev" target="_blank" rel="noopener">edgeai-store.tesaiot.dev</a> <span>— Edge AI model catalog: Deploy AnomalousVibration ลงบอร์ด</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py" target="_blank" rel="noopener">sf3_04_ai_pump_doctor.py</a> <span>— ให้ AI บนบอร์ดตัดสินแทนกฎ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_07_ai_model_lab.py" target="_blank" rel="noopener">sf3_07_ai_model_lab.py</a> <span>— ลองโมเดลไหนก็ได้บนจอเดียว: เลือก รัน/หยุด ปรับเกณฑ์</span></div></div><div><div class="fh hw">☆ การบ้าน / ถ้ามีเวลา</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py" target="_blank" rel="noopener">sf3_06_ai_to_mqtt.py</a> <span>— ส่งผล AI ขึ้น MQTT ให้แอปของทีม</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ห้าท่าเดียวกัน — <b>กฎที่เราเขียน</b> หรือ <b>AI</b> ตอบถูกมากกว่ากัน?</div>
 
@@ -858,7 +860,7 @@ section table { font-size: .66em; }
 
 **ส่ง AnomalousVibration ลงบอร์ด** · ทีม 1–10 ก่อน ทีม 11–20 รอผู้สอนเรียก
 1. เมนู Edge AI บนบอร์ดต้องขึ้น **STOPPED** · ใน BENTO IDE กด **Disconnect** — พอร์ตของบอร์ดใช้ได้ทีละโปรแกรม
-2. เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ [edgeai-store.tesaiot.dev](https://edgeai-store.tesaiot.dev) (หน้า **Edge AI model catalog**) แล้วกด **Connect a board** เลือกพอร์ตของบอร์ด
+2. เปิด **Google Chrome** บนคอมพิวเตอร์ ไปที่ <a href="https://edgeai-store.tesaiot.dev" target="_blank" rel="noopener">edgeai-store.tesaiot.dev</a> (หน้า **Edge AI model catalog**) แล้วกด **Connect a board** เลือกพอร์ตของบอร์ด
 3. กด **Deploy** ที่โมเดล **AnomalousVibration** · ห้ามถอดสาย USB ระหว่างส่ง
 4. รอจนหน้าต่างขึ้น **"Loaded onto the board"** และ **"Saved to the board and loaded"** แล้วกด **Close**
 5. **ปิดแท็บ Store** ก่อนกลับไปต่อ BENTO IDE
@@ -883,7 +885,7 @@ section table { font-size: .66em; }
 | IMU | DrillMaterialIMU · FallDetection ⚠ **อย่าใช้** ผลบนบอร์ดยังผิด | — |
 | ไมค์ | **SurfaceMic** ☆ · **HomeSounds** ☆ · DrillMaterialMic · SirenDetection | ดูในหน้า Store |
 
-<div class="src">★ ใช้วันนี้ ทดสอบผลบน Dev Kit แล้ว · ☆ น่าลองในโปรเจกต์ ติดตั้งได้ แต่ผลบน Dev Kit ยังไม่ได้วัด — ลองแล้วจดผลเอง · ทุกตัว: Infineon Technologies AG / Imagimob DEEPCRAFT Studio accelerators · <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> — ใช้เรียนได้ ห้ามใช้เชิงพาณิชย์ และต้องให้เครดิตในงานของทีม</div>
+<div class="src">★ ใช้วันนี้ ทดสอบผลบน Dev Kit แล้ว · ☆ น่าลองในโปรเจกต์ ติดตั้งได้ แต่ผลบน Dev Kit ยังไม่ได้วัด — ลองแล้วจดผลเอง · ทุกตัว: Infineon Technologies AG / Imagimob DEEPCRAFT Studio accelerators · <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> — ใช้เรียนได้ ห้ามใช้เชิงพาณิชย์ และต้องให้เครดิตในงานของทีม</div>
 
 </div>
 </div>
@@ -984,7 +986,7 @@ def find_models(keys):
         return []               # แกน AI ไม่ตอบ = ถือว่าไม่พบ
     return [(m["index"], m["name"], m["labels"]) for key in keys for m in ms if key.lower() in m["name"].lower()]
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> · find_models() ในส่วน "2) ฮาร์ดแวร์" · main() ลอง <code>edge_ai.select()</code> ทีละตัวจนสำเร็จ</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py" target="_blank" rel="noopener">sf3_04_ai_pump_doctor.py</a> · find_models() ในส่วน "2) ฮาร์ดแวร์" · main() ลอง <code>edge_ai.select()</code> ทีละตัวจนสำเร็จ</div>
 
 <div class="cols">
 <div class="c55">
@@ -1003,7 +1005,7 @@ def alert_rule(hist, alerting, danger):
     hits = sum(hist)
     return hist, hits >= CONFIRM_N or (alerting and hits > 0)
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py">sf3_04_ai_pump_doctor.py</a> · is_danger() และ alert_rule() ในส่วน "3) สมอง"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py" target="_blank" rel="noopener">sf3_04_ai_pump_doctor.py</a> · is_danger() และ alert_rule() ในส่วน "3) สมอง"</div>
 
 </div>
 <div>
@@ -1034,7 +1036,7 @@ section table { font-size: .68em; }
 <div class="cols">
 <div>
 
-ทำท่าเดียวกันกับไฟล์กฎ [`sf3_03_pump_vibration.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py) และไฟล์ AI **ท่าละ 5 วินาที**
+ทำท่าเดียวกันกับไฟล์กฎ <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py" target="_blank" rel="noopener">`sf3_03_pump_vibration.py`</a> และไฟล์ AI **ท่าละ 5 วินาที**
 
 | ท่า | ความจริง | กฎ `sf3_03` ตอบ | ถูก? | AI `sf3_04` ตอบ (มั่นใจ %) | ถูก? |
 |---|---|---|---|---|---|
@@ -1063,7 +1065,7 @@ section table { font-size: .68em; }
 
 </div>
 
-<div class="cap">ดูเพิ่มและเครดิตของส่วนนี้: <a href="https://www.youtube.com/watch?v=mQViYVo2L4w">What is Edge AI?</a> — Esper · 2:24 · EN &#160;·&#160; <a href="https://www.youtube.com/watch?v=b93ZyoY1hjo">Edge AI โฉมหน้าอุตสาหกรรมไทย 5.0 และวิสัยทัศน์จาก Advantech</a> — Techsauce · 10:36 · ไทย &#160;·&#160; โมเดลในตัวบอร์ด: Imagimob DEEPCRAFT ของ Infineon (ผู้พัฒนาภายนอก ฝึกจากท่ามือคนและเสียงทั่วไป) &#160;·&#160; อินโฟกราฟิก Edge AI วาดประกอบสำหรับคอร์สนี้ · ภาพหน้าจอจาก BENTO Emulator ซึ่งผล AI เป็นผลจำลอง</div>
+<div class="cap">ดูเพิ่มและเครดิตของส่วนนี้: <a href="https://www.youtube.com/watch?v=mQViYVo2L4w" target="_blank" rel="noopener">What is Edge AI?</a> — Esper · 2:24 · EN &#160;·&#160; <a href="https://www.youtube.com/watch?v=b93ZyoY1hjo" target="_blank" rel="noopener">Edge AI โฉมหน้าอุตสาหกรรมไทย 5.0 และวิสัยทัศน์จาก Advantech</a> — Techsauce · 10:36 · ไทย &#160;·&#160; โมเดลในตัวบอร์ด: Imagimob DEEPCRAFT ของ Infineon (ผู้พัฒนาภายนอก ฝึกจากท่ามือคนและเสียงทั่วไป) &#160;·&#160; อินโฟกราฟิก Edge AI วาดประกอบสำหรับคอร์สนี้ · ภาพหน้าจอจาก BENTO Emulator ซึ่งผล AI เป็นผลจำลอง</div>
 
 ---
 
@@ -1078,7 +1080,7 @@ section table { font-size: .68em; }
 
 **ลองทำ**
 1. แก้ `WIFI_SSID` `WIFI_PASS` และ `TEAM` (team01–team99 ตามที่ผู้สอนแจก · ยังเป็น teamXX = ไม่ต่อเน็ต พิมพ์ผลลง Console แทน)
-2. รัน แล้วเปิด [แดชบอร์ดของคอร์ส](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/apps/web-dashboard/) และ [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__) ใส่เลขทีมเดียวกัน (เปิดในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร)
+2. รัน แล้วเปิด <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/apps/web-dashboard/" target="_blank" rel="noopener">แดชบอร์ดของคอร์ส</a> และ <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__" target="_blank" rel="noopener">แจ้งเตือนเข้ามือถือ</a> ใส่เลขทีมเดียวกัน (เปิดในเบราว์เซอร์ ไม่ต้องติดตั้งอะไร)
 3. วางนิ่ง 10 วิ **นับข้อความ** แล้วเขย่า ดูว่าป้ายใหม่มาเร็วแค่ไหน
 
 </div>
@@ -1096,7 +1098,7 @@ def should_send(changed, since_ms):
         return False
     return changed or since_ms >= HEARTBEAT_MS
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py">sf3_06_ai_to_mqtt.py</a> · should_send() ในส่วน "3) สมอง"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_06_ai_to_mqtt.py" target="_blank" rel="noopener">sf3_06_ai_to_mqtt.py</a> · should_send() ในส่วน "3) สมอง"</div>
 
 <div class="think">
 
@@ -1165,7 +1167,7 @@ def should_send(changed, since_ms):
 </div>
 </div>
 
-<div class="src">ทุกภารกิจส่งผลตาม <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md">สัญญาข้อ 3.11</a> · <b>lvl 2</b> = กฎกับ AI เห็นตรงกัน (เตือนจริง) · <b>lvl 1</b> = ฝ่ายเดียว (ให้คนไปดู) · ชื่อโมเดลในโค้ดคือชื่อบนบอร์ด (Store "Siren" = บอร์ด "SirenDetection")</div>
+<div class="src">ทุกภารกิจส่งผลตาม <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/MQTT_CONTRACT_th.md" target="_blank" rel="noopener">สัญญาข้อ 3.11</a> · <b>lvl 2</b> = กฎกับ AI เห็นตรงกัน (เตือนจริง) · <b>lvl 1</b> = ฝ่ายเดียว (ให้คนไปดู) · ชื่อโมเดลในโค้ดคือชื่อบนบอร์ด (Store "Siren" = บอร์ด "SirenDetection")</div>
 
 ---
 
@@ -1177,14 +1179,14 @@ def should_send(changed, since_ms):
 <div class="try">
 
 **ลองทำ**
-1. จับการ์ดภารกิจ แล้ว **Deploy** โมเดลของภารกิจจาก [Edge AI Store](https://edgeai-store.tesaiot.dev) ลงบอร์ด
-2. เปิด [`sf3_08_farm_ai_missions.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py) แก้ `MISSION` `TEAM` `WIFI_SSID` `WIFI_PASS` แล้วรัน → จอบอก **กฎ vs AI** และระดับ lvl
-3. เปิด [หน้าทีม](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__) และ [แจ้งเตือนเข้ามือถือ](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__) ใส่เลขทีมเดียวกัน
+1. จับการ์ดภารกิจ แล้ว **Deploy** โมเดลของภารกิจจาก <a href="https://edgeai-store.tesaiot.dev" target="_blank" rel="noopener">Edge AI Store</a> ลงบอร์ด
+2. เปิด <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_08_farm_ai_missions.py" target="_blank" rel="noopener">`sf3_08_farm_ai_missions.py`</a> แก้ `MISSION` `TEAM` `WIFI_SSID` `WIFI_PASS` แล้วรัน → จอบอก **กฎ vs AI** และระดับ lvl
+3. เปิด <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__" target="_blank" rel="noopener">หน้าทีม</a> และ <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/notify/index.html?team=team__" target="_blank" rel="noopener">แจ้งเตือนเข้ามือถือ</a> ใส่เลขทีมเดียวกัน
 4. ทำให้เกิดเหตุจริง (เขย่าพัดลม · เปิดคลิปเสียงจากมือถือ · พูด go) แล้วกด **เหตุจริง / เตือนผิด** ให้ครบ 10 ครั้ง → ดาวน์โหลด CSV ไว้ฝึกใน BENTO Edge AI Trainer
 
 </div>
 
-<div class="tip"><b>ไม่มีบอร์ด?</b> เปิด <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__&amp;sim=1">หน้าทีมโหมดบอร์ดจำลอง</a> กดปุ่มเหตุการณ์ได้ทุกภารกิจ · หรือรัน sf3_08 ใน BENTO Emulator (ใช้โมเดลในตัวแทน)</div>
+<div class="tip"><b>ไม่มีบอร์ด?</b> เปิด <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_farm.html?team=team__&amp;sim=1" target="_blank" rel="noopener">หน้าทีมโหมดบอร์ดจำลอง</a> กดปุ่มเหตุการณ์ได้ทุกภารกิจ · หรือรัน sf3_08 ใน BENTO Emulator (ใช้โมเดลในตัวแทน)</div>
 
 </div>
 <div>
@@ -1200,12 +1202,12 @@ TEAM = "teamXX"    # team01–team99 ตามที่ผู้สอนแจ�
 
 </div>
 
-<div class="goal"><b>กลุ่ม SI:</b> วัดเวลาจนคนกดรับทราบ (ack) · ต่อ voice เข้า PLC Simulator ใน <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__">farm_web</a> แล้วพิสูจน์ว่าถังต่ำยังชนะคำสั่งเสียง</div>
+<div class="goal"><b>กลุ่ม SI:</b> วัดเวลาจนคนกดรับทราบ (ack) · ต่อ voice เข้า PLC Simulator ใน <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__" target="_blank" rel="noopener">farm_web</a> แล้วพิสูจน์ว่าถังต่ำยังชนะคำสั่งเสียง</div>
 
 </div>
 </div>
 
-<div class="src">ผู้สอนฉาย <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_class.html">แผนที่ฟาร์มทั้งห้อง</a> ตอน Stand-up: ทุกทีมพูด 30 วิ — ปัญหา → AI ช่วยอย่างไร → เตือนผิดกี่ครั้ง → จะต่อยอดอะไร</div>
+<div class="src">ผู้สอนฉาย <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s3/app/ai_class.html" target="_blank" rel="noopener">แผนที่ฟาร์มทั้งห้อง</a> ตอน Stand-up: ทุกทีมพูด 30 วิ — ปัญหา → AI ช่วยอย่างไร → เตือนผิดกี่ครั้ง → จะต่อยอดอะไร</div>
 
 ---
 
@@ -1215,7 +1217,7 @@ TEAM = "teamXX"    # team01–team99 ตามที่ผู้สอนแจ�
 
 <div class="big">1:40 – 1:50</div>
 
-**ระหว่างพัก:** เปิด [`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md) อ่านไอเดียตั้งต้น 8 เรื่อง แล้วคุยกันว่า **ทีมเราอยากแก้ปัญหาของใคร**
+**ระหว่างพัก:** เปิด <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">`PROJECT_BRIEF_th.md`</a> อ่านไอเดียตั้งต้น 8 เรื่อง แล้วคุยกันว่า **ทีมเราอยากแก้ปัญหาของใคร**
 
 ---
 
@@ -1229,7 +1231,7 @@ TEAM = "teamXX"    # team01–team99 ตามที่ผู้สอนแจ�
 
 <div class="flow"><b>อากาศ ดิน เรดาร์</b><i>→</i><b>Dev Kit ตัดสิน</b><i>→</i><b>สั่งรีเลย์ผ่าน MQTT</b><i>→</i><b>แอปของทีมดูและสั่ง</b></div>
 
-<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py">sf3_05_farm_all_in_one.py</a> <span>— ฟาร์มครบวงจรในไฟล์เดียว</span></div></div></div>
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">sf3_05_farm_all_in_one.py</a> <span>— ฟาร์มครบวงจรในไฟล์เดียว</span></div></div></div>
 
 <div class="chal">🏆 <b>ท้าทาย:</b> ทำให้เกิดครบใน 3 นาที — <b>พัดลมเปิด · ปั๊มเปิด · ผู้บุกรุก · กด SW6 รับทราบ · แอปสั่งรดน้ำ</b></div>
 
@@ -1283,7 +1285,7 @@ section table { font-size: .68em; }
 <div class="cols">
 <div class="c60">
 
-| เสา | ใน [`sf3_05_farm_all_in_one.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
+| เสา | ใน <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05_farm_all_in_one.py`</a> |
 |---|---|
 | **1 · Smart HMI** | 3 การ์ด **โรงเรือน · แปลงผัก · คอกสัตว์** + ปุ่มบนจอ **"ส่งรายงานเลย"** · จอไฟ RGB **เขียว** ปกติ · **เหลือง** มีเครื่องทำงาน · **แดงวิ่ง INTRUDER** |
 | **2 · เซนเซอร์** | อุณหภูมิ ความชื้น ความกดอากาศ · เรดาร์ที่คอก · **ดิน = จำลองด้วย VR2** (ต้องประกาศ) · hysteresis + ยืนยัน 3 รอบ |
@@ -1325,7 +1327,7 @@ section table { font-size: .68em; }
 
 1. แก้ `WIFI_SSID` `WIFI_PASS` `TEAM` ให้เหมือน Session 2 แล้วรัน → แถบสถานะขึ้น **"ออนไลน์ teamNN"** หรือ **"ออฟไลน์ (ทำงานต่อ)"**
 2. หมุน **VR2 ลง** (ดินแห้ง → ไฟปั๊ม) · หมุน **VR3 ลง** ต่ำกว่าอุณหภูมิห้อง (→ ไฟพัดลม) · **เดินเข้าหาบอร์ด** (→ INTRUDER) แล้วกด **SW6** · กด **SW5 ค้าง** (รดเอง) · แตะ **"ส่งรายงานเลย"**
-3. เปิดแอปของทีม [`farm_web.html`](https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__) ใส่ TEAM เดียวกัน → เห็นรายงาน · สั่ง `pump` `beep` แล้วบอร์ดตอบสนอง
+3. เปิดแอปของทีม <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/s2/app/farm_web.html?team=team__" target="_blank" rel="noopener">`farm_web.html`</a> ใส่ TEAM เดียวกัน → เห็นรายงาน · สั่ง `pump` `beep` แล้วบอร์ดตอบสนอง
 4. **ปิด Hotspot กลางทาง** — ฟาร์มยังตัดสินและเตือนได้ไหม?
 
 </div>
@@ -1359,7 +1361,7 @@ def decide(f, near):
     f.count += near                     # True นับเป็น 1 = นับเฉพาะตอนเข้า
     return True
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py">sf3_05_farm_all_in_one.py</a> · decide() ในส่วน "3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต"</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">sf3_05_farm_all_in_one.py</a> · decide() ในส่วน "3) สมอง (ตัดสินใจ) ไม่แตะฮาร์ดแวร์ ไม่แตะเน็ต"</div>
 
 <div class="cols">
 <div>
@@ -1394,7 +1396,7 @@ def decide(f, near):
 
 <div class="budget"><span>📝 Sprint 0 <b>15</b> นาที</span><span>🛠️ Sprint 1 <b>30</b> นาที</span><span>🗣️ Stand-up <b>10</b> นาที</span><span>🏠 เสา 5 + ทดสอบ <b>หลังคาบ</b></span></div>
 
-<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md">PROJECT_BRIEF_th.md</a> <span>— โจทย์ เกณฑ์ให้คะแนน และการนำเสนอ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py">sf3_05_farm_all_in_one.py</a> <span>— แม่แบบ: คัดลอกแล้วแก้เป็นเรื่องของทีม</span></div></div></div>
+<div class="files one"><div><div class="fh">★ ทำในห้อง</div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">PROJECT_BRIEF_th.md</a> <span>— โจทย์ เกณฑ์ให้คะแนน และการนำเสนอ</span></div><div class="f"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">sf3_05_farm_all_in_one.py</a> <span>— แม่แบบ: คัดลอกแล้วแก้เป็นเรื่องของทีม</span></div></div></div>
 
 <div class="chal">🏆 <b>ภายในวันนี้:</b> Project Canvas ผ่านการตรวจ + <b>MVP บนบอร์ดรันได้อย่างน้อยเสา 1–4</b></div>
 
@@ -1453,11 +1455,11 @@ section table { font-size: .6em; }
 
 | เสา | ขั้นต่ำที่ต้องมี | ไฟล์ตัวอย่างที่ใช้ได้ |
 |---|---|---|
-| **1 · Smart HMI** จอสัมผัส + จอไฟ RGB | หน้าจอเป็นเรื่องของทีม อ่านออกจากระยะหนึ่งเมตร มีป้ายสถานะ และมีการแตะอย่างน้อย 1 อย่าง (ปุ่ม/สวิตช์/แท็บบนจอ) ที่ทำงานจริง · จอไฟ RGB บอกสถานะที่เห็นได้จากไกล วาด **เฉพาะตอนสถานะเปลี่ยน** | [`sf1_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_05_my_farm_dashboard.py) · [`sf3_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
-| **2 · เซนเซอร์** | เซนเซอร์จริงบนบอร์ดอย่างน้อย 1 ตัว (SHT40 · DPS368 · BMI270 · เรดาร์ · ไมค์) · กฎหรือ AI ที่มีตัวกันเตือนผิด (hysteresis / ยืนยัน N ครั้ง / นับในช่วงเวลา / ความมั่นใจขั้นต่ำ) · ถ้าใช้ SHT40 ต้องตั้ง `TEMP_OFFSET` เทียบกับเทอร์โมมิเตอร์ | [`sf1_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py)–[`sf1_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py) · [`sf3_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py)–[`sf3_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py) |
-| **3 · ปุ่มตั้งค่า** | ลูกบิด VR อย่างน้อย 1 ตัวเป็น "ค่าตั้ง" ที่มีเหตุผล (เช่น เกณฑ์) · ปุ่ม SW5 (ล่าง) / SW6 (บน) อย่างน้อย 1 ปุ่มที่มีหน้าที่ชัด (เช่น รับทราบ · รดน้ำเอง · เริ่มเที่ยว) | [`sf1_03`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
-| **4 · เสียง** | เสียงอย่างน้อย 2 แบบ ต่างกันตามเหตุการณ์ ดัง **เฉพาะตอนเกิดเหตุการณ์** | [`sf1_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py) · [`sf3_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) |
-| **5 · MQTT + แอปของตัวเอง** | บอร์ดส่ง telemetry ขึ้น `bento-aiot/<TEAM>/telemetry` ไม่ถี่กว่าทุก 5 วินาที · ส่ง event อย่างน้อย 1 ชนิดขึ้น `.../event` · รับคำสั่งอย่างน้อย 1 ชนิดจาก `.../cmd` · **เน็ตหลุดแล้วบอร์ดยังตัดสินและเตือนได้** · แอปของทีมต่อยอดจาก Session 2 เพิ่มอย่างน้อย 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป (เช่น บอร์ดเงียบเกิน 15 วิ) · ปุ่มสั่งกลับบอร์ด · กราฟ | [`sf2_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py)–[`sf2_04`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) · [`farm_web.html`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html) |
+| **1 · Smart HMI** จอสัมผัส + จอไฟ RGB | หน้าจอเป็นเรื่องของทีม อ่านออกจากระยะหนึ่งเมตร มีป้ายสถานะ และมีการแตะอย่างน้อย 1 อย่าง (ปุ่ม/สวิตช์/แท็บบนจอ) ที่ทำงานจริง · จอไฟ RGB บอกสถานะที่เห็นได้จากไกล วาด **เฉพาะตอนสถานะเปลี่ยน** | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_05_my_farm_dashboard.py" target="_blank" rel="noopener">`sf1_05`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">`sf3_01`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05`</a> |
+| **2 · เซนเซอร์** | เซนเซอร์จริงบนบอร์ดอย่างน้อย 1 ตัว (SHT40 · DPS368 · BMI270 · เรดาร์ · ไมค์) · กฎหรือ AI ที่มีตัวกันเตือนผิด (hysteresis / ยืนยัน N ครั้ง / นับในช่วงเวลา / ความมั่นใจขั้นต่ำ) · ถ้าใช้ SHT40 ต้องตั้ง `TEMP_OFFSET` เทียบกับเทอร์โมมิเตอร์ | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_01_greenhouse_hello.py" target="_blank" rel="noopener">`sf1_01`</a>–<a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_04_tank_tilt.py" target="_blank" rel="noopener">`sf1_04`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">`sf3_01`</a>–<a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_04_ai_pump_doctor.py" target="_blank" rel="noopener">`sf3_04`</a> |
+| **3 · ปุ่มตั้งค่า** | ลูกบิด VR อย่างน้อย 1 ตัวเป็น "ค่าตั้ง" ที่มีเหตุผล (เช่น เกณฑ์) · ปุ่ม SW5 (ล่าง) / SW6 (บน) อย่างน้อย 1 ปุ่มที่มีหน้าที่ชัด (เช่น รับทราบ · รดน้ำเอง · เริ่มเที่ยว) | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_03_auto_irrigation.py" target="_blank" rel="noopener">`sf1_03`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05`</a> |
+| **4 · เสียง** | เสียงอย่างน้อย 2 แบบ ต่างกันตามเหตุการณ์ ดัง **เฉพาะตอนเกิดเหตุการณ์** | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s1/sf1_02_crop_comfort.py" target="_blank" rel="noopener">`sf1_02`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py" target="_blank" rel="noopener">`sf3_02`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05`</a> |
+| **5 · MQTT + แอปของตัวเอง** | บอร์ดส่ง telemetry ขึ้น `bento-aiot/<TEAM>/telemetry` ไม่ถี่กว่าทุก 5 วินาที · ส่ง event อย่างน้อย 1 ชนิดขึ้น `.../event` · รับคำสั่งอย่างน้อย 1 ชนิดจาก `.../cmd` · **เน็ตหลุดแล้วบอร์ดยังตัดสินและเตือนได้** · แอปของทีมต่อยอดจาก Session 2 เพิ่มอย่างน้อย 1 อย่าง: เก็บ CSV · กฎเตือนฝั่งแอป (เช่น บอร์ดเงียบเกิน 15 วิ) · ปุ่มสั่งกลับบอร์ด · กราฟ | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_02_greenhouse_report.py" target="_blank" rel="noopener">`sf2_02`</a>–<a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/sf2_04_crop_alert.py" target="_blank" rel="noopener">`sf2_04`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s2/app/farm_web.html" target="_blank" rel="noopener">`farm_web.html`</a> |
 
 ---
 
@@ -1519,7 +1521,7 @@ section table { font-size: .6em; }
 </div>
 </div>
 
-<div class="cap">แต่ละไอเดียมีได้ไม่เกิน 3 ทีม (ลงชื่อบนกระดานรวมตอน Sprint 0) · ทีมที่เลือกไอเดียเดียวกันต้องแก้ปัญหาคนละมุม · ไฟล์ตั้งต้นของแต่ละไอเดียดูตารางใน <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md">PROJECT_BRIEF_th.md</a> ข้อ 3</div>
+<div class="cap">แต่ละไอเดียมีได้ไม่เกิน 3 ทีม (ลงชื่อบนกระดานรวมตอน Sprint 0) · ทีมที่เลือกไอเดียเดียวกันต้องแก้ปัญหาคนละมุม · ไฟล์ตั้งต้นของแต่ละไอเดียดูตารางใน <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">PROJECT_BRIEF_th.md</a> ข้อ 3</div>
 
 ---
 
@@ -1544,7 +1546,7 @@ section table { font-size: .64em; }
 
 <div class="goal">
 
-Canvas ต้อง **ผ่านการตรวจของทีมข้าง ๆ หรือผู้ช่วยสอน** ก่อนเริ่ม Sprint 1 · วิธีเริ่มที่ง่ายที่สุด: คัดลอก [`sf3_05_farm_all_in_one.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py) แล้วเปลี่ยนการ์ดทั้งสามให้เป็นเรื่องของทีม
+Canvas ต้อง **ผ่านการตรวจของทีมข้าง ๆ หรือผู้ช่วยสอน** ก่อนเริ่ม Sprint 1 · วิธีเริ่มที่ง่ายที่สุด: คัดลอก <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05_farm_all_in_one.py`</a> แล้วเปลี่ยนการ์ดทั้งสามให้เป็นเรื่องของทีม
 
 </div>
 
@@ -1663,8 +1665,8 @@ section table { font-size: .66em; }
 |---|---|---|---|
 | **1 เดา** (Predict) | **sf3_01:** `SAMPLE_MS = 250`, `CONFIRM_N = 3` — ไซเรนดังช้ากว่าตอนคนเข้าเขตราวกี่วินาที (ยังไม่นับค่ากลาง)? · **sf3_02:** ตบมือ 5 ครั้ง ห่างกันครั้งละ 0.3 วิ จะถูกนับกี่ครั้ง? | โจทย์หลัก (มีเฉลยในคาบ) | ข้อละ 1 |
 | **2 แก้** (Tweak) | **sf3_01:** `CONFIRM_N` = 1 กับ 3 เดินผ่าน 5 รอบ · **sf3_02:** `MUTE_MS = 0` · **sf3_03:** กด SW5 เรียนรู้ใหม่ขณะเพื่อนเคาะโต๊ะ | โจทย์หลัก (มีเฉลยในคาบ) | ข้อละ 2 |
-| **3 เติม** (Fill-in) | [`sf3_02_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py) เติม `is_event()` ช่อง A B C | โจทย์หลัก (มีเฉลยในคาบ) | ลงมือ 3 + ผ่าน 1 |
-| | [`sf3_01_practise.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_01_practise.py) เติม `confirm()` ช่อง A B C | โจทย์เพิ่ม (โบนัส เฉลยครั้งหน้า) | ลงมือ 3 + ผ่าน 1 |
+| **3 เติม** (Fill-in) | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py" target="_blank" rel="noopener">`sf3_02_practise.py`</a> เติม `is_event()` ช่อง A B C | โจทย์หลัก (มีเฉลยในคาบ) | ลงมือ 3 + ผ่าน 1 |
+| | <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_01_practise.py" target="_blank" rel="noopener">`sf3_01_practise.py`</a> เติม `confirm()` ช่อง A B C | โจทย์เพิ่ม (โบนัส เฉลยครั้งหน้า) | ลงมือ 3 + ผ่าน 1 |
 | **4 สร้าง** (Make) | **sf3_05:** กฎข้ามระบบ "มีผู้บุกรุก ห้ามเปิดปั๊ม" + event บอกแอป · **sf3_02:** กฎ "กลางคืนต้องเงียบ" (เฉลี่ยเกิน 40 นาน 10 วิ) · **sf3_03:** SW6 ล้างตัวนับครั้งผิดปกติ | โจทย์เพิ่ม (โบนัส เฉลยครั้งหน้า) | 5 |
 
 <div class="goal">
@@ -1677,14 +1679,14 @@ section table { font-size: .66em; }
 
 ## Code Quest — ไฟล์ฝึก + ติดขัดทำอย่างไร
 
-**ไฟล์ฝึกระดับ 3** — ช่องที่ต้องเติมเขียนว่า `____` · รันแล้วไฟล์ตรวจคำตอบให้เองก่อนเปิดจอ (5–7 กรณี) ผ่านครบ = Console ขึ้น **"ผ่าน!"** · เฉลยโจทย์หลัก: [`sf3_02_practise_solution.py`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/solutions/sf3_02_practise_solution.py) (ลองเองก่อน)
+**ไฟล์ฝึกระดับ 3** — ช่องที่ต้องเติมเขียนว่า `____` · รันแล้วไฟล์ตรวจคำตอบให้เองก่อนเปิดจอ (5–7 กรณี) ผ่านครบ = Console ขึ้น **"ผ่าน!"** · เฉลยโจทย์หลัก: <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/solutions/sf3_02_practise_solution.py" target="_blank" rel="noopener">`sf3_02_practise_solution.py`</a> (ลองเองก่อน)
 
 ```python
     return (time.ticks_diff(now, mute_until) >= ____     # ช่อง A: พ้นช่วงปิดหูแล้ว ผลต่างเวลาต้องไม่ติดลบ
             and peak >= ____                            # ช่อง B: ยอดเสียงต้องถึง "อะไร"?
             and time.ticks_diff(now, last) >= ____)     # ช่อง C: ห่างครั้งก่อนอย่างน้อยกี่ ms? (ส่วน 1)
 ```
-<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py">s3/practise/sf3_02_practise.py</a> · is_event() (ตัดตอน)</div>
+<div class="src"><a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/practise/sf3_02_practise.py" target="_blank" rel="noopener">s3/practise/sf3_02_practise.py</a> · is_event() (ตัดตอน)</div>
 
 <div class="cols">
 <div>
@@ -1764,10 +1766,10 @@ section table { font-size: .66em; }
 
 | หัวข้อ | คลิป | ยาว |
 |---|---|---|
-| เรดาร์ | [What is mmWave sensing?](https://www.youtube.com/watch?v=XJ6JhB8wOPU) — Mouser Electronics | 2:14 |
-| การสั่นของเครื่องจักร | [Vibration Analysis for beginners 1](https://www.youtube.com/watch?v=BPMjYJ_HoWk) — ADASH | 9:09 |
+| เรดาร์ | <a href="https://www.youtube.com/watch?v=XJ6JhB8wOPU" target="_blank" rel="noopener">What is mmWave sensing?</a> — Mouser Electronics | 2:14 |
+| การสั่นของเครื่องจักร | <a href="https://www.youtube.com/watch?v=BPMjYJ_HoWk" target="_blank" rel="noopener">Vibration Analysis for beginners 1</a> — ADASH | 9:09 |
 
-**รู้จักบอร์ดให้ลึกขึ้น:** TESAIoT Dev Kit SDK <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/> — ฮาร์ดแวร์ · ซอฟต์แวร์ · เอกสาร SDK
+**รู้จักบอร์ดให้ลึกขึ้น:** TESAIoT Dev Kit SDK <a href="https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/" target="_blank" rel="noopener">https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/</a> — ฮาร์ดแวร์ · ซอฟต์แวร์ · เอกสาร SDK
 
 </div>
 </div>
@@ -1783,16 +1785,16 @@ section p, section li { margin: .05em 0; line-height: 1.28; }
 
 **ภาพที่ทำขึ้นเองสำหรับคอร์สนี้:** ปก · อินโฟกราฟิกทุกภาพที่วาดด้วย SVG/HTML (ตัวกันเตือนผิด 4 แบบ, ช่องระยะของเรดาร์, ค่ากลาง + ยืนยัน N ครั้ง, ยอดเสียงกับความดัง, หน้าต่างเวลา 30 วินาที, ขนาดความเร่ง, เรียนรู้ค่าปกติ, Smart IoT Gateway, ห้าเสา) — **เป็นภาพประกอบแนวคิด ไม่ใช่ค่าที่วัดจริง**
 
-**ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ค่าเซนเซอร์และเสียงเป็นค่าจำลอง) ถ่ายจากไฟล์ตัวอย่าง [`sf3_01`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py) · [`sf3_02`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py) · [`sf3_03`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py) · [`sf3_05`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py)
+**ภาพหน้าจอทุกภาพจาก BENTO Emulator** (ค่าเซนเซอร์และเสียงเป็นค่าจำลอง) ถ่ายจากไฟล์ตัวอย่าง <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_01_pen_guard.py" target="_blank" rel="noopener">`sf3_01`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_02_coop_ears.py" target="_blank" rel="noopener">`sf3_02`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_03_pump_vibration.py" target="_blank" rel="noopener">`sf3_03`</a> · <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/s3/sf3_05_farm_all_in_one.py" target="_blank" rel="noopener">`sf3_05`</a>
 
 **วิดีโอ (YouTube — ลิขสิทธิ์เป็นของเจ้าของช่อง ใช้ด้วยการฝัง/ลิงก์)**
-- [What is mmWave sensing? | Mouser Electronics | Texas Instruments](https://www.youtube.com/watch?v=XJ6JhB8wOPU) — Mouser · 2:14
-- [Vibration Analysis for beginners 1 (Predictive Maintenance and vibration explanation. How it works?)](https://www.youtube.com/watch?v=BPMjYJ_HoWk) — ADASH · 9:09
+- <a href="https://www.youtube.com/watch?v=XJ6JhB8wOPU" target="_blank" rel="noopener">What is mmWave sensing? | Mouser Electronics | Texas Instruments</a> — Mouser · 2:14
+- <a href="https://www.youtube.com/watch?v=BPMjYJ_HoWk" target="_blank" rel="noopener">Vibration Analysis for beginners 1 (Predictive Maintenance and vibration explanation. How it works?)</a> — ADASH · 9:09
 
-**โมเดล AI:** โมเดลที่ติดมากับบอร์ด — Imagimob DEEPCRAFT (Infineon) ใช้เพื่อการเรียนการสอนเท่านั้น · โมเดลจาก Edge AI Store (AnomalousVibration, HumanActivity และตัวอื่นในตาราง) — Infineon Technologies AG / Imagimob DEEPCRAFT Studio accelerators, [CC-BY-NC-4.0](https://creativecommons.org/licenses/by-nc/4.0/) ห้ามใช้เชิงพาณิชย์
+**โมเดล AI:** โมเดลที่ติดมากับบอร์ด — Imagimob DEEPCRAFT (Infineon) ใช้เพื่อการเรียนการสอนเท่านั้น · โมเดลจาก Edge AI Store (AnomalousVibration, HumanActivity และตัวอื่นในตาราง) — Infineon Technologies AG / Imagimob DEEPCRAFT Studio accelerators, <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC-BY-NC-4.0</a> ห้ามใช้เชิงพาณิชย์
 
 **อีโมจิ:** Twemoji — Twitter, Inc. และผู้ร่วมพัฒนา (jdecked/twemoji) — CC BY 4.0
 
-**ข้อมูลฮาร์ดแวร์:** TESAIoT Dev Kit SDK — <https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/> · โจทย์โปรเจกต์ เกณฑ์ และปฏิทิน: [`PROJECT_BRIEF_th.md`](https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md)
+**ข้อมูลฮาร์ดแวร์:** TESAIoT Dev Kit SDK — <a href="https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/" target="_blank" rel="noopener">https://tesaiot.github.io/tesaiot-pse84-devkit-sdk/</a> · โจทย์โปรเจกต์ เกณฑ์ และปฏิทิน: <a href="https://github.com/Advance-Innovation-Centre-AIC/aiot-development-for-smart-farm/blob/main/PROJECT_BRIEF_th.md" target="_blank" rel="noopener">`PROJECT_BRIEF_th.md`</a>
 
 **BENTO : : Make Anything.** · BENTO & TESAIoT
