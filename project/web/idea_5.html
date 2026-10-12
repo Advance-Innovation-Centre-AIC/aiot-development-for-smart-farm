@@ -4,7 +4,7 @@
   เปิดแบบนี้: web/idea_5.html?team=team05  (หรือพิมพ์เลขกลุ่มในช่องบนหน้า)
   ฟัง bento-aiot/<ทีม>/# · ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd · คู่กับบอร์ด project/idea_5_night_pen.py
   event: intruder {count, cm, shift_s, quiet_s} · clear {count} · ack {by, count} · armed {on}
-  กฎฝั่งแอป: intruder (หรือ level เป็น 2) = เตือนแรงบนจอ + เสียงซ้ำทุก 5 วินาที จนกว่าจะรับทราบ
+  กฎฝั่งแอป: event intruder = เตือนแรงบนจอ + เสียงซ้ำทุก 5 วินาที จนกว่าจะรับทราบ
   broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
 -->
 <html lang="th">
@@ -175,10 +175,9 @@ function onEvent(o) {
   const ev = typeof o.event === "string" ? o.event.slice(0, 20) : "";
   const count = num(o.count, 0, 1e6), cm = num(o.cm, 0, 2000);
   const shift = num(o.shift_s, 0, 1e7), quiet = num(o.quiet_s, 0, 1e7);
-  const level = num(o.level, 0, 9);
   if (shift !== null) shiftRef = { shift_s: shift, at: Date.now() };
   if (count !== null) $("count").textContent = String(count);
-  if (ev === "intruder" || level === 2) {
+  if (ev === "intruder") {
     if (!alarm) alarmAt = Date.now();
     setAlarm(true, "มีผู้บุกรุกที่คอก!");
     $("detail").textContent = "ครั้งที่ " + (count ?? "-") + " ระยะ " + (cm ?? "-") + " cm" + (shift !== null ? " เฝ้ามาแล้ว " + mmss(shift) : "");
