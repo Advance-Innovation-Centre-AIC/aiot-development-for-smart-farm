@@ -76,8 +76,8 @@
   <section class="card">
     <h2>สั่งคนขับ</h2>
     <div class="row">
-      <button class="go" data-sec="10">ไฟขับปกติ 10 วิ</button>
-      <button class="go" data-sec="30">ไฟขับปกติ 30 วิ</button>
+      <button class="go" data-sec="10">ไฟขับปกติ 10 วินาที</button>
+      <button class="go" data-sec="30">ไฟขับปกติ 30 วินาที</button>
       <button class="stop" id="off">ดับไฟขับ</button>
       <button id="beep">เรียกคนขับ</button>
     </div>
@@ -106,7 +106,7 @@
 "use strict";
 const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
 const ROOT = "bento-aiot";
-const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วินาที)
 const $ = (id) => document.getElementById(id);
 let client = null;
 let team = new URLSearchParams(location.search).get("team") || "teamXX";
@@ -254,7 +254,7 @@ function connect() {
 setInterval(() => {
   if (!client || !client.connected || !lastAt) return;
   const quiet = Math.round((Date.now() - lastAt) / 1000);
-  if (quiet > SILENT_S) setStatus("กระบะเงียบ (สัญญาณหาย?) " + quiet + " วิ", "alarm");
+  if (quiet > SILENT_S) setStatus("กระบะเงียบ (สัญญาณหาย?) " + quiet + " วินาที", "alarm");
   else setStatus("ต่อแล้ว " + team, "on");
 }, 1000);
 

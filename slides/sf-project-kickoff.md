@@ -179,8 +179,8 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 |---|---|
 | **A** เฝ้าอากาศ + เตือน + รับทราบ | 1 ห้องเย็นผลไม้ · 2 รถส่งผลผลิต · 3 ไซโลข้าวเปลือก · 8 เล้าไก่ · 9 โรงเพาะเห็ด · 10 ห้องบ่มกล้วย · 11 โรงอบลำไย · 12 โกดังเมล็ดพันธุ์ · 13 โกดังปุ๋ย · 14 ตู้ยาและวัคซีนสัตว์ · 15 ไฮโดรโปนิกส์ |
 | **B** สั่งเครื่องจากมือถือ + กฎปลอดภัย | 4 โรงเรือนรดน้ำ · 6 หอถังน้ำ · 16 พ่นหมอกกล้วยไม้ · 17 เติมอากาศบ่อปลา · 18 พัดลมเล้าไก่ · 19 ประตูน้ำแปลงนา · 20 ให้อาหารปลา |
-| **C** การสั่นผิดปกติ + หยุดเครื่อง | 7 หมอฟังปั๊ม · 21 พัดลมโรงเรือน · 22 เครื่องสีข้าว · 23 ถาดไข่ขนส่ง · 24 ลังผลไม้บนกระบะ |
-| **D** เรดาร์จับผู้บุกรุก | 5 คอกกลางคืน · 25 ประตูโกดังกันขโมย |
+| **C** การสั่นผิดปกติ + หยุดเครื่อง (กฎธรรมดา ไม่ใช้ AI) | 7 หมอฟังปั๊ม · 21 พัดลมโรงเรือน · 22 เครื่องสีข้าว · 23 ถาดไข่ขนส่ง · 24 ลังผลไม้บนกระบะ |
+| **D** เรดาร์จับผู้บุกรุก (กฎธรรมดา ไม่ใช้ AI) | 5 คอกกลางคืน · 25 ประตูโกดังกันขโมย |
 
 <div class="cap">หน้าเว็บของแต่ละเรื่อง: project/web/idea_N.html · เกณฑ์ในโค้ดเริ่มต้นเป็นค่าสาธิต ทีมต้องตั้งใหม่ · ตัวอย่าง Edge AI 3 ตัวใน project/ai_future/ เป็นแนวทางอนาคต ไม่อยู่ในโจทย์</div>
 
@@ -209,50 +209,57 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 
 ---
 
-## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 9–14)
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 9–12)
 
-<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
 <div class="pairs">
-<div class="pair"><b class="pt">9 · โรงเพาะเห็ด <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_9.png" alt="จอบอร์ด เรื่อง 9"></figure><figure><img class="wb" src="img/project/web_idea_9.png" alt="หน้าเว็บ เรื่อง 9"></figure></div></div>
-<div class="pair"><b class="pt">10 · ห้องบ่มกล้วย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_10.png" alt="จอบอร์ด เรื่อง 10"></figure><figure><img class="wb" src="img/project/web_idea_10.png" alt="หน้าเว็บ เรื่อง 10"></figure></div></div>
-<div class="pair"><b class="pt">11 · โรงอบลำไย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_11.png" alt="จอบอร์ด เรื่อง 11"></figure><figure><img class="wb" src="img/project/web_idea_11.png" alt="หน้าเว็บ เรื่อง 11"></figure></div></div>
-<div class="pair"><b class="pt">12 · โกดังเก็บเมล็ดพันธุ์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_12.png" alt="จอบอร์ด เรื่อง 12"></figure><figure><img class="wb" src="img/project/web_idea_12.png" alt="หน้าเว็บ เรื่อง 12"></figure></div></div>
-<div class="pair"><b class="pt">13 · โกดังปุ๋ย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_13.png" alt="จอบอร์ด เรื่อง 13"></figure><figure><img class="wb" src="img/project/web_idea_13.png" alt="หน้าเว็บ เรื่อง 13"></figure></div></div>
-<div class="pair"><b class="pt">14 · ตู้เก็บยาและวัคซีนสัตว์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_14.png" alt="จอบอร์ด เรื่อง 14"></figure><figure><img class="wb" src="img/project/web_idea_14.png" alt="หน้าเว็บ เรื่อง 14"></figure></div></div>
+<div class="pair"><b class="pt">9 · โรงเพาะเห็ด <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_9.png" alt="จอบอร์ด เรื่อง 9"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_9.png" alt="หน้าเว็บ เรื่อง 9"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">10 · ห้องบ่มกล้วย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_10.png" alt="จอบอร์ด เรื่อง 10"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_10.png" alt="หน้าเว็บ เรื่อง 10"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">11 · โรงอบลำไย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_11.png" alt="จอบอร์ด เรื่อง 11"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_11.png" alt="หน้าเว็บ เรื่อง 11"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">12 · โกดังเก็บเมล็ดพันธุ์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_12.png" alt="จอบอร์ด เรื่อง 12"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_12.png" alt="หน้าเว็บ เรื่อง 12"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
 </div>
-
-<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
 
 ---
 
-## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 15–20)
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 13–16)
 
-<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
 <div class="pairs">
-<div class="pair"><b class="pt">15 · โรงเรือนไฮโดรโปนิกส์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_15.png" alt="จอบอร์ด เรื่อง 15"></figure><figure><img class="wb" src="img/project/web_idea_15.png" alt="หน้าเว็บ เรื่อง 15"></figure></div></div>
-<div class="pair"><b class="pt">16 · พ่นหมอกโรงกล้วยไม้ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_16.png" alt="จอบอร์ด เรื่อง 16"></figure><figure><img class="wb" src="img/project/web_idea_16.png" alt="หน้าเว็บ เรื่อง 16"></figure></div></div>
-<div class="pair"><b class="pt">17 · เติมอากาศบ่อปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_17.png" alt="จอบอร์ด เรื่อง 17"></figure><figure><img class="wb" src="img/project/web_idea_17.png" alt="หน้าเว็บ เรื่อง 17"></figure></div></div>
-<div class="pair"><b class="pt">18 · พัดลมเล้าไก่ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_18.png" alt="จอบอร์ด เรื่อง 18"></figure><figure><img class="wb" src="img/project/web_idea_18.png" alt="หน้าเว็บ เรื่อง 18"></figure></div></div>
-<div class="pair"><b class="pt">19 · ประตูน้ำแปลงนา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_19.png" alt="จอบอร์ด เรื่อง 19"></figure><figure><img class="wb" src="img/project/web_idea_19.png" alt="หน้าเว็บ เรื่อง 19"></figure></div></div>
-<div class="pair"><b class="pt">20 · เครื่องให้อาหารปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_20.png" alt="จอบอร์ด เรื่อง 20"></figure><figure><img class="wb" src="img/project/web_idea_20.png" alt="หน้าเว็บ เรื่อง 20"></figure></div></div>
+<div class="pair"><b class="pt">13 · โกดังปุ๋ย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_13.png" alt="จอบอร์ด เรื่อง 13"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_13.png" alt="หน้าเว็บ เรื่อง 13"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">14 · ตู้เก็บยาและวัคซีนสัตว์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_14.png" alt="จอบอร์ด เรื่อง 14"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_14.png" alt="หน้าเว็บ เรื่อง 14"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">15 · โรงเรือนไฮโดรโปนิกส์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_15.png" alt="จอบอร์ด เรื่อง 15"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_15.png" alt="หน้าเว็บ เรื่อง 15"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">16 · พ่นหมอกโรงกล้วยไม้ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_16.png" alt="จอบอร์ด เรื่อง 16"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_16.png" alt="หน้าเว็บ เรื่อง 16"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
 </div>
-
-<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
 
 ---
 
-## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 21–25)
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 17–20)
 
-<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
 <div class="pairs">
-<div class="pair"><b class="pt">21 · พัดลมโรงเรือนสั่นผิดปกติ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_21.png" alt="จอบอร์ด เรื่อง 21"></figure><figure><img class="wb" src="img/project/web_idea_21.png" alt="หน้าเว็บ เรื่อง 21"></figure></div></div>
-<div class="pair"><b class="pt">22 · เครื่องสีข้าวชุมชน <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_22.png" alt="จอบอร์ด เรื่อง 22"></figure><figure><img class="wb" src="img/project/web_idea_22.png" alt="หน้าเว็บ เรื่อง 22"></figure></div></div>
-<div class="pair"><b class="pt">23 · ถาดไข่ระหว่างขนส่ง <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_23.png" alt="จอบอร์ด เรื่อง 23"></figure><figure><img class="wb" src="img/project/web_idea_23.png" alt="หน้าเว็บ เรื่อง 23"></figure></div></div>
-<div class="pair"><b class="pt">24 · ลังผลไม้บนรถกระบะ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_24.png" alt="จอบอร์ด เรื่อง 24"></figure><figure><img class="wb" src="img/project/web_idea_24.png" alt="หน้าเว็บ เรื่อง 24"></figure></div></div>
-<div class="pair"><b class="pt">25 · ประตูโกดังกันขโมย <span style="color:#667">(ชุด D)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_25.png" alt="จอบอร์ด เรื่อง 25"></figure><figure><img class="wb" src="img/project/web_idea_25.png" alt="หน้าเว็บ เรื่อง 25"></figure></div></div>
+<div class="pair"><b class="pt">17 · เติมอากาศบ่อปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_17.png" alt="จอบอร์ด เรื่อง 17"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_17.png" alt="หน้าเว็บ เรื่อง 17"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">18 · พัดลมเล้าไก่ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_18.png" alt="จอบอร์ด เรื่อง 18"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_18.png" alt="หน้าเว็บ เรื่อง 18"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">19 · ประตูน้ำแปลงนา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_19.png" alt="จอบอร์ด เรื่อง 19"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_19.png" alt="หน้าเว็บ เรื่อง 19"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">20 · เครื่องให้อาหารปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_20.png" alt="จอบอร์ด เรื่อง 20"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_20.png" alt="หน้าเว็บ เรื่อง 20"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
 </div>
 
-<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+---
+
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 21–24)
+
+<div class="pairs">
+<div class="pair"><b class="pt">21 · พัดลมโรงเรือนสั่นผิดปกติ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_21.png" alt="จอบอร์ด เรื่อง 21"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_21.png" alt="หน้าเว็บ เรื่อง 21"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">22 · เครื่องสีข้าวชุมชน <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_22.png" alt="จอบอร์ด เรื่อง 22"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_22.png" alt="หน้าเว็บ เรื่อง 22"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">23 · ถาดไข่ระหว่างขนส่ง <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_23.png" alt="จอบอร์ด เรื่อง 23"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_23.png" alt="หน้าเว็บ เรื่อง 23"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">24 · ลังผลไม้บนรถกระบะ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_24.png" alt="จอบอร์ด เรื่อง 24"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_24.png" alt="หน้าเว็บ เรื่อง 24"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+</div>
+
+---
+
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 25)
+
+<div class="pairs">
+<div class="pair"><b class="pt">25 · ประตูโกดังกันขโมย <span style="color:#667">(ชุด D)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_25.png" alt="จอบอร์ด เรื่อง 25"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_25.png" alt="หน้าเว็บ เรื่อง 25"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+</div>
+
+<div class="cap">หน้าเว็บของทุกเรื่องรวมไว้ที่ <a href="https://advance-innovation-centre-aic.github.io/aiot-development-for-smart-farm/project/web/index.html" target="_blank" rel="noopener">project/web/index.html</a> · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
 
 ---
 

@@ -9,7 +9,7 @@
   เปิดแบบนี้: idea_16.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
   ภาพหลัก: มาตรครึ่งวงกลมความชื้นอากาศ แบ่งช่วง แห้ง / พอดี / ชื้นเกิน + แถบหยดหมอก 12 รอบล่าสุด
   กฎของหน้านี้: ความชื้นต่ำกว่า 50 % ติดกัน 3 รายงาน และหมอกไม่ได้พ่นอยู่ = ขึ้นป้าย "ควรพ่นหมอก"
-               พร้อมปุ่มพ่นสั้น 10 วิ (หน้าเว็บไม่สั่งเอง คนต้องกดเอง)
+               พร้อมปุ่มพ่นสั้น 10 วินาที (หน้าเว็บไม่สั่งเอง คนต้องกดเอง)
   คีย์ที่ใช้: soil (= ความชื้นอากาศ) tank pump n + bursts rh_min (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
 -->
 <style>
@@ -82,7 +82,7 @@ footer { max-width: 560px; margin: auto; padding: 16px; color: var(--dim); font-
   </div>
 </header>
 <main>
-  <div id="advice"><b id="advice_t">อากาศแห้ง 3 รายงานติด ควรพ่นหมอก</b><button id="quick" class="mist">พ่น 10 วิ</button></div>
+  <div id="advice"><b id="advice_t">อากาศแห้ง 3 รายงานติด ควรพ่นหมอก</b><button id="quick" class="mist">พ่น 10 วินาที</button></div>
   <section class="card">
     <h2>ความชื้นอากาศในโรง</h2>
     <svg id="gauge" viewBox="0 0 300 165" role="img" aria-label="มาตรความชื้นอากาศ"></svg>
@@ -101,11 +101,11 @@ footer { max-width: 560px; margin: auto; padding: 16px; color: var(--dim); font-
   <section class="card">
     <h2>สั่งปั๊มหมอก</h2>
     <div class="row">
-      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วิ</label>
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วินาที</label>
       <button id="on" class="mist">พ่นหมอก</button>
       <button id="off" class="stop">หยุดพ่น</button>
     </div>
-    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วิ และไม่พ่นถ้าถังหมอกต่ำกว่า 10 %</p>
+    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วินาที และไม่พ่นถ้าถังหมอกต่ำกว่า 10 %</p>
     <div class="row"><button id="beep" class="alt">เรียกคนดูแล (beep)</button></div>
     <div class="row">
       <input id="say" maxlength="20" placeholder="MIST OK" style="flex:1">
@@ -197,7 +197,7 @@ function onTelemetry(d) {
   $("t_tank").style.color = tank !== null && tank < 10 ? "var(--bad)" : "";
   $("t_pump").textContent = pump === null ? "--" : pump ? "พ่นอยู่" : "หยุด";
   $("t_bursts").textContent = count === null ? "--" : count;
-  // bursts ของบอร์ดเพิ่ม = เริ่มพ่นรอบใหม่ (พ่นสั้นกว่า 5 วิก็ไม่พลาด เพราะบอร์ดนับเอง)
+  // bursts ของบอร์ดเพิ่ม = เริ่มพ่นรอบใหม่ (พ่นสั้นกว่า 5 วินาทีก็ไม่พลาด เพราะบอร์ดนับเอง)
   if (count !== null && lastCount !== null && count > lastCount) {
     for (let k = lastCount; k < count && k - lastCount < SLOTS; k++) bursts.push(new Date());
     drawDrops();
@@ -213,7 +213,7 @@ function onTelemetry(d) {
 }
 
 setInterval(() => {
-  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วินาทีที่แล้ว" : "--";
 }, 1000);
 
 function send(obj) {

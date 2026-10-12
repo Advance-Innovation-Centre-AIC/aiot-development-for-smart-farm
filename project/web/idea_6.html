@@ -8,7 +8,7 @@
   เรื่อง 6 · หอถังน้ำของฟาร์ม (คู่กับ project/idea_6_water_tower.py)
   เปิดแบบนี้: idea_6.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
   ภาพหลัก: รูปหอถังมีน้ำขึ้นลงตาม tank พร้อมขีด "ห้ามปั๊ม" และขีดครึ่งถัง
-  กฎของหน้านี้: ปุ่มเปิดปั๊มล็อกเอง ถ้าถังล่าสุดต่ำกว่า 10 % หรือบอร์ดเงียบเกิน 15 วิ
+  กฎของหน้านี้: ปุ่มเปิดปั๊มล็อกเอง ถ้าถังล่าสุดต่ำกว่า 10 % หรือบอร์ดเงียบเกิน 15 วินาที
                (บอร์ดยังตรวจซ้ำเองเสมอ หน้าเว็บแค่ไม่ส่งคำสั่งที่รู้อยู่แล้วว่าจะถูกปฏิเสธ)
   คีย์ที่ใช้: tank soil pump n + refused tank_lo (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
 -->
@@ -101,7 +101,7 @@ footer { padding: 16px; color: var(--dim); font-size: .85rem; max-width: 980px; 
       <span>ปั๊มปฏิเสธเพราะน้ำต่ำ</span><b id="t_ref">--</b>
     </div>
     <div class="row">
-      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วิ</label>
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วินาที</label>
       <button id="on">เปิดปั๊ม</button>
       <button id="off" class="stop">ปิดปั๊ม</button>
     </div>
@@ -204,11 +204,11 @@ function onTelemetry(d) {
 function checkLock() {
   const silent = !lastAt || Date.now() - lastAt > SILENT_MS;
   let why = "";
-  if (silent) why = lastAt ? "บอร์ดเงียบเกิน 15 วิ ไม่รู้ระดับถังตอนนี้ จึงไม่ส่งคำสั่งเปิด" : "ยังไม่ได้ยินบอร์ด รอรายงานแรกก่อน";
+  if (silent) why = lastAt ? "บอร์ดเงียบเกิน 15 วินาที ไม่รู้ระดับถังตอนนี้ จึงไม่ส่งคำสั่งเปิด" : "ยังไม่ได้ยินบอร์ด รอรายงานแรกก่อน";
   else if (lastTank !== null && lastTank < TANK_MIN) why = "ถังเหลือ " + lastTank + " % ต่ำกว่า " + TANK_MIN + " % บอร์ดจะปฏิเสธอยู่แล้ว";
   $("on").disabled = why !== "";
   $("lock").textContent = why;
-  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วินาทีที่แล้ว" : "--";
 }
 setInterval(checkLock, 1000);
 

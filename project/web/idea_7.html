@@ -3,7 +3,7 @@
   idea_7.html - หมอฟังปั๊ม: บัตรตรวจสุขภาพปั๊มน้ำบนมือถือ (คู่กับ project/idea_7_pump_doctor.py)
   เปิดแบบนี้: web/idea_7.html?team=team05
   ฟัง bento-aiot/<ทีม>/# (telemetry + event "vib") ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
-  กฎฝั่งแอป: ไม่มี telemetry เกิน SILENT_S วินาที = "โรงสูบเงียบ" (บอร์ดส่งทุก 5 วิ)
+  กฎฝั่งแอป: ไม่มี telemetry เกิน SILENT_S วินาที = "โรงสูบเงียบ" (บอร์ดส่งทุก 5 วินาที)
   broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
 -->
 <html lang="th">
@@ -72,8 +72,8 @@
     <p class="muted" id="tank">ถัง -- % / ดิน -- %</p>
     <p class="muted" id="run">เดินสะสม --</p>
     <div class="row">
-      <button class="go" data-sec="10">เปิด 10 วิ</button>
-      <button class="go" data-sec="30">เปิด 30 วิ</button>
+      <button class="go" data-sec="10">เปิด 10 วินาที</button>
+      <button class="go" data-sec="30">เปิด 30 วินาที</button>
       <button class="stop" id="off">ปิดปั๊ม</button>
       <button id="beep">เรียกคนที่โรงสูบ</button>
     </div>
@@ -85,7 +85,7 @@
   <section class="card">
     <h2>ประวัติการตรวจ (event vib)</h2>
     <ol id="log"><li class="muted">ยังไม่มีเหตุการณ์</li></ol>
-    <p class="muted" id="summary">สั่นผิดปกติ 0 ครั้ง / นานสุด -- วิ</p>
+    <p class="muted" id="summary">สั่นผิดปกติ 0 ครั้ง / นานสุด -- วินาที</p>
     <div class="row" style="margin-top:8px">
       <button id="csv">ดาวน์โหลด CSV</button>
       <button id="clear">ล้างข้อมูล</button>
@@ -167,7 +167,7 @@ function onEvent(d) {
   const vib = num(d.vib), bad = d.bad === 1;
   if (bad) { badCount += 1; badSince = Date.now(); }
   else if (badSince) { longestS = Math.max(longestS, Math.round((Date.now() - badSince) / 1000)); badSince = 0; }
-  $("summary").textContent = "สั่นผิดปกติ " + badCount + " ครั้ง / นานสุด " + (longestS || "--") + " วิ";
+  $("summary").textContent = "สั่นผิดปกติ " + badCount + " ครั้ง / นานสุด " + (longestS || "--") + " วินาที";
   addLog((bad ? "สั่นผิดปกติ ปั๊มหยุด" : "กลับมาปกติ") + (vib === null ? "" : " (" + vib.toFixed(2) + ")"), bad ? "bad" : "ok");
 }
 
@@ -228,7 +228,7 @@ function connect() {
 setInterval(() => {
   if (!client || !client.connected || !lastAt) return;
   const quiet = Math.round((Date.now() - lastAt) / 1000);
-  if (quiet > SILENT_S) setStatus("โรงสูบเงียบ " + quiet + " วิ ไปดูบอร์ด", "alarm");
+  if (quiet > SILENT_S) setStatus("โรงสูบเงียบ " + quiet + " วินาที ไปดูบอร์ด", "alarm");
   else setStatus("ต่อแล้ว " + team, "on");
 }, 1000);
 

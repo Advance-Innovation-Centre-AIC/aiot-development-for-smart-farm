@@ -9,7 +9,7 @@
   เปิดแบบนี้: idea_17.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
   ภาพหลัก: "แถบเฝ้ายาม" ทั้งคืน (canvas) หนึ่งช่อง = หนึ่งรายงาน สีตามขั้นออกซิเจน
            เขียว = ปลาสบาย  เหลือง = เฝ้าระวัง  แดง = ปลาลอยหัว  ขีดฟ้าใต้ช่อง = เครื่องตีน้ำเดิน
-  กฎของหน้านี้: DO ลดลงตั้งแต่ 1.0 mg/L ภายใน 4 รายงานล่าสุด (ราว 20 วิ) = ป้ายแดง "ออกซิเจนกำลังดิ่ง"
+  กฎของหน้านี้: DO ลดลงตั้งแต่ 1.0 mg/L ภายใน 4 รายงานล่าสุด (ราว 20 วินาที) = ป้ายแดง "ออกซิเจนกำลังดิ่ง"
                แม้ยังไม่ต่ำกว่า 3.0 ก็เตือนก่อน เพราะตอนตีสี่ปลาตายเร็วกว่าที่คนตื่นทัน
   คีย์ที่ใช้: soil (= DO x10) tank (= น้ำในบ่อ) pump n + dips do_min (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
 -->
@@ -117,11 +117,11 @@ footer { max-width: 900px; margin: auto; padding: 16px; color: var(--dim); font-
   <section class="card">
     <h2>สั่งเครื่องตีน้ำ</h2>
     <div class="row">
-      <label>นาน <input id="sec" type="number" min="1" max="30" value="30" style="width:5em"> วิ</label>
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="30" style="width:5em"> วินาที</label>
       <button id="on">เปิดเครื่องตีน้ำ</button>
       <button id="off" class="stop">หยุด</button>
     </div>
-    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วิ และไม่เปิดถ้าน้ำในบ่อต่ำกว่า 10 % (ใบพัดตีลม)</p>
+    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วินาที และไม่เปิดถ้าน้ำในบ่อต่ำกว่า 10 % (ใบพัดตีลม)</p>
     <div class="row"><button id="beep" class="alt">ปลุกคนเฝ้าบ่อ (beep)</button></div>
     <div class="row">
       <input id="say" maxlength="20" placeholder="CHECK POND" style="flex:1">
@@ -219,7 +219,7 @@ function checkDive() {
 }
 
 setInterval(() => {
-  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วินาทีที่แล้ว" : "--";
 }, 1000);
 
 function send(obj) {

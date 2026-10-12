@@ -8,7 +8,7 @@
   เรื่อง 4 · โรงเรือนอัจฉริยะ (คู่กับ project/idea_4_greenhouse.py)
   เปิดแบบนี้: idea_4.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
   ภาพหลัก: เส้นเวลา "ดินแห้ง vs รดน้ำ" (เส้นน้ำตาล = ดิน, แถบฟ้า = ช่วงที่วาล์วเปิด)
-  กฎของหน้านี้: บอร์ดเงียบเกิน 15 วิ = ขึ้นป้าย "บอร์ดเงียบ" และค่าบนหน้าเป็นสีจาง (อย่าเชื่อค่าเก่า)
+  กฎของหน้านี้: บอร์ดเงียบเกิน 15 วินาที = ขึ้นป้าย "บอร์ดเงียบ" และค่าบนหน้าเป็นสีจาง (อย่าเชื่อค่าเก่า)
   คีย์ที่ใช้: soil tank pump n + dry_min water_s (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
 -->
 <style>
@@ -54,7 +54,7 @@ footer{padding:16px;color:var(--dim);font-size:.85rem;max-width:1100px;margin:au
 </header>
 <main id="app">
   <section class="card wide">
-    <div id="banner">บอร์ดเงียบเกิน 15 วิ: ค่าบนหน้านี้อาจเก่าแล้ว ตรวจไฟและ WiFi ที่โรงเรือน</div>
+    <div id="banner">บอร์ดเงียบเกิน 15 วินาที: ค่าบนหน้านี้อาจเก่าแล้ว ตรวจไฟและ WiFi ที่โรงเรือน</div>
     <h2>เส้นเวลา: ดินแห้ง กับ ช่วงที่รดน้ำ (60 รายงานล่าสุด)</h2>
     <svg id="chart" viewBox="0 0 600 230" role="img" aria-label="กราฟความชื้นดินและช่วงรดน้ำ"></svg>
     <p class="muted">เส้นน้ำตาล = ดิน % · พื้นส้ม = ต่ำกว่าเกณฑ์แห้ง <span id="dryv"></span> % · แถบฟ้าด้านล่าง = วาล์วเปิด</p>
@@ -65,15 +65,15 @@ footer{padding:16px;color:var(--dim);font-size:.85rem;max-width:1100px;margin:au
       <div class="tile"><span>ดินในแปลง (VR1)</span><b id="t_soil">--</b></div>
       <div class="tile"><span>ถังพัก (VR4)</span><b id="t_tank">--</b></div>
       <div class="tile"><span>ดินแห้งสะสม (นาที)</span><b id="t_dry">--</b></div>
-      <div class="tile"><span>รดไปแล้วรวม (วิ)</span><b id="t_water">--</b></div>
+      <div class="tile"><span>รดไปแล้วรวม (วินาที)</span><b id="t_water">--</b></div>
     </div>
     <p class="muted">วาล์ว: <b id="t_pump">--</b> · รายงานล่าสุด <span id="t_age">--</span></p>
   </section>
   <section class="card">
     <h2>สั่งวาล์วแปลง 0</h2>
-    <div class="row"><label>รดนาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วิ</label>
+    <div class="row"><label>รดนาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วินาที</label>
       <button id="water">เปิดวาล์ว</button><button id="off" class="stop">ปิดวาล์ว</button></div>
-    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วิ และไม่เปิดถ้าถังพักต่ำกว่า 10 %</p>
+    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วินาที และไม่เปิดถ้าถังพักต่ำกว่า 10 %</p>
     <div class="row"><button id="beep" class="alt">เรียกคนงาน (beep)</button></div>
     <div class="row"><input id="say" maxlength="20" placeholder="WATER BED 3" style="flex:1"><button id="sayb" class="alt">ขึ้นจอไฟ</button></div>
     <div class="row"><button id="csv" class="alt">ดาวน์โหลด CSV</button><span id="csvn" class="muted">0 แถว</span></div>
@@ -180,7 +180,7 @@ function trackRun(pump, soil) {
   if (!run) return;
   const tr = document.createElement("tr");
   const sec = Math.round((Date.now() - run.t0) / 1000);
-  const cells = [new Date(run.t0).toLocaleTimeString("th-TH"), sec + " วิ",
+  const cells = [new Date(run.t0).toLocaleTimeString("th-TH"), sec + " วินาที",
                  run.soil0 === null ? "--" : run.soil0 + " %", soil === null ? "--" : soil + " %"];
   for (const c of cells) { const td = document.createElement("td"); td.textContent = c; tr.append(td); }
   if (soil !== null && run.soil0 !== null) tr.lastChild.className = soil > run.soil0 ? "up" : "flat";
@@ -189,11 +189,11 @@ function trackRun(pump, soil) {
   run = null;
 }
 
-// กฎของหน้านี้: เงียบเกิน 15 วิ = ค่าเก่า
+// กฎของหน้านี้: เงียบเกิน 15 วินาที = ค่าเก่า
 function tickSilence() {
   const stale = lastAt > 0 && Date.now() - lastAt > SILENT_MS;
   $("app").classList.toggle("stale", stale);
-  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วินาทีที่แล้ว" : "--";
 }
 setInterval(tickSilence, 1000);
 

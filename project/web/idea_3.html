@@ -175,7 +175,7 @@ function drawTrend() {
   } else { $("trendNote").textContent = n ? "ยังไม่เห็นแนวโน้มชื้นขึ้นต่อเนื่อง" : ""; $("trendNote").style.color = ""; }
 }
 
-function mmss(sec) { return Math.floor(sec / 60) + " นาที " + (sec % 60) + " วิ"; }
+function mmss(sec) { return Math.floor(sec / 60) + " นาที " + (sec % 60) + " วินาที"; }
 
 // กฎฝั่งแอป: เสี่ยงรา (level 2) = ป้ายแดงค้าง
 function alarm(on, why) {

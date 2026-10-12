@@ -73,7 +73,7 @@
     </div>
     <div class="big" id="verdict">รอข้อมูล</div>
     <div class="muted">ซ้าย = สุขภาพลูกปืน / ขวา = กระบะ (เส้นแดง = ต่ำสุด 10%)</div>
-    <div class="muted" id="wear">สึกสะสม -- วิ / ค่าสั่น --</div>
+    <div class="muted" id="wear">สึกสะสม -- วินาที / ค่าสั่น --</div>
   </section>
   <section class="card">
     <h2>รอบสีวันนี้</h2>
@@ -85,8 +85,8 @@
   <section class="card">
     <h2>สั่งเครื่องสี</h2>
     <div class="row">
-      <button class="go" data-sec="10">เดินเครื่อง 10 วิ</button>
-      <button class="go" data-sec="30">เดินเครื่อง 30 วิ</button>
+      <button class="go" data-sec="10">เดินเครื่อง 10 วินาที</button>
+      <button class="go" data-sec="30">เดินเครื่อง 30 วินาที</button>
       <button class="stop" id="off">หยุดเครื่อง</button>
       <button id="beep">เรียกคนที่โรงสี</button>
     </div>
@@ -115,7 +115,7 @@
 "use strict";
 const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
 const ROOT = "bento-aiot";
-const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วินาที)
 const $ = (id) => document.getElementById(id);
 let client = null;
 let team = new URLSearchParams(location.search).get("team") || "teamXX";
@@ -185,7 +185,7 @@ function onTelemetry(d) {
   const v = $("verdict");
   v.textContent = vib === null ? "กำลังเรียนรู้เสียงเครื่องปกติ" : (bad ? "ผิดปกติ! เครื่องหยุด" : (hp !== null && hp < 70 ? "ลูกปืนเริ่มสึก" : "เดินเรียบ"));
   v.style.color = bad ? "var(--bad)" : "var(--ink)";
-  $("wear").textContent = "สึกสะสม " + show(wear) + " วิ / ค่าสั่น " + show(vib, 2) + " / กระบะ " + show(tank) + " %";
+  $("wear").textContent = "สึกสะสม " + show(wear) + " วินาที / ค่าสั่น " + show(vib, 2) + " / กระบะ " + show(tank) + " %";
   $("batches").textContent = show(batches) + " รอบ";
   if (batches !== null) {
     drawSacks(Math.max(0, Math.floor(batches)));
@@ -252,7 +252,7 @@ function connect() {
 setInterval(() => {
   if (!client || !client.connected || !lastAt) return;
   const quiet = Math.round((Date.now() - lastAt) / 1000);
-  if (quiet > SILENT_S) setStatus("โรงสีเงียบ " + quiet + " วิ", "alarm");
+  if (quiet > SILENT_S) setStatus("โรงสีเงียบ " + quiet + " วินาที", "alarm");
   else setStatus("ต่อแล้ว " + team, "on");
 }, 1000);
 

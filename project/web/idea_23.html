@@ -65,7 +65,7 @@
     <div class="muted" id="speed">ความเร็ว -- % / แบต -- %</div>
   </section>
   <section class="card">
-    <h2>แถบกระแทก (ช่องละ 5 วิ ตามที่บอร์ดรายงาน)</h2>
+    <h2>แถบกระแทก (ช่องละ 5 วินาที ตามที่บอร์ดรายงาน)</h2>
     <svg viewBox="0 0 300 150" id="strip" aria-label="แถบกระแทกตามเวลา"></svg>
     <div class="legend">
       <span><i style="background:var(--line)"></i>นิ่ง</span>
@@ -77,8 +77,8 @@
   <section class="card">
     <h2>สั่งไฟบนรถ</h2>
     <div class="row">
-      <button class="go" data-sec="10">ไฟขับปกติ 10 วิ</button>
-      <button class="go" data-sec="30">ไฟขับปกติ 30 วิ</button>
+      <button class="go" data-sec="10">ไฟขับปกติ 10 วินาที</button>
+      <button class="go" data-sec="30">ไฟขับปกติ 30 วินาที</button>
       <button class="stop" id="off">ดับไฟขับ</button>
       <button id="beep">เรียกคนขับ</button>
     </div>
@@ -107,7 +107,7 @@
 "use strict";
 const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
 const ROOT = "bento-aiot";
-const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วินาที)
 const $ = (id) => document.getElementById(id);
 let client = null;
 let team = new URLSearchParams(location.search).get("team") || "teamXX";
@@ -136,7 +136,7 @@ function addLog(text, cls) {
   while (ol.children.length > 50) ol.lastElementChild.remove();
 }
 
-const BURST_N = 3, BURST_S = 60;   // กฎฝั่งแอป: กระแทก 3 ครั้งใน 60 วิ = ถนนช่วงนี้แย่
+const BURST_N = 3, BURST_S = 60;   // กฎฝั่งแอป: กระแทก 3 ครั้งใน 60 วินาที = ถนนช่วงนี้แย่
 const COLS = 12, ROWS_N = 6, CELL = 25;
 const CSV_COLS = ["time", "n", "speed", "tank", "pump", "vib", "vib_bad", "bumps", "trip_s"];
 const CSV_NAME = "egg_trip";
@@ -188,7 +188,7 @@ function onTelemetry(d) {
   $("speed").textContent = "ความเร็ว " + show(speed) + " % / แบต " + show(tank) + " % / ไฟขับ " + (pump === 1 ? "เปิด" : "ดับ");
   // กฎฝั่งแอป: กระแทกถี่
   while (hits.length && Date.now() - hits[0] > BURST_S * 1000) hits.shift();
-  banner(hits.length >= BURST_N ? "กระแทก " + hits.length + " ครั้งใน " + BURST_S + " วิ ถนนช่วงนี้แย่ ชะลอหรือเลี่ยงเส้นทาง" : "");
+  banner(hits.length >= BURST_N ? "กระแทก " + hits.length + " ครั้งใน " + BURST_S + " วินาที ถนนช่วงนี้แย่ ชะลอหรือเลี่ยงเส้นทาง" : "");
   rows.push([new Date().toISOString(), num(d.n), speed, tank, pump, vib, bad ? 1 : 0, bumps, trip]);
 }
 
@@ -245,7 +245,7 @@ function connect() {
 setInterval(() => {
   if (!client || !client.connected || !lastAt) return;
   const quiet = Math.round((Date.now() - lastAt) / 1000);
-  if (quiet > SILENT_S) setStatus("รถเงียบ (สัญญาณหาย?) " + quiet + " วิ", "alarm");
+  if (quiet > SILENT_S) setStatus("รถเงียบ (สัญญาณหาย?) " + quiet + " วินาที", "alarm");
   else setStatus("ต่อแล้ว " + team, "on");
 }, 1000);
 

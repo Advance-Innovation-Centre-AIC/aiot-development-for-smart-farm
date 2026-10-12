@@ -99,8 +99,8 @@
               stroke-linecap="round" transform="rotate(-90 70 70)" stroke-dasharray="351.9" stroke-dashoffset="0"/>
       <text id="ringTxt" x="70" y="76" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor">100%</text>
     </svg>
-    <p class="dim">อุ่นเกินสะสม <b id="warm">0</b> วิ จากงบ
-      <input id="budget" type="number" min="10" max="3600" value="180" aria-label="งบวินาที"> วิ</p>
+    <p class="dim">อุ่นเกินสะสม <b id="warm">0</b> วินาที จากงบ
+      <input id="budget" type="number" min="10" max="3600" value="180" aria-label="งบวินาที"> วินาที</p>
   </section>
 
   <section class="card wide">
@@ -133,7 +133,7 @@ const T_MAX_SCALE = 40;                       // ปรอทบนจอ 0-40 C
 const LEVEL_TH = ["เย็นดี", "เริ่มอุ่น", "ร้อนเกิน"];
 const LEVEL_VAR = ["--ok", "--warn", "--bad"];
 const CROP_TH = { mango: "มะม่วง", strawberry: "สตรอว์เบอร์รี", durian: "ทุเรียน" };
-const BUDGET_S = { mango: 180, strawberry: 90, durian: 240 };   // งบความร้อน (วิ) ตรงกับ CROPS ในบอร์ด
+const BUDGET_S = { mango: 180, strawberry: 90, durian: 240 };   // งบความร้อน (วินาที) ตรงกับ CROPS ในบอร์ด
 const ALERT_TH = { ok: "เย็นดี", cold: "เย็นจัด", hot: "กล่องอุ่น", dry: "แห้งไป", wet: "ไอน้ำเกาะ" };
 const $ = (id) => document.getElementById(id);
 const rows = [];                              // เก็บไว้ทำ CSV
