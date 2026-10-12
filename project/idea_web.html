@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-  idea_web.html - หน้าเว็บตั้งต้นของโปรเจกต์ทีม (ไอเดีย 1-8 ใน PROJECT_BRIEF_lite_th.md) เปิดบนมือถือได้เลย ไม่ต้องติดตั้งอะไร
-  เปิดแบบนี้: idea_web.html?idea=3&team=team05   (idea = เลขไอเดีย 1-8 · team = เลขกลุ่ม)
+  idea_web.html - หน้าเว็บตั้งต้นของโปรเจกต์ทีม (เรื่อง 1-25 ใน project/stories.json และ README_th.md) เปิดบนมือถือได้เลย ไม่ต้องติดตั้งอะไร
+  เปิดแบบนี้: idea_web.html?idea=3&team=team05   (idea = เลขเรื่อง 1-25 · team = เลขกลุ่ม)
               ไม่ใส่ idea = หน้าเลือกไอเดีย · ไม่ใส่ team = พิมพ์เลขกลุ่มในช่องด้านบนแล้วกด "ต่อ"
   ฟัง  bento-aiot/<ทีม>/telemetry กับ /event  และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd  (สัญญาเดียวกับบอร์ด: s2/app/MQTT_CONTRACT_th.md)
   โครงมาจาก s2/app/farm_web.html: การ์ดค่า ปุ่มคำสั่ง CSV และหน้าตาเดียวกัน
@@ -198,7 +198,322 @@ const IDEAS = {
       { key: "level", op: "==", value: 1, level: "warn", text: "เล้าเริ่มออกนอกช่วง: เฝ้าดู" }
     ],
     note: NOTE_SF2_04
-  }
+  },
+  // <stories-generated>
+  // สร้างโดย tools/gen_stories.py จาก project/stories.json · แก้ที่ stories.json แล้วรันใหม่ ไม่แก้ตรงนี้
+  9: {
+    title: "โรงเพาะเห็ด",
+    problem: "ก้อนเชื้อเห็ดแห้งเพราะอากาศในโรงไม่ชื้นพอ ดอกไม่ออก คนดูแลรู้ตอนเก็บผลผลิตไม่ได้",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["ชื้นดี", "เริ่มแห้ง", "แห้งเกิน"] },
+      rh:     { label: "ความชื้นในโรงเพาะ", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในโรงเพาะ (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["rh", "temp_c"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "โรงเพาะแห้งเกินมาก: พ่นน้ำหรือรดพื้นโรง แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "โรงเพาะเริ่มแห้ง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  10: {
+    title: "ห้องบ่มกล้วย",
+    problem: "ห้องบ่มกล้วยร้อนหรือเย็นเกินช่วง กล้วยสุกไม่เท่ากันหรือเปลือกดำ ขายไม่ได้ราคา",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["พอดี", "เริ่มหลุด", "หลุดมาก"] },
+      rh:     { label: "ความชื้นในห้องบ่ม", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิห้องบ่ม (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "ห้องบ่มหลุดช่วงมาก: ปรับแอร์หรือเปิดระบาย แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "ห้องบ่มเริ่มหลุดช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  11: {
+    title: "โรงอบลำไย",
+    problem: "ห้องอบลำไยร้อนเกิน เนื้อลำไยไหม้ สีคล้ำ ขายไม่ได้ คนคุมเตารู้ตอนเปิดดู",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["ร้อนพอดี", "เริ่มร้อน", "ร้อนเกิน"] },
+      rh:     { label: "ความชื้นในห้องอบ", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิห้องอบ (รวมไฟเตาจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "ไฟจากเตาอบจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "ห้องอบร้อนเกินมาก: ลดไฟเตา แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "ห้องอบเริ่มร้อน: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  12: {
+    title: "โกดังเก็บเมล็ดพันธุ์",
+    problem: "เมล็ดพันธุ์ในโกดังชื้น ความงอกลดลง ปลูกแล้วขึ้นไม่ครบ เจ้าของรู้ตอนเพาะ",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["แห้งดี", "เริ่มชื้น", "ชื้นเกิน"] },
+      rh:     { label: "ความชื้นในโกดัง", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในโกดัง (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["rh", "temp_c"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "โกดังชื้นเกินมาก: เปิดพัดลมระบายหรือย้ายกระสอบ แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "โกดังเริ่มชื้น: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  13: {
+    title: "โกดังปุ๋ย",
+    problem: "ปุ๋ยในโกดังดูดความชื้นจนจับเป็นก้อน หว่านไม่ได้ ต้องทุบหรือทิ้ง",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["แห้งดี", "เริ่มชื้น", "จับก้อน"] },
+      rh:     { label: "ความชื้นในโกดังปุ๋ย", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในโกดัง (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["rh", "temp_c"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "โกดังปุ๋ยชื้นเกินมาก: ปิดปากกระสอบ ยกขึ้นพาเลท แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "โกดังปุ๋ยเริ่มชื้น: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  14: {
+    title: "ตู้เก็บยาและวัคซีนสัตว์",
+    problem: "ตู้เก็บยาและวัคซีนสัตว์หลุดช่วงอุณหภูมิ วัคซีนเสื่อมโดยไม่มีใครรู้ ฉีดแล้วไม่ได้ผล",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["พอดี", "เริ่มหลุด", "หลุดมาก"] },
+      rh:     { label: "ความชื้นในตู้", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในตู้ (รวมความร้อนจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "ความร้อนนอกตู้จำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "ตู้ยาหลุดช่วงมาก: ย้ายวัคซีนไปตู้สำรอง แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "ตู้ยาเริ่มหลุดช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  15: {
+    title: "โรงเรือนไฮโดรโปนิกส์",
+    problem: "อากาศในโรงเรือนผักไฮโดรโปนิกส์ร้อนหรือชื้นเกิน ผักใบเหี่ยว ขม และเน่าโคน",
+    base: "sf2_04",
+    keys: { ...SF2_04_KEYS,
+      level:  { label: "ระดับ", fmt: "level", names: ["ผักสบาย", "เริ่มเครียด", "ผักเหี่ยว"] },
+      rh:     { label: "ความชื้นในโรงเรือน", unit: "%", src: "real", max: 100 },
+      temp_c: { label: "อุณหภูมิในโรงเรือน (รวมแดดจำลอง)", unit: "°C", src: "real" },
+      sun_c:  { label: "แดดบนหลังคาจำลอง VR3", unit: "°C", src: "sim", max: 10 } },
+    chart: ["temp_c", "rh"],
+    commands: [CMD_ACK, CMD_SET_THI],
+    rules: [
+      { key: "level", op: "==", value: 2, level: "bad", text: "โรงเรือนร้อน/ชื้นเกินมาก: เปิดพัดลมและม่านพรางแสง แล้วกดรับทราบ" },
+      { key: "level", op: "==", value: 1, level: "warn", text: "โรงเรือนเริ่มออกนอกช่วง: เฝ้าดู" }
+    ],
+    note: NOTE_SF2_04
+  },
+  16: {
+    title: "พ่นหมอกโรงกล้วยไม้",
+    problem: "อากาศในโรงกล้วยไม้แห้งตอนบ่าย ใบและรากเหี่ยว คนดูแลต้องเดินไปเปิดหมอกเองทุกโรง",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ความชื้นอากาศ VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "น้ำในถังหมอก VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "ปั๊มหมอก", fmt: "onoff", names: ["ปิด", "เปิด"] } },
+    chart: ["soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "พ่นหมอก 10 วินาที" }, { ...CMD_PUMPOFF, label: "หยุดพ่นหมอก" }, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "น้ำในถังหมอกต่ำกว่า 10 %: บอร์ดจะไม่ยอมพ่น" },
+      { key: "soil", op: "<", value: 50, level: "warn", text: "อากาศแห้ง (ต่ำกว่า 50 %): กดพ่นหมอก 10 วินาที" }
+    ],
+    note: "ปั๊มหมอกบนบอร์ดคือไฟ RGB สีฟ้า · พ่นได้นานสุด 30 วินาทีแล้วหยุดเอง"
+  },
+  17: {
+    title: "เติมอากาศบ่อปลา",
+    problem: "ออกซิเจนในบ่อปลาตกตอนกลางคืน ปลาลอยหัวและตาย เจ้าของรู้ตอนเช้า",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ออกซิเจนในน้ำ VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "ไฟแบตสำรอง VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "เครื่องเติมอากาศ", fmt: "onoff", names: ["ปิด", "เปิด"] } },
+    chart: ["soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เติมอากาศ 10 วินาที" }, { ...CMD_PUMPOFF, label: "หยุดเติมอากาศ" }, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "แบตต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดเครื่องเติมอากาศ" },
+      { key: "soil", op: "<", value: 30, level: "warn", text: "ออกซิเจนต่ำ (ต่ำกว่า 30 %): กดเติมอากาศ 10 วินาที" }
+    ],
+    note: "เครื่องเติมอากาศบนบอร์ดคือไฟ RGB สีฟ้า · เปิดได้นานสุด 30 วินาทีแล้วหยุดเอง"
+  },
+  18: {
+    title: "พัดลมเล้าไก่",
+    problem: "เล้าไก่ร้อนอบอ้าวตอนบ่าย ไก่หอบและตาย คนเลี้ยงต้องวิ่งไปเปิดพัดลมเอง",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ความร้อนในเล้า VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "ไฟแบตสำรอง VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "พัดลม", fmt: "onoff", names: ["ปิด", "เปิด"] } },
+    chart: ["soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เปิดพัดลม 10 วินาที" }, { ...CMD_PUMPOFF, label: "ปิดพัดลม" }, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "แบตต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดพัดลม" },
+      { key: "soil", op: ">", value: 70, level: "warn", text: "เล้าร้อน (สูงกว่า 70 %): กดเปิดพัดลม 10 วินาที" }
+    ],
+    note: "พัดลมบนบอร์ดคือไฟ RGB สีฟ้า · หมุนได้นานสุด 30 วินาทีแล้วหยุดเอง"
+  },
+  19: {
+    title: "ประตูน้ำแปลงนา",
+    problem: "น้ำในแปลงนาลดโดยไม่มีใครเห็น ชาวนาต้องเดินไปเปิดประตูน้ำเองทุกแปลง",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "น้ำในแปลงนา VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "น้ำในคลองส่ง VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "ประตูน้ำ", fmt: "onoff", names: ["ปิด", "เปิด"] } },
+    chart: ["soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เปิดประตูน้ำ 10 วินาที" }, { ...CMD_PUMPOFF, label: "ปิดประตูน้ำ" }, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "น้ำในคลองต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดประตูน้ำ" },
+      { key: "soil", op: "<", value: 30, level: "warn", text: "น้ำในแปลงน้อย (ต่ำกว่า 30 %): กดเปิดประตูน้ำ 10 วินาที" }
+    ],
+    note: "ประตูน้ำบนบอร์ดคือไฟ RGB สีฟ้า · เปิดได้นานสุด 30 วินาทีแล้วปิดเอง"
+  },
+  20: {
+    title: "เครื่องให้อาหารปลา",
+    problem: "ให้อาหารปลาไม่ตรงเวลาเมื่อเจ้าของไม่อยู่บ่อ และไม่รู้ว่าอาหารในถังจะหมดเมื่อไร",
+    base: "sf2_03",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "อาหารเหลือในบ่อ VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "อาหารในถังเก็บ VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "เครื่องให้อาหาร", fmt: "onoff", names: ["ปิด", "เปิด"] } },
+    chart: ["soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "ให้อาหาร 10 วินาที" }, { ...CMD_PUMPOFF, label: "หยุดให้อาหาร" }, CMD_BEEP, CMD_SAY],
+    rules: [
+      RULE_SILENT,
+      { key: "tank", op: "<", value: 10, level: "bad", text: "อาหารในถังต่ำกว่า 10 %: บอร์ดจะไม่ยอมหมุน ต้องเติมก่อน" },
+      { key: "soil", op: "<", value: 30, level: "warn", text: "อาหารในบ่อหมด (ต่ำกว่า 30 %): กดให้อาหาร 10 วินาที" }
+    ],
+    note: "เครื่องให้อาหารบนบอร์ดคือไฟ RGB สีฟ้า · หมุนได้นานสุด 30 วินาทีแล้วหยุดเอง"
+  },
+  21: {
+    // คีย์ตรงกับ idea_21_fan_doctor.py: telemetry vib · vib_bad (0/1) · event = vib พร้อม bad
+    title: "พัดลมโรงเรือนสั่นผิดปกติ",
+    problem: "พัดลมระบายอากาศในโรงเรือนสั่นผิดปกติจากใบพัดเสียหรือน็อตหลวม ไม่มีใครได้ยิน จนพัดลมพังกลางวันร้อน",
+    base: "sf2_03 + vib",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "อุณหภูมิโรงเรือน VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "ไฟแบตสำรอง VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "พัดลมโรงเรือน", fmt: "onoff", names: ["ปิด", "เปิด"] },
+      vib:   { label: "ค่าสั่นของพัดลม (IMU)", unit: "m/s²", src: "real" },
+      vib_bad: { label: "สถานะการสั่น", fmt: "onoff", names: ["ปกติ", "ผิดปกติ"] },
+      bad:     { label: "event: พัดลมสั่นผิดปกติ", fmt: "onoff", names: ["หายแล้ว", "เริ่มผิดปกติ"] },
+      event:   { label: "เหตุการณ์ล่าสุด" } },
+    chart: ["vib", "soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เปิดพัดลม 10 วินาที" }, { ...CMD_PUMPOFF, label: "ปิดพัดลม" }, CMD_BEEP],
+    rules: [
+      RULE_SILENT,
+      { key: "vib_bad", op: "==", value: 1, level: "bad", text: "พัดลมสั่นผิดปกติ: บอร์ดหยุดพัดลมและไม่ยอมเปิด ไปตรวจใบพัดและน็อต" },
+      { key: "tank", op: "<", value: 10, level: "bad", text: "แบตต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดพัดลม" }
+    ],
+    note: "เกณฑ์ \"สั่นผิดปกติ\" ตัดสินบนบอร์ด (เทียบกับค่าปกติที่เรียนรู้) หน้าเว็บแค่แสดงและเตือนตาม event"
+  },
+  22: {
+    // คีย์ตรงกับ idea_22_rice_mill.py: telemetry vib · vib_bad (0/1) · event = vib พร้อม bad
+    title: "เครื่องสีข้าวชุมชน",
+    problem: "เครื่องสีข้าวของชุมชนสั่นผิดปกติก่อนลูกปืนแตก ไม่มีใครสังเกต ซ่อมหลังพังทั้งหมู่บ้านต้องรอ",
+    base: "sf2_03 + vib",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ข้าวสารในถังพัก VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "ข้าวเปลือกในกระบะ VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "มอเตอร์สีข้าว", fmt: "onoff", names: ["ปิด", "เปิด"] },
+      vib:   { label: "ค่าสั่นของเครื่องสี (IMU)", unit: "m/s²", src: "real" },
+      vib_bad: { label: "สถานะการสั่น", fmt: "onoff", names: ["ปกติ", "ผิดปกติ"] },
+      bad:     { label: "event: เครื่องสีสั่นผิดปกติ", fmt: "onoff", names: ["หายแล้ว", "เริ่มผิดปกติ"] },
+      event:   { label: "เหตุการณ์ล่าสุด" } },
+    chart: ["vib", "soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เดินเครื่องสี 10 วินาที" }, { ...CMD_PUMPOFF, label: "หยุดเครื่องสี" }, CMD_BEEP],
+    rules: [
+      RULE_SILENT,
+      { key: "vib_bad", op: "==", value: 1, level: "bad", text: "เครื่องสีสั่นผิดปกติ: บอร์ดหยุดเครื่องและไม่ยอมเดิน ตามช่างตรวจลูกปืน" },
+      { key: "tank", op: "<", value: 10, level: "bad", text: "ข้าวเปลือกในกระบะต่ำกว่า 10 %: บอร์ดจะไม่ยอมเดินเครื่อง" }
+    ],
+    note: "เกณฑ์ \"สั่นผิดปกติ\" ตัดสินบนบอร์ด (เทียบกับค่าปกติที่เรียนรู้) หน้าเว็บแค่แสดงและเตือนตาม event"
+  },
+  23: {
+    // คีย์ตรงกับ idea_23_egg_tray_transit.py: telemetry vib · vib_bad (0/1) · event = vib พร้อม bad
+    title: "ถาดไข่ระหว่างขนส่ง",
+    problem: "รถส่งไข่วิ่งถนนขรุขระ ไข่แตกในถาดโดยคนขับไม่รู้ตัว ของเสียทั้งเที่ยว",
+    base: "sf2_03 + vib",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ความเร็วรถจำลอง VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "แบตกล่องเฝ้า VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "ไฟขับปกติ", fmt: "onoff", names: ["ปิด", "เปิด"] },
+      vib:   { label: "ค่ากระแทกถาดไข่ (IMU)", unit: "m/s²", src: "real" },
+      vib_bad: { label: "สถานะการสั่น", fmt: "onoff", names: ["ปกติ", "ผิดปกติ"] },
+      bad:     { label: "event: กระแทกแรง", fmt: "onoff", names: ["หายแล้ว", "เริ่มผิดปกติ"] },
+      event:   { label: "เหตุการณ์ล่าสุด" } },
+    chart: ["vib", "soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เปิดไฟขับปกติ 10 วินาที" }, { ...CMD_PUMPOFF, label: "ดับไฟขับปกติ" }, CMD_BEEP],
+    rules: [
+      RULE_SILENT,
+      { key: "vib_bad", op: "==", value: 1, level: "bad", text: "ถาดไข่กระแทกแรง: บอร์ดแจ้งคนขับชะลอ โทรถามคนขับ" },
+      { key: "tank", op: "<", value: 10, level: "bad", text: "แบตกล่องเฝ้าต่ำกว่า 10 %: บอร์ดจะไม่เปิดไฟขับปกติ" }
+    ],
+    note: "เกณฑ์ \"สั่นผิดปกติ\" ตัดสินบนบอร์ด (เทียบกับค่าปกติที่เรียนรู้) หน้าเว็บแค่แสดงและเตือนตาม event"
+  },
+  24: {
+    // คีย์ตรงกับ idea_24_fruit_crate_truck.py: telemetry vib · vib_bad (0/1) · event = vib พร้อม bad
+    title: "ลังผลไม้บนรถกระบะ",
+    problem: "แม่ค้าผลไม้ขนลังมะม่วงและทุเรียนบนกระบะ ผลไม้ช้ำจากถนนขรุขระ ขายได้ราคาต่ำโดยไม่รู้ว่าช้ำช่วงไหน",
+    base: "sf2_03 + vib",
+    keys: { ...SF2_03_KEYS,
+      soil: { label: "ระยะถึงตลาดจำลอง VR1", unit: "%", src: "sim", max: 100 },
+      tank: { label: "แบตกล่องเฝ้า VR4", unit: "%", src: "sim", max: 100 },
+      pump: { label: "ไฟขับปกติ", fmt: "onoff", names: ["ปิด", "เปิด"] },
+      vib:   { label: "ค่ากระแทกลังผลไม้ (IMU)", unit: "m/s²", src: "real" },
+      vib_bad: { label: "สถานะการสั่น", fmt: "onoff", names: ["ปกติ", "ผิดปกติ"] },
+      bad:     { label: "event: ลังกระแทกแรง", fmt: "onoff", names: ["หายแล้ว", "เริ่มผิดปกติ"] },
+      event:   { label: "เหตุการณ์ล่าสุด" } },
+    chart: ["vib", "soil", "tank"],
+    commands: [{ ...CMD_PUMP10, label: "เปิดไฟขับปกติ 10 วินาที" }, { ...CMD_PUMPOFF, label: "ดับไฟขับปกติ" }, CMD_BEEP],
+    rules: [
+      RULE_SILENT,
+      { key: "vib_bad", op: "==", value: 1, level: "bad", text: "ลังผลไม้กระแทกแรง: บอร์ดแจ้งคนขับชะลอ แม่ค้าโทรถามคนขับ" },
+      { key: "tank", op: "<", value: 10, level: "bad", text: "แบตกล่องเฝ้าต่ำกว่า 10 %: บอร์ดจะไม่เปิดไฟขับปกติ" }
+    ],
+    note: "เกณฑ์ \"สั่นผิดปกติ\" ตัดสินบนบอร์ด (เทียบกับค่าปกติที่เรียนรู้) หน้าเว็บแค่แสดงและเตือนตาม event"
+  },
+  25: {
+    // คีย์ตรงกับ idea_25_warehouse_door.py: event = intruder / clear / ack / armed · cm · count · on · by
+    title: "ประตูโกดังกันขโมย",
+    problem: "โจรงัดประตูโกดังเก็บปุ๋ยและเครื่องมือตอนกลางคืน ไม่มีใครรู้จนเช้า",
+    base: "sf3_01 + MQTT",
+    keys: {
+      event: { label: "เหตุการณ์ล่าสุด" },
+      cm:    { label: "ระยะคนที่ประตู (เรดาร์)", unit: "cm", src: "real", max: 300 },
+      count: { label: "นับผู้บุกรุก", unit: "ครั้ง" },
+      on:    { label: "การเฝ้า", fmt: "onoff", names: ["ไม่เฝ้า", "เฝ้าอยู่"] },
+      by:    { label: "รับทราบจาก" }
+    },
+    chart: ["cm"],
+    commands: [CMD_ACK],
+    rules: [
+      { key: "event", op: "==", value: "intruder", withinS: 60, level: "bad", text: "มีคนที่ประตูโกดังใน 1 นาทีที่ผ่านมา: ไปตรวจดู แล้วกดรับทราบ" },
+      { key: "on", op: "==", value: 0, level: "warn", text: "ระบบเฝ้าปิดอยู่ (SW5 บนบอร์ด)" }
+    ],
+    note: "ขั้นสูง: ใช้เรดาร์จากคาบ 3 · บอร์ดส่งเฉพาะตอนมีเหตุการณ์ หน้าเว็บจึงไม่เตือนเรื่องบอร์ดเงียบ"
+  },
+  // </stories-generated>
 };
 // ===== จบส่วนที่ทีมแก้ =====
 </script>
@@ -413,7 +728,7 @@ const SKIP_KEYS = new Set(["id", "sim"]);   // id = เลขทีม · sim = 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const ideaParam = params.get("idea") || "";
-const ideaNo = /^[1-8]$/.test(ideaParam) && Object.prototype.hasOwnProperty.call(IDEAS, ideaParam) ? ideaParam : null;
+const ideaNo = /^[1-9][0-9]?$/.test(ideaParam) && Object.prototype.hasOwnProperty.call(IDEAS, ideaParam) ? ideaParam : null;
 const IDEA = ideaNo ? IDEAS[ideaNo] : null;
 let team = (params.get("team") || "").trim();
 let client = null;

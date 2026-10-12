@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เลือกเรื่องโปรเจกต์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1020;--card:#151c33;--line:#26304f;--ink:#e8ecf6;--dim:#97a3c0;--ok:#30a46c;--warn:#f5a623;--bad:#e5484d;--me:#4a9eff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Thai",system-ui,sans-serif}
+header{padding:16px;border-bottom:1px solid var(--line)}h1{font-size:1.35rem;margin:0 0 4px}.sub{color:var(--dim);font-size:.92rem}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px}
+input{background:#0f1529;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 10px;font:inherit;width:9em}
+button{background:#22305a;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}button.pri{background:var(--me);border-color:var(--me);color:#06122a;font-weight:700}
+.chip{font-size:.85rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}
+.chip.on{color:var(--ok);border-color:var(--ok)}.chip.off{color:var(--bad);border-color:var(--bad)}
+main{padding:0 16px 24px}.kit{margin:16px 0 6px;font-weight:700;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.s{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.s.taken{border-color:#3a2a2a}.s.mine{border-color:var(--me);box-shadow:0 0 0 1px var(--me) inset}
+.t{font-weight:700}.n{color:var(--dim);font-weight:600;margin-right:6px}.st{font-size:.9rem;color:var(--dim)}
+.st.free{color:var(--ok)}.st.taken{color:var(--bad)}.st.mine{color:var(--me)}
+#msg{margin:0 16px;padding:10px 12px;border-radius:8px;display:none}#msg.show{display:block}
+#msg.ok{background:#11331f;color:#8ef0b4}#msg.bad{background:#3a1416;color:#ffb4b4}#msg.info{background:#1a2442;color:#bcd0ff}
+.note{color:var(--dim);font-size:.85rem;padding:0 16px}
+@media (max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>เลือกเรื่องโปรเจกต์ Smart Farm</h1>
+  <div class="sub">25 เรื่อง · เรื่องละ 1 กลุ่ม · ใครกดก่อนได้ก่อน · เปลี่ยนเรื่องได้จนกว่าผู้สอนจะปิดรับ</div>
+</header>
+<div class="bar">
+  <label for="team">กลุ่ม</label><input id="team" placeholder="team05" maxlength="6" autocomplete="off">
+  <button id="save">ใช้เลขกลุ่มนี้</button>
+  <span id="conn" class="chip">กำลังต่อ broker…</span>
+  <span id="lockchip" class="chip">เปิดรับ</span>
+  <button id="csv">ดาวน์โหลด CSV</button>
+  <span id="teacher" style="display:none"><button id="lock">ปิดรับ</button> <button id="unlock">เปิดรับอีกครั้ง</button></span>
+</div>
+<div id="msg"></div>
+<main id="list"></main>
+<p class="note">ระบบนี้ใช้ broker สาธารณะของคอร์ส (ไม่เข้ารหัส) จึงส่งแค่เลขกลุ่มกับเลขเรื่อง ห้ามใส่ชื่อคนหรือข้อมูลส่วนตัว · ถ้าสองกลุ่มกดเรื่องเดียวกัน ระบบถือเวลาที่กดก่อน · ผู้สอนยืนยันรายชื่อสุดท้ายจากไฟล์ CSV</p>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+// ---- ตั้งค่า (ผู้สอนแก้ได้) ----
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";      // สำรอง: "wss://test.mosquitto.org:8081/mqtt"
+const qs = new URLSearchParams(location.search);
+// เปลี่ยนต่อรุ่น เพื่อไม่ปนกับรุ่นอื่น · ?root=bento-aiot/test/<ชื่อ> ใช้ทดสอบเท่านั้น
+const ROOT = new RegExp("^bento-aiot/test/[a-z0-9_]{1,32}$").test(qs.get("root") || "") ? qs.get("root") : "bento-aiot/sf2569/signup";
+const MAX_TEAM = 22;
+const OPEN_FROM = Date.UTC(2026, 9, 1);                       // เวลาที่ก่อนหน้านี้ถือว่าผิด (กันใส่เวลาปลอม)
+const KITS = { A: "A · เฝ้าอากาศ + เตือน + รับทราบ", B: "B · สั่งเครื่องจากมือถือ + กฎปลอดภัย", C: "C · การสั่นผิดปกติ + หยุดเครื่อง", D: "D · เรดาร์จับผู้บุกรุก" };
+const STORIES = [
+  [1,"กล่องขนส่งผลไม้ห้องเย็น","A"],[2,"รถส่งผลผลิตถึงตลาด","A"],[3,"ไซโลข้าวเปลือก","A"],[8,"เล้าไก่กันความเครียดฝูง","A"],
+  [9,"โรงเพาะเห็ด","A"],[10,"ห้องบ่มกล้วย","A"],[11,"โรงอบลำไย","A"],[12,"โกดังเก็บเมล็ดพันธุ์","A"],[13,"โกดังปุ๋ย","A"],
+  [14,"ตู้เก็บยาและวัคซีนสัตว์","A"],[15,"โรงเรือนไฮโดรโปนิกส์","A"],
+  [4,"โรงเรือนอัจฉริยะ (รดน้ำ)","B"],[6,"หอถังน้ำของฟาร์ม","B"],[16,"พ่นหมอกโรงกล้วยไม้","B"],[17,"เติมอากาศบ่อปลา","B"],
+  [18,"พัดลมเล้าไก่","B"],[19,"ประตูน้ำแปลงนา","B"],[20,"เครื่องให้อาหารปลา","B"],
+  [7,"หมอฟังปั๊มน้ำ","C"],[21,"พัดลมโรงเรือนสั่นผิดปกติ","C"],[22,"เครื่องสีข้าวชุมชน","C"],[23,"ถาดไข่ระหว่างขนส่ง","C"],[24,"ลังผลไม้บนรถกระบะ","C"],
+  [5,"คอกปศุสัตว์กลางคืน","D"],[25,"ประตูโกดังกันขโมย","D"]
+];
+// ---- สถานะ ----
+const claims = new Map();   // team -> {story, ts}
+let locked = false, myTeam = "", client = null;
+const $ = (id) => document.getElementById(id);
+const validTeam = (t) => new RegExp("^team(0[1-9]|[1-9][0-9])$").test(t) && Number(t.slice(4)) <= MAX_TEAM;
+try { myTeam = localStorage.getItem("sf_team") || ""; } catch (e) {}
+if (validTeam(qs.get("team") || "")) myTeam = qs.get("team");
+$("team").value = myTeam;
+if (qs.get("teacher") === "1") $("teacher").style.display = "";
+
+function owners() {
+  // เรื่อง -> ผู้ชนะ (เวลาเก่าสุด ถ้าเท่ากันเลขกลุ่มน้อยกว่าชนะ)
+  const best = new Map();
+  for (const [team, c] of claims) {
+    const cur = best.get(c.story);
+    if (!cur || c.ts < cur.ts || (c.ts === cur.ts && team < cur.team)) best.set(c.story, { team, ts: c.ts });
+  }
+  return best;
+}
+function say(text, kind) { const m = $("msg"); m.textContent = text; m.className = "show " + kind; }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function render() {
+  const own = owners(), mine = claims.get(myTeam);
+  const list = $("list"); list.replaceChildren();
+  for (const k of Object.keys(KITS)) {
+    list.append(el("div", "kit", KITS[k]));
+    const grid = el("div", "grid");
+    for (const [n, name] of STORIES.filter((s) => s[2] === k)) {
+      const o = own.get(n), isMine = o && o.team === myTeam;
+      const card = el("div", "s" + (isMine ? " mine" : o ? " taken" : ""));
+      const t = el("div", "t"); t.append(el("span", "n", String(n)), document.createTextNode(name)); card.append(t);
+      const st = el("div", "st " + (isMine ? "mine" : o ? "taken" : "free"),
+        isMine ? "กลุ่มของเรา (" + myTeam + ")" : o ? "มีเจ้าของแล้ว: " + o.team : "ว่าง");
+      card.append(st);
+      const btn = el("button", isMine ? "" : "pri", isMine ? "ยกเลิกเรื่องนี้" : "เลือกเรื่องนี้");
+      btn.disabled = locked || !client || !client.connected || !validTeam(myTeam) || (!!o && !isMine);
+      btn.onclick = () => isMine ? release() : claim(n);
+      card.append(btn);
+      grid.append(card);
+    }
+    list.append(grid);
+  }
+  $("lockchip").textContent = locked ? "ปิดรับแล้ว" : "เปิดรับ";
+  $("lockchip").className = "chip " + (locked ? "off" : "on");
+  if (mine && own.get(mine.story) && own.get(mine.story).team !== myTeam) {
+    say("เรื่อง " + mine.story + " มีกลุ่มอื่นกดก่อน กรุณาเลือกเรื่องอื่น", "bad");
+  }
+}
+function claim(n) {
+  if (!validTeam(myTeam)) { say("ใส่เลขกลุ่มก่อน เช่น team05", "bad"); return; }
+  const o = owners().get(n);
+  if (o && o.team !== myTeam) { say("เรื่องนี้มีเจ้าของแล้ว", "bad"); return; }
+  const body = JSON.stringify({ team: myTeam, story: n, ts: Date.now() });
+  client.publish(ROOT + "/claims/" + myTeam, body, { qos: 1, retain: true }, (err) => {
+    if (err) { say("ส่งไม่สำเร็จ ลองใหม่", "bad"); return; }
+    say("ส่งแล้ว กำลังตรวจว่าได้เรื่อง " + n + " หรือไม่…", "info");
+    setTimeout(() => {
+      const w = owners().get(n);
+      if (w && w.team === myTeam) say("ได้เรื่อง " + n + " แล้ว", "ok");
+      else say("เรื่อง " + n + " มีกลุ่มอื่นกดก่อน กรุณาเลือกเรื่องอื่น", "bad");
+    }, 2500);
+  });
+}
+function release() {
+  client.publish(ROOT + "/claims/" + myTeam, "", { qos: 1, retain: true }, () => say("ยกเลิกแล้ว เลือกเรื่องใหม่ได้", "info"));
+}
+$("save").onclick = () => {
+  const t = $("team").value.trim().toLowerCase();
+  if (!validTeam(t)) { say("เลขกลุ่มต้องเป็น team01 ถึง team" + String(MAX_TEAM).padStart(2, "0"), "bad"); return; }
+  myTeam = t; try { localStorage.setItem("sf_team", t); } catch (e) {}
+  say("ใช้กลุ่ม " + t, "info"); render();
+};
+$("csv").onclick = () => {
+  const own = owners(), rows = [["story", "name", "kit", "team", "claimed_at"]];
+  for (const [n, name, k] of [...STORIES].sort((a, b) => a[0] - b[0])) {
+    const o = own.get(n);
+    rows.push([n, name, k, o ? o.team : "", o ? new Date(o.ts).toISOString() : ""]);
+  }
+  const csv = "﻿" + rows.map((r) => r.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+  const a = el("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "project_signup.csv"; a.click();
+};
+$("lock").onclick = () => client.publish(ROOT + "/lock", JSON.stringify({ locked: true, ts: Date.now() }), { qos: 1, retain: true });
+$("unlock").onclick = () => client.publish(ROOT + "/lock", JSON.stringify({ locked: false, ts: Date.now() }), { qos: 1, retain: true });
+
+function onMessage(topic, payload) {
+  const text = payload.toString();
+  if (topic === ROOT + "/lock") {
+    try { locked = !!JSON.parse(text).locked; } catch (e) { locked = false; }
+    render(); return;
+  }
+  const team = topic.slice((ROOT + "/claims/").length);
+  if (!validTeam(team)) return;
+  if (!text) { claims.delete(team); render(); return; }
+  try {
+    const c = JSON.parse(text), ok = STORIES.some((s) => s[0] === c.story);
+    if (c.team === team && ok && typeof c.ts === "number" && c.ts >= OPEN_FROM && c.ts <= Date.now() + 60000) {
+      claims.set(team, { story: c.story, ts: c.ts });
+    } else { claims.delete(team); }
+  } catch (e) { claims.delete(team); }
+  render();
+}
+function connect() {
+  client = mqtt.connect(BROKER_URL, { clientId: "sf-signup-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => {
+    $("conn").textContent = "ต่อ broker แล้ว"; $("conn").className = "chip on";
+    client.subscribe([ROOT + "/claims/+", ROOT + "/lock"], { qos: 1 }); render();
+  });
+  client.on("close", () => { $("conn").textContent = "หลุดจาก broker กำลังต่อใหม่"; $("conn").className = "chip off"; render(); });
+  client.on("message", onMessage);
+}
+render();
+connect();
+</script>
+</body>
+</html>
