@@ -1,5 +1,5 @@
 # sf3_01_pen_guard.py - ยามเฝ้าคอก: เรดาร์นับผู้บุกรุก
-# ภารกิจ : ใครเข้าเขตเตือน = บุกรุก -> ไซเรน, จอไฟ RGB วิ่ง INTRUDER, ตัวนับเพิ่ม
+# ภารกิจ : ใครเข้าเขตเตือน = บุกรุก -> ไซเรน, จอไฟ RGB แดงทั้งจอ, ตัวนับเพิ่ม
 # ลองเล่น : ตอนเริ่มถอยห่างบอร์ด แล้วเดินเข้าหา · VR3 = เขตเตือน · SW5/สวิตช์บนจอ = เปิด/ปิดเฝ้า
 # ของบนบอร์ดที่ใช้ : เรดาร์ BGT60TR13C, VR3, SW5 (ปุ่มล่าง), ลำโพง, จอไฟ RGB
 # บนจอ : ประตูคอก ระยะเป้า การเคลื่อนไหว ตัวนับ สวิตช์ กราฟ บันทึก
@@ -101,12 +101,13 @@ def wait_ms(ms, btns):
 
 
 def show_matrix(armed, inside, count):
-    # ปิดเฝ้า = มืด, บุกรุก = INTRUDER, ปกติ = จำนวนครั้ง
+    # ปิดเฝ้า = มืด, บุกรุก = แดงทั้งจอ, ปกติ = จำนวนครั้ง
+    # ไม่ใช้ scroll: ตัวอักษรวิ่งเขียนบัส I2C ทุก 60 ms และเป็นบัสเดียวกับจอสัมผัส · fill ส่งคำสั่งเดียวจบ
     try:
         if not armed:
             rgbmatrix.clear()
         elif inside:
-            rgbmatrix.scroll("INTRUDER", rgbmatrix.RED, 60)
+            rgbmatrix.fill(rgbmatrix.RED)
         else:
             rgbmatrix.score(count, rgbmatrix.GREEN)
     except OSError:

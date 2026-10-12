@@ -97,12 +97,13 @@ def wait_ms(ms, btns):
 
 
 def show_matrix(armed, inside, count):
-    # ปิดเฝ้า = มืด, บุกรุก = INTRUDER, ปกติ = จำนวนครั้ง
+    # ปิดเฝ้า = มืด, บุกรุก = แดงทั้งจอ, ปกติ = จำนวนครั้ง
+    # ไม่ใช้ scroll: ตัวอักษรวิ่งเขียนบัส I2C ทุก 60 ms และเป็นบัสเดียวกับจอสัมผัส · fill ส่งคำสั่งเดียวจบ
     try:
         if not armed:
             rgbmatrix.clear()
         elif inside:
-            rgbmatrix.scroll("INTRUDER", rgbmatrix.RED, 60)
+            rgbmatrix.fill(rgbmatrix.RED)
         else:
             rgbmatrix.score(count, rgbmatrix.GREEN)
     except OSError:
