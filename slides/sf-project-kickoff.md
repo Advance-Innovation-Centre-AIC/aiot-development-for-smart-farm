@@ -209,6 +209,33 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 
 ---
 
+## ทุกเรื่องมีจอของตัวเอง (เรื่อง 9–14)
+
+<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
+<div class="g"><figure><img src="img/project/board_idea_9.png" alt="เรื่อง 9"><figcaption><b>9</b> · โรงเพาะเห็ด <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_10.png" alt="เรื่อง 10"><figcaption><b>10</b> · ห้องบ่มกล้วย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_11.png" alt="เรื่อง 11"><figcaption><b>11</b> · โรงอบลำไย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_12.png" alt="เรื่อง 12"><figcaption><b>12</b> · โกดังเก็บเมล็ดพันธุ์ <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_13.png" alt="เรื่อง 13"><figcaption><b>13</b> · โกดังปุ๋ย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_14.png" alt="เรื่อง 14"><figcaption><b>14</b> · ตู้เก็บยาและวัคซีนสัตว์ <span style="color:#667">(ชุด A)</span></figcaption></figure></div>
+
+<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+
+---
+
+## ทุกเรื่องมีจอของตัวเอง (เรื่อง 15–20)
+
+<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
+<div class="g"><figure><img src="img/project/board_idea_15.png" alt="เรื่อง 15"><figcaption><b>15</b> · โรงเรือนไฮโดรโปนิกส์ <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_16.png" alt="เรื่อง 16"><figcaption><b>16</b> · พ่นหมอกโรงกล้วยไม้ <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_17.png" alt="เรื่อง 17"><figcaption><b>17</b> · เติมอากาศบ่อปลา <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_18.png" alt="เรื่อง 18"><figcaption><b>18</b> · พัดลมเล้าไก่ <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_19.png" alt="เรื่อง 19"><figcaption><b>19</b> · ประตูน้ำแปลงนา <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_20.png" alt="เรื่อง 20"><figcaption><b>20</b> · เครื่องให้อาหารปลา <span style="color:#667">(ชุด B)</span></figcaption></figure></div>
+
+<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+
+---
+
+## ทุกเรื่องมีจอของตัวเอง (เรื่อง 21–25)
+
+<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
+<div class="g"><figure><img src="img/project/board_idea_21.png" alt="เรื่อง 21"><figcaption><b>21</b> · พัดลมโรงเรือนสั่นผิดปกติ <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_22.png" alt="เรื่อง 22"><figcaption><b>22</b> · เครื่องสีข้าวชุมชน <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_23.png" alt="เรื่อง 23"><figcaption><b>23</b> · ถาดไข่ระหว่างขนส่ง <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_24.png" alt="เรื่อง 24"><figcaption><b>24</b> · ลังผลไม้บนรถกระบะ <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_25.png" alt="เรื่อง 25"><figcaption><b>25</b> · ประตูโกดังกันขโมย <span style="color:#667">(ชุด D)</span></figcaption></figure></div>
+
+<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+
+---
+
 ## ต่อยอดอย่างน้อย 3 อย่าง = หัวใจของคะแนน
 
 | ข้อ | ทำอะไร | ตัวอย่าง |
