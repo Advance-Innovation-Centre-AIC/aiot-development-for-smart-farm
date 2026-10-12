@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<!--
+  idea_7.html - หมอฟังปั๊ม: บัตรตรวจสุขภาพปั๊มน้ำบนมือถือ (คู่กับ project/idea_7_pump_doctor.py)
+  เปิดแบบนี้: web/idea_7.html?team=team05
+  ฟัง bento-aiot/<ทีม>/# (telemetry + event "vib") ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  กฎฝั่งแอป: ไม่มี telemetry เกิน SILENT_S วินาที = "โรงสูบเงียบ" (บอร์ดส่งทุก 5 วิ)
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>หมอฟังปั๊ม</title>
+<style>
+  :root { --bg:#eef6f5; --card:#ffffff; --ink:#0f2629; --dim:#5d7c79; --ok:#1a9e92; --warn:#d98a1c; --bad:#d63a45; --line:#cfe3e0; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b1c1e; --card:#0f2629; --ink:#e6f4f1; --dim:#8fa9a6; --line:#1f3d40; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; border-bottom:3px solid var(--ok); }
+  h1 { font-size:1.25rem; margin:0; flex:1 1 100%; }
+  input, button { font:inherit; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; }
+  button.go { background:var(--ok); color:#fff; border:0; }
+  button.stop { background:var(--bad); color:#fff; border:0; }
+  main { padding:12px 16px; display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); }
+  main > * { min-width:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; }
+  .card h2 { margin:0 0 8px; font-size:1rem; color:var(--dim); }
+  .pill { padding:4px 10px; border-radius:99px; font-size:.85rem; background:var(--line); }
+  .pill.on { background:var(--ok); color:#fff; } .pill.alarm { background:var(--bad); color:#fff; }
+  .big { font-size:1.6rem; font-weight:700; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--dim); font-size:.9rem; }
+  #diag.ok { color:var(--ok); } #diag.warn { color:var(--warn); } #diag.bad { color:var(--bad); }
+  ol { margin:0; padding-left:20px; max-height:220px; overflow:auto; }
+  li { margin:4px 0; }
+  li.bad { color:var(--bad); } li.ok { color:var(--ok); }
+  svg { width:100%; height:auto; display:block; }
+  footer { padding:16px; font-size:.85rem; color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>หมอฟังปั๊ม - บัตรตรวจสุขภาพปั๊มน้ำ</h1>
+  <input id="team" size="10" value="teamXX" aria-label="เลขทีม เช่น team05">
+  <button id="connect" class="go">ต่อ</button>
+  <span id="status" class="pill">ยังไม่ต่อ</span>
+</header>
+<main>
+  <section class="card">
+    <h2>ชีพจรปั๊ม (เทียบค่าสูงสุดที่เคยเห็น)</h2>
+    <svg viewBox="0 0 220 130" aria-label="หน้าปัดการสั่น">
+      <path d="M20 115 A90 90 0 0 1 200 115" fill="none" stroke="var(--line)" stroke-width="16"/>
+      <path id="arc" d="M20 115 A90 90 0 0 1 200 115" fill="none" stroke="var(--ok)" stroke-width="16" stroke-dasharray="0 999"/>
+      <line id="needle" x1="110" y1="115" x2="110" y2="35" stroke="var(--ink)" stroke-width="3"/>
+      <circle cx="110" cy="115" r="6" fill="var(--ink)"/>
+    </svg>
+    <div id="diag" class="big ok">รอข้อมูล</div>
+    <div class="muted" id="vibtxt">ค่าสั่น -- / สูงสุด --</div>
+  </section>
+  <section class="card">
+    <h2>คลื่นการสั่น 60 จุดล่าสุด</h2>
+    <svg viewBox="0 0 300 100" aria-label="กราฟการสั่น">
+      <rect x="0" y="0" width="300" height="100" fill="none" stroke="var(--line)"/>
+      <polyline id="wave" fill="none" stroke="var(--ok)" stroke-width="2" points=""/>
+    </svg>
+    <div class="muted">แกนตั้งปรับตามค่าสูงสุดในกราฟ</div>
+  </section>
+  <section class="card">
+    <h2>ปั๊มและถังน้ำ</h2>
+    <div class="row"><span class="big" id="pump">--</span><span class="pill" id="vbad">--</span></div>
+    <p class="muted" id="tank">ถัง -- % / ดิน -- %</p>
+    <p class="muted" id="run">เดินสะสม --</p>
+    <div class="row">
+      <button class="go" data-sec="10">เปิด 10 วิ</button>
+      <button class="go" data-sec="30">เปิด 30 วิ</button>
+      <button class="stop" id="off">ปิดปั๊ม</button>
+      <button id="beep">เรียกคนที่โรงสูบ</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น FIX PUMP">
+      <button id="sayBtn">ขึ้นจอไฟ</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>ประวัติการตรวจ (event vib)</h2>
+    <ol id="log"><li class="muted">ยังไม่มีเหตุการณ์</li></ol>
+    <p class="muted" id="summary">สั่นผิดปกติ 0 ครั้ง / นานสุด -- วิ</p>
+    <div class="row" style="margin-top:8px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <button id="clear">ล้างข้อมูล</button>
+      <span class="muted" id="rows">0 แถว</span>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const SILENT_S = 15;          // กฎฝั่งแอป: ไม่มีรายงานเกินนี้ = โรงสูบเงียบ
+const WAVE_N = 60;
+const CSV_COLS = ["time", "n", "soil", "tank", "pump", "vib", "vib_bad", "run_s", "vib_max"];
+const $ = (id) => document.getElementById(id);
+let client = null;
+let team = new URLSearchParams(location.search).get("team") || "teamXX";
+let lastAt = 0, vibMax = null;
+// สรุปใบตรวจ: นับครั้งที่ผิดปกติ และช่วงผิดปกติที่นานที่สุด (นับจากเวลาที่ event มาถึงหน้านี้)
+let badCount = 0, badSince = 0, longestS = 0;
+const wave = [], rows = [];
+$("team").value = team;
+
+// ตัวเลขที่ใช้ได้เท่านั้น อย่างอื่น = null
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function setStatus(text, cls) { $("status").textContent = text; $("status").className = "pill " + (cls || ""); }
+function hms(s) {
+  const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0");
+}
+function validTeam(t) { return /^team[0-9a-z_]{2,24}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+
+function drawGauge(vib, max) {
+  // สัดส่วนเทียบค่าสูงสุดที่เคยเห็น (บอร์ดรู้เส้นเสียจริง หน้านี้ไม่รู้)
+  const frac = (vib === null || !max) ? 0 : Math.min(1, vib / max);
+  const len = Math.PI * 90;
+  $("arc").setAttribute("stroke-dasharray", (frac * len).toFixed(1) + " 999");
+  const ang = Math.PI * (1 - frac);
+  $("needle").setAttribute("x2", (110 + 80 * Math.cos(ang)).toFixed(1));
+  $("needle").setAttribute("y2", (115 - 80 * Math.sin(ang)).toFixed(1));
+}
+
+function drawWave() {
+  const max = Math.max(0.05, ...wave);
+  const pts = wave.map((v, i) => (i * 300 / (WAVE_N - 1)).toFixed(1) + "," + (98 - v / max * 94).toFixed(1));
+  $("wave").setAttribute("points", pts.join(" "));
+}
+
+function onTelemetry(d) {
+  lastAt = Date.now();
+  const vib = num(d.vib), bad = d.vib_bad === 1, pump = num(d.pump), tank = num(d.tank), soil = num(d.soil);
+  const run = num(d.run_s), peak = num(d.vib_max);
+  if (peak !== null) vibMax = peak;
+  if (vib !== null) { wave.push(vib); if (wave.length > WAVE_N) wave.shift(); drawWave(); }
+  drawGauge(vib, vibMax);
+  $("arc").setAttribute("stroke", bad ? "var(--bad)" : "var(--ok)");
+  const diag = $("diag");
+  if (vib === null) { diag.textContent = "บอร์ดกำลังเรียนรู้ค่าปกติ"; diag.className = "big warn"; }
+  else if (bad) { diag.textContent = "ผิดปกติ! ปั๊มถูกหยุด"; diag.className = "big bad"; }
+  else { diag.textContent = "ชีพจรปกติ"; diag.className = "big ok"; }
+  $("vibtxt").textContent = "ค่าสั่น " + (vib === null ? "--" : vib.toFixed(2)) + " / สูงสุด " + (vibMax === null ? "--" : vibMax.toFixed(2)) + " m/s2";
+  $("pump").textContent = pump === 1 ? "ปั๊มเดิน" : (pump === 0 ? "ปั๊มหยุด" : "--");
+  $("vbad").textContent = bad ? "ห้ามเปิด (สั่น)" : "เปิดได้";
+  $("vbad").className = "pill " + (bad ? "alarm" : "on");
+  $("tank").textContent = "ถัง " + (tank === null ? "--" : tank) + " % / ดิน " + (soil === null ? "--" : soil) + " %";
+  $("run").textContent = "เดินสะสม " + (run === null ? "--" : hms(Math.max(0, Math.floor(run))));
+  rows.push([new Date().toISOString(), num(d.n), soil, tank, pump, vib, bad ? 1 : 0, run, peak]);
+  $("rows").textContent = rows.length + " แถว";
+}
+
+function onEvent(d) {
+  if (d.event !== "vib") return;      // event อื่นไม่ใช่ของหน้านี้
+  const vib = num(d.vib), bad = d.bad === 1;
+  if (bad) { badCount += 1; badSince = Date.now(); }
+  else if (badSince) { longestS = Math.max(longestS, Math.round((Date.now() - badSince) / 1000)); badSince = 0; }
+  $("summary").textContent = "สั่นผิดปกติ " + badCount + " ครั้ง / นานสุด " + (longestS || "--") + " วิ";
+  addLog((bad ? "สั่นผิดปกติ ปั๊มหยุด" : "กลับมาปกติ") + (vib === null ? "" : " (" + vib.toFixed(2) + ")"), bad ? "bad" : "ok");
+}
+
+function addLog(text, cls) {
+  const ol = $("log");
+  if (ol.firstElementChild && ol.firstElementChild.classList.contains("muted")) ol.textContent = "";
+  const li = document.createElement("li");
+  li.className = cls;
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  " + text;
+  ol.prepend(li);
+  while (ol.children.length > 50) ol.lastElementChild.remove();
+}
+
+// คำสั่งห่างกันอย่างน้อย 400 ms เพราะกล่องรับของบอร์ดมีช่องเดียว
+const queue = []; let sending = false;
+function toBoard(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ ส่งไม่ได้", "alarm"); return; }
+  queue.push(JSON.stringify(obj));
+  if (!sending) drain();
+}
+function drain() {
+  const next = queue.shift();
+  if (next === undefined) { sending = false; return; }
+  sending = true;
+  client.publish(ROOT + "/" + team + "/cmd", next);
+  setTimeout(drain, 400);
+}
+
+function downloadCsv() {
+  const cell = (v) => (v === null || v === undefined) ? "" : '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [CSV_COLS.join(",")].concat(rows.map((r) => r.map(cell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "pump_doctor_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!validTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "alarm"); $("team").focus(); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ (ต่อเน็ตก่อน)", "alarm"); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "pump-doc-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, "on"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", "alarm"));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!d || typeof d !== "object" || Array.isArray(d)) return;
+    if (topic.endsWith("/telemetry")) onTelemetry(d);
+    else if (topic.endsWith("/event")) onEvent(d);
+  });
+}
+
+// กฎฝั่งแอป: โรงสูบเงียบ
+setInterval(() => {
+  if (!client || !client.connected || !lastAt) return;
+  const quiet = Math.round((Date.now() - lastAt) / 1000);
+  if (quiet > SILENT_S) setStatus("โรงสูบเงียบ " + quiet + " วิ ไปดูบอร์ด", "alarm");
+  else setStatus("ต่อแล้ว " + team, "on");
+}, 1000);
+
+document.querySelectorAll("button[data-sec]").forEach((b) => {
+  b.addEventListener("click", () => toBoard({ cmd: "pump", on: 1, sec: Number(b.dataset.sec) }));
+});
+$("off").addEventListener("click", () => toBoard({ cmd: "pump", on: 0 }));
+$("beep").addEventListener("click", () => toBoard({ cmd: "beep" }));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) toBoard({ cmd: "say", text: text });
+});
+$("csv").addEventListener("click", downloadCsv);
+$("clear").addEventListener("click", () => {
+  rows.length = 0; wave.length = 0; drawWave();
+  $("rows").textContent = "0 แถว";
+});
+$("connect").addEventListener("click", connect);
+drawGauge(null, null);
+if (validTeam(team)) connect(); else setStatus("ใส่เลขทีมแล้วกด ต่อ", "alarm");
+</script>
+</body>
+</html>

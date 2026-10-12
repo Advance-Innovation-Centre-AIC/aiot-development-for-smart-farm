@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!--
+  idea_19.html - ประตูน้ำแปลงนา: ดูน้ำในคลองกับในแปลง สั่งเปิดประตูน้ำจากมือถือ
+  เปิดแบบนี้: web/idea_19.html?team=team05  (หรือพิมพ์เลขกลุ่มในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# · ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd · คู่กับบอร์ด project/idea_19_paddy_gate.py
+  คีย์ telemetry: soil = น้ำในแปลงนา (VR1) · tank = น้ำในคลองส่ง (VR4) · pump = ประตูน้ำ 0/1
+                  open_s = ประตูเปิดรวมกี่วินาที · low_min = น้ำในแปลงต่ำสุดตั้งแต่เริ่ม
+  กฎฝั่งแอป: บอร์ดเงียบเกิน 15 วินาที = ขึ้น "บอร์ดเงียบ" (telemetry ส่งทุก 5 วินาที)
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ประตูน้ำแปลงนา</title>
+<style>
+  :root { --bg:#0d1b12; --card:#13261a; --line:#2b4a33; --ink:#eef6e4; --dim:#93a88a;
+          --water:#2f9bff; --rice:#8bd450; --mud:#6b4f2a; --warn:#f2c14e; --bad:#e5484d; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, "Noto Sans Thai", sans-serif; }
+  header { padding:14px 16px 4px; }
+  h1 { margin:0; font-size:1.3rem; color:var(--rice); }
+  .sub { color:var(--dim); font-size:.85rem; margin:2px 0 8px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  input, button { font:inherit; border-radius:8px; border:1px solid var(--line); background:#1a3323; color:var(--ink); padding:8px 12px; }
+  button { cursor:pointer; } button:hover { border-color:var(--rice); }
+  button.open { background:#123d66; border-color:var(--water); }
+  button.close { background:#4a3a20; border-color:var(--mud); }
+  #status { font-size:.85rem; color:var(--dim); } #status.ok { color:var(--rice); } #status.bad { color:var(--bad); }
+  main { padding:8px 16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
+  h2 { margin:0 0 8px; font-size:.95rem; color:var(--rice); }
+  #field { width:100%; height:auto; display:block; }
+  #trend { width:100%; height:120px; display:block; background:#0f1f15; border-radius:6px; }
+  .legend { font-size:.75rem; color:var(--dim); }
+  .facts { display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:10px; }
+  .fact { background:#0f1f15; border-radius:8px; padding:8px; text-align:center; }
+  .fact b { display:block; font-size:1.25rem; font-variant-numeric: tabular-nums; }
+  .fact span { font-size:.72rem; color:var(--dim); }
+  #banner { margin:6px 16px 0; padding:8px 12px; border-radius:8px; display:none; }
+  #banner.show { display:block; } #banner.warn { background:#4d3d10; } #banner.mute { background:#2c302d; color:var(--dim); }
+  #log { width:100%; border-collapse:collapse; font-size:.8rem; }
+  #log td { border-top:1px solid var(--line); padding:4px; }
+  .wide { grid-column: 1 / -1; }
+  footer { padding:12px 16px 28px; color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ประตูน้ำแปลงนา</h1>
+  <p class="sub">น้ำในแปลงนาลดโดยไม่มีใครเห็น: ดูระดับน้ำจากมือถือ แล้วสั่งเปิดประตูน้ำจากคลองส่ง</p>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" autocomplete="off" aria-label="เลขทีม">
+    <button id="go">ต่อ</button>
+    <span id="status">ใส่เลขทีม เช่น team05 แล้วกด ต่อ</span>
+  </div>
+</header>
+<div id="banner" role="status"></div>
+<main>
+  <section>
+    <h2>ภาพตัดคลองกับแปลงนา</h2>
+    <svg id="field" viewBox="0 0 360 170" aria-label="ภาพตัดคลอง ประตูน้ำ และแปลงนา">
+      <rect x="0" y="150" width="360" height="20" fill="#6b4f2a"/>
+      <rect x="10" y="20" width="90" height="130" fill="#1a3323" stroke="#2b4a33"/>
+      <rect id="canalW" x="10" y="150" width="90" height="0" fill="#2f9bff"/>
+      <rect x="150" y="70" width="200" height="80" fill="#1a3323" stroke="#2b4a33"/>
+      <rect id="paddyW" x="150" y="150" width="200" height="0" fill="#2f9bff" opacity=".75"/>
+      <line x1="150" x2="350" y1="126" y2="126" stroke="#f2c14e" stroke-dasharray="5 4"/>
+      <g id="rice" stroke="#8bd450" stroke-width="2"></g>
+      <rect x="100" y="60" width="50" height="90" fill="#0d1b12"/>
+      <rect id="gate" x="118" y="60" width="14" height="90" fill="#6b4f2a" stroke="#93a88a"/>
+      <path id="flow" d="M100 140 L150 140" stroke="#2f9bff" stroke-width="6" opacity="0"/>
+      <text x="55" y="14" fill="#93a88a" font-size="11" text-anchor="middle">คลองส่ง</text>
+      <text x="125" y="54" fill="#93a88a" font-size="11" text-anchor="middle">ประตู</text>
+      <text x="250" y="64" fill="#93a88a" font-size="11" text-anchor="middle">แปลงนา (เส้นเหลือง = 30 %)</text>
+    </svg>
+    <div class="facts">
+      <div class="fact"><b id="canalN">--</b><span>น้ำในคลอง %</span></div>
+      <div class="fact"><b id="paddyN">--</b><span>น้ำในแปลง %</span></div>
+      <div class="fact"><b id="gateN">--</b><span>ประตูน้ำ</span></div>
+    </div>
+  </section>
+  <section>
+    <h2>ระดับน้ำย้อนหลัง (ประมาณ 5 นาที)</h2>
+    <svg id="trend" viewBox="0 0 300 100" preserveAspectRatio="none" aria-label="กราฟระดับน้ำ">
+      <line x1="0" x2="300" y1="70" y2="70" stroke="#f2c14e" stroke-dasharray="4 4" stroke-width="1"/>
+      <polyline id="lineCanal" fill="none" stroke="#2f9bff" stroke-width="2"/>
+      <polyline id="linePaddy" fill="none" stroke="#8bd450" stroke-width="2"/>
+    </svg>
+    <div class="legend">ฟ้า = คลอง · เขียว = แปลงนา · เหลือง = เกณฑ์ 30 %</div>
+    <div class="facts">
+      <div class="fact"><b id="openS">--</b><span>ประตูเปิดรวม (วินาที)</span></div>
+      <div class="fact"><b id="lowMin">--</b><span>น้ำต่ำสุด %</span></div>
+      <div class="fact"><b id="seen">--</b><span>ข้อมูลล่าสุด</span></div>
+    </div>
+  </section>
+  <section class="wide">
+    <h2>สั่งประตูน้ำ</h2>
+    <div class="row">
+      <button class="open" data-cmd='{"cmd":"pump","on":1,"sec":10}'>เปิดประตูน้ำ 10 วินาที</button>
+      <button class="open" data-cmd='{"cmd":"pump","on":1,"sec":30}'>เปิด 30 วินาที (สูงสุด)</button>
+      <button class="close" data-cmd='{"cmd":"pump","on":0}'>ปิดประตูน้ำ</button>
+      <button data-cmd='{"cmd":"beep"}'>เรียกคนที่นา</button>
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น GATE OPEN">
+      <button id="sayBtn">ส่งข้อความ</button>
+    </div>
+    <p class="legend">น้ำในคลองต่ำกว่า 10 %: บอร์ดจะไม่ยอมเปิดประตูน้ำ · เปิดได้นานสุด 30 วินาทีแล้วปิดเอง</p>
+  </section>
+  <section class="wide">
+    <h2>บันทึก <button id="csv" style="float:right;padding:4px 10px">ดาวน์โหลด CSV</button></h2>
+    <table id="log"><tbody></tbody></table>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const LOW = 30, CANAL_MIN = 10;   // ตรงกับ SOIL_DRY และ TANK_MIN บนบอร์ด
+const SILENT_MS = 15000, TREND_N = 60;
+let client = null, lastSeen = 0, team = new URLSearchParams(location.search).get("team") || "";
+const rows = [], trend = [];
+
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null; }
+function okTeam(t) { return /^team[a-z0-9_]{2,20}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = cls || ""; }
+function banner(text, cls) { const b = $("banner"); b.textContent = text || ""; b.className = text ? "show " + cls : ""; }
+function now() { return new Date().toLocaleTimeString("th-TH"); }
+
+// ต้นข้าวในแปลง วาดครั้งเดียว
+(function drawRice() {
+  const g = $("rice"), ns = "http://www.w3.org/2000/svg";
+  for (let x = 162; x < 350; x += 16) {
+    const l = document.createElementNS(ns, "line");
+    l.setAttribute("x1", String(x)); l.setAttribute("x2", String(x + 3));
+    l.setAttribute("y1", "150"); l.setAttribute("y2", "96");
+    g.appendChild(l);
+  }
+})();
+
+function drawField(canal, paddy, open) {
+  const ch = canal === null ? 0 : canal * 1.3, ph = paddy === null ? 0 : paddy * 0.8;
+  $("canalW").setAttribute("y", String(150 - ch)); $("canalW").setAttribute("height", String(ch));
+  $("paddyW").setAttribute("y", String(150 - ph)); $("paddyW").setAttribute("height", String(ph));
+  $("gate").setAttribute("y", open === 1 ? "20" : "60");      // ประตูยกขึ้นเมื่อเปิด
+  $("flow").setAttribute("opacity", open === 1 ? "0.9" : "0");
+  $("canalN").textContent = canal === null ? "--" : String(canal);
+  $("paddyN").textContent = paddy === null ? "--" : String(paddy);
+  $("paddyN").style.color = paddy !== null && paddy < LOW ? "var(--warn)" : "";
+  $("gateN").textContent = open === 1 ? "เปิด" : open === 0 ? "ปิด" : "--";
+  $("gateN").style.color = open === 1 ? "var(--water)" : "";
+}
+
+function drawTrend() {
+  const pts = (key) => trend.map((p, i) => p[key] === null ? null : (i * 300 / (TREND_N - 1)).toFixed(1) + "," + (100 - p[key]).toFixed(1))
+    .filter((s) => s !== null).join(" ");
+  $("lineCanal").setAttribute("points", pts("canal"));
+  $("linePaddy").setAttribute("points", pts("paddy"));
+}
+
+function addLog(kind, text) {
+  const tb = $("log").tBodies[0], tr = document.createElement("tr");
+  [now(), kind, text].forEach((v) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+  tb.insertBefore(tr, tb.firstChild);
+  while (tb.rows.length > 20) tb.deleteRow(-1);
+}
+
+function onTelemetry(o) {
+  const paddy = num(o.soil, 0, 100), canal = num(o.tank, 0, 100);
+  const open = o.pump === 1 ? 1 : o.pump === 0 ? 0 : null;
+  const openS = num(o.open_s, 0, 1e7), lowMin = num(o.low_min, 0, 100);
+  drawField(canal, paddy, open);
+  trend.push({ canal, paddy });
+  if (trend.length > TREND_N) trend.shift();
+  drawTrend();
+  $("openS").textContent = openS === null ? "--" : String(openS);
+  $("lowMin").textContent = lowMin === null ? "--" : String(lowMin);
+  $("seen").textContent = now();
+  if (paddy !== null && paddy < LOW && canal !== null && canal < CANAL_MIN) banner("น้ำในแปลงน้อย แต่คลองก็แห้ง: บอร์ดจะไม่ยอมเปิด รอน้ำเข้าคลองก่อน", "warn");
+  else if (paddy !== null && paddy < LOW && open !== 1) banner("น้ำในแปลงเหลือ " + paddy + " %: กดเปิดประตูน้ำ", "warn");
+  else banner("", "");
+  rows.push([new Date().toISOString(), "telemetry", num(o.n, 0, 1e9), paddy, canal, open, openS, lowMin, ""]);
+  addLog("telemetry", "นา " + (paddy ?? "-") + " % คลอง " + (canal ?? "-") + " % ประตู" + (open === 1 ? "เปิด" : "ปิด"));
+}
+
+function onMessage(kind, o) {
+  if (kind !== "cmd") lastSeen = Date.now();   // คำสั่งของแอปเองไม่ได้แปลว่าบอร์ดยังอยู่
+  if (kind === "telemetry") { onTelemetry(o); return; }
+  const raw = JSON.stringify(o).slice(0, 120);
+  addLog(kind === "cmd" ? "คำสั่ง" : kind.slice(0, 12), raw);
+  rows.push([new Date().toISOString(), kind, "", "", "", "", "", "", raw]);
+}
+
+// กฎฝั่งแอป: บอร์ดเงียบ
+setInterval(() => {
+  if (!client || !client.connected || !lastSeen) return;
+  const gap = Date.now() - lastSeen;
+  if (gap > SILENT_MS) banner("บอร์ดที่นาเงียบมา " + Math.round(gap / 1000) + " วินาที: ไม่รู้ว่าประตูเปิดหรือปิด ไปดูที่แปลง", "mute");
+}, 1000);
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "bad"); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  setStatus("กำลังต่อ broker...", "");
+  client = mqtt.connect(BROKER_URL, { clientId: "paddy-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว ฟัง " + ROOT + "/" + team + "/#", "ok"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("reconnect", () => setStatus("ต่อใหม่...", ""));
+  client.on("error", () => setStatus("ต่อ broker ไม่ได้", "bad"));
+  client.on("message", (topic, payload) => {
+    let o;
+    try { o = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) return;
+    onMessage(String(topic.split("/").pop()), o);
+  });
+}
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ broker", "bad"); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+}
+
+document.querySelectorAll("button[data-cmd]").forEach((b) => b.addEventListener("click", () => send(JSON.parse(b.dataset.cmd))));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) send({ cmd: "say", text });
+});
+$("go").addEventListener("click", connect);
+$("team").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+
+$("csv").addEventListener("click", () => {
+  const head = ["time", "kind", "n", "paddy_pct", "canal_pct", "gate", "open_s", "low_min", "raw"];
+  const esc = (v) => { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(esc).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "paddy_gate_" + (team || "team") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$("team").value = team;
+drawField(null, null, null);
+if (okTeam(team)) connect();
+</script>
+</body>
+</html>

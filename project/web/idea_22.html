@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<!--
+  idea_22.html - โรงสีข้าวชุมชน: สมุดโรงสีของหมู่บ้าน (คู่กับ project/idea_22_rice_mill.py)
+  เปิดแบบนี้: web/idea_22.html?team=team05
+  ฟัง bento-aiot/<ทีม>/# (telemetry + event "vib") ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์ของเรื่องนี้: wear (วินาทีที่ลูกปืนสั่นแรง) batches (รอบสีที่ครบ)  soil = ข้าวสารในถังพัก  tank = ข้าวเปลือกในกระบะ
+  กฎฝั่งแอป: สุขภาพลูกปืนต่ำกว่า SERVICE_PCT = ขึ้นป้าย "นัดช่างเปลี่ยนลูกปืน" ก่อนแตกกลางคิวสี
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สมุดโรงสีชุมชน</title>
+<style>
+  :root { --bg:#fbf6ea; --card:#fffdf7; --ink:#2a2112; --dim:#7d6c4a; --line:#eadfc4; --accent:#b8861b; --ok:#5f8f2e; --warn:#d9822b; --bad:#c94a2a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1c160b; --card:#2a2112; --ink:#fff6e0; --dim:#b3a27e; --line:#4a3c22; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  h1 { font-size:1.25rem; margin:0; flex:1 1 100%; }
+  input, button { font:inherit; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; }
+  button.go { background:var(--accent); color:#fff; border:0; }
+  button.stop { background:var(--bad); color:#fff; border:0; }
+  .pill { padding:4px 10px; border-radius:99px; font-size:.85rem; background:var(--line); }
+  .pill.on { background:var(--ok); color:#fff; } .pill.alarm { background:var(--bad); color:#fff; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--dim); font-size:.9rem; }
+  .banner { display:none; margin:0 16px; padding:12px 14px; border-radius:12px; background:var(--bad); color:#fff; font-weight:700; }
+  .banner.show { display:block; }
+  svg { width:100%; height:auto; display:block; }
+  footer { padding:16px; font-size:.85rem; color:var(--dim); }
+  header { border-bottom:2px dashed var(--accent); }
+  main { padding:12px 16px; display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); }
+  main > * { min-width:0; }
+  .card { background:var(--card); border:2px solid var(--line); border-radius:18px; padding:14px; }
+  .card h2 { margin:0 0 8px; font-size:1rem; color:var(--accent); }
+  .pair { display:flex; gap:12px; align-items:center; }
+  .pair svg { flex:1 1 0; min-width:0; }
+  .pair svg + svg { flex:0 0 96px; }
+  .big { font-size:1.4rem; font-weight:700; }
+  #sacks { display:flex; flex-wrap:wrap; gap:4px; min-height:30px; }
+  .sack { width:22px; height:28px; border-radius:6px 6px 10px 10px; background:var(--accent); }
+  ol { margin:0; padding-left:20px; max-height:200px; overflow:auto; }
+  li.bad { color:var(--bad); } li.ok { color:var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <h1>สมุดโรงสีข้าวชุมชน - ลูกปืน กระบะ รอบสี</h1>
+  <input id="team" size="10" value="teamXX" aria-label="เลขทีม เช่น team05">
+  <button id="connect" class="go">ต่อ</button>
+  <span id="status" class="pill">ยังไม่ต่อ</span>
+</header>
+<div id="banner" class="banner" role="alert"></div>
+<main>
+  <section class="card">
+    <h2>สุขภาพลูกปืน และ ข้าวเปลือกในกระบะ</h2>
+    <div class="pair">
+      <svg viewBox="0 0 140 140" aria-label="สุขภาพลูกปืน">
+        <circle cx="70" cy="70" r="56" fill="none" stroke="var(--line)" stroke-width="14"/>
+        <circle id="ring" cx="70" cy="70" r="56" fill="none" stroke="var(--ok)" stroke-width="14"
+                stroke-dasharray="352 352" transform="rotate(-90 70 70)" stroke-linecap="round"/>
+        <text id="hp" x="70" y="78" text-anchor="middle" font-size="26" font-weight="700" fill="var(--ink)">--</text>
+      </svg>
+      <svg viewBox="0 0 90 140" aria-label="กระบะข้าวเปลือก">
+        <path d="M10 10 L80 10 L62 130 L28 130 Z" fill="none" stroke="var(--dim)" stroke-width="3"/>
+        <clipPath id="hop"><path d="M10 10 L80 10 L62 130 L28 130 Z"/></clipPath>
+        <rect id="paddy" x="0" y="130" width="90" height="0" fill="var(--accent)" clip-path="url(#hop)"/>
+        <line x1="20" y1="118" x2="70" y2="118" stroke="var(--bad)" stroke-dasharray="4 3"/>
+      </svg>
+    </div>
+    <div class="big" id="verdict">รอข้อมูล</div>
+    <div class="muted">ซ้าย = สุขภาพลูกปืน / ขวา = กระบะ (เส้นแดง = ต่ำสุด 10%)</div>
+    <div class="muted" id="wear">สึกสะสม -- วิ / ค่าสั่น --</div>
+  </section>
+  <section class="card">
+    <h2>รอบสีวันนี้</h2>
+    <div class="big" id="batches">-- รอบ</div>
+    <div id="sacks" aria-label="กระสอบข้าวสาร"></div>
+    <p class="muted" id="rice">ข้าวสารในถังพัก -- %</p>
+    <p class="muted" id="mill">เครื่อง --</p>
+  </section>
+  <section class="card">
+    <h2>สั่งเครื่องสี</h2>
+    <div class="row">
+      <button class="go" data-sec="10">เดินเครื่อง 10 วิ</button>
+      <button class="go" data-sec="30">เดินเครื่อง 30 วิ</button>
+      <button class="stop" id="off">หยุดเครื่อง</button>
+      <button id="beep">เรียกคนที่โรงสี</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น NEXT QUEUE">
+      <button id="sayBtn">ขึ้นจอไฟ</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>สมุดบันทึก</h2>
+    <ol id="log"><li class="muted">ยังไม่มีเหตุการณ์</li></ol>
+    <div class="row" style="margin-top:8px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <button id="clear">ล้างข้อมูล</button>
+      <span class="muted" id="rows">0 แถว</span>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const $ = (id) => document.getElementById(id);
+let client = null;
+let team = new URLSearchParams(location.search).get("team") || "teamXX";
+let lastAt = 0;
+const rows = [];
+$("team").value = team;
+
+// ตัวเลขที่ใช้ได้เท่านั้น อย่างอื่น (null, ข้อความ, NaN) = null
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function show(v, digits) { return v === null ? "--" : (digits ? v.toFixed(digits) : String(Math.round(v))); }
+function setStatus(text, cls) { $("status").textContent = text; $("status").className = "pill " + (cls || ""); }
+function validTeam(t) { return /^team[0-9a-z_]{2,24}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function banner(text) { $("banner").textContent = text || ""; $("banner").className = "banner" + (text ? " show" : ""); }
+function svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function addLog(text, cls) {
+  const ol = $("log");
+  if (ol.firstElementChild && ol.firstElementChild.classList.contains("muted")) ol.textContent = "";
+  const li = document.createElement("li");
+  li.className = cls || "";
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  " + text;
+  ol.prepend(li);
+  while (ol.children.length > 50) ol.lastElementChild.remove();
+}
+
+const WEAR_LIFE_S = 120;       // ต้องตรงกับ WEAR_LIFE_S ในบอร์ด
+const SERVICE_PCT = 30;        // กฎฝั่งแอป: สุขภาพต่ำกว่านี้ = นัดช่าง
+const RING = 2 * Math.PI * 56;
+const CSV_COLS = ["time", "n", "soil", "tank", "pump", "vib", "vib_bad", "wear", "batches", "health"];
+const CSV_NAME = "rice_mill";
+let lastBatches = null;
+
+function health(wear) { return wear === null ? null : Math.max(0, 100 - Math.floor(wear * 100 / WEAR_LIFE_S)); }
+
+function drawRing(hp) {
+  const f = hp === null ? 0 : hp / 100;
+  $("ring").setAttribute("stroke-dasharray", (f * RING).toFixed(1) + " " + RING.toFixed(1));
+  $("ring").setAttribute("stroke", hp === null ? "var(--line)" : (hp < SERVICE_PCT ? "var(--bad)" : (hp < 70 ? "var(--warn)" : "var(--ok)")));
+  $("hp").textContent = hp === null ? "--" : hp + "%";
+}
+
+function drawHopper(pct) {
+  const h = pct === null ? 0 : Math.max(0, Math.min(100, pct)) * 1.2;
+  $("paddy").setAttribute("y", (130 - h).toFixed(1));
+  $("paddy").setAttribute("height", h.toFixed(1));
+}
+
+function drawSacks(n) {
+  const box = $("sacks");
+  box.textContent = "";
+  const shown = Math.min(n, 40);
+  for (let i = 0; i < shown; i++) {
+    const s = document.createElement("span");
+    s.className = "sack";
+    box.appendChild(s);
+  }
+}
+
+function onTelemetry(d) {
+  const vib = num(d.vib), bad = d.vib_bad === 1, pump = num(d.pump), soil = num(d.soil), tank = num(d.tank);
+  const wear = num(d.wear), batches = num(d.batches), hp = health(wear);
+  drawRing(hp);
+  drawHopper(tank);
+  const v = $("verdict");
+  v.textContent = vib === null ? "กำลังเรียนรู้เสียงเครื่องปกติ" : (bad ? "ผิดปกติ! เครื่องหยุด" : (hp !== null && hp < 70 ? "ลูกปืนเริ่มสึก" : "เดินเรียบ"));
+  v.style.color = bad ? "var(--bad)" : "var(--ink)";
+  $("wear").textContent = "สึกสะสม " + show(wear) + " วิ / ค่าสั่น " + show(vib, 2) + " / กระบะ " + show(tank) + " %";
+  $("batches").textContent = show(batches) + " รอบ";
+  if (batches !== null) {
+    drawSacks(Math.max(0, Math.floor(batches)));
+    if (lastBatches !== null && batches > lastBatches) addLog("สีเสร็จ รอบที่ " + batches, "ok");
+    lastBatches = batches;
+  }
+  $("rice").textContent = "ข้าวสารในถังพัก " + show(soil) + " %";
+  $("mill").textContent = pump === 1 ? "เครื่องกำลังเดิน" : (pump === 0 ? "เครื่องหยุด" : "เครื่อง --");
+  // กฎฝั่งแอป: ถึงเวลานัดช่าง
+  banner(hp !== null && hp < SERVICE_PCT ? "สุขภาพลูกปืน " + hp + "% นัดช่างเปลี่ยนลูกปืนก่อนคิวสีถัดไป" : "");
+  rows.push([new Date().toISOString(), num(d.n), soil, tank, pump, vib, bad ? 1 : 0, wear, batches, hp]);
+}
+
+function onVibEvent(bad, vib) {
+  addLog((bad ? "สั่นผิดปกติ เครื่องหยุด" : "สั่นกลับมาปกติ") + (vib === null ? "" : " (" + vib.toFixed(2) + ")"), bad ? "bad" : "ok");
+}
+
+function resetView() { lastBatches = null; drawRing(null); drawHopper(null); drawSacks(0); banner(""); }
+
+// คำสั่งห่างกันอย่างน้อย 400 ms เพราะกล่องรับของบอร์ดมีช่องเดียว
+const queue = []; let sending = false;
+function toBoard(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ ส่งไม่ได้", "alarm"); return; }
+  queue.push(JSON.stringify(obj));
+  if (!sending) drain();
+}
+function drain() {
+  const next = queue.shift();
+  if (next === undefined) { sending = false; return; }
+  sending = true;
+  client.publish(ROOT + "/" + team + "/cmd", next);
+  setTimeout(drain, 400);
+}
+
+function downloadCsv() {
+  const cell = (v) => (v === null || v === undefined) ? "" : '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [CSV_COLS.join(",")].concat(rows.map((r) => r.map(cell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = CSV_NAME + "_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!validTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "alarm"); $("team").focus(); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ (ต่อเน็ตก่อน)", "alarm"); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "rice-mill-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, "on"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", "alarm"));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!d || typeof d !== "object" || Array.isArray(d)) return;
+    if (topic.endsWith("/telemetry")) { lastAt = Date.now(); onTelemetry(d); $("rows").textContent = rows.length + " แถว"; }
+    else if (topic.endsWith("/event") && d.event === "vib") onVibEvent(d.bad === 1, num(d.vib));
+  });
+}
+
+// บอร์ดเงียบเกิน SILENT_S วินาที
+setInterval(() => {
+  if (!client || !client.connected || !lastAt) return;
+  const quiet = Math.round((Date.now() - lastAt) / 1000);
+  if (quiet > SILENT_S) setStatus("โรงสีเงียบ " + quiet + " วิ", "alarm");
+  else setStatus("ต่อแล้ว " + team, "on");
+}, 1000);
+
+// ปุ่มคำสั่ง: data-sec = เปิดกี่วินาที
+document.querySelectorAll("button[data-sec]").forEach((b) => {
+  b.addEventListener("click", () => toBoard({ cmd: "pump", on: 1, sec: Number(b.dataset.sec) }));
+});
+$("off").addEventListener("click", () => toBoard({ cmd: "pump", on: 0 }));
+$("beep").addEventListener("click", () => toBoard({ cmd: "beep" }));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) toBoard({ cmd: "say", text: text });
+});
+$("csv").addEventListener("click", downloadCsv);
+$("clear").addEventListener("click", () => { rows.length = 0; $("rows").textContent = "0 แถว"; resetView(); });
+$("connect").addEventListener("click", connect);
+resetView();
+if (validTeam(team)) connect(); else setStatus("ใส่เลขทีมแล้วกด ต่อ", "alarm");
+</script>
+</body>
+</html>

@@ -1,15 +1,14 @@
-# idea_9_mushroom_house.py - โรงเพาะเห็ด: อากาศแห้งเกิน ก้อนเชื้อไม่ออกดอก มือถือรู้ทันที
-# แม่แบบ A = idea_3_silo.py · สร้างจาก project/stories.json ด้วย tools/gen_stories.py (คัดลอกไปแก้ ไม่แก้ไฟล์นี้ตรง ๆ)
+# idea_9_mushroom_house.py - โรงเพาะเห็ด: อากาศแห้งเกิน ก้อนเชื้อไม่ออกดอก จับเวลาแห้งติดกัน
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
-# ต่อยอดจาก s2/sf2_04_crop_alert.py (โครงโค้ดเดิม ใช้ diff เทียบได้)
-# เปลี่ยน: ข้อความจอ, CROPS = เห็ด (เตือนเมื่อ RH ต่ำ), MX, กราฟความชื้น เส้นแดง = RH ต่ำ, VR3 = แดดบนหลังคา
-# ทีมต้องแก้ 3 อย่าง: 1) CROPS จากค่าที่วัดเอง 2) หัวจอและป้าย 3) คำใน MX และเสียง
-# MQTT: หัวข้อ/คีย์เหมือน sf2_04 (สัญญา 3.4, 4) ไม่มีคีย์ใหม่ · crop ใหม่: oyster straw ear · alert หลักคือ "dry"
+# ต่อยอดจาก s2/sf2_04_crop_alert.py (WiFi MQTT ack set เหมือนเดิม) ack = พ่นหมอกแล้ว
+# จอ: แถบความชื้นยาว (Bar) มีขีดต่ำสุด + นาฬิกาแห้งติดกัน (Seg7) ธีมป่าชื้น
+# คิดบนบอร์ด: 1) แห้งติดกันมากี่วินาที (กลับมาชื้นพอ = เริ่มนับใหม่)
+#             2) ขอพ่นหมอกไปแล้วกี่ครั้ง (นับทุกครั้งที่เพิ่งแห้งลงต่ำกว่าเกณฑ์)
+# MQTT: คีย์ sf2_04 ครบ + "dry_s" (วินาทีแห้งติดกันตอนนี้) "mist_n" (ครั้งที่ขอพ่นหมอก)
+# crop: oyster straw ear  alert หลักคือ "dry"
 # เกณฑ์ = ค่าสาธิตในห้องเรียน ไม่ใช่คำแนะนำทางเกษตร (ห้องแห้งกว่า 55 % ให้ลด RH ต่ำลง)
-#
-# ลองเล่น  : ห้อง 60 % ขึ้นเริ่มแห้ง · เป่าลมหายใจใส่บอร์ดจนหายเตือน · แผงเซนเซอร์ต่ำกว่า 55 % = แห้งเกิน แล้วกด SW5
+# ลองเล่น: ห้อง 60 % = เริ่มแห้ง  เป่าลมหายใจใส่บอร์ดจนหายเตือน แล้วกด SW5 หรือส่ง {"cmd":"ack"}
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM, CROP, TEMP_OFFSET
-# บนจอ     : ไฟสถานะ 3 ดวง กราฟอุณหภูมิ กล่องเตือน
 
 import buttons
 import json
@@ -30,13 +29,12 @@ TEMP_OFFSET = 0.0    # บอร์ดอ่านสูงกว่าห้อ
 
 BROKER = "broker.hivemq.com"
 ROOT = "bento-aiot"
-CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า
+CLIENT_ID = "bento-farm-" + TEAM  # + เลขสุ่มตอนต่อ: ไม่ชน id เก่า
 TOPIC_EVENT = ROOT + "/" + TEAM + "/event"
 TOPIC_CMD = ROOT + "/" + TEAM + "/cmd"
 BTN_NAMES = ("SW6", "SW5")
 
-# (ชื่อไทย, รหัสอังกฤษ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)
-# ค่าสาธิต: เป่าลมหายใจ = ชื้นดี · ห้อง 60 % = เริ่มแห้ง · ต่ำกว่า RH ต่ำ - 10 = แห้งเกิน
+# (ชื่อไทย, รหัสอังกฤษ, T ต่ำ, T สูง, RH ต่ำ, RH สูง)  เป่าลมหายใจ = ชื้นดี  ห้อง 60 % = เริ่มแห้ง
 CROPS = (
     ("เห็ดนางฟ้า", "oyster", 18, 32, 65, 100),
     ("เห็ดฟาง", "straw", 22, 35, 65, 100),
@@ -44,21 +42,22 @@ CROPS = (
 )
 T_HI_MAX = 45
 READ_MS, BEEP_MS, POLL_MS, RUN_MS = 1000, 5000, 20, 600000
-CHART_MAX_C = 100   # กราฟความชื้น 0-100 %
 MX = (("MOIST", rgbmatrix.GREEN), ("DRYING", rgbmatrix.YELLOW), ("DRY", rgbmatrix.RED))
-BOX = (212, 90, 368, 150)
+BOX = (200, 100, 380, 140)
+RH_BAR = (150, 88, 560, 28)            # x, y, w, h ของแถบความชื้น 0-100 %
 
 SPEAKER = 40
 VOLUME = 25
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
+# ธีมป่าชื้น: เขียวมอส ครีมดอกเห็ด
+COL_TEXT, COL_DIM = 0xEAF7E6, 0x9DB8A0
+COL_CARD, COL_EDGE = 0x14231A, 0x2F5A3B
+COL_MOSS, COL_WARN, COL_BAD = 0x8BD17C, 0xF2CC8F, 0xE07A5F
+COL_OK = 0x5FD3A0
 LEVEL_COLORS = (COL_OK, COL_WARN, COL_BAD)
 
 
 # ---- 2) ฮาร์ดแวร์ ----
-TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
-         "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
+TUNES = {"tap": (76,), "good": (72, 79, 84), "bad": (84, 76), "empty": (84, 76, 69)}
 
 
 def beep(name):
@@ -81,8 +80,7 @@ def valid_team(team):
 
 
 def judge(t, h, lim):
-    # คืน (ระดับ 0-2, ข้อความไทย, รหัสอังกฤษ)
-    # ระดับ 2 = หลุดไกล (เกิน 3 C หรือ 10 %RH)
+    # คืน (ระดับ 0-2, ไทย, อังกฤษ)  ระดับ 2 = หลุดไกล (เกิน 3 C หรือ 10 %RH)
     t_lo, t_hi, h_lo, h_hi = lim
     p = []
     if t < t_lo:
@@ -94,14 +92,14 @@ def judge(t, h, lim):
     if h > h_hi:
         p.append(("ชื้นเกิน", "wet"))
     if not p:
-        return 0, "สบายดี", "ok"
+        return 0, "ชื้นดี", "ok"
     far = (t < t_lo - 3) or (t > t_hi + 3) or (h < h_lo - 10) or (h > h_hi + 10)
     return (2 if far else 1), " + ".join(x[0] for x in p), "+".join(x[1] for x in p)
 
 
 # ---- 4) เครือข่าย ----
 def connect_broker(w):
-    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    # broker สาธารณะไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง client_id ใหม่ทุกครั้ง
     for n in (1, 2, 3):
         if n > 1:
             show_status(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
@@ -116,19 +114,19 @@ def connect_broker(w):
 
 
 def connect_farm(w):
-    # WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
+    # WiFi -> IP -> broker + subscribe คืนข้อความบอกว่าพังขั้นไหน
     show_status(w, "ต่อ WiFi...", COL_WARN)
-    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    ui.poll()  # ป้ายขึ้นก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "WiFi ไม่ติด: ตรวจชื่อ/รหัส"
-    linked = connect_broker(w)         # ลองได้ 3 ครั้ง (ดู connect_broker)
-    if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
+    linked = connect_broker(w)  # ลองได้ 3 ครั้ง
+    if not linked or not mqtt.subscribe(TOPIC_CMD):  # subscribe หลัง connect เสมอ
         return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
 
 def send(obj):
-    # publish ตอนสายหลุดโยน OSError
+    # สายหลุดโยน OSError
     try:
         mqtt.publish(TOPIC_EVENT, json.dumps(obj))
         return True
@@ -138,35 +136,41 @@ def send(obj):
 
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
-    ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=20, value=2)
+    ui.Label(title, x=x + 14, y=y + 6, color=COL_MOSS, value=16)
 
 
 def show_link(w, ok):
     w["mq"].value(1 if ok else 0)
-    w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
+    w["mq_t"].text("MQTT: ต่อแล้ว" if ok else "MQTT: ออฟไลน์")
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("โรงเพาะเห็ด แห้งไปไหม", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("โรงเพาะเห็ด: อากาศชื้นพอไหม", x=12, y=6, color=COL_TEXT, value=24)
     w = {"box": None, "leds": []}
-    card(12, 44, 500, 200, "ในโรงเพาะ")
-    w["crop"] = ui.Label("-", x=24, y=74, color=COL_INFO, value=16)
-    w["th"] = ui.Label("-- C  -- %", x=24, y=100, color=COL_TEXT, value=24)
-    w["mood"] = ui.Label("...", x=24, y=140, color=COL_WARN)
+    card(12, 44, 768, 120, "ความชื้นในโรงเพาะ (%RH)")
+    w["rh"] = ui.Seg7(text="--", x=28, y=76, w=100, h=56, color=COL_MOSS)
+    x, y, bw, bh = RH_BAR
+    w["bar"] = ui.Bar(x=x, y=y, w=bw, h=bh, min=0, max=100, value=0)
+    w["bar"].color(COL_MOSS)  # Bar: color() = สีส่วนที่เติม (แบบ sf1_03) ใน Emulator จะเห็นเป็นสีราง
+    ui.Label("0", x=x, y=y + bh + 6, color=COL_DIM, value=14)
+    ui.Label("100", x=x + bw - 28, y=y + bh + 6, color=COL_DIM, value=14)
+    w["mark"] = ui.Label("^ ต่ำสุด", x=x, y=y + bh + 6, color=COL_BAD, value=14)
+    card(12, 174, 300, 170, "แห้งติดกันมา (นาที.วินาที)")
+    w["dry"] = ui.Seg7(text="00.00", x=28, y=206, w=220, h=70, color=COL_MOSS)
+    w["mist"] = ui.Label("ขอพ่นหมอก 0 ครั้ง", x=28, y=296, color=COL_DIM, value=16)
+    card(322, 174, 380, 170, "ก้อนเชื้อ")
+    w["crop"] = ui.Label("-", x=336, y=200, color=COL_DIM, value=14)
+    w["mood"] = ui.Label("...", x=336, y=222, color=COL_WARN)
+    w["temp"] = ui.Label("-- C  แดด +0", x=336, y=252, color=COL_TEXT, value=16)
     for i in range(3):
-        x = 24 + i * 130
-        w["leds"].append(ui.Led(x=x, y=198, w=20, h=20, color=LEVEL_COLORS[i]))
-        ui.Label(("ชื้นดี", "เริ่มแห้ง", "แห้งเกิน")[i], x=x + 28, y=198, color=COL_DIM, value=14)
-    card(522, 44, 258, 200, "แจ้งคนดูแล")
-    w["ack"] = ui.Label("-", x=534, y=80, color=COL_DIM)
-    w["chart"] = ui.Chart(x=12, y=252, w=400, h=86, color=COL_WARN, min=0, max=CHART_MAX_C)
-    w["chart"].prop(ui.PROP_CHART_POINTS, 400)
-    w["s_hi"] = w["chart"].add_series(COL_BAD)
-    ui.Label("ส้ม = ความชื้น  แดง = เกณฑ์แห้ง", x=424, y=256, color=COL_DIM, value=14)   # Label รับไม่เกิน 126 ไบต์
-    ui.Label("VR3 = แดดบนหลังคาโรงเพาะ\n" + BTN_NAMES[1] + " = รับทราบ", x=424, y=280, color=COL_DIM, value=14)
+        lx = 336 + i * 100
+        w["leds"].append(ui.Led(x=lx, y=282, w=16, h=16, color=LEVEL_COLORS[i]))
+        ui.Label(("ชื้นดี", "เริ่มแห้ง", "แห้งเกิน")[i], x=lx + 22, y=280, color=COL_DIM, value=14)
+    w["ack"] = ui.Label("-", x=336, y=310, color=COL_DIM, value=14)
+    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = พ่นหมอกแล้ว", x=470, y=52, color=COL_DIM, value=14)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
@@ -181,22 +185,30 @@ def show_status(w, msg, col):
 
 def show_ack(w, s, msg, col):
     w["ack"].color(col)
-    w["ack"].text("แจ้งไปแล้ว %d ครั้ง\n%s" % (s.alerts, msg))
+    w["ack"].text("แจ้ง %d ครั้ง: %s" % (s.alerts, msg))
 
 
 def show_crop(w, s):
     t_lo, t_hi, h_lo, h_hi = s.lim
-    w["crop"].text("%s ออกดอกดีที่ %d-%d C, %d-%d %%" % (s.crop[0], t_lo, t_hi, h_lo, h_hi))
+    w["crop"].text("%s ออกดอกดีที่ %d-%d C, RH %d %% ขึ้นไป" % (s.crop[0], t_lo, t_hi, h_lo))
+    x, y, bw, bh = RH_BAR
+    w["mark"].pos(x + h_lo * bw // 100 - 6, y + bh + 6)
+    w["mark"].text("^ ต่ำสุด %d" % h_lo)
 
 
 def show_reading(w, s, t, h, sun, level, why_th):
-    w["th"].text("%.1f C  %.1f %%  (แดด +%d)" % (t, h, sun))
+    w["rh"].text("%d" % int(h))
+    w["rh"].color(LEVEL_COLORS[level])
+    w["bar"].value(int(max(0, min(100, h))))
+    w["bar"].color(LEVEL_COLORS[level])
     w["mood"].color(LEVEL_COLORS[level])
-    w["mood"].text(("ชื้นดี :)", "เริ่มแห้ง: ", "แห้งเกิน!: ")[level] + ("" if level == 0 else why_th))
+    w["mood"].text(("ชื้นดี", "เริ่มแห้ง: ", "แห้งเกิน!: ")[level] + ("" if level == 0 else why_th))
+    w["temp"].text("%.1f C  แดด +%d" % (t, sun))
+    w["dry"].text("%02d.%02d" % (s.dry_s // 60 % 100, s.dry_s % 60))
+    w["dry"].color(COL_MOSS if s.dry_s == 0 else LEVEL_COLORS[level])
+    w["mist"].text("ขอพ่นหมอก %d ครั้ง" % s.mist_n)
     for i in range(3):
         w["leds"][i].value(1 if i == level else 0)
-    w["chart"].set_next(0, int(max(0, min(CHART_MAX_C, h))))   # กราฟความชื้น
-    w["chart"].set_next(w["s_hi"], s.lim[2])                     # เส้นแดง = RH ต่ำ
 
 
 def close_box(w):
@@ -211,10 +223,12 @@ class Watch:
         self.level, self.acked, self.alerts, self.t = -1, True, 0, None
         self.crop = CROPS[idx]
         self.lim = list(self.crop[2:])
+        self.dry_s = 0     # วินาทีที่แห้งติดกันตอนนี้
+        self.mist_n = 0    # ครั้งที่เพิ่งแห้งลงต่ำกว่าเกณฑ์
 
 
 class Stop(Exception):
-    # ไม่ใช้ SystemExit: บอร์ดอาจค้าง
+    # ไม่ใช้ SystemExit (บอร์ดอาจค้าง)
     pass
 
 
@@ -229,18 +243,18 @@ def stop(w, msg, col=COL_BAD):
 
 
 def on_command(w, s, raw):
-    # คำสั่งจากแอป (สัญญาข้อ 4) คืน True ถ้าเป็นการรับทราบ  คำสั่งที่ไม่รู้จัก = เงียบ ไม่ทำอะไร
-    try:                               # ใครส่งอะไรมาก็ได้ ไม่ใช่ JSON object ก็ไม่ใช้
+    # คำสั่งจากแอป (สัญญาข้อ 4) คืน True ถ้าเป็น ack  ไม่รู้จัก = เงียบ
+    try:  # ไม่ใช่ JSON object ก็ไม่ใช้
         cmd = json.loads(raw.decode())
         act = cmd.get("cmd")
     except Exception:
         return False
     if act == "ack":
         return True
-    elif act == "set":                 # เกณฑ์ใหม่จากที่ไกล ต้องเป็นเลขจำนวนเต็มในช่วงที่สมเหตุผล
+    elif act == "set":  # เกณฑ์ใหม่ ต้องเป็น int ในช่วงที่สมเหตุผล
         v = cmd.get("t_hi")
         if isinstance(v, int) and s.lim[0] < v <= T_HI_MAX:
-            s.lim[1], s.level, s.t = v, -1, None     # level -1 + t None = ตัดสินใหม่และแจ้งทันที
+            s.lim[1], s.level, s.t = v, -1, None  # ตัดสินใหม่และแจ้งทันที
             show_crop(w, s)
             beep("tap")
     # >>> ภารกิจกลุ่ม: วาง elif สำหรับ "led"/"pump" จาก sf2_03 ตรงนี้ <<<
@@ -248,32 +262,39 @@ def on_command(w, s, raw):
 
 
 def on_level(w, s, level, why_th, why_en, t, h, sun):
-    # ระดับเปลี่ยน: แจ้งออกเน็ต (สัญญาข้อ 3.4) แล้วค่อยเสียง จอไฟ RGB และกล่องเตือน
+    # ระดับเปลี่ยน: ส่งก่อน (สัญญาข้อ 3.4) แล้วค่อยเสียง RGB กล่องเตือน
     s.level, s.acked = level, level < 2
     s.alerts += 1
     if not send({"id": TEAM, "crop": s.crop[1], "level": level, "alert": why_en,
-                 "temp_c": round(t, 1), "rh": round(h, 1), "sun_c": sun}):
+                 "temp_c": round(t, 1), "rh": round(h, 1), "sun_c": sun,
+                 "dry_s": s.dry_s, "mist_n": s.mist_n}):
         stop(w, "สายหลุดตอนส่ง")
     rgbmatrix.scroll(MX[level][0], MX[level][1], 80)
     beep(("good", "tap", "empty")[level])
-    show_ack(w, s, "รอคนรับทราบ" if level == 2 else "ส่งแล้ว", COL_BAD if level == 2 else COL_DIM)
+    show_ack(w, s, "รอพ่นหมอก" if level == 2 else "ส่งแล้ว", COL_BAD if level == 2 else COL_DIM)
     close_box(w)
     if level == 2:  # MsgBox รับไม่เกิน 126 ไบต์
-        w["box"] = ui.MsgBox("ก้อนเชื้อแห้ง!\n" + why_th + "\n" + BTN_NAMES[1] + " / ack = รับทราบ",
+        w["box"] = ui.MsgBox("แห้งเกิน!\n" + why_th + "\nพ่นหมอก กด " + BTN_NAMES[1],
                              x=BOX[0], y=BOX[1], w=BOX[2], h=BOX[3], value=0)
 
 
 def read_and_judge(w, s):
-    # อ่าน -> ตัดสิน -> โชว์ -> แจ้งถ้าเปลี่ยน  คืน True ถ้าเพิ่งแจ้ง (เริ่มนับรอบร้องซ้ำใหม่)
-    sun = pots.read(2) * 10 // 4095    # VR3 = แดดบนหลังคาโรงเพาะจำลอง 0-10 C ที่บวกเข้าอุณหภูมิ
+    # คืน True ถ้าเพิ่งแจ้ง
+    sun = pots.read(2) * 10 // 4095  # VR3 = แดดจำลอง 0-10 C ที่บวกเข้าอุณหภูมิ
     t, h = read_climate()
     if t is None or h is None:
-        s.t = None                     # อ่านไม่ได้ = ลองใหม่รอบหน้าเลย ไม่ต้องรอครบวินาที
+        s.t = None  # อ่านไม่ได้ = ลองใหม่รอบหน้าเลย
         return False
     s.t = t = t + sun
+    if h < s.lim[2]:
+        if s.dry_s == 0:
+            s.mist_n += 1  # เพิ่งแห้งลง = ขอพ่นหมอกครั้งใหม่
+        s.dry_s += READ_MS // 1000  # อ่านทุก 1 วิ
+    else:
+        s.dry_s = 0
     level, why_th, why_en = judge(t, h, s.lim)
     show_reading(w, s, t, h, sun, level, why_th)
-    if level == s.level:               # ส่ง เล่นเสียง และเขียนจอไฟ RGB เฉพาะตอนเปลี่ยน
+    if level == s.level:  # ส่ง เสียง RGB เฉพาะตอนเปลี่ยน
         return False
     on_level(w, s, level, why_th, why_en, t, h, sun)
     return True
@@ -294,21 +315,21 @@ def main():
     if problem:
         stop(w, problem)
     show_link(w, True)
-    show_status(w, "เฝ้าอยู่", COL_OK)
+    show_status(w, "เฝ้าโรงเพาะอยู่", COL_OK)
     was_down = False
     t_read = t_beep = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
         now = time.ticks_ms()
-        msg = mqtt.get_message()       # ฟังทุก 20 ms แม้จะอ่านเซนเซอร์แค่ทุกวินาที
+        msg = mqtt.get_message()  # ฟังทุก 20 ms อ่านเซนเซอร์ทุกวินาที
         ack = on_command(w, s, msg[1]) if msg else False
-        down = buttons.pressed(1)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
-        if down and not was_down:      # นับตอนเพิ่งกดลง กดค้างไม่นับซ้ำ
+        down = buttons.pressed(1)  # SW5 = คนดูแลพ่นหมอกแล้ว ไม่พึ่งเน็ต
+        if down and not was_down:  # นับตอนเพิ่งกดลง
             ack = True
         was_down = down
-        if ack and not s.acked:        # มีคนรับทราบ: หยุดร้อง ปิดกล่องเตือน จอไฟ RGB ขึ้น ACK
+        if ack and not s.acked:  # รับทราบ: หยุดร้อง ปิดกล่อง RGB ขึ้น ACK
             s.acked = True
             close_box(w)
-            show_ack(w, s, "รับทราบแล้ว", COL_OK)
+            show_ack(w, s, "พ่นหมอกแล้ว", COL_OK)
             rgbmatrix.scroll("ACK", rgbmatrix.CYAN, 80)
             beep("tap")
         ui.poll()
@@ -335,6 +356,6 @@ finally:
         pass
 
 # ---- ตาคุณ ----
-# 1) แจ้งเฉพาะเมื่อแห้งติดกัน 5 วินาที (นับใน Watch) - เปิดประตูโรงแป๊บเดียวไม่ควรเตือน
-# 2) ระดับ 2: ให้ {"cmd":"set"} รับ "rh_lo" ด้วย (ตอนนี้รับแค่ t_hi) แล้วบอกฝั่งเว็บ
+# 1) แจ้งเฉพาะเมื่อแห้งติดกัน 5 วินาที (ใช้ s.dry_s) เปิดประตูโรงแป๊บเดียวไม่ควรเตือน
+# 2) ให้ {"cmd":"set"} รับ "rh_lo" ด้วย (ตอนนี้รับแค่ t_hi) แล้วขยับขีดต่ำสุดบนจอ
 # 3) สั่งพ่นหมอกจากแอป: วาง elif "pump" จาก sf2_03 ใน on_command

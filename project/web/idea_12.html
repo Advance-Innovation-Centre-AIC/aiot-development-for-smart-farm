@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<!--
+  idea_12.html - โกดังเก็บเมล็ดพันธุ์: บัตรประจำล็อตเมล็ด + หน้าปัดความชื้น + แถบชั่วโมงที่ชื้น
+  เปิดแบบนี้: idea_12.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง event ตอนระดับเปลี่ยน) และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด idea_12_seed_store.py: level alert temp_c rh sun_c crop + germ_pct wet_min
+  กฎฝั่งแอป: level 2 = แถบแดงจนกว่าจะรับทราบ  และคะแนนความงอกต่ำกว่า 80 = แนะนำให้สุ่มเพาะทดสอบ
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โกดังเมล็ดพันธุ์</title>
+<style>
+  :root {
+    --bg: #f4efe1; --paper: #fffdf6; --line: #d9cfb3; --ink: #2b2a1f; --dim: #706b55;
+    --leaf: #3f7d3a; --ok: #3f7d3a; --warn: #b7791f; --bad: #c0392b;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.45; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 14px; }
+  header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  h1 { margin: 0; font-size: 22px; color: var(--leaf); }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .row > * { min-width: 0; }
+  .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--dim); background: var(--paper); }
+  .chip.on { color: var(--ok); border-color: var(--ok); }
+  input, button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); padding: 8px 12px; min-height: 40px; }
+  button { cursor: pointer; font-weight: 600; background: #efe6c9; }
+  button.main { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+  .alarm { display: none; margin: 12px 0; padding: 12px 14px; border-radius: 10px; background: var(--bad); color: #fff; font-weight: 700; }
+  .alarm.show { display: block; }
+  .packet { margin-top: 12px; background: var(--paper); border: 2px dashed var(--line); border-radius: 16px; padding: 14px; }
+  .packet h2 { margin: 0 0 10px; font-size: 16px; color: var(--leaf); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+  .split > * { min-width: 0; }
+  .score { font-size: 56px; font-weight: 800; line-height: 1; }
+  .meter { height: 16px; border-radius: 8px; background: #eee6cc; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--ok); }
+  .advice { margin-top: 8px; font-weight: 600; }
+  .hours { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 8px; }
+  .hours span { height: 28px; border-radius: 4px; background: #ece4c8; font-size: 10px; color: var(--dim); display: grid; place-items: center; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 15px; }
+  dt { color: var(--dim); }
+  dd { margin: 0; font-weight: 600; }
+  ul.log { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; font-size: 14px; }
+  ul.log li { padding: 5px 0; border-bottom: 1px dotted var(--line); }
+  .lv0 { color: var(--ok); } .lv1 { color: var(--warn); } .lv2 { color: var(--bad); }
+  .muted { color: var(--dim); font-size: 13px; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>โกดังเมล็ดพันธุ์</h1>
+      <p class="sub">บัตรประจำล็อตเมล็ด: ชื้นเมื่อไร ความงอกเหลือเท่าไร</p>
+    </div>
+    <div class="row">
+      <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+      <button id="go">เชื่อมต่อ</button>
+      <span id="conn" class="chip">ยังไม่ต่อ</span>
+    </div>
+  </header>
+
+  <div id="alarm" class="alarm" role="alert">เมล็ดเสี่ยงเสื่อม: ตรวจโกดัง เปิดพัดลมระบาย ย้ายกระสอบขึ้นแคร่</div>
+
+  <section class="packet">
+    <h2>ความชื้นในโกดังตอนนี้</h2>
+    <div class="split">
+      <svg viewBox="0 0 240 172" aria-label="หน้าปัดความชื้น">
+        <path d="M20 130 A100 100 0 0 1 220 130" fill="none" stroke="#ece4c8" stroke-width="18"/>
+        <path id="wetZone" fill="none" stroke="#e7b3aa" stroke-width="18"/>
+        <g id="dialTicks" fill="#706b55" font-size="10" text-anchor="middle"></g>
+        <line id="needle" x1="120" y1="130" x2="120" y2="40" stroke="#2b2a1f" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="120" cy="130" r="8" fill="#2b2a1f"/>
+        <text id="rhText" x="120" y="164" text-anchor="middle" font-size="22" font-weight="700" fill="#2b2a1f">-- %</text>
+      </svg>
+      <dl>
+        <dt>สถานะ</dt><dd id="mood">รอข้อความแรกจากบอร์ด</dd>
+        <dt>อุณหภูมิ</dt><dd id="temp">--</dd>
+        <dt>แดดบนหลังคา</dt><dd id="sun">--</dd>
+        <dt>ชนิดเมล็ด</dt><dd id="crop">--</dd>
+        <dt>เกณฑ์ชื้น</dt><dd id="limit">65 % (ค่าในไฟล์บอร์ด)</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="packet">
+    <h2>คะแนนความงอกของล็อตนี้ <span class="muted">(ค่าสาธิตที่บอร์ดคิด ไม่ใช่ผลเพาะจริง)</span></h2>
+    <div class="row" style="align-items:flex-end">
+      <span id="germ" class="score">--</span><span class="muted">/ 100</span>
+      <span class="muted">ชื้นเกินสะสม <b id="wet">--</b> นาที</span>
+    </div>
+    <div class="meter" style="margin-top:8px"><i id="germBar"></i></div>
+    <p id="advice" class="advice muted">ยังไม่มีข้อมูล</p>
+    <h2 style="margin-top:14px">ชั่วโมงที่โกดังชื้น (วันนี้)</h2>
+    <div id="hours" class="hours"></div>
+    <p class="muted">ช่องเข้ม = ชั่วโมงที่บอร์ดแจ้งว่าชื้น/ร้อน (นับจาก event ที่หน้านี้ได้รับ)</p>
+  </section>
+
+  <section class="packet">
+    <h2>สั่งบอร์ด</h2>
+    <div class="row">
+      <button id="ack" class="main">รับทราบ (ack)</button>
+      <label class="muted">เกณฑ์ร้อนใหม่ <input id="thi" type="number" min="16" max="45" value="35" style="width:80px"> C</label>
+      <button id="set">ส่ง set t_hi</button>
+    </div>
+    <p id="cmdMsg" class="muted"></p>
+  </section>
+
+  <section class="packet">
+    <h2>สมุดโกดัง</h2>
+    <ul id="log" class="log"></ul>
+    <div class="row" style="margin-top:10px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <span id="other" class="muted"></span>
+    </div>
+  </section>
+
+  <footer>
+    <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+    <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const RH_LIMIT = 65;                              // ตรงกับ CROPS ในไฟล์บอร์ด (แก้คู่กัน)
+const GERM_TEST = 80;                             // ต่ำกว่านี้แนะนำให้สุ่มเพาะทดสอบ
+const KNOWN = ["id", "crop", "level", "alert", "temp_c", "rh", "sun_c", "germ_pct", "wet_min"];
+const CROP_TH = { rice: "เมล็ดข้าว", corn: "เมล็ดข้าวโพด", bean: "เมล็ดถั่ว" };
+const MOOD = ["แห้งดี เมล็ดปลอดภัย", "เริ่มเสี่ยง", "ความงอกลด"];
+const $ = (id) => document.getElementById(id);
+let client = null, team = new URLSearchParams(location.search).get("team") || "";
+const rows = [], wetHours = new Array(24).fill(0);
+$("team").value = team;
+
+function num(v) { return typeof v === "number" && Number.isFinite(v) ? v : null; }
+function hhmm(d) { return d.toTimeString().slice(0, 5); }
+function setStatus(msg, ok) { $("conn").textContent = msg; $("conn").className = ok ? "chip on" : "chip"; }
+
+// หน้าปัดครึ่งวงกลม 0-100 %: มุม 180 องศา (ซ้าย) ถึง 0 องศา (ขวา)
+function pt(v, r) { const a = Math.PI * (1 - v / 100); return [120 + r * Math.cos(a), 130 - r * Math.sin(a)]; }
+function drawDial() {
+  const g = $("dialTicks");
+  for (let v = 0; v <= 100; v += 20) {
+    const [x, y] = pt(v, 80);
+    const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    t.setAttribute("x", x.toFixed(1)); t.setAttribute("y", (y + 4).toFixed(1)); t.textContent = String(v);
+    g.appendChild(t);
+  }
+  const [x1, y1] = pt(RH_LIMIT, 100), [x2, y2] = pt(100, 100);
+  $("wetZone").setAttribute("d", "M" + x1.toFixed(1) + " " + y1.toFixed(1) + " A100 100 0 0 1 " + x2.toFixed(1) + " " + y2.toFixed(1));
+}
+function setNeedle(rh) {
+  const [x, y] = pt(Math.max(0, Math.min(100, rh)), 66);
+  $("needle").setAttribute("x2", x.toFixed(1)); $("needle").setAttribute("y2", y.toFixed(1));
+  $("needle").setAttribute("stroke", rh > RH_LIMIT ? "#c0392b" : "#2b2a1f");
+  $("rhText").textContent = rh.toFixed(0) + " %";
+}
+
+function drawHours() {
+  const box = $("hours"); box.textContent = "";
+  const max = Math.max(1, ...wetHours);
+  wetHours.forEach((n, h) => {
+    const c = document.createElement("span");
+    c.textContent = String(h);
+    if (n) { c.style.background = "rgba(192,57,43," + (0.25 + 0.75 * n / max).toFixed(2) + ")"; c.style.color = "#fff"; }
+    c.title = h + ":00 แจ้ง " + n + " ครั้ง";
+    box.appendChild(c);
+  });
+}
+
+function showGerm(g) {
+  $("germ").textContent = String(g);
+  const col = g >= GERM_TEST ? "var(--ok)" : (g >= 50 ? "var(--warn)" : "var(--bad)");
+  $("germ").style.color = col;
+  $("germBar").style.width = Math.max(0, Math.min(100, g)) + "%";
+  $("germBar").style.background = col;
+  // กฎฝั่งแอปข้อ 2: คะแนนต่ำ = บอกให้สุ่มเพาะทดสอบก่อนขาย
+  $("advice").textContent = g >= GERM_TEST ? "ล็อตนี้ยังปลอดภัย เก็บต่อได้"
+    : "คะแนนต่ำกว่า " + GERM_TEST + ": ควรสุ่มเพาะทดสอบ 100 เมล็ดก่อนขายล็อตนี้";
+  $("advice").className = "advice " + (g >= GERM_TEST ? "lv0" : "lv2");
+}
+
+function onEvent(d) {
+  const level = Number.isInteger(d.level) && d.level >= 0 && d.level <= 2 ? d.level : null;
+  const t = num(d.temp_c), rh = num(d.rh), sun = num(d.sun_c), germ = num(d.germ_pct), wet = num(d.wet_min);
+  if (rh !== null) setNeedle(rh);
+  if (t !== null) $("temp").textContent = t.toFixed(1) + " C";
+  if (sun !== null) $("sun").textContent = "+" + sun + " C";
+  if (germ !== null) showGerm(Math.round(germ));
+  if (wet !== null) $("wet").textContent = String(wet);
+  if (typeof d.crop === "string") $("crop").textContent = CROP_TH[d.crop] || d.crop.slice(0, 20);
+  const now = new Date();
+  if (level !== null) {
+    $("mood").textContent = MOOD[level] + (level && typeof d.alert === "string" ? " (" + d.alert.slice(0, 30) + ")" : "");
+    $("mood").className = "lv" + level;
+    $("alarm").className = level === 2 ? "alarm show" : "alarm";   // กฎฝั่งแอปข้อ 1
+    if (level > 0) { wetHours[now.getHours()] += 1; drawHours(); }
+  }
+  const extra = Object.keys(d).filter((k) => !KNOWN.includes(k));
+  $("other").textContent = extra.length ? "คีย์ที่หน้านี้ยังไม่รู้จัก: " + extra.slice(0, 6).join(", ") : "";
+  rows.push([now.toISOString(), level, t, rh, sun, germ, wet, typeof d.alert === "string" ? d.alert : ""]);
+  const li = document.createElement("li");
+  li.textContent = hhmm(now) + "  " + (level === null ? "?" : MOOD[level]) + "  RH " + (rh === null ? "--" : rh.toFixed(1)) +
+    " %  ความงอก " + (germ === null ? "--" : Math.round(germ));
+  if (level !== null) li.className = "lv" + level;
+  $("log").prepend(li);
+  while ($("log").children.length > 80) $("log").lastChild.remove();
+}
+
+function send(obj, label) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker คำสั่งยังไม่ถึงบอร์ด"; return false; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + label + " " + hhmm(new Date());
+  return true;
+}
+
+function csvCell(v) { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function downloadCsv() {
+  const head = ["time", "level", "temp_c", "rh", "sun_c", "germ_pct", "wet_min", "alert"];
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(csvCell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านไทยได้
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "seed_store_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลดไลบรารี MQTT ไม่ได้ ตรวจเน็ต", false); return; }
+  if (client) client.end(true);
+  setStatus("กำลังต่อ " + team, false);
+  client = mqtt.connect(BROKER_URL, { clientId: "seed-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", false));
+  client.on("message", (topic, payload) => {
+    if (!topic.endsWith("/event")) return;
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (d && typeof d === "object" && !Array.isArray(d)) onEvent(d);
+  });
+}
+
+$("go").onclick = connect;
+$("ack").onclick = () => { if (send({ cmd: "ack" }, "รับทราบ")) $("alarm").className = "alarm"; };
+$("set").onclick = () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v < 16 || v > 45) { $("cmdMsg").textContent = "เกณฑ์ต้องเป็นจำนวนเต็ม 16-45"; return; }
+  send({ cmd: "set", t_hi: v }, "t_hi " + v);
+};
+$("csv").onclick = downloadCsv;
+drawDial();
+drawHours();
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>

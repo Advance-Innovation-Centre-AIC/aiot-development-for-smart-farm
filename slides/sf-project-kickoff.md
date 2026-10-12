@@ -182,17 +182,17 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 | **C** การสั่นผิดปกติ + หยุดเครื่อง | 7 หมอฟังปั๊ม · 21 พัดลมโรงเรือน · 22 เครื่องสีข้าว · 23 ถาดไข่ขนส่ง · 24 ลังผลไม้บนกระบะ |
 | **D** เรดาร์จับผู้บุกรุก | 5 คอกกลางคืน · 25 ประตูโกดังกันขโมย |
 
-<div class="cap">หน้าเว็บทุกเรื่อง: idea_web.html?idea=N · เกณฑ์ในโค้ดเริ่มต้นเป็นค่าสาธิต ทีมต้องตั้งใหม่ · ตัวอย่าง Edge AI 3 ตัวใน project/ai_future/ เป็นแนวทางอนาคต ไม่อยู่ในโจทย์</div>
+<div class="cap">หน้าเว็บของแต่ละเรื่อง: project/web/idea_N.html · เกณฑ์ในโค้ดเริ่มต้นเป็นค่าสาธิต ทีมต้องตั้งใหม่ · ตัวอย่าง Edge AI 3 ตัวใน project/ai_future/ เป็นแนวทางอนาคต ไม่อยู่ในโจทย์</div>
 
 ---
 
 ## ตัวอย่างชุด A–B: จอบอร์ด + หน้าเว็บ (เรื่อง 1–4)
 
 <div class="pairs">
-<div class="pair"><b class="pt">1 · กล่องขนส่งผลไม้ห้องเย็น</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_1.png" alt="จอบอร์ด ไอเดีย 1"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea1.png" alt="หน้าเว็บ ไอเดีย 1"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">2 · รถส่งผลผลิตถึงตลาด</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_2.png" alt="จอบอร์ด ไอเดีย 2"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea2.png" alt="หน้าเว็บ ไอเดีย 2"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">3 · ไซโลข้าวเปลือก</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_3.png" alt="จอบอร์ด ไอเดีย 3"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea3.png" alt="หน้าเว็บ ไอเดีย 3"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">4 · โรงเรือนอัจฉริยะ</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_4.png" alt="จอบอร์ด ไอเดีย 4"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea4.png" alt="หน้าเว็บ ไอเดีย 4"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
+<div class="pair"><b class="pt">1 · กล่องขนส่งผลไม้ห้องเย็น</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_1.png" alt="จอบอร์ด ไอเดีย 1"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_1.png" alt="หน้าเว็บ ไอเดีย 1"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">2 · รถส่งผลผลิตถึงตลาด</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_2.png" alt="จอบอร์ด ไอเดีย 2"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_2.png" alt="หน้าเว็บ ไอเดีย 2"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">3 · ไซโลข้าวเปลือก</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_3.png" alt="จอบอร์ด ไอเดีย 3"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_3.png" alt="หน้าเว็บ ไอเดีย 3"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">4 · โรงเรือนอัจฉริยะ</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_4.png" alt="จอบอร์ด ไอเดีย 4"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_4.png" alt="หน้าเว็บ ไอเดีย 4"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
 </div>
 
 ---
@@ -200,39 +200,59 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 ## ตัวอย่างชุด B–D: จอบอร์ด + หน้าเว็บ (เรื่อง 5–8)
 
 <div class="pairs">
-<div class="pair"><b class="pt">5 · คอกปศุสัตว์กลางคืน</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_5.png" alt="จอบอร์ด ไอเดีย 5"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea5.png" alt="หน้าเว็บ ไอเดีย 5"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">6 · หอถังน้ำของฟาร์ม</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_6.png" alt="จอบอร์ด ไอเดีย 6"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea6.png" alt="หน้าเว็บ ไอเดีย 6"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">7 · หมอฟังปั๊ม/พัดลม</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_7.png" alt="จอบอร์ด ไอเดีย 7"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea7.png" alt="หน้าเว็บ ไอเดีย 7"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
-<div class="pair"><b class="pt">8 · เล้าไก่กันความเครียดฝูง</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_8.png" alt="จอบอร์ด ไอเดีย 8"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea8.png" alt="หน้าเว็บ ไอเดีย 8"><figcaption>หน้าเว็บเริ่มต้น (ยังไม่ต่อบอร์ด)</figcaption></figure></div></div>
+<div class="pair"><b class="pt">5 · คอกปศุสัตว์กลางคืน</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_5.png" alt="จอบอร์ด ไอเดีย 5"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_5.png" alt="หน้าเว็บ ไอเดีย 5"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">6 · หอถังน้ำของฟาร์ม</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_6.png" alt="จอบอร์ด ไอเดีย 6"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_6.png" alt="หน้าเว็บ ไอเดีย 6"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">7 · หมอฟังปั๊ม/พัดลม</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_7.png" alt="จอบอร์ด ไอเดีย 7"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_7.png" alt="หน้าเว็บ ไอเดีย 7"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
+<div class="pair"><b class="pt">8 · เล้าไก่กันความเครียดฝูง</b><div class="pi"><figure><img class="bd" src="img/project/board_idea_8.png" alt="จอบอร์ด ไอเดีย 8"><figcaption>จอบอร์ดใน BENTO Emulator</figcaption></figure><figure><img class="wb" src="img/project/web_idea_8.png" alt="หน้าเว็บ ไอเดีย 8"><figcaption>หน้าเว็บ รับค่าจริงจากบอร์ดใน Emulator</figcaption></figure></div></div>
 </div>
 
 
 ---
 
-## ทุกเรื่องมีจอของตัวเอง (เรื่อง 9–14)
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 9–14)
 
-<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
-<div class="g"><figure><img src="img/project/board_idea_9.png" alt="เรื่อง 9"><figcaption><b>9</b> · โรงเพาะเห็ด <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_10.png" alt="เรื่อง 10"><figcaption><b>10</b> · ห้องบ่มกล้วย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_11.png" alt="เรื่อง 11"><figcaption><b>11</b> · โรงอบลำไย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_12.png" alt="เรื่อง 12"><figcaption><b>12</b> · โกดังเก็บเมล็ดพันธุ์ <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_13.png" alt="เรื่อง 13"><figcaption><b>13</b> · โกดังปุ๋ย <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_14.png" alt="เรื่อง 14"><figcaption><b>14</b> · ตู้เก็บยาและวัคซีนสัตว์ <span style="color:#667">(ชุด A)</span></figcaption></figure></div>
+<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
+<div class="pairs">
+<div class="pair"><b class="pt">9 · โรงเพาะเห็ด <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_9.png" alt="จอบอร์ด เรื่อง 9"></figure><figure><img class="wb" src="img/project/web_idea_9.png" alt="หน้าเว็บ เรื่อง 9"></figure></div></div>
+<div class="pair"><b class="pt">10 · ห้องบ่มกล้วย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_10.png" alt="จอบอร์ด เรื่อง 10"></figure><figure><img class="wb" src="img/project/web_idea_10.png" alt="หน้าเว็บ เรื่อง 10"></figure></div></div>
+<div class="pair"><b class="pt">11 · โรงอบลำไย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_11.png" alt="จอบอร์ด เรื่อง 11"></figure><figure><img class="wb" src="img/project/web_idea_11.png" alt="หน้าเว็บ เรื่อง 11"></figure></div></div>
+<div class="pair"><b class="pt">12 · โกดังเก็บเมล็ดพันธุ์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_12.png" alt="จอบอร์ด เรื่อง 12"></figure><figure><img class="wb" src="img/project/web_idea_12.png" alt="หน้าเว็บ เรื่อง 12"></figure></div></div>
+<div class="pair"><b class="pt">13 · โกดังปุ๋ย <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_13.png" alt="จอบอร์ด เรื่อง 13"></figure><figure><img class="wb" src="img/project/web_idea_13.png" alt="หน้าเว็บ เรื่อง 13"></figure></div></div>
+<div class="pair"><b class="pt">14 · ตู้เก็บยาและวัคซีนสัตว์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_14.png" alt="จอบอร์ด เรื่อง 14"></figure><figure><img class="wb" src="img/project/web_idea_14.png" alt="หน้าเว็บ เรื่อง 14"></figure></div></div>
+</div>
 
-<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
-
----
-
-## ทุกเรื่องมีจอของตัวเอง (เรื่อง 15–20)
-
-<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
-<div class="g"><figure><img src="img/project/board_idea_15.png" alt="เรื่อง 15"><figcaption><b>15</b> · โรงเรือนไฮโดรโปนิกส์ <span style="color:#667">(ชุด A)</span></figcaption></figure><figure><img src="img/project/board_idea_16.png" alt="เรื่อง 16"><figcaption><b>16</b> · พ่นหมอกโรงกล้วยไม้ <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_17.png" alt="เรื่อง 17"><figcaption><b>17</b> · เติมอากาศบ่อปลา <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_18.png" alt="เรื่อง 18"><figcaption><b>18</b> · พัดลมเล้าไก่ <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_19.png" alt="เรื่อง 19"><figcaption><b>19</b> · ประตูน้ำแปลงนา <span style="color:#667">(ชุด B)</span></figcaption></figure><figure><img src="img/project/board_idea_20.png" alt="เรื่อง 20"><figcaption><b>20</b> · เครื่องให้อาหารปลา <span style="color:#667">(ชุด B)</span></figcaption></figure></div>
-
-<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
 
 ---
 
-## ทุกเรื่องมีจอของตัวเอง (เรื่อง 21–25)
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 15–20)
 
-<style scoped>.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.g figure{margin:0}.g img{width:100%;border-radius:6px;border:1px solid #ccd}.g figcaption{font-size:15px;line-height:1.2;margin-top:2px}</style>
-<div class="g"><figure><img src="img/project/board_idea_21.png" alt="เรื่อง 21"><figcaption><b>21</b> · พัดลมโรงเรือนสั่นผิดปกติ <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_22.png" alt="เรื่อง 22"><figcaption><b>22</b> · เครื่องสีข้าวชุมชน <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_23.png" alt="เรื่อง 23"><figcaption><b>23</b> · ถาดไข่ระหว่างขนส่ง <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_24.png" alt="เรื่อง 24"><figcaption><b>24</b> · ลังผลไม้บนรถกระบะ <span style="color:#667">(ชุด C)</span></figcaption></figure><figure><img src="img/project/board_idea_25.png" alt="เรื่อง 25"><figcaption><b>25</b> · ประตูโกดังกันขโมย <span style="color:#667">(ชุด D)</span></figcaption></figure></div>
+<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
+<div class="pairs">
+<div class="pair"><b class="pt">15 · โรงเรือนไฮโดรโปนิกส์ <span style="color:#667">(ชุด A)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_15.png" alt="จอบอร์ด เรื่อง 15"></figure><figure><img class="wb" src="img/project/web_idea_15.png" alt="หน้าเว็บ เรื่อง 15"></figure></div></div>
+<div class="pair"><b class="pt">16 · พ่นหมอกโรงกล้วยไม้ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_16.png" alt="จอบอร์ด เรื่อง 16"></figure><figure><img class="wb" src="img/project/web_idea_16.png" alt="หน้าเว็บ เรื่อง 16"></figure></div></div>
+<div class="pair"><b class="pt">17 · เติมอากาศบ่อปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_17.png" alt="จอบอร์ด เรื่อง 17"></figure><figure><img class="wb" src="img/project/web_idea_17.png" alt="หน้าเว็บ เรื่อง 17"></figure></div></div>
+<div class="pair"><b class="pt">18 · พัดลมเล้าไก่ <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_18.png" alt="จอบอร์ด เรื่อง 18"></figure><figure><img class="wb" src="img/project/web_idea_18.png" alt="หน้าเว็บ เรื่อง 18"></figure></div></div>
+<div class="pair"><b class="pt">19 · ประตูน้ำแปลงนา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_19.png" alt="จอบอร์ด เรื่อง 19"></figure><figure><img class="wb" src="img/project/web_idea_19.png" alt="หน้าเว็บ เรื่อง 19"></figure></div></div>
+<div class="pair"><b class="pt">20 · เครื่องให้อาหารปลา <span style="color:#667">(ชุด B)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_20.png" alt="จอบอร์ด เรื่อง 20"></figure><figure><img class="wb" src="img/project/web_idea_20.png" alt="หน้าเว็บ เรื่อง 20"></figure></div></div>
+</div>
 
-<div class="cap">จอบอร์ดใน BENTO Emulator · หน้าเว็บของทุกเรื่อง: idea_web.html?idea=N · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
+
+---
+
+## ทุกเรื่องมีจอและหน้าเว็บของตัวเอง (เรื่อง 21–25)
+
+<style scoped>.pairs{grid-template-columns:1fr 1fr 1fr;gap:8px 10px}.pair .pt{font-size:.5em}.pi img.bd{height:118px}.pi img.wb{height:150px}</style>
+<div class="pairs">
+<div class="pair"><b class="pt">21 · พัดลมโรงเรือนสั่นผิดปกติ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_21.png" alt="จอบอร์ด เรื่อง 21"></figure><figure><img class="wb" src="img/project/web_idea_21.png" alt="หน้าเว็บ เรื่อง 21"></figure></div></div>
+<div class="pair"><b class="pt">22 · เครื่องสีข้าวชุมชน <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_22.png" alt="จอบอร์ด เรื่อง 22"></figure><figure><img class="wb" src="img/project/web_idea_22.png" alt="หน้าเว็บ เรื่อง 22"></figure></div></div>
+<div class="pair"><b class="pt">23 · ถาดไข่ระหว่างขนส่ง <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_23.png" alt="จอบอร์ด เรื่อง 23"></figure><figure><img class="wb" src="img/project/web_idea_23.png" alt="หน้าเว็บ เรื่อง 23"></figure></div></div>
+<div class="pair"><b class="pt">24 · ลังผลไม้บนรถกระบะ <span style="color:#667">(ชุด C)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_24.png" alt="จอบอร์ด เรื่อง 24"></figure><figure><img class="wb" src="img/project/web_idea_24.png" alt="หน้าเว็บ เรื่อง 24"></figure></div></div>
+<div class="pair"><b class="pt">25 · ประตูโกดังกันขโมย <span style="color:#667">(ชุด D)</span></b><div class="pi"><figure><img class="bd" src="img/project/board_idea_25.png" alt="จอบอร์ด เรื่อง 25"></figure><figure><img class="wb" src="img/project/web_idea_25.png" alt="หน้าเว็บ เรื่อง 25"></figure></div></div>
+</div>
+
+<div class="cap">ซ้าย = จอบอร์ดใน BENTO Emulator · ขวา = หน้าเว็บ project/web/idea_N.html รับค่าจริงผ่าน broker · โค้ดเริ่มต้นเท่านั้น ต้องต่อยอดเอง 3 อย่าง</div>
 
 ---
 
@@ -252,7 +272,7 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 
 | ช่วงงาน | คนที่ 1 · ฝั่งบอร์ด | คนที่ 2 · ฝั่งเว็บ |
 |---|---|---|
-| คาบเสนอหัวข้อ | รันไฟล์ของเรื่องบนบอร์ดจริง | เปิด `idea_web.html?idea=N&team=teamXX` เห็นค่าของกลุ่ม |
+| คาบเสนอหัวข้อ | รันไฟล์ของเรื่องบนบอร์ดจริง | เปิด `web/idea_N.html?team=teamXX` เห็นค่าของกลุ่ม |
 | ระหว่างสัปดาห์ | ต่อยอดข้อ 1–2 (+ ข้อ 3 ถ้าเลือกฝั่งบอร์ด) | ต่อยอดหน้าเว็บ (ข้อ 3 ถ้าเลือกฝั่งเว็บ) |
 | วันนำเสนอ | สาธิตบอร์ด · ตอบเรื่องโค้ดบอร์ด | สาธิตเว็บ · ตอบเรื่องโค้ดเว็บ |
 
@@ -271,7 +291,7 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 <li>คัดลอกไฟล์ของเรื่องเป็น <code>g&lt;เลขทีม&gt;_&lt;ชื่อโปรเจกต์&gt;.py</code></li>
 <li>แก้ <code>WIFI_SSID</code> · <code>WIFI_PASS</code> · <code>TEAM</code></li>
 <li>กด <b>Program to Device</b> → รันได้ก่อน แล้วค่อยแก้</li>
-<li>มือถือเปิด <code>idea_web.html?idea=N&amp;team=teamXX</code></li>
+<li>มือถือเปิด <code>web/idea_N.html?team=teamXX</code></li>
 </ol>
 
 <div class="cols"><div class="c40">
@@ -297,7 +317,7 @@ Edge AI (คาบ 3) เรียนเพื่อเข้าใจหลั�
 |---|---|---|
 | แก้แล้วบอร์ด error | กลับไปไฟล์ที่รันได้ล่าสุด · แก้ทีละจุด | ไม่เสีย ถ้าวันนำเสนอรันได้ |
 | ต่อยอดไม่ครบ 3 อย่าง | นำเสนอเท่าที่ทำได้ + แผนทำต่อ | หักเฉพาะหมวดต่อยอด |
-| เว็บที่แก้เองพัง | เปิด `idea_web.html` ตัวเดิมของคอร์ส | หักเฉพาะส่วนเว็บที่ต่อยอด |
+| เว็บที่แก้เองพัง | เปิด `web/idea_N.html` ตัวเดิมของคอร์ส | หักเฉพาะส่วนเว็บที่ต่อยอด |
 | เน็ต/broker ล่มวันนำเสนอ | สาธิตบอร์ดสด + คลิปสำรองฝั่งมือถือ | ไม่เสียส่วนเว็บ ถ้ามีคลิป |
 | ติดจนไปต่อไม่ได้ | ส่งภาพจอบอร์ด + error ในกลุ่มแชท | ไม่เสีย |
 

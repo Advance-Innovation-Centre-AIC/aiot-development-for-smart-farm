@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>พ่นหมอกโรงกล้วยไม้</title>
+<!--
+  เรื่อง 16 · พ่นหมอกโรงกล้วยไม้ (คู่กับ project/idea_16_orchid_mist.py)
+  เปิดแบบนี้: idea_16.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ภาพหลัก: มาตรครึ่งวงกลมความชื้นอากาศ แบ่งช่วง แห้ง / พอดี / ชื้นเกิน + แถบหยดหมอก 12 รอบล่าสุด
+  กฎของหน้านี้: ความชื้นต่ำกว่า 50 % ติดกัน 3 รายงาน และหมอกไม่ได้พ่นอยู่ = ขึ้นป้าย "ควรพ่นหมอก"
+               พร้อมปุ่มพ่นสั้น 10 วิ (หน้าเว็บไม่สั่งเอง คนต้องกดเอง)
+  คีย์ที่ใช้: soil (= ความชื้นอากาศ) tank pump n + bursts rh_min (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
+-->
+<style>
+:root {
+  --bg: #17111c;
+  --card: #231a2b;
+  --line: #3a2c45;
+  --ink: #f1e8f4;
+  --dim: #9e8fa6;
+  --petal: #c77ddb;
+  --pink: #f08db8;
+  --mist: #8fd6f0;
+  --dry: #f0a030;
+  --bad: #e5484d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 0%, #2a1934, var(--bg) 60%);
+  color: var(--ink);
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+header { text-align: center; padding: 18px 16px 6px; }
+header h1 { margin: 0; font-size: 1.3rem; color: var(--pink); font-weight: 600; }
+header p { margin: 4px 0; color: var(--dim); font-size: .9rem; }
+.teamrow { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; align-items: center; margin-top: 6px; }
+main { max-width: 560px; margin: auto; padding: 8px 16px; display: flex; flex-direction: column; gap: 12px; }
+.card { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; }
+.card h2 { margin: 0 0 8px; font-size: 1rem; color: var(--petal); }
+#gauge { width: 100%; max-width: 380px; display: block; margin: auto; height: auto; }
+#advice {
+  display: none; background: #3b2a12; border: 1px solid var(--dry); color: #ffd9a0;
+  border-radius: 12px; padding: 10px 12px; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+#advice.show { display: flex; }
+#advice b { flex: 1 1 200px; }
+.drops { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin: 6px 0; }
+.drop { height: 34px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #2e2338; }
+.drop.on { background: var(--mist); }
+.droptime { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; font-size: .65rem; color: var(--dim); text-align: center; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.stats div { background: #1b1421; border-radius: 12px; padding: 8px 4px; }
+.stats b { display: block; font-size: 1.4rem; }
+.stats span { font-size: .8rem; color: var(--dim); }
+button {
+  font: inherit; font-weight: 600; border: 0; border-radius: 999px;
+  padding: 9px 16px; cursor: pointer; background: var(--petal); color: #1a0f20;
+}
+button.mist { background: var(--mist); }
+button.alt { background: #3a2c45; color: var(--ink); }
+button.stop { background: var(--bad); color: #fff; }
+input { min-width: 0; max-width: 100%; font: inherit; background: #120d16; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+#status.ok { color: var(--petal); }
+#status.bad { color: var(--bad); }
+.muted { color: var(--dim); font-size: .85rem; }
+footer { max-width: 560px; margin: auto; padding: 16px; color: var(--dim); font-size: .85rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>โรงกล้วยไม้ พ่นหมอกจากมือถือ</h1>
+  <p>ความชื้นอากาศตกตอนบ่าย ใบและรากเหี่ยว ดูจากที่นี่แล้วสั่งพ่นได้เลย</p>
+  <div class="teamrow">
+    <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+    <button id="go" class="alt">เชื่อมต่อ</button>
+    <span id="status" class="muted">ยังไม่ต่อ</span>
+  </div>
+</header>
+<main>
+  <div id="advice"><b id="advice_t">อากาศแห้ง 3 รายงานติด ควรพ่นหมอก</b><button id="quick" class="mist">พ่น 10 วิ</button></div>
+  <section class="card">
+    <h2>ความชื้นอากาศในโรง</h2>
+    <svg id="gauge" viewBox="0 0 300 165" role="img" aria-label="มาตรความชื้นอากาศ"></svg>
+    <div class="stats">
+      <div><b id="t_min">--</b><span>ต่ำสุดรอบนี้</span></div>
+      <div><b id="t_tank">--</b><span>ถังหมอก</span></div>
+      <div><b id="t_pump">--</b><span>หัวพ่น</span></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>หยดหมอก 12 รอบล่าสุด (รวม <span id="t_bursts">--</span> รอบ)</h2>
+    <div class="drops" id="drops"></div>
+    <div class="droptime" id="droptimes"></div>
+    <p class="muted">หยดฟ้า = หนึ่งรอบพ่น ตัวเลขใต้หยด = เวลาเริ่มพ่น</p>
+  </section>
+  <section class="card">
+    <h2>สั่งปั๊มหมอก</h2>
+    <div class="row">
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วิ</label>
+      <button id="on" class="mist">พ่นหมอก</button>
+      <button id="off" class="stop">หยุดพ่น</button>
+    </div>
+    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วิ และไม่พ่นถ้าถังหมอกต่ำกว่า 10 %</p>
+    <div class="row"><button id="beep" class="alt">เรียกคนดูแล (beep)</button></div>
+    <div class="row">
+      <input id="say" maxlength="20" placeholder="MIST OK" style="flex:1">
+      <button id="sayb" class="alt">ขึ้นจอไฟ</button>
+    </div>
+    <div class="row"><button id="csv" class="alt">ดาวน์โหลด CSV</button><span id="csvn" class="muted">0 แถว</span></div>
+    <p class="muted">รายงานล่าสุด <span id="t_age">--</span></p>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const RH_DRY = 50, RH_WET = 90, DRY_RUN = 3, SLOTS = 12;
+const NS = "http://www.w3.org/2000/svg";
+const $ = (id) => document.getElementById(id);
+const rows = [];
+const bursts = [];        // เวลาเริ่มพ่นแต่ละรอบ (ใหม่สุดท้ายสุด)
+let client = null, lastAt = 0, dryStreak = 0, lastCount = null;
+let team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+
+function setStatus(text, ok) { const s = $("status"); s.textContent = text; s.className = ok ? "ok" : "bad"; }
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? Math.round(v) : null; }
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// มาตรครึ่งวงกลม: 0 % ซ้าย 100 % ขวา จุดศูนย์กลาง (150,150) รัศมี 120
+const CX = 150, CY = 150, RAD = 120;
+function polar(p, r) {
+  const a = Math.PI * (1 - p / 100);
+  return [CX + r * Math.cos(a), CY - r * Math.sin(a)];
+}
+function band(p0, p1, color) {
+  const [x0, y0] = polar(p0, RAD), [x1, y1] = polar(p1, RAD);
+  return svgEl("path", { d: `M${x0} ${y0} A${RAD} ${RAD} 0 0 1 ${x1} ${y1}`, stroke: color, "stroke-width": 22, fill: "none" });
+}
+function drawGauge(rh) {
+  const g = $("gauge");
+  g.replaceChildren();
+  g.append(band(0, RH_DRY, "#f0a030"), band(RH_DRY, RH_WET, "#c77ddb"), band(RH_WET, 100, "#8fd6f0"));
+  for (const [p, word] of [[RH_DRY / 2, "แห้ง"], [(RH_DRY + RH_WET) / 2, "พอดี"], [95, "ชื้นเกิน"]]) {
+    const [x, y] = polar(p, RAD - 30);
+    const t = svgEl("text", { x, y, fill: "#9e8fa6", "font-size": 12, "text-anchor": "middle" });
+    t.textContent = word;
+    g.append(t);
+  }
+  const big = svgEl("text", { x: CX, y: CY - 8, fill: "#f1e8f4", "font-size": 40, "font-weight": 700, "text-anchor": "middle" });
+  big.textContent = rh === null ? "--" : rh + " %";
+  g.append(big);
+  if (rh !== null) {      // เข็มสั้นที่ขอบมาตร ไม่ทับตัวเลขกลาง
+    const [x0, y0] = polar(rh, RAD - 22), [x1, y1] = polar(rh, RAD + 16);
+    g.append(svgEl("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: "#f08db8", "stroke-width": 6, "stroke-linecap": "round" }));
+  }
+}
+
+function drawDrops() {
+  const box = $("drops"), times = $("droptimes");
+  box.replaceChildren();
+  times.replaceChildren();
+  const recent = bursts.slice(-SLOTS);
+  for (let i = 0; i < SLOTS; i++) {
+    const d = document.createElement("div");
+    const t = document.createElement("div");
+    const when = recent[i - (SLOTS - recent.length)];
+    d.className = when ? "drop on" : "drop";
+    t.textContent = when ? when.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "";
+    box.append(d);
+    times.append(t);
+  }
+}
+
+function onTelemetry(d) {
+  const rh = num(d.soil, 0, 100), tank = num(d.tank, 0, 100), pump = num(d.pump, 0, 1);
+  const count = num(d.bursts, 0, 1e6), rhMin = num(d.rh_min, 0, 100), n = num(d.n, 0, 1e9);
+  lastAt = Date.now();
+  drawGauge(rh);
+  $("t_min").textContent = rhMin === null ? "--" : rhMin + " %";
+  $("t_tank").textContent = tank === null ? "--" : tank + " %";
+  $("t_tank").style.color = tank !== null && tank < 10 ? "var(--bad)" : "";
+  $("t_pump").textContent = pump === null ? "--" : pump ? "พ่นอยู่" : "หยุด";
+  $("t_bursts").textContent = count === null ? "--" : count;
+  // bursts ของบอร์ดเพิ่ม = เริ่มพ่นรอบใหม่ (พ่นสั้นกว่า 5 วิก็ไม่พลาด เพราะบอร์ดนับเอง)
+  if (count !== null && lastCount !== null && count > lastCount) {
+    for (let k = lastCount; k < count && k - lastCount < SLOTS; k++) bursts.push(new Date());
+    drawDrops();
+  }
+  if (count !== null) lastCount = count;
+  // กฎของหน้านี้: แห้งติดกัน DRY_RUN รายงานและไม่ได้พ่นอยู่ = แนะนำให้พ่น
+  dryStreak = rh !== null && rh < RH_DRY ? dryStreak + 1 : 0;
+  const advise = dryStreak >= DRY_RUN && pump === 0;
+  $("advice").classList.toggle("show", advise);
+  if (advise) $("advice_t").textContent = "อากาศแห้ง " + dryStreak + " รายงานติด (" + rh + " %) ควรพ่นหมอก";
+  rows.push([new Date().toISOString(), n, rh, tank, pump, count, rhMin]);
+  $("csvn").textContent = rows.length + " แถว";
+}
+
+setInterval(() => {
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+}, 1000);
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ broker", false); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  setStatus("ส่ง " + JSON.stringify(obj), true);
+}
+
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  let t = String(v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function downloadCsv() {
+  const head = ["time", "n", "rh", "tank", "pump", "bursts", "rh_min"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "orchid_mist_" + team + ".csv";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (client) client.end(true);
+  lastCount = null;
+  client = mqtt.connect(BROKER_URL, { clientId: "idea16-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setStatus("กำลังต่อ...", false);
+  client.on("connect", () => { setStatus("ต่อแล้ว " + ROOT + "/" + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่...", false));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { d = null; }
+    if (topic.endsWith("/telemetry") && d && typeof d === "object" && !Array.isArray(d)) onTelemetry(d);
+  });
+}
+
+function mist(sec) { send({ cmd: "pump", on: 1, sec }); }
+$("go").onclick = connect;
+$("on").onclick = () => {
+  const s = Number($("sec").value);
+  mist(Number.isInteger(s) && s > 0 ? Math.min(s, 30) : 10);
+};
+$("quick").onclick = () => mist(10);
+$("off").onclick = () => send({ cmd: "pump", on: 0 });
+$("beep").onclick = () => send({ cmd: "beep" });
+$("sayb").onclick = () => send({ cmd: "say", text: $("say").value.replace(/[^ -~]/g, "").slice(0, 20).toUpperCase() });
+$("csv").onclick = downloadCsv;
+drawGauge(null);
+drawDrops();
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>

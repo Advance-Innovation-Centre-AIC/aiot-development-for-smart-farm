@@ -1,14 +1,10 @@
-# idea_24_fruit_crate_truck.py - ลังผลไม้บนรถกระบะ: ลังกระแทกแรง = แจ้งคนขับชะลอ แม่ค้ารู้ทางมือถือ
-# แม่แบบ C = idea_7_pump_doctor.py · สร้างจาก project/stories.json ด้วย tools/gen_stories.py (คัดลอกไปแก้ ไม่แก้ไฟล์นี้ตรง ๆ)
+# idea_24_fruit_crate_truck.py - ลังผลไม้บนรถกระบะ: แม่ค้ารู้ว่าผลไม้ช้ำช่วงไหนของทาง กระแทกต่อเนื่อง = แจ้งคนขับชะลอ
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
-# ต่อยอดจาก s2/sf2_03_remote_pump.py + กฎการสั่นย่อจาก s3/sf3_03_pump_vibration.py
-# เปลี่ยน (ข้อความเท่านั้น โครงโค้ดเดิม): ไฟสีฟ้า = ไฟขับปกติจากแม่ค้า · กระแทกแรง = ดับไฟ + จอไฟ BUMP = แจ้งคนขับชะลอ
-# ทีมต้องแก้ 3 อย่าง: 1) K_BAD CONFIRM_N จากการลองเอง 2) หัวจอและป้าย 3) คำบนจอไฟ RGB และเสียง
-# MQTT: ของ sf2_03 ครบ (สัญญา 3.2, 4) + telemetry "vib" (m/s^2, null ตอนเริ่ม) "vib_bad" 0/1
-#   + event {"id":"team05","event":"vib","bad":1,"vib":0.84} ตอนเปลี่ยน · vib_bad 1 = ไม่รับคำสั่งเปิด
-# เกณฑ์ = ค่าสาธิต · ลองเล่น: วางนิ่ง 5 วิแรก (รถจอด) แล้วเคาะหรือเขย่าบอร์ด (ลังกระแทก)
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM (เลขกลุ่ม)
-# กับดัก    : get_message() ไม่บล็อก กล่องรับมีช่องเดียว ต้องถามทุก 100 ms
+# ต่อยอดจาก s2/sf2_03 + กฎการสั่นจาก s3/sf3_03 / จอ: แถบช้ำ 8 ช่วงตามระยะทาง + นาฬิกาเที่ยว + เกรดผลไม้
+# MQTT: ของ sf2_03 ครบ + telemetry "vib" (null ตอนเริ่ม) "vib_bad" 0/1 + event "vib" ตอนเปลี่ยน
+#   + "bumps" ครั้งที่กระแทกในเที่ยวนี้  "bruise_at" ระยะทาง % ที่กระแทกแรงสุด (null = ยังไม่มี)
+#   ไฟสีฟ้า (pump/led) = ไฟขับปกติจากแม่ค้า / vib_bad 1 = ไม่รับคำสั่งเปิดไฟ / VR1 = ระยะทาง VR4 = แบต
+# ลองเล่น: วางนิ่ง 5 วิแรก (รถจอด) หมุน VR1 ไปตามทาง แล้วเคาะบอร์ด / แก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM
 
 import buttons
 import gpio
@@ -23,8 +19,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า ----
-WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"  # อังกฤษ/ตัวเลข ไม่มีเว้นวรรค
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"  # อย่าส่งไฟล์ที่มีรหัสจริงให้ใคร
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
 TEAM = "teamXX"
 
 BROKER = "broker.hivemq.com"
@@ -34,16 +30,20 @@ TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
 BTN_NAMES = ("SW5", "SW6")
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30
-TANK_MIN = 10  # ถังต่ำกว่านี้ห้ามปั๊ม
+TANK_MIN = 10  # แบตกล่องเฝ้า ต่ำกว่านี้ห้ามเปิด
 LEARN_MS, WIN = 5000, 10
 K_BAD, MIN_BASE, CONFIRM_N = 4.0, 0.05, 5  # ค่าสาธิต
+SEV_STEP = K_BAD  # ระดับกระแทก: เกิน 1, 2, 3 เท่าของ SEV_STEP = เบา กลาง แรง
+SEGS = 8  # แบ่งทางสวนถึงตลาดเป็น 8 ช่วง
+GRADE_BUMPS = (3, 8)  # กระแทกครบ = เกรด B / C (เท่ากับหน้าเว็บ)
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
 SPEAKER = 40
 VOLUME = 25
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
+# ธีมแผงผลไม้: เขียวใบมะม่วง + ส้มมะม่วงสุก
+COL_TEXT, COL_DIM = 0xFFF4E6, 0xA8B59A
+COL_CARD = 0x1A2614
+COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x9CCC65, 0xFFB020, 0xE5533D, 0xFFD180
 
 
 # ---- 2) ฮาร์ดแวร์ ----
@@ -55,6 +55,7 @@ def beep(name):
     for n in TUNES[name]:
         ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
         time.sleep_ms(100)
+
 
 def knob_percent(i):
     return pots.read(i) * 100 // 4095
@@ -123,7 +124,8 @@ def pump_seconds(sec):
 
 
 def ascii_only(text):
-    return "".join(c for c in str(text) if " " <= c <= "~")[:20]
+    # จอไฟ RGB รับเฉพาะอักษรอังกฤษตัวใหญ่
+    return "".join(c for c in str(text) if " " <= c <= "~")[:20].upper()
 
 
 def handle_command(raw, tank, bad):
@@ -136,7 +138,7 @@ def handle_command(raw, tank, bad):
         return "deny", 0, "อ่านคำสั่งไม่ได้", COL_BAD
     act, on = cmd.get("cmd", ""), cmd.get("on", 1)
     if act == "led" and cmd.get("n", 0) != 0:
-        return "deny", 0, "ไม่มีไฟดวงที่ " + str(cmd.get("n")), COL_WARN
+        return "deny", 0, "ไม่มีไฟดวงที่ " + str(cmd.get("n"))[:6], COL_WARN
     if act in ("led", "pump") and not on:
         return "off", 0, "สั่งดับไฟขับปกติ", COL_OK
     if act in ("led", "pump") and bad:
@@ -147,7 +149,7 @@ def handle_command(raw, tank, bad):
         sec = pump_seconds(cmd.get("sec", PUMP_DEFAULT_S))
         return "on", sec, "ไฟขับปกติ %d วิ" % sec, COL_OK
     if act == "beep":
-        return "beep", 0, "เจ้าของฟาร์มเรียก!", COL_INFO
+        return "beep", 0, "แม่ค้าเรียกคนขับ!", COL_INFO
     if act == "say":
         text = ascii_only(cmd.get("text", ""))
         return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_INFO
@@ -159,7 +161,7 @@ def handle_command(raw, tank, bad):
 
 
 class Vib:
-    # ย่อจาก sf3_03
+    # ย่อจาก sf3_03 
     def __init__(self, now):
         self.buf, self.vib, self.base, self.total, self.n = [], None, None, 0.0, 0
         self.t0, self.bad, self.streak = now, False, 0
@@ -183,6 +185,46 @@ class Vib:
         self.bad, self.streak = not self.bad, 0
         return True
 
+    def ratio(self):
+        return 0 if self.base is None else self.vib / self.base
+
+
+def severity(r):
+    # 0 = ไม่กระแทก 1 เบา 2 กลาง 3 แรง
+    return min(3, int(r // SEV_STEP))
+
+
+class Route:
+    # หนึ่งเที่ยว: ช้ำสุดของแต่ละช่วงทาง + ที่ไหนแรงสุด
+    def __init__(self, now):
+        self.t0, self.bumps, self.hard, self.sev, self.big = now, 0, 0, 0, False
+        self.segs, self.worst, self.worst_at = [0] * SEGS, 0, None
+
+    def feed(self, s, where):
+        # คืนช่วงทางที่ต้องวาดใหม่ หรือ -1
+        if s and not self.sev:
+            self.bumps, self.big = self.bumps + 1, False
+        if s >= 2 and not self.big:                    # ครั้งนี้แรง นับครั้งเดียว
+            self.hard, self.big = self.hard + 1, True
+        self.sev = s
+        i = min(SEGS - 1, where * SEGS // 100)
+        if s <= self.segs[i]:
+            return -1
+        self.segs[i] = s
+        if s > self.worst:
+            self.worst, self.worst_at = s, where
+        return i
+
+    def grade(self):
+        return 0 if self.bumps < GRADE_BUMPS[0] else (1 if self.bumps < GRADE_BUMPS[1] else 2)
+
+    def seconds(self, now):
+        return time.ticks_diff(now, self.t0) // 1000
+
+
+def mmss(sec):
+    return "%02d:%02d" % (sec // 60 % 100, sec % 60)
+
 
 # ---- 4) เครือข่าย ----
 def connect_broker(w):
@@ -202,11 +244,11 @@ def connect_broker(w):
 
 def connect_farm(w):
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
-    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    ui.poll()
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
     linked = connect_broker(w)
-    if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
+    if not linked or not mqtt.subscribe(TOPIC_CMD):
         return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
@@ -233,22 +275,26 @@ def show_link(w, ok):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("ลังผลไม้บนกระบะ แจ้งคนขับชะลอ", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("ลังผลไม้บนกระบะ ช้ำช่วงไหน", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
-    w["title"] = card(12, 44, 440, 290, "ไฟขับปกติ = ไฟสีฟ้า (คำสั่ง 0)")
-    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)
-    w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
-    w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
-    w["arc"].color(COL_OK)
-    w["soil"] = ui.Label("ระยะถึงตลาด (VR1) -- %", x=28, y=150, color=COL_TEXT)
-    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
-    card(462, 44, 318, 150, "แบตกล่องเฝ้า (VR4)")
-    w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
-    w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
-    card(462, 204, 318, 130, "การกระแทกลังผลไม้ (IMU)")
-    w["vib"] = ui.Label("จอดนิ่ง 5 วิ เรียนรู้ถนนปกติ", x=476, y=240, color=COL_WARN, value=16)
+    card(12, 44, 768, 150, "ช้ำตรงไหนของทาง (สูง = แรง / VR1 = ระยะทาง)")
+    w["segs"] = []
+    for i in range(SEGS):
+        w["segs"].append(ui.Bar(x=48 + i * 92, y=74, w=40, h=66, min=0, max=3, value=0))
+    ui.Label("สวน", x=28, y=150, color=COL_DIM, value=16)
+    w["where"] = ui.Bar(x=88, y=158, w=600, h=10, min=0, max=100, value=0)
+    ui.Label("ตลาด", x=706, y=150, color=COL_DIM, value=16)
+    card(12, 204, 300, 140, "เวลาเดินทาง")
+    w["trip"] = ui.Seg7(text="00:00", x=28, y=232, w=200, h=56, color=COL_INFO)
+    w["bumps"] = ui.Label("กระแทก 0 ครั้ง", x=28, y=292, color=COL_TEXT, value=16)
+    ui.Label(BTN_NAMES[1] + " = เริ่มเที่ยวใหม่", x=28, y=318, color=COL_DIM, value=14)
+    card(322, 204, 250, 140, "เกรดผลไม้ถึงตลาด")
+    w["grade"] = ui.Label("A ราคาเต็ม", x=336, y=236, color=COL_OK, value=28)
+    w["worst"] = ui.Label("ยังไม่ช้ำ", x=336, y=284, color=COL_DIM, value=16)
+    w["title"] = card(582, 204, 198, 140, "ไฟขับ (คำสั่ง 0)")
+    w["led"] = ui.Led(x=596, y=238, w=32, h=32, color=COL_INFO)
+    w["pump"] = ui.Label("ดับ", x=638, y=240, color=COL_DIM, value=20)
+    w["tank"] = ui.Label("แบต -- %", x=596, y=286, color=COL_TEXT, value=16)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
@@ -264,21 +310,27 @@ def show_note(w, text, col):
 def show_pump(w, sec_left):
     w["led"].value(1 if sec_left else 0)
     w["pump"].color(COL_OK if sec_left else COL_DIM)
-    w["pump"].text("เปิด อีก %d วิ" % sec_left if sec_left else "ปิด")
-    w["arc"].value(sec_left)
+    w["pump"].text("%d วิ" % sec_left if sec_left else "ดับ")
 
 
-def show_vib(w, vib):
-    if vib.base is not None:
-        w["vib"].color(COL_BAD if vib.bad else COL_OK)
-        w["vib"].text("%s\nค่าสั่น %.2f ปกติ %.2f" % ("ผลไม้เสี่ยงช้ำ! ชะลอ" if vib.bad else "สั่นปกติ", vib.vib, vib.base))
+def show_route(w, route):
+    for i in range(SEGS):
+        w["segs"][i].value(route.segs[i])
+        w["segs"][i].color(COL_BAD if route.segs[i] >= 2 else COL_DIM)
+    g = route.grade()
+    w["grade"].color((COL_OK, COL_WARN, COL_BAD)[g])
+    w["grade"].text(("A ราคาเต็ม", "B ลดราคานิด", "C คัดช้ำออก")[g])
+    w["bumps"].text("กระแทก %d ครั้ง (แรง %d)" % (route.bumps, route.hard))
+    if route.worst_at is None:
+        w["worst"].text("ยังไม่ช้ำ")
+    else:
+        w["worst"].text("ช้ำสุดที่ระยะ %d %%" % route.worst_at)
 
 
-def show_knobs(w, soil, tank):
-    w["soil"].text("ระยะถึงตลาด (VR1) %d %%" % soil)
-    w["tank_bar"].value(tank)
-    w["tank_bar"].color(COL_INFO if tank >= TANK_MIN else COL_BAD)
-    w["tank"].text("%d %%" % tank)
+def show_knobs(w, where, tank):
+    w["where"].value(where)
+    w["tank"].color(COL_TEXT if tank >= TANK_MIN else COL_BAD)
+    w["tank"].text("แบต %d %%" % tank)
 
 
 # ---- 6) โปรแกรมหลัก ----
@@ -298,17 +350,17 @@ def stop(w, pump, msg, col=COL_BAD):
 
 
 def on_vib(w, vib, pump):
-    # ดับปั๊ม แจ้งออกเน็ต
+    # ดับไฟขับปกติ บอกคนขับชะลอ แจ้งแม่ค้า
     rgbmatrix.scroll("")
     rgbmatrix.clear()
     if vib.bad:
         set_led(pump, False)
         show_pump(w, 0)
-        show_note(w, "ลังกระแทกแรง! แจ้งคนขับชะลอ", COL_BAD)
+        show_note(w, "ลังกระแทกต่อเนื่อง! แจ้งคนขับชะลอ", COL_BAD)
         rgbmatrix.scroll("BUMP", rgbmatrix.RED, 80)
         beep("empty")
     else:
-        show_note(w, "ถนนเรียบแล้ว ขับปกติได้", COL_OK)
+        show_note(w, "ถนนเรียบแล้ว ขับต่อได้", COL_OK)
         beep("good")
     if not send(TOPIC_EVENT, {"id": TEAM, "event": "vib", "bad": int(vib.bad), "vib": round(vib.vib, 2)}):
         stop(w, pump, "สายหลุด")
@@ -345,29 +397,40 @@ def main():
         stop(w, pump, problem)
     show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
-    stop_btn = Button(1)
+    stop_btn, trip_btn = Button(1), Button(0)
     got = n = pump_ms = pump_t0 = 0
-    shown = -1
+    shown, sec_shown = -1, -1
     t_send = t0 = time.ticks_ms()
-    vib = Vib(t0)
+    vib, route = Vib(t0), Route(t0)
     while time.ticks_diff(time.ticks_ms(), t0) < LISTEN_MS:
         now = time.ticks_ms()
         if stop_btn.pressed_now() and pump_ms:                      # SW5 ไม่ผ่านเน็ตเลย
             pump_ms = 0
-            show_note(w, "หยุดฉุกเฉิน " + BTN_NAMES[0], COL_BAD)
+            show_note(w, "ดับไฟขับปกติ " + BTN_NAMES[0], COL_BAD)
             beep("stop")
+        where, tank = knob_percent(0), knob_percent(3)
+        if trip_btn.pressed_now():                                  # SW6 = เที่ยวใหม่
+            route = Route(now)
+            show_route(w, route)
+            show_note(w, "เริ่มเที่ยวใหม่ ล้างแถบช้ำ", COL_INFO)
+            beep("tap")
         m = magnitude()
         if m is not None and vib.push(m, now):
             on_vib(w, vib, pump)
             pump_ms, shown = 0, 0
-        soil, tank = knob_percent(0), knob_percent(3)
-        msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
+        if vib.base is not None:
+            before = (route.bumps, route.hard)
+            if route.feed(severity(vib.ratio()), where) >= 0 or (route.bumps, route.hard) != before:
+                show_route(w, route)
+                if route.bumps != before[0]:
+                    beep("hit")
+        msg = mqtt.get_message()
         if msg is not None:
             got += 1
-            w["title"].text("ไฟขับปกติ = ไฟสีฟ้า (คำสั่ง %d)" % got)
+            w["title"].text("ไฟขับ (คำสั่ง %d)" % got)
             pump_ms, pump_t0 = act_on(w, msg[1], tank, now, pump_ms, pump_t0, vib.bad)
         left = pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
-        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
+        if pump_ms and (left <= 0 or tank < TANK_MIN):
             pump_ms = 0
             show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "แบตหมด ดับเอง", COL_INFO)
             beep("stop")
@@ -376,18 +439,21 @@ def main():
         if sec_left != shown:
             shown = matrix_countdown(sec_left, shown)
             show_pump(w, sec_left)
-        show_knobs(w, soil, tank)
-        show_vib(w, vib)
+        if route.seconds(now) != sec_shown:
+            sec_shown = route.seconds(now)
+            w["trip"].text(mmss(sec_shown))
+        show_knobs(w, where, tank)
         if time.ticks_diff(now, t_send) >= SEND_MS:
             t_send, n = now, n + 1
             v = None if vib.vib is None else round(vib.vib, 2)
-            if not send(TOPIC, {"id": TEAM, "n": n, "soil": soil, "tank": tank, "pump": 1 if pump_ms else 0,
-                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad)}):
+            if not send(TOPIC, {"id": TEAM, "n": n, "soil": where, "tank": tank, "pump": 1 if pump_ms else 0,
+                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad),
+                                "bumps": route.bumps, "bruise_at": route.worst_at}):
                 stop(w, pump, "สายหลุด")
         if not mqtt.is_connected():
             stop(w, pump, "สายหลุด")
         ui.poll()
-        wait_ms(POLL_MS, (stop_btn,))
+        wait_ms(POLL_MS, (stop_btn, trip_btn))
     stop(w, pump, "เลิกฟัง ได้รับ %d คำสั่ง" % got, COL_DIM)
 
 
@@ -402,6 +468,5 @@ finally:
         pass
 
 # ---- ตาคุณ ----
-# 1) CONFIRM_N = 1 แล้วเคาะโต๊ะทีเดียว เทียบกับ 5
-# 2) จำว่ากระแทกตอนระยะ (VR1) เท่าไร แล้วส่งขึ้นเว็บ ให้แม่ค้ารู้ว่าช่วงไหนของถนนแย่
-# 3) ผลไม้แต่ละชนิดทนไม่เท่ากัน: ให้เลือก K_BAD จากชนิดผลไม้ (มะม่วง ทุเรียน กล้วย)
+# 1) เปลี่ยน SEGS เป็นชื่อหมู่บ้านจริงบนทาง แล้วให้จอบอกชื่อช่วงที่ช้ำ
+# 2) จบเที่ยว (SW6) ส่ง event "trip" พร้อม segs ไปให้แม่ค้าตั้งราคา

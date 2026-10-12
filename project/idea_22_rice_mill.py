@@ -1,14 +1,10 @@
 # idea_22_rice_mill.py - เครื่องสีข้าวชุมชน: สั่นผิดปกติ = หยุดเครื่อง ไม่รับคำสั่งเดินเครื่อง แจ้งมือถือ
-# แม่แบบ C = idea_7_pump_doctor.py · สร้างจาก project/stories.json ด้วย tools/gen_stories.py (คัดลอกไปแก้ ไม่แก้ไฟล์นี้ตรง ๆ)
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
-# ต่อยอดจาก s2/sf2_03_remote_pump.py + กฎการสั่นย่อจาก s3/sf3_03_pump_vibration.py
-# เปลี่ยน: Vib, on_vib, การ์ดการสั่น, send() ใช้ทั้ง telemetry และ event
-# ทีมต้องแก้ 3 อย่าง: 1) K_BAD CONFIRM_N จากการลองเอง 2) หัวจอและป้าย 3) คำบนจอไฟ RGB และเสียง
-# MQTT: ของ sf2_03 ครบ (สัญญา 3.2, 4) + telemetry "vib" (m/s^2, null ตอนเริ่ม) "vib_bad" 0/1
-#   + event {"id":"team05","event":"vib","bad":1,"vib":0.84} ตอนเปลี่ยน · vib_bad 1 = ไม่รับคำสั่งเปิด
-# เกณฑ์ = ค่าสาธิต · ลองเล่น: วางนิ่ง 5 วิแรก แล้วเขย่าบอร์ด (ลูกปืนสึก/สายพานหย่อน)
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM (เลขกลุ่ม)
-# กับดัก    : get_message() ไม่บล็อก กล่องรับมีช่องเดียว ต้องถามทุก 100 ms
+# ต่อยอดจาก s2/sf2_03 + กฎการสั่นจาก s3/sf3_03 / จอ: วงแหวนสุขภาพลูกปืน + กระบะข้าวเปลือก + ตัวนับรอบสี
+# MQTT: ของ sf2_03 ครบ + telemetry "vib" (null ตอนเริ่ม) "vib_bad" 0/1 + event "vib" ตอนเปลี่ยน
+#   + "wear" วินาทีที่สั่นแรงเกิน WEAR_K เท่า (ลูกปืนสึกสะสม)  "batches" รอบสีที่เดินครบเวลา
+#   vib_bad 1 = ไม่รับคำสั่งเดินเครื่อง / VR1 = ข้าวสารในถังพัก (soil) VR4 = ข้าวเปลือกในกระบะ (tank)
+# ลองเล่น: วางนิ่ง 5 วิแรก แล้วเขย่าบอร์ด (ลูกปืนสึก/สายพานหย่อน) / แก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM
 
 import buttons
 import gpio
@@ -23,8 +19,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า ----
-WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"  # อังกฤษ/ตัวเลข ไม่มีเว้นวรรค
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"  # อย่าส่งไฟล์ที่มีรหัสจริงให้ใคร
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
 TEAM = "teamXX"
 
 BROKER = "broker.hivemq.com"
@@ -34,16 +30,19 @@ TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
 BTN_NAMES = ("SW5", "SW6")
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30
-TANK_MIN = 10  # ถังต่ำกว่านี้ห้ามปั๊ม
+TANK_MIN = 10  # ข้าวเปลือก ต่ำกว่านี้ห้ามเปิด
 LEARN_MS, WIN = 5000, 10
 K_BAD, MIN_BASE, CONFIRM_N = 4.0, 0.05, 5  # ค่าสาธิต
+WEAR_K = 2.0  # สั่นเกิน 2 เท่าของปกติ = ลูกปืนกำลังสึก
+WEAR_LIFE_S = 120  # ค่าสาธิต: สึกสะสมครบเท่านี้ สุขภาพ = 0 %
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
 SPEAKER = 40
 VOLUME = 25
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
+# ธีมโรงสี: ฟางข้าว + ทอง
+COL_TEXT, COL_DIM = 0xFFF6E0, 0xB3A27E
+COL_CARD = 0x2A2112
+COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x8BC34A, 0xFF9F1C, 0xE4572E, 0xE9B949
 
 
 # ---- 2) ฮาร์ดแวร์ ----
@@ -55,6 +54,7 @@ def beep(name):
     for n in TUNES[name]:
         ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
         time.sleep_ms(100)
+
 
 def knob_percent(i):
     return pots.read(i) * 100 // 4095
@@ -123,7 +123,8 @@ def pump_seconds(sec):
 
 
 def ascii_only(text):
-    return "".join(c for c in str(text) if " " <= c <= "~")[:20]
+    # จอไฟ RGB รับเฉพาะอักษรอังกฤษตัวใหญ่
+    return "".join(c for c in str(text) if " " <= c <= "~")[:20].upper()
 
 
 def handle_command(raw, tank, bad):
@@ -136,18 +137,18 @@ def handle_command(raw, tank, bad):
         return "deny", 0, "อ่านคำสั่งไม่ได้", COL_BAD
     act, on = cmd.get("cmd", ""), cmd.get("on", 1)
     if act == "led" and cmd.get("n", 0) != 0:
-        return "deny", 0, "ไม่มีเครื่องที่ " + str(cmd.get("n")), COL_WARN
+        return "deny", 0, "ไม่มีเครื่องที่ " + str(cmd.get("n"))[:6], COL_WARN
     if act in ("led", "pump") and not on:
         return "off", 0, "สั่งหยุดเครื่องสี", COL_OK
     if act in ("led", "pump") and bad:
-        return "deny", 0, "สั่นผิดปกติ ไม่เดินเครื่อง", COL_BAD
+        return "deny", 0, "ลูกปืนสั่นผิดปกติ ไม่เดินเครื่อง", COL_BAD
     if act in ("led", "pump") and tank < TANK_MIN:
         return "deny", 0, "ข้าวเปลือกเหลือ %d%% ไม่เดินเครื่อง" % tank, COL_BAD
     if act in ("led", "pump"):
         sec = pump_seconds(cmd.get("sec", PUMP_DEFAULT_S))
         return "on", sec, "เดินเครื่องสี %d วิ" % sec, COL_OK
     if act == "beep":
-        return "beep", 0, "เจ้าของฟาร์มเรียก!", COL_INFO
+        return "beep", 0, "มีคนเรียกที่โรงสี!", COL_INFO
     if act == "say":
         text = ascii_only(cmd.get("text", ""))
         return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_INFO
@@ -159,10 +160,11 @@ def handle_command(raw, tank, bad):
 
 
 class Vib:
-    # ย่อจาก sf3_03
+    # ย่อจาก sf3_03 + นับเวลาสึก
     def __init__(self, now):
         self.buf, self.vib, self.base, self.total, self.n = [], None, None, 0.0, 0
         self.t0, self.bad, self.streak = now, False, 0
+        self.wear_ms = 0
 
     def push(self, m, now):
         self.buf.append(m)
@@ -183,6 +185,16 @@ class Vib:
         self.bad, self.streak = not self.bad, 0
         return True
 
+    def wear(self, dt):
+        # สั่นเกิน WEAR_K เท่า = ลูกปืนสึกเพิ่ม
+        if self.base is not None and self.vib > self.base * WEAR_K:
+            self.wear_ms += dt
+        return self.wear_ms // 1000
+
+
+def health(wear_s):
+    return max(0, 100 - wear_s * 100 // WEAR_LIFE_S)
+
 
 # ---- 4) เครือข่าย ----
 def connect_broker(w):
@@ -202,11 +214,11 @@ def connect_broker(w):
 
 def connect_farm(w):
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
-    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    ui.poll()
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
     linked = connect_broker(w)
-    if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
+    if not linked or not mqtt.subscribe(TOPIC_CMD):
         return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
@@ -233,22 +245,28 @@ def show_link(w, ok):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("เครื่องสีข้าว ฟังการสั่น", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("โรงสีข้าวชุมชน ฟังลูกปืน", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
-    w["title"] = card(12, 44, 440, 290, "มอเตอร์สีข้าว = ไฟสีฟ้า (คำสั่ง 0)")
-    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)
-    w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
-    w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
-    w["arc"].color(COL_OK)
-    w["soil"] = ui.Label("ข้าวสารในถังพัก (VR1) -- %", x=28, y=150, color=COL_TEXT)
-    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
-    card(462, 44, 318, 150, "ข้าวเปลือกในกระบะ (VR4)")
-    w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
-    w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
-    card(462, 204, 318, 130, "การสั่นของเครื่องสี (IMU)")
-    w["vib"] = ui.Label("วางนิ่ง 5 วิ เรียนรู้ค่าปกติ", x=476, y=240, color=COL_WARN, value=16)
+    card(12, 44, 290, 300, "สุขภาพลูกปืน")
+    w["health"] = ui.Arc(x=46, y=78, w=180, h=180, min=0, max=100, value=100)
+    w["health"].color(COL_OK)
+    w["pct"] = ui.Label("100 %", x=98, y=152, color=COL_TEXT, value=28)
+    w["wear"] = ui.Label("สึกสะสม 0 วิ", x=24, y=268, color=COL_DIM, value=16)
+    w["verdict"] = ui.Label("วางนิ่ง 5 วิ เรียนรู้", x=24, y=298, color=COL_WARN, value=20)
+    card(312, 44, 130, 300, "กระบะ (VR4)")
+    w["tank_bar"] = ui.Bar(x=332, y=80, w=50, h=210, min=0, max=100, value=0)
+    ui.Label("เต็ม", x=392, y=80, color=COL_DIM, value=14)
+    ui.Label("ต่ำ", x=392, y=262, color=COL_BAD, value=14)
+    w["tank"] = ui.Label("-- %", x=332, y=304, color=COL_TEXT, value=16)
+    w["title"] = card(452, 44, 328, 300, "เครื่องสี = ไฟสีฟ้า (คำสั่ง 0)")
+    w["led"] = ui.Led(x=466, y=80, w=40, h=40, color=COL_INFO)
+    w["mill"] = ui.Label("หยุด", x=518, y=86, color=COL_DIM, value=24)
+    w["left"] = ui.Bar(x=466, y=132, w=300, h=14, min=0, max=PUMP_MAX_S, value=0)
+    ui.Label("สีครบรอบแล้ว", x=466, y=160, color=COL_DIM, value=16)
+    w["batches"] = ui.Seg7(text="0", x=466, y=186, w=120, h=50, color=COL_INFO)
+    ui.Label("รอบ", x=530, y=200, color=COL_DIM, value=16)
+    w["rice"] = ui.Label("ข้าวสาร (VR1) -- %", x=466, y=254, color=COL_TEXT, value=16)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=466, y=290, color=COL_DIM, value=14)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
@@ -263,21 +281,33 @@ def show_note(w, text, col):
 
 def show_pump(w, sec_left):
     w["led"].value(1 if sec_left else 0)
-    w["pump"].color(COL_OK if sec_left else COL_DIM)
-    w["pump"].text("เปิด อีก %d วิ" % sec_left if sec_left else "ปิด")
-    w["arc"].value(sec_left)
+    w["mill"].color(COL_OK if sec_left else COL_DIM)
+    w["mill"].text("เดิน อีก %d วิ" % sec_left if sec_left else "หยุด")
+    w["left"].value(sec_left)
 
 
-def show_vib(w, vib):
-    if vib.base is not None:
-        w["vib"].color(COL_BAD if vib.bad else COL_OK)
-        w["vib"].text("%s\nค่าสั่น %.2f ปกติ %.2f" % ("ผิดปกติ! เครื่องหยุด" if vib.bad else "สั่นปกติ", vib.vib, vib.base))
+def show_vib(w, vib, wear_s, last):
+    # วาดใหม่เมื่อเปลี่ยน
+    if vib.base is None:
+        return last
+    hp = health(wear_s)
+    rough = vib.vib > vib.base * WEAR_K
+    if (hp, vib.bad, rough) == last:
+        return last
+    col = COL_BAD if vib.bad or hp < 30 else (COL_WARN if hp < 70 or rough else COL_OK)
+    w["health"].value(hp)
+    w["health"].color(col)
+    w["pct"].text("%d %%" % hp)
+    w["wear"].text("สึกสะสม %d วิ" % wear_s)
+    w["verdict"].color(col)
+    w["verdict"].text("ผิดปกติ! หยุดเครื่อง" if vib.bad else ("สั่นแรง กำลังสึก" if rough else "เดินเรียบ"))
+    return (hp, vib.bad, rough)
 
 
 def show_knobs(w, soil, tank):
-    w["soil"].text("ข้าวสารในถังพัก (VR1) %d %%" % soil)
+    w["rice"].text("ข้าวสาร (VR1) %d %%" % soil)
     w["tank_bar"].value(tank)
-    w["tank_bar"].color(COL_INFO if tank >= TANK_MIN else COL_BAD)
+    w["tank_bar"].color(COL_DIM if tank >= TANK_MIN else COL_BAD)
     w["tank"].text("%d %%" % tank)
 
 
@@ -298,14 +328,14 @@ def stop(w, pump, msg, col=COL_BAD):
 
 
 def on_vib(w, vib, pump):
-    # ดับปั๊ม แจ้งออกเน็ต
+    # หยุดเครื่อง แจ้งออกเน็ต
     rgbmatrix.scroll("")
     rgbmatrix.clear()
     if vib.bad:
         set_led(pump, False)
         show_pump(w, 0)
-        show_note(w, "สั่นผิดปกติ! หยุดเครื่องสีแล้ว", COL_BAD)
-        rgbmatrix.scroll("MILL", rgbmatrix.RED, 80)
+        show_note(w, "สั่นผิดปกติ! หยุดเครื่องสีแล้ว เรียกช่าง", COL_BAD)
+        rgbmatrix.scroll("MILL STOP", rgbmatrix.RED, 80)
         beep("empty")
     else:
         show_note(w, "สั่นปกติแล้ว เดินเครื่องได้", COL_OK)
@@ -346,9 +376,9 @@ def main():
     show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
     stop_btn = Button(1)
-    got = n = pump_ms = pump_t0 = 0
-    shown = -1
-    t_send = t0 = time.ticks_ms()
+    got = n = pump_ms = pump_t0 = batches = wear_s = 0
+    shown, drawn = -1, None
+    t_send = t_loop = t0 = time.ticks_ms()
     vib = Vib(t0)
     while time.ticks_diff(time.ticks_ms(), t0) < LISTEN_MS:
         now = time.ticks_ms()
@@ -360,16 +390,21 @@ def main():
         if m is not None and vib.push(m, now):
             on_vib(w, vib, pump)
             pump_ms, shown = 0, 0
+        wear_s = vib.wear(time.ticks_diff(now, t_loop))
+        t_loop = now
         soil, tank = knob_percent(0), knob_percent(3)
-        msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
+        msg = mqtt.get_message()
         if msg is not None:
             got += 1
-            w["title"].text("มอเตอร์สีข้าว = ไฟสีฟ้า (คำสั่ง %d)" % got)
+            w["title"].text("เครื่องสี = ไฟสีฟ้า (คำสั่ง %d)" % got)
             pump_ms, pump_t0 = act_on(w, msg[1], tank, now, pump_ms, pump_t0, vib.bad)
         left = pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
-        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
+        if pump_ms and (left <= 0 or tank < TANK_MIN):
             pump_ms = 0
-            show_note(w, "ครบเวลา หยุดเอง" if left <= 0 else "ข้าวหมดกระบะ หยุดเอง", COL_INFO)
+            if left <= 0:                                           # เดินครบเวลา = สีเสร็จ 1 รอบ
+                batches += 1
+                w["batches"].text(str(batches))
+            show_note(w, "สีเสร็จ 1 รอบ หยุดเอง" if left <= 0 else "ข้าวเปลือกหมดกระบะ หยุดเอง", COL_INFO)
             beep("stop")
         set_led(pump, pump_ms)
         sec_left = (left + 999) // 1000 if pump_ms else 0
@@ -377,12 +412,13 @@ def main():
             shown = matrix_countdown(sec_left, shown)
             show_pump(w, sec_left)
         show_knobs(w, soil, tank)
-        show_vib(w, vib)
+        drawn = show_vib(w, vib, wear_s, drawn)
         if time.ticks_diff(now, t_send) >= SEND_MS:
             t_send, n = now, n + 1
             v = None if vib.vib is None else round(vib.vib, 2)
             if not send(TOPIC, {"id": TEAM, "n": n, "soil": soil, "tank": tank, "pump": 1 if pump_ms else 0,
-                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad)}):
+                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad),
+                                "wear": wear_s, "batches": batches}):
                 stop(w, pump, "สายหลุด")
         if not mqtt.is_connected():
             stop(w, pump, "สายหลุด")
@@ -403,5 +439,4 @@ finally:
 
 # ---- ตาคุณ ----
 # 1) CONFIRM_N = 1 แล้วเคาะโต๊ะทีเดียว เทียบกับ 5
-# 2) ให้ SW6 (Button(0)) = เรียนรู้ค่าปกติใหม่ (vib = Vib(now)) หลังเปลี่ยนลูกปืน
-# 3) นับชั่วโมงเดินเครื่องสะสม แล้วเตือนให้อัดจาระบีทุก N ชั่วโมง
+# 2) สุขภาพต่ำกว่า 30 % = ไม่รับคำสั่งเดินเครื่อง จนช่างกด SW6 (Button(0)) ยืนยันว่าเปลี่ยนลูกปืนแล้ว

@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>หอถังน้ำของฟาร์ม</title>
+<!--
+  เรื่อง 6 · หอถังน้ำของฟาร์ม (คู่กับ project/idea_6_water_tower.py)
+  เปิดแบบนี้: idea_6.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ภาพหลัก: รูปหอถังมีน้ำขึ้นลงตาม tank พร้อมขีด "ห้ามปั๊ม" และขีดครึ่งถัง
+  กฎของหน้านี้: ปุ่มเปิดปั๊มล็อกเอง ถ้าถังล่าสุดต่ำกว่า 10 % หรือบอร์ดเงียบเกิน 15 วิ
+               (บอร์ดยังตรวจซ้ำเองเสมอ หน้าเว็บแค่ไม่ส่งคำสั่งที่รู้อยู่แล้วว่าจะถูกปฏิเสธ)
+  คีย์ที่ใช้: tank soil pump n + refused tank_lo (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
+-->
+<style>
+:root {
+  --bg: #11151b;
+  --card: #1a1f27;
+  --line: #2c3440;
+  --ink: #e4e9f0;
+  --dim: #8c97a6;
+  --steel: #7a8fa6;
+  --water: #2f86f0;
+  --half: #f2c230;
+  --low: #e5484d;
+  --go: #3fb97a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  line-height: 1.45;
+}
+header {
+  padding: 14px 16px;
+  background: linear-gradient(90deg, #1d2530, #11151b);
+  border-bottom: 2px solid var(--steel);
+}
+header h1 { margin: 0 0 6px; font-size: 1.25rem; letter-spacing: .5px; }
+header .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+main {
+  display: grid;
+  gap: 12px;
+  padding: 12px 16px;
+  max-width: 980px;
+  margin: auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 760px) { main { grid-template-columns: 340px minmax(0, 1fr); } }
+.card { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.card h2 { margin: 0 0 8px; font-size: 1rem; color: var(--steel); text-transform: none; }
+#tower { width: 100%; max-width: 300px; height: auto; display: block; margin: auto; }
+.big { font-size: 2.2rem; font-weight: 700; text-align: center; margin: 4px 0 0; }
+.sub { text-align: center; color: var(--dim); font-size: .9rem; margin: 0; }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0; }
+.kv span { color: var(--dim); }
+.kv b { text-align: right; }
+button {
+  font: inherit; font-weight: 600; border: 0; border-radius: 8px;
+  padding: 9px 14px; cursor: pointer; background: var(--water); color: #fff;
+}
+button.alt { background: #2c3440; color: var(--ink); }
+button.stop { background: var(--low); }
+button:disabled { background: #333a45; color: #6b7684; cursor: not-allowed; }
+input { min-width: 0; max-width: 100%; font: inherit; background: #0d1116; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+#lock { color: var(--low); font-size: .9rem; min-height: 1.3em; margin: 2px 0 8px; }
+#status { font-size: .9rem; }
+#status.ok { color: var(--go); }
+#status.bad { color: var(--low); }
+ol#refusals { margin: 0; padding-left: 22px; max-height: 190px; overflow: auto; }
+ol#refusals li { margin: 2px 0; }
+ol#refusals li.dry { color: var(--low); }
+.muted { color: var(--dim); font-size: .85rem; }
+footer { padding: 16px; color: var(--dim); font-size: .85rem; max-width: 980px; margin: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>หอถังน้ำของฟาร์ม</h1>
+  <div class="row">
+    <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+    <button id="go" class="alt">เชื่อมต่อ</button>
+    <span id="status" class="muted">ยังไม่ต่อ</span>
+  </div>
+</header>
+<main>
+  <section class="card">
+    <h2>ระดับน้ำในหอถัง (VR4)</h2>
+    <svg id="tower" viewBox="0 0 220 300" role="img" aria-label="รูปหอถังและระดับน้ำ"></svg>
+    <p class="big" id="t_tank">--</p>
+    <p class="sub">ต่ำสุดตั้งแต่เปิดบอร์ด <b id="t_lo">--</b> · รายงานล่าสุด <span id="t_age">--</span></p>
+  </section>
+  <section class="card">
+    <h2>ปั๊มจากหอถัง</h2>
+    <div class="kv">
+      <span>ปั๊ม</span><b id="t_pump">--</b>
+      <span>แปลงปลายท่อ (VR1)</span><b id="t_soil">--</b>
+      <span>ปั๊มปฏิเสธเพราะน้ำต่ำ</span><b id="t_ref">--</b>
+    </div>
+    <div class="row">
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="10" style="width:5em"> วิ</label>
+      <button id="on">เปิดปั๊ม</button>
+      <button id="off" class="stop">ปิดปั๊ม</button>
+    </div>
+    <p id="lock"></p>
+    <div class="row"><button id="beep" class="alt">เรียกคนดูแล (beep)</button></div>
+    <div class="row">
+      <input id="say" maxlength="20" placeholder="TANK LOW" style="flex:1">
+      <button id="sayb" class="alt">ขึ้นจอไฟ</button>
+    </div>
+    <div class="row">
+      <button id="csv" class="alt">ดาวน์โหลด CSV</button>
+      <span id="csvn" class="muted">0 แถว</span>
+    </div>
+    <h2 style="margin-top:12px">สมุดปฏิเสธ (ครั้งที่ปั๊มไม่ยอมเปิดหรือดับเอง)</h2>
+    <ol id="refusals"></ol>
+    <p class="muted" id="refhint">ยังว่าง = ยังไม่เคยมีใครสั่งตอนถังต่ำ ลองหมุน VR4 ลงต่ำกว่า 10 แล้วสั่งดู</p>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const TANK_MIN = 10, TANK_HALF = 50, SILENT_MS = 15000;
+const NS = "http://www.w3.org/2000/svg";
+const $ = (id) => document.getElementById(id);
+const rows = [];
+let client = null, lastAt = 0, lastTank = null, lastRefused = null;
+let team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+
+function setStatus(text, ok) { const s = $("status"); s.textContent = text; s.className = ok ? "ok" : "bad"; }
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? Math.round(v) : null; }
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+// รูปหอถัง: ตัวถัง 40..200 แนวนอน 20..200 แนวตั้ง ขาตั้งด้านล่าง
+const TX = 40, TY = 20, TW = 140, TH = 180;
+function drawTower(tank) {
+  const svg = $("tower");
+  svg.replaceChildren();
+  const lvl = (p) => TY + TH - p * TH / 100;
+  for (const x of [60, 160]) svg.append(svgEl("line", { x1: x, y1: TY + TH, x2: x + (x < 110 ? -20 : 20), y2: 290, stroke: "#7a8fa6", "stroke-width": 6 }));
+  svg.append(svgEl("line", { x1: 50, y1: 250, x2: 170, y2: 250, stroke: "#7a8fa6", "stroke-width": 3 }));
+  svg.append(svgEl("rect", { x: TX, y: TY, width: TW, height: TH, rx: 10, fill: "#0d1116", stroke: "#7a8fa6", "stroke-width": 4 }));
+  if (tank !== null) {
+    const col = tank < TANK_MIN ? "#e5484d" : tank < TANK_HALF ? "#f2c230" : "#2f86f0";
+    svg.append(svgEl("rect", { x: TX + 4, y: lvl(tank), width: TW - 8, height: TY + TH - lvl(tank) - 2, rx: 6, fill: col, opacity: .85 }));
+  }
+  const marks = [[TANK_HALF, "#f2c230", "ครึ่ง"], [TANK_MIN, "#e5484d", "ห้ามปั๊ม"]];
+  for (const [p, c, word] of marks) {
+    svg.append(svgEl("line", { x1: TX - 6, x2: TX + TW + 6, y1: lvl(p), y2: lvl(p), stroke: c, "stroke-width": 2, "stroke-dasharray": "6 4" }));
+    const t = svgEl("text", { x: TX + TW + 8, y: lvl(p) + 4, fill: c, "font-size": 11 });
+    t.textContent = word;
+    svg.append(t);
+  }
+}
+
+function addRefusal(count, tank) {
+  const li = document.createElement("li");
+  li.className = "dry";
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  ครั้งที่ " + count + " ถังเหลือ " +
+    (tank === null ? "--" : tank + " %");
+  $("refusals").prepend(li);
+  $("refhint").hidden = true;
+  while ($("refusals").children.length > 30) $("refusals").lastChild.remove();
+}
+
+function onTelemetry(d) {
+  const tank = num(d.tank, 0, 100), soil = num(d.soil, 0, 100), pump = num(d.pump, 0, 1);
+  const refused = num(d.refused, 0, 1e6), lo = num(d.tank_lo, 0, 100), n = num(d.n, 0, 1e9);
+  lastAt = Date.now();
+  lastTank = tank;
+  drawTower(tank);
+  $("t_tank").textContent = tank === null ? "--" : tank + " %";
+  $("t_tank").style.color = tank === null ? "" : tank < TANK_MIN ? "var(--low)" : tank < TANK_HALF ? "var(--half)" : "var(--water)";
+  $("t_lo").textContent = lo === null ? "--" : lo + " %";
+  $("t_soil").textContent = soil === null ? "--" : soil + " %";
+  $("t_pump").textContent = pump === null ? "--" : pump ? "เปิดอยู่" : "ปิด";
+  $("t_ref").textContent = refused === null ? "--" : refused + " ครั้ง";
+  // refused เพิ่ม = บอร์ดเพิ่งปฏิเสธ (หน้าเว็บอาจพลาดบางครั้งถ้าเปิดหลังบอร์ด จึงจดเฉพาะส่วนที่เพิ่ม)
+  if (refused !== null && lastRefused !== null && refused > lastRefused) {
+    for (let k = lastRefused + 1; k <= refused; k++) addRefusal(k, tank);
+  }
+  if (refused !== null) lastRefused = refused;
+  rows.push([new Date().toISOString(), n, tank, soil, pump, refused, lo]);
+  $("csvn").textContent = rows.length + " แถว";
+  checkLock();
+}
+
+// กฎของหน้านี้: ล็อกปุ่มเปิดปั๊มเมื่อรู้แล้วว่าถังต่ำ หรือไม่รู้เลยเพราะบอร์ดเงียบ
+function checkLock() {
+  const silent = !lastAt || Date.now() - lastAt > SILENT_MS;
+  let why = "";
+  if (silent) why = lastAt ? "บอร์ดเงียบเกิน 15 วิ ไม่รู้ระดับถังตอนนี้ จึงไม่ส่งคำสั่งเปิด" : "ยังไม่ได้ยินบอร์ด รอรายงานแรกก่อน";
+  else if (lastTank !== null && lastTank < TANK_MIN) why = "ถังเหลือ " + lastTank + " % ต่ำกว่า " + TANK_MIN + " % บอร์ดจะปฏิเสธอยู่แล้ว";
+  $("on").disabled = why !== "";
+  $("lock").textContent = why;
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+}
+setInterval(checkLock, 1000);
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ broker", false); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  setStatus("ส่ง " + JSON.stringify(obj), true);
+}
+
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  let t = String(v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function downloadCsv() {
+  const head = ["time", "n", "tank", "soil", "pump", "refused", "tank_lo"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "water_tower_" + team + ".csv";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (client) client.end(true);
+  lastRefused = null;
+  client = mqtt.connect(BROKER_URL, { clientId: "idea6-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setStatus("กำลังต่อ...", false);
+  client.on("connect", () => { setStatus("ต่อแล้ว " + ROOT + "/" + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่...", false));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { d = null; }
+    if (topic.endsWith("/telemetry") && d && typeof d === "object" && !Array.isArray(d)) onTelemetry(d);
+  });
+}
+
+$("go").onclick = connect;
+$("on").onclick = () => {
+  const s = Number($("sec").value);
+  send({ cmd: "pump", on: 1, sec: Number.isInteger(s) && s > 0 ? Math.min(s, 30) : 10 });
+};
+$("off").onclick = () => send({ cmd: "pump", on: 0 });   // ปิดได้เสมอ ไม่ล็อก
+$("beep").onclick = () => send({ cmd: "beep" });
+$("sayb").onclick = () => send({ cmd: "say", text: $("say").value.replace(/[^ -~]/g, "").slice(0, 20).toUpperCase() });
+$("csv").onclick = downloadCsv;
+drawTower(null);
+checkLock();
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>

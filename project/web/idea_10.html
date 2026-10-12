@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!--
+  idea_10.html - ห้องบ่มกล้วย: แถบสีเปลือก 5 ขั้น เวลาพร้อมขายโดยประมาณ และแถบช่วงอุณหภูมิ
+  เปิดแบบนี้: web/idea_10.html?team=team05  (หรือพิมพ์ทีมในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง /event เมื่อระดับเปลี่ยน) ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด: id crop level alert temp_c rh sun_c + ripe_pct out_s (ดู project/idea_10_banana_ripening.py)
+  กฎฝั่งแอป: level 2 = ป้ายแดง "บ่มหลุดช่วง" และบอกว่าเวลาพร้อมขายเลื่อนออกไป
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ห้องบ่มกล้วย</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fffbe6; --card: #ffffff; --line: #eadfa8; --ink: #3d3210; --dim: #7d6b2e;
+    --banana: #f5c400; --ok: #5d9b1e; --warn: #d48806; --bad: #cf3f3f; --cold: #2f7fc1;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1a1608; --card: #2b2410; --line: #5a4a1c; --ink: #fff8dc; --dim: #c2b280;
+      --banana: #ffe135; --ok: #9acd32; --warn: #ffa94d; --bad: #ff6b6b; --cold: #6cb4ee; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center;
+    border-bottom: 4px solid var(--banana); padding-bottom: 10px; }
+  h1 { margin: 0; font-size: 21px; }
+  h2 { margin: 0 0 8px; font-size: 16px; }
+  .sub { margin: 0; color: var(--dim); font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 12px; }
+  .peel { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .peel div { height: 44px; border-radius: 22px 22px 6px 6px; border: 3px solid transparent; }
+  .peel div.now { border-color: var(--ink); transform: translateY(-4px); }
+  .peel span { font-size: 12px; color: var(--dim); text-align: center; }
+  .prog { height: 14px; background: var(--line); border-radius: 7px; overflow: hidden; margin-top: 10px; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--banana); transition: width .4s; }
+  .ready { font-size: 26px; font-weight: 800; margin-top: 8px; }
+  #alarm { display: none; margin-top: 12px; padding: 12px; border-radius: 12px; background: var(--bad); color: #fff; font-weight: 700; }
+  #alarm.on { display: block; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, input { font: inherit; min-height: 40px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); }
+  button.main { background: var(--banana); border-color: var(--banana); color: #2b2410; font-weight: 700; }
+  input[type=number] { width: 80px; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>ห้องบ่มกล้วย</h1>
+    <p class="sub">สีเปลือกถึงขั้นไหน และพร้อมขายเมื่อไร</p>
+  </div>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" aria-label="ชื่อทีม">
+    <button id="go">ต่อ</button>
+    <span id="conn" class="sub">ยังไม่ต่อ</span>
+  </div>
+</header>
+<div id="alarm" role="alert"></div>
+
+<section class="card">
+  <h2>สีเปลือก</h2>
+  <div class="peel" id="peel"></div>
+  <div class="prog"><i id="progBar"></i></div>
+  <div class="ready" id="ready">-</div>
+  <p class="sub">บ่มไปแล้ว <b id="pct">0</b> %  <span id="crop"></span></p>
+</section>
+
+<section class="card">
+  <h2>อุณหภูมิห้องบ่ม</h2>
+  <svg viewBox="0 0 320 70" width="100%" aria-label="ช่วงอุณหภูมิ">
+    <rect id="zCold" x="0" y="20" width="96" height="18" fill="var(--cold)" opacity=".5"/>
+    <rect id="zOk" x="96" y="20" width="128" height="18" fill="var(--ok)" opacity=".7"/>
+    <rect id="zHot" x="224" y="20" width="96" height="18" fill="var(--bad)" opacity=".5"/>
+    <polygon id="tMark" points="0,16 -7,4 7,4" fill="currentColor"/>
+    <text id="loTxt" x="96" y="56" font-size="11" fill="currentColor" text-anchor="middle">22</text>
+    <text id="hiTxt" x="224" y="56" font-size="11" fill="currentColor" text-anchor="middle">30</text>
+    <text x="4" y="56" font-size="11" fill="currentColor">เย็นไป</text>
+    <text x="316" y="56" font-size="11" fill="currentColor" text-anchor="end">ร้อนไป</text>
+  </svg>
+  <p class="sub"><b id="temp">--</b> C  ความชื้น <b id="rh">--</b> %  <span id="mood"></span></p>
+  <p class="sub">หลุดช่วงรวม <b id="out">0</b> วิ (เวลาที่บ่มไม่เดิน)</p>
+</section>
+
+<section class="card">
+  <h2>สั่งห้องบ่ม</h2>
+  <div class="row">
+    <button class="main" id="ack">รับทราบ (ack)</button>
+    <input id="thi" type="number" min="23" max="45" value="30" aria-label="t_hi"><button id="set">ตั้งเกณฑ์ร้อน t_hi</button>
+    <button id="csv">ดาวน์โหลด CSV</button>
+  </div>
+  <p class="sub" id="cmdMsg"></p>
+</section>
+
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const LEVEL_TH = ["บ่มอยู่ พอดี", "เริ่มหลุดช่วง", "หลุดช่วงมาก"];
+const LEVEL_VAR = ["--ok", "--warn", "--bad"];
+const ALERT_TH = { ok: "พอดี", cold: "ห้องเย็นไป", hot: "ห้องร้อนไป", dry: "เปลือกแห้ง", wet: "ชื้นเกิน" };
+// ชื่อไทย T ต่ำ T สูง และวินาทีที่ต้องบ่ม ตรงกับ CROPS ในบอร์ด
+const CROPS = { hom: ["กล้วยหอม", 22, 30, 300], namwa: ["กล้วยน้ำว้า", 22, 31, 360], khai: ["กล้วยไข่", 22, 30, 240] };
+const PEEL = [["#3e8e41", "เขียว"], ["#8dbf3a", "เขียวอม"], ["#d7d83a", "เริ่มเหลือง"], ["#ffe135", "เหลือง"], ["#e0b12b", "จุดน้ำตาล"]];
+const T_MIN = 12, T_MAX = 40;                   // ช่วงที่วาดบนแถบอุณหภูมิ
+const $ = (id) => document.getElementById(id);
+const rows = [];
+let client = null, team = "", crop = CROPS.hom;
+
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function str(v, max) { return typeof v === "string" ? v.slice(0, max || 40) : ""; }
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function okTeam(t) { return /^team[0-9a-z_]{2,16}$/i.test(t) && t !== "teamXX" && t !== "team00"; }
+function alertTh(code) { return str(code, 60).split("+").map((c) => ALERT_TH[c] || c).join(" + "); }
+function setConn(t, ok) { $("conn").textContent = t; $("conn").style.color = cssVar(ok ? "--ok" : "--warn"); }
+function xOf(c) { return Math.max(0, Math.min(320, (c - T_MIN) * 320 / (T_MAX - T_MIN))); }
+
+function buildPeel() {
+  for (const [col, name] of PEEL) {
+    const wrap = document.createElement("div"); wrap.style.cssText = "display:flex;flex-direction:column;gap:4px;height:auto;border:0";
+    const sw = document.createElement("div"); sw.style.background = col;
+    const lb = document.createElement("span"); lb.textContent = name;
+    wrap.append(sw, lb);
+    $("peel").appendChild(wrap);
+  }
+}
+
+function drawPeel(pct) {
+  const stage = Math.min(4, Math.floor(pct / 20));
+  [...$("peel").children].forEach((w, i) => { w.firstChild.className = i === stage ? "now" : ""; });
+  $("progBar").style.width = pct + "%";
+  $("pct").textContent = String(pct);
+}
+
+function drawBand() {
+  const lo = xOf(crop[1]), hi = xOf(crop[2]);
+  $("zCold").setAttribute("width", lo);
+  $("zOk").setAttribute("x", lo); $("zOk").setAttribute("width", hi - lo);
+  $("zHot").setAttribute("x", hi); $("zHot").setAttribute("width", 320 - hi);
+  $("loTxt").setAttribute("x", lo); $("loTxt").textContent = String(crop[1]);
+  $("hiTxt").setAttribute("x", hi); $("hiTxt").textContent = String(crop[2]);
+}
+
+function readyText(pct, level) {
+  // เวลาพร้อมขาย = เวลาที่ยังต้องบ่ม (นับเฉพาะตอนอยู่ในช่วง) บวกจากตอนนี้
+  if (pct >= 100) return "พร้อมขายแล้ว";
+  const leftS = Math.round(crop[3] * (100 - pct) / 100);
+  const at = new Date(Date.now() + leftS * 1000).toTimeString().slice(0, 5);
+  return (level ? "เลื่อนออกไป: " : "พร้อมขายราว ") + at + " น. (อีก " + Math.ceil(leftS / 60) + " นาที)";
+}
+
+// กฎฝั่งแอป: หลุดช่วงมาก (level 2) = ป้ายแดง และบอกว่าการบ่มหยุดเดิน
+function alarm(on, why) {
+  $("alarm").className = on ? "on" : "";
+  $("alarm").textContent = on ? "บ่มหลุดช่วง: " + why + "  การบ่มหยุดเดินจนกว่าห้องจะกลับมาพอดี" : "";
+  if (on && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+
+function onEvent(topic, d) {
+  const level = num(d.level);
+  if (level === null || level < 0 || level > 2) return;
+  const t = num(d.temp_c), rh = num(d.rh), sun = num(d.sun_c), out = num(d.out_s);
+  const ripe = num(d.ripe_pct), code = str(d.crop, 20), why = alertTh(d.alert);
+  if (CROPS[code] && CROPS[code][0] !== crop[0]) { crop = CROPS[code]; drawBand(); }
+  $("crop").textContent = CROPS[code] ? "(" + CROPS[code][0] + ")" : "";
+  const pct = ripe === null ? 0 : Math.max(0, Math.min(100, Math.round(ripe)));
+  drawPeel(pct);
+  $("ready").textContent = readyText(pct, level);
+  $("ready").style.color = cssVar(level ? LEVEL_VAR[level] : "--ink");
+  if (t !== null) { $("temp").textContent = t.toFixed(1); $("tMark").setAttribute("transform", `translate(${xOf(t).toFixed(1)} 0)`); }
+  $("rh").textContent = rh === null ? "--" : rh.toFixed(0);
+  $("mood").textContent = LEVEL_TH[level] + (level ? ": " + why : "");
+  $("mood").style.color = cssVar(LEVEL_VAR[level]);
+  $("out").textContent = out === null ? "0" : String(out);
+  rows.push([new Date().toISOString(), topic, level, str(d.alert, 60), t, rh, sun, ripe, out]);
+  alarm(level === 2, why);
+}
+
+function onMessage(topic, payload) {
+  let d = null;
+  try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return;
+  if (topic.endsWith("/cmd")) { if (d.cmd === "ack") alarm(false); return; }
+  if (topic.endsWith("/event")) onEvent(topic, d);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setConn("ใส่ทีม เช่น team05", false); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea10-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setConn("กำลังต่อ...", false);
+  client.on("connect", () => { setConn("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setConn("หลุด กำลังต่อใหม่...", false));
+  client.on("message", onMessage);
+}
+
+function toBoard(obj) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker"; return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + JSON.stringify(obj);
+}
+
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCsv() {
+  if (!rows.length) { $("cmdMsg").textContent = "ยังไม่มีข้อมูลให้ดาวน์โหลด"; return; }
+  const head = ["time", "topic", "level", "alert", "temp_c", "rh", "sun_c", "ripe_pct", "out_s"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "banana_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("go").addEventListener("click", connect);
+$("ack").addEventListener("click", () => toBoard({ cmd: "ack" }));
+$("set").addEventListener("click", () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v < 23 || v > 45) { $("cmdMsg").textContent = "t_hi ต้องเป็นเลขเต็ม 23-45"; return; }
+  crop = crop.slice(); crop[2] = v; drawBand();
+  toBoard({ cmd: "set", t_hi: v });
+});
+$("csv").addEventListener("click", downloadCsv);
+
+buildPeel(); drawPeel(0); drawBand();
+team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+if (okTeam(team)) connect(); else setConn("ใส่ทีมแล้วกด ต่อ", false);
+</script>
+</body>
+</html>

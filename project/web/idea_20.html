@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<!--
+  idea_20.html - เครื่องให้อาหารปลา: นาฬิกามื้ออาหาร ถังอาหาร และสมุดมื้อ สั่งให้อาหารจากมือถือ
+  เปิดแบบนี้: web/idea_20.html?team=team05  (หรือพิมพ์เลขกลุ่มในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# · ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd · คู่กับบอร์ด project/idea_20_fish_feeder.py
+  คีย์ telemetry: soil = อาหารเหลือในบ่อ (VR1) · tank = อาหารในถังเก็บ (VR4) · pump = เครื่องให้อาหาร 0/1
+                  meals = ให้ไปกี่มื้อ · next_s = อีกกี่วินาทีถึงมื้อถัดไป (0 = ถึงเวลา)
+  กฎฝั่งแอป: บอร์ดเงียบเกิน 15 วินาที = ขึ้น "บอร์ดเงียบ" (telemetry ส่งทุก 5 วินาที)
+  แอปคิดเอง: ถังอาหารลดมื้อละกี่ % แล้วประมาณว่าเหลืออีกกี่มื้อ
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เครื่องให้อาหารปลา</title>
+<style>
+  :root { --bg:#08161f; --card:#0f2633; --line:#1e4252; --ink:#e6f4f8; --dim:#86a4b0;
+          --fish:#ff8c42; --pond:#2ec4b6; --warn:#ffd166; --bad:#ef476f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:linear-gradient(180deg, #0b2230, var(--bg) 40%); color:var(--ink); font-family: system-ui, "Noto Sans Thai", sans-serif; min-height:100vh; }
+  header { padding:16px 16px 6px; text-align:center; }
+  h1 { margin:0; font-size:1.35rem; } h1 span { color:var(--fish); }
+  .sub { color:var(--dim); font-size:.85rem; margin:4px 0 10px; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; }
+  input, button { font:inherit; border-radius:999px; border:1px solid var(--line); background:#123241; color:var(--ink); padding:8px 14px; }
+  button { cursor:pointer; } button:hover { border-color:var(--pond); }
+  button.feed { background:var(--fish); border-color:var(--fish); color:#2a1300; font-weight:600; }
+  button.stop { background:#3a1622; border-color:var(--bad); }
+  #status { width:100%; text-align:center; font-size:.85rem; color:var(--dim); }
+  #status.ok { color:var(--pond); } #status.bad { color:var(--bad); }
+  #banner { margin:8px 16px 0; padding:8px 12px; border-radius:12px; display:none; text-align:center; }
+  #banner.show { display:block; } #banner.warn { background:#4a3b0c; } #banner.mute { background:#22323a; color:var(--dim); }
+  main { padding:8px 16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); max-width:980px; margin:0 auto; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:14px; }
+  h2 { margin:0 0 10px; font-size:.95rem; color:var(--pond); }
+  .clockWrap { display:flex; gap:14px; align-items:center; justify-content:center; }
+  #clock { width:170px; height:170px; flex:none; }
+  #hopper { width:90px; height:150px; flex:none; }
+  .big { font-size:1.6rem; font-weight:700; font-variant-numeric: tabular-nums; }
+  .note { color:var(--dim); font-size:.8rem; }
+  .meter { height:16px; background:#123241; border-radius:999px; overflow:hidden; }
+  .meter i { display:block; height:100%; width:0; background:var(--pond); }
+  #book { list-style:none; margin:0; padding:0; max-height:220px; overflow:auto; }
+  #book li { display:flex; justify-content:space-between; border-top:1px solid var(--line); padding:6px 2px; font-size:.85rem; }
+  #book li span { color:var(--dim); }
+  .wide { grid-column: 1 / -1; }
+  footer { padding:12px 16px 28px; color:var(--dim); font-size:.8rem; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>เครื่องให้อาหาร<span>ปลา</span></h1>
+  <p class="sub">เจ้าของไม่อยู่บ่อ: ดูว่าถึงมื้อหรือยัง อาหารในถังเหลือกี่มื้อ แล้วสั่งให้อาหารจากมือถือ</p>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" autocomplete="off" aria-label="เลขทีม">
+    <button id="go">ต่อ</button>
+    <div id="status">ใส่เลขทีม เช่น team05 แล้วกด ต่อ</div>
+  </div>
+</header>
+<div id="banner" role="status"></div>
+<main>
+  <section>
+    <h2>นาฬิกามื้ออาหาร</h2>
+    <div class="clockWrap">
+      <svg id="clock" viewBox="0 0 120 120" aria-label="นับถอยหลังมื้อถัดไป">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#123241" stroke-width="12"/>
+        <circle id="ring" cx="60" cy="60" r="50" fill="none" stroke="#2ec4b6" stroke-width="12"
+                stroke-linecap="round" stroke-dasharray="314.16" stroke-dashoffset="314.16" transform="rotate(-90 60 60)"/>
+        <text id="nextTxt" x="60" y="60" text-anchor="middle" fill="#e6f4f8" font-size="20" font-weight="700">--:--</text>
+        <text x="60" y="80" text-anchor="middle" fill="#86a4b0" font-size="9">ถึงมื้อถัดไป</text>
+      </svg>
+      <div>
+        <div class="big" id="meals">--</div><div class="note">มื้อที่ให้ไปแล้ว</div>
+        <div class="big" id="feeder" style="font-size:1.1rem;margin-top:10px">--</div><div class="note">เครื่องให้อาหาร</div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2>ถังอาหารกับอาหารในบ่อ</h2>
+    <div class="clockWrap">
+      <svg id="hopper" viewBox="0 0 90 150" aria-label="ถังอาหาร">
+        <defs><clipPath id="funnel"><path d="M5 5 H85 V80 L55 130 H35 L5 80 Z"/></clipPath></defs>
+        <path d="M5 5 H85 V80 L55 130 H35 L5 80 Z" fill="#123241" stroke="#1e4252" stroke-width="2"/>
+        <rect id="feedFill" x="0" y="130" width="90" height="0" fill="#ff8c42" clip-path="url(#funnel)"/>
+        <line x1="5" x2="85" y1="117.5" y2="117.5" stroke="#ef476f" stroke-dasharray="3 3"/>
+        <text id="hopTxt" x="45" y="146" text-anchor="middle" fill="#e6f4f8" font-size="12">-- %</text>
+      </svg>
+      <div style="flex:1">
+        <div class="big" id="mealsLeft">--</div><div class="note">ประมาณว่าเหลืออีกกี่มื้อ (แอปคิดจากที่ลดต่อมื้อ)</div>
+        <div style="margin-top:12px" class="note">อาหารเหลือในบ่อ <b id="pondTxt">--</b></div>
+        <div class="meter"><i id="pondBar"></i></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <h2>สั่งเครื่องให้อาหาร</h2>
+    <div class="row" style="justify-content:flex-start">
+      <button class="feed" data-cmd='{"cmd":"pump","on":1,"sec":5}'>ให้อาหาร 5 วินาที</button>
+      <button class="feed" data-cmd='{"cmd":"pump","on":1,"sec":10}'>ให้อาหาร 10 วินาที</button>
+      <button class="stop" data-cmd='{"cmd":"pump","on":0}'>หยุดให้อาหาร</button>
+      <button data-cmd='{"cmd":"beep"}'>เรียกคนที่บ่อ</button>
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น FED">
+      <button id="sayBtn">ส่งข้อความ</button>
+    </div>
+    <p class="note">อาหารในถังต่ำกว่า 10 %: บอร์ดจะไม่ยอมหมุน ต้องเติมก่อน · หมุนได้นานสุด 30 วินาทีแล้วหยุดเอง</p>
+  </section>
+  <section>
+    <h2>สมุดมื้ออาหาร <button id="csv" style="float:right;padding:4px 10px">ดาวน์โหลด CSV</button></h2>
+    <ul id="book"><li><span>ยังไม่มีมื้อ</span></li></ul>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const MEAL_EVERY_S = 120;            // ตรงกับ MEAL_EVERY_S บนบอร์ด
+const HOPPER_MIN = 10, POND_LOW = 30; // TANK_MIN และ SOIL_DRY บนบอร์ด
+const SILENT_MS = 15000;
+let client = null, lastSeen = 0, team = new URLSearchParams(location.search).get("team") || "";
+let lastPump = null, lastMeals = null, mealStartTank = null;
+const rows = [], drops = [];          // drops = ถังอาหารลดกี่ % ต่อมื้อ
+
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null; }
+function okTeam(t) { return /^team[a-z0-9_]{2,20}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function mmss(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = cls || ""; }
+function banner(text, cls) { const b = $("banner"); b.textContent = text || ""; b.className = text ? "show " + cls : ""; }
+
+function drawClock(nextS) {
+  const frac = nextS === null ? 0 : 1 - Math.min(nextS, MEAL_EVERY_S) / MEAL_EVERY_S;
+  $("ring").setAttribute("stroke-dashoffset", String(314.16 * (1 - frac)));
+  $("ring").setAttribute("stroke", nextS === 0 ? "#ffd166" : "#2ec4b6");
+  $("nextTxt").textContent = nextS === null ? "--:--" : nextS === 0 ? "ถึงแล้ว" : mmss(nextS);
+}
+
+function drawHopper(tank) {
+  const h = tank === null ? 0 : tank * 1.25;
+  $("feedFill").setAttribute("y", String(130 - h));
+  $("feedFill").setAttribute("height", String(h));
+  $("feedFill").setAttribute("fill", tank !== null && tank < HOPPER_MIN ? "#ef476f" : "#ff8c42");
+  $("hopTxt").textContent = tank === null ? "-- %" : tank + " %";
+}
+
+function addMeal(text, sub) {
+  const book = $("book");
+  if (book.firstChild && book.firstChild.dataset.empty !== "0") book.textContent = "";
+  const li = document.createElement("li"), a = document.createElement("b"), b = document.createElement("span");
+  li.dataset.empty = "0";
+  a.textContent = text; b.textContent = sub;
+  li.appendChild(a); li.appendChild(b);
+  book.insertBefore(li, book.firstChild);
+  while (book.children.length > 30) book.removeChild(book.lastChild);
+}
+
+// แอปคิดเอง: ถังอาหารลดมื้อละกี่ % -> เหลืออีกกี่มื้อ
+function mealsLeft(tank) {
+  if (tank === null || drops.length === 0) return "--";
+  const avg = drops.reduce((s, d) => s + d, 0) / drops.length;
+  if (avg <= 0) return "--";
+  return String(Math.max(0, Math.floor((tank - HOPPER_MIN) / avg)));
+}
+
+function onTelemetry(o) {
+  const pond = num(o.soil, 0, 100), tank = num(o.tank, 0, 100);
+  const pump = o.pump === 1 ? 1 : o.pump === 0 ? 0 : null;
+  const meals = num(o.meals, 0, 1e6), nextS = num(o.next_s, 0, 86400);
+  const t = new Date().toLocaleTimeString("th-TH");
+  if (pump === 1 && lastPump === 0) { mealStartTank = tank; addMeal(t + " เริ่มให้อาหาร", "ถังเหลือ " + (tank ?? "-") + " %"); }
+  if (pump === 0 && lastPump === 1) {
+    if (mealStartTank !== null && tank !== null && mealStartTank > tank) { drops.push(mealStartTank - tank); if (drops.length > 5) drops.shift(); }
+    addMeal(t + " หยุด", "ถังเหลือ " + (tank ?? "-") + " %");
+  }
+  if (pump !== null) lastPump = pump;
+  if (meals !== null && lastMeals !== null && meals < lastMeals) addMeal(t + " บอร์ดเริ่มนับใหม่", "มื้อ " + meals);
+  if (meals !== null) lastMeals = meals;
+  drawClock(nextS);
+  drawHopper(tank);
+  $("meals").textContent = meals === null ? "--" : String(meals);
+  $("feeder").textContent = pump === 1 ? "กำลังโปรย" : pump === 0 ? "พัก" : "--";
+  $("feeder").style.color = pump === 1 ? "var(--fish)" : "";
+  $("mealsLeft").textContent = mealsLeft(tank);
+  $("pondTxt").textContent = pond === null ? "--" : pond + " %";
+  $("pondBar").style.width = (pond === null ? 0 : pond) + "%";
+  $("pondBar").style.background = pond !== null && pond < POND_LOW ? "var(--warn)" : "";
+  if (tank !== null && tank < HOPPER_MIN) banner("ถังอาหารเหลือ " + tank + " %: บอร์ดไม่ยอมหมุน ไปเติมอาหารก่อน", "warn");
+  else if (nextS === 0 && pump !== 1) banner("ถึงมื้อแล้ว" + (pond !== null && pond >= POND_LOW ? " แต่อาหารในบ่อยังเหลือ " + pond + " %" : ": กดให้อาหาร"), "warn");
+  else banner("", "");
+  rows.push([new Date().toISOString(), "telemetry", num(o.n, 0, 1e9), pond, tank, pump, meals, nextS, ""]);
+}
+
+function onMessage(kind, o) {
+  if (kind !== "cmd") lastSeen = Date.now();   // คำสั่งของแอปเองไม่ได้แปลว่าบอร์ดยังอยู่
+  if (kind === "telemetry") { onTelemetry(o); return; }
+  const raw = JSON.stringify(o).slice(0, 120);
+  if (kind === "cmd") addMeal(new Date().toLocaleTimeString("th-TH") + " คำสั่ง", raw.slice(0, 40));
+  rows.push([new Date().toISOString(), kind, "", "", "", "", "", "", raw]);
+}
+
+// กฎฝั่งแอป: บอร์ดเงียบ
+setInterval(() => {
+  if (!client || !client.connected || !lastSeen) return;
+  const gap = Date.now() - lastSeen;
+  if (gap > SILENT_MS) banner("บอร์ดที่บ่อเงียบมา " + Math.round(gap / 1000) + " วินาที: ไม่รู้ว่าปลาได้กินหรือยัง", "mute");
+}, 1000);
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "bad"); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  setStatus("กำลังต่อ broker...", "");
+  client = mqtt.connect(BROKER_URL, { clientId: "fishfeed-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว ฟัง " + ROOT + "/" + team + "/#", "ok"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("reconnect", () => setStatus("ต่อใหม่...", ""));
+  client.on("error", () => setStatus("ต่อ broker ไม่ได้", "bad"));
+  client.on("message", (topic, payload) => {
+    let o;
+    try { o = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) return;
+    onMessage(String(topic.split("/").pop()), o);
+  });
+}
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ broker", "bad"); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+}
+
+document.querySelectorAll("button[data-cmd]").forEach((b) => b.addEventListener("click", () => send(JSON.parse(b.dataset.cmd))));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) send({ cmd: "say", text });
+});
+$("go").addEventListener("click", connect);
+$("team").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+
+$("csv").addEventListener("click", () => {
+  const head = ["time", "kind", "n", "pond_food_pct", "hopper_pct", "feeder", "meals", "next_s", "raw"];
+  const esc = (v) => { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(esc).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "fish_feeder_" + (team || "team") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$("team").value = team;
+drawClock(null);
+drawHopper(null);
+if (okTeam(team)) connect();
+</script>
+</body>
+</html>

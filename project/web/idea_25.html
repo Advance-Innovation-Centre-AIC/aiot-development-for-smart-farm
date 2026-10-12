@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<!--
+  idea_25.html - ประตูโกดังกันขโมย: แผงยามโกดัง แผนผังเขตหน้าประตู นับถอยหลังก่อนเฝ้า และชั่วโมงที่มีคนมา
+  เปิดแบบนี้: web/idea_25.html?team=team05  (หรือพิมพ์เลขกลุ่มในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# · ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd · คู่กับบอร์ด project/idea_25_warehouse_door.py
+  event: intruder {count, cm, loiter} · clear {count, loiter} · ack {by, count} · armed {on, delay_s}
+  กฎฝั่งแอป: intruder (หรือ level เป็น 2) = เตือนแดง + เสียง · ไม่มีใครรับทราบเกิน 60 วินาที = เตือนขั้นสอง ให้โทรหายาม
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ยามประตูโกดัง</title>
+<style>
+  :root { --bg:#121417; --card:#1c2026; --line:#3a4048; --ink:#f2f2f2; --dim:#9aa0a8;
+          --haz:#ffc300; --ok:#34c759; --bad:#ff3b30; --info:#5ac8fa; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family: ui-monospace, "SF Mono", Menlo, "Noto Sans Thai", monospace; }
+  .stripe { height:10px; background:repeating-linear-gradient(45deg, var(--haz) 0 14px, #121417 14px 28px); }
+  header { padding:12px 16px 4px; }
+  h1 { margin:0; font-size:1.2rem; color:var(--haz); letter-spacing:.5px; }
+  .sub { color:var(--dim); font-size:.8rem; margin:2px 0 8px; font-family: system-ui, "Noto Sans Thai", sans-serif; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  input, button { font:inherit; border-radius:4px; border:1px solid var(--line); background:#262b33; color:var(--ink); padding:8px 12px; }
+  button { cursor:pointer; } button:hover { border-color:var(--haz); }
+  #status { font-size:.8rem; color:var(--dim); } #status.ok { color:var(--ok); } #status.bad { color:var(--bad); }
+  #alert { margin:8px 16px 0; padding:12px; border:2px solid var(--line); border-radius:4px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #alert b { flex:1 1 200px; font-size:1.1rem; }
+  #alert.safe { border-color:var(--ok); } #alert.wait { border-color:var(--haz); }
+  #alert.thief { border-color:var(--bad); background:#3b1210; animation: blink 1s steps(2) infinite; }
+  #alert.escalate { border-color:var(--bad); background:#5c0f0b; }
+  @keyframes blink { 50% { background:#1c2026; } }
+  #ack { background:var(--bad); border-color:var(--bad); color:#fff; font-weight:700; display:none; }
+  #alert.thief #ack, #alert.escalate #ack { display:inline-block; }
+  main { padding:8px 16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:12px; }
+  h2 { margin:0 0 8px; font-size:.9rem; color:var(--haz); text-transform:uppercase; }
+  svg { width:100%; display:block; }
+  .tiles { display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top:8px; }
+  .tile { border:1px solid var(--line); padding:6px; text-align:center; }
+  .tile b { display:block; font-size:1.3rem; }
+  .tile span { font-size:.7rem; color:var(--dim); }
+  #delayBar { height:10px; background:#262b33; margin-top:6px; } #delayBar i { display:block; height:100%; width:0; background:var(--haz); }
+  #log { width:100%; border-collapse:collapse; font-size:.78rem; }
+  #log { table-layout:fixed; }
+  #log td { border-top:1px dashed var(--line); padding:4px; overflow-wrap:anywhere; }
+  #log td:first-child { width:6.5em; } #log td:nth-child(2) { width:6.5em; }
+  #log tr.intruder td { color:var(--bad); }
+  .note { font-size:.75rem; color:var(--dim); font-family: system-ui, "Noto Sans Thai", sans-serif; }
+  .wide { grid-column: 1 / -1; }
+  footer { padding:12px 16px 28px; color:var(--dim); font-size:.8rem; font-family: system-ui, "Noto Sans Thai", sans-serif; }
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<header>
+  <h1>ยามประตูโกดัง</h1>
+  <p class="sub">โจรงัดประตูโกดังเก็บปุ๋ยและเครื่องมือตอนกลางคืน: หน้านี้บอกทันทีที่มีคนถึงประตู</p>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" autocomplete="off" aria-label="เลขทีม">
+    <button id="go">ต่อ</button>
+    <button id="sound">เปิดเสียง</button>
+    <span id="status">ใส่เลขทีม เช่น team05 แล้วกด ต่อ</span>
+  </div>
+</header>
+<div id="alert" class=""><b id="alertTxt">ยังไม่ได้ยินจากโกดัง</b><button id="ack">รับทราบ</button></div>
+<main>
+  <section>
+    <h2>แผนผังหน้าประตู</h2>
+    <svg id="plan" viewBox="0 0 320 170" aria-label="แผนผังเขตหน้าประตูโกดัง">
+      <rect x="0" y="0" width="320" height="30" fill="#3a4048"/>
+      <text x="160" y="20" fill="#9aa0a8" font-size="11" text-anchor="middle">ผนังโกดัง</text>
+      <rect id="doorRect" x="130" y="22" width="60" height="10" fill="#ffc300"/>
+      <path d="M20 30 A140 130 0 0 0 300 30" fill="#ffc300" fill-opacity=".07" stroke="#ffc300" stroke-dasharray="6 5"/>
+      <path d="M90 30 A70 70 0 0 0 230 30" fill="#ff3b30" fill-opacity=".10" stroke="#ff3b30"/>
+      <text x="160" y="80" fill="#ff3b30" font-size="10" text-anchor="middle">เขตประตู</text>
+      <text x="160" y="140" fill="#ffc300" font-size="10" text-anchor="middle">เขตหน้าโกดัง (2 เท่า)</text>
+      <g id="dots"></g>
+    </svg>
+    <div class="tiles">
+      <div class="tile"><b id="count">0</b><span>ถึงประตู</span></div>
+      <div class="tile"><b id="loiter">0</b><span>เดินผ่านหน้าโกดัง</span></div>
+      <div class="tile"><b id="armed">--</b><span>ระบบเฝ้า</span></div>
+    </div>
+  </section>
+  <section>
+    <h2>นับถอยหลังก่อนเฝ้า</h2>
+    <div id="delayTxt" class="note">เปิดเฝ้าแล้วบอร์ดรอให้คนงานออกก่อน (delay_s) หน้านี้นับตาม</div>
+    <div id="delayBar"><i></i></div>
+    <h2 style="margin-top:14px">ชั่วโมงที่มีคนถึงประตู</h2>
+    <svg id="hours" viewBox="0 0 312 80" aria-label="จำนวนครั้งตามชั่วโมง"></svg>
+    <div class="note">แท่งแดง = จำนวนครั้งในชั่วโมงนั้น (เวลาเครื่องนี้) ใช้ดูว่าควรเปิดเฝ้าช่วงไหน</div>
+  </section>
+  <section class="wide">
+    <h2>สมุดยาม <button id="csv" style="float:right;padding:4px 10px">ดาวน์โหลด CSV</button></h2>
+    <table id="log"><tbody></tbody></table>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const ESCALATE_MS = 60000;           // ไม่มีใครรับทราบนานเกินนี้ = เตือนขั้นสอง
+const REF_CM = 150;                  // เขตประตูกว้างสุดบนบอร์ด (MIN_CM + SPAN_CM) บอร์ดไม่ส่งค่าที่ตั้งจริงมา
+let client = null, team = new URLSearchParams(location.search).get("team") || "";
+let audio = null, thiefAt = 0, delayEnd = 0, delayLen = 0;
+const hours = new Array(24).fill(0), rows = [], dots = [];
+
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null; }
+function okTeam(t) { return /^team[a-z0-9_]{2,20}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = cls || ""; }
+function setAlert(cls, text) { $("alert").className = cls; $("alertTxt").textContent = text; }
+
+function beep(freqs) {
+  if (navigator.vibrate) navigator.vibrate(400);
+  if (!audio) return;
+  freqs.forEach((f, i) => {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = "sawtooth"; o.frequency.value = f; g.gain.value = 0.06;
+    o.connect(g); g.connect(audio.destination);
+    o.start(audio.currentTime + i * 0.2); o.stop(audio.currentTime + i * 0.2 + 0.16);
+  });
+}
+
+// จุดคนบนแผนผัง: ระยะ cm เทียบกับเขตประตู (ไม่รู้ทิศ จึงวางเรียงซ้ายไปขวา)
+function drawDots() {
+  const g = $("dots"), ns = "http://www.w3.org/2000/svg";
+  while (g.firstChild) g.removeChild(g.firstChild);
+  dots.slice(-8).forEach((d, i, arr) => {
+    const r = Math.min(130, 70 * (d.cm / REF_CM));
+    const ang = Math.PI * (0.2 + 0.6 * (arr.length === 1 ? 0.5 : i / (arr.length - 1)));
+    const c = document.createElementNS(ns, "circle");
+    c.setAttribute("cx", String(160 + r * Math.cos(ang)));
+    c.setAttribute("cy", String(30 + r * Math.sin(ang)));
+    c.setAttribute("r", i === arr.length - 1 ? "7" : "4");
+    c.setAttribute("fill", "#ff3b30");
+    c.setAttribute("fill-opacity", String(0.35 + 0.65 * (i + 1) / arr.length));
+    g.appendChild(c);
+  });
+}
+
+function drawHours() {
+  const svg = $("hours"), ns = "http://www.w3.org/2000/svg", max = Math.max(1, ...hours), now = new Date().getHours();
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  hours.forEach((n, h) => {
+    const bh = n ? 8 + 52 * n / max : 2;
+    const r = document.createElementNS(ns, "rect");
+    r.setAttribute("x", String(h * 13)); r.setAttribute("width", "11");
+    r.setAttribute("y", String(62 - bh)); r.setAttribute("height", String(bh));
+    r.setAttribute("fill", n ? "#ff3b30" : h === now ? "#ffc300" : "#3a4048");
+    svg.appendChild(r);
+    if (h % 6 === 0) {
+      const t = document.createElementNS(ns, "text");
+      t.setAttribute("x", String(h * 13)); t.setAttribute("y", "76");
+      t.setAttribute("fill", "#9aa0a8"); t.setAttribute("font-size", "9");
+      t.textContent = String(h).padStart(2, "0") + ":00";
+      svg.appendChild(t);
+    }
+  });
+}
+
+function logRow(kind, text) {
+  const tb = $("log").tBodies[0], tr = document.createElement("tr");
+  tr.className = kind;
+  [new Date().toLocaleTimeString("th-TH"), kind.toUpperCase(), text].forEach((v) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+  tb.insertBefore(tr, tb.firstChild);
+  while (tb.rows.length > 40) tb.deleteRow(-1);
+}
+
+function onEvent(o) {
+  const ev = typeof o.event === "string" ? o.event.slice(0, 20) : "";
+  const count = num(o.count, 0, 1e6), cm = num(o.cm, 0, 2000), loiter = num(o.loiter, 0, 1e6);
+  const level = num(o.level, 0, 9), delay = num(o.delay_s, 0, 3600);
+  if (count !== null) $("count").textContent = String(count);
+  if (loiter !== null) $("loiter").textContent = String(loiter);
+  if (ev === "intruder" || level === 2) {
+    if (!thiefAt) thiefAt = Date.now();
+    if (delayEnd) { delayEnd = 0; $("delayTxt").textContent = "เริ่มเฝ้าแล้ว"; }   // บอร์ดเตือนได้ = พ้นช่วงรอแล้ว
+    setAlert("thief", "มีคนที่ประตูโกดัง! ครั้งที่ " + (count ?? "-") + " ระยะ " + (cm ?? "-") + " cm");
+    if (cm !== null) { dots.push({ cm }); drawDots(); }
+    hours[new Date().getHours()] += 1;
+    drawHours();
+    beep([988, 740, 988, 740]);
+    logRow("intruder", "ถึงประตู ครั้งที่ " + (count ?? "-") + " ระยะ " + (cm ?? "-") + " cm เดินผ่านก่อนหน้า " + (loiter ?? "-"));
+  } else if (ev === "clear") {
+    logRow("clear", "คนออกจากเขตประตูแล้ว" + (thiefAt ? " (ยังไม่มีใครรับทราบ)" : ""));
+    if (!thiefAt) setAlert("safe", "เฝ้าอยู่ ปลอดภัย");
+  } else if (ev === "ack") {
+    thiefAt = 0;
+    setAlert("safe", "รับทราบแล้ว (" + String(o.by ?? "-").slice(0, 8) + ")");
+    logRow("ack", "รับทราบโดย " + String(o.by ?? "-").slice(0, 8));
+  } else if (ev === "armed") {
+    const on = o.on === 1 ? 1 : o.on === 0 ? 0 : null;
+    $("armed").textContent = on === 1 ? "เปิด" : on === 0 ? "ปิด" : "--";
+    thiefAt = 0; delayEnd = 0;          // ปิดเฝ้า = หยุดนับถอยหลังด้วย ไม่งั้นนับจบแล้วขึ้นว่าเฝ้าอยู่
+    if (on === 1 && delay) { delayLen = delay; delayEnd = Date.now() + delay * 1000; setAlert("wait", "เปิดเฝ้าแล้ว รอคนงานออก " + delay + " วินาที"); }
+    else {
+      $("delayTxt").textContent = on === 1 ? "เริ่มเฝ้าแล้ว" : "ปิดเฝ้าอยู่ ไม่นับถอยหลัง";
+      setAlert(on === 1 ? "safe" : "", on === 1 ? "เฝ้าอยู่ ปลอดภัย" : "ปิดระบบเฝ้า (คนงานอยู่ในโกดัง)");
+    }
+    logRow("armed", on === 1 ? "เปิดเฝ้า รอ " + (delay ?? 0) + " วินาที" : "ปิดเฝ้า");
+  } else {
+    logRow("other", JSON.stringify(o).slice(0, 80));
+  }
+  rows.push([new Date().toISOString(), ev, count, cm, loiter, delay, o.by === undefined ? "" : String(o.by).slice(0, 8), o.on === 1 || o.on === 0 ? o.on : ""]);
+}
+
+// นับถอยหลังก่อนเฝ้า + เตือนขั้นสอง
+setInterval(() => {
+  const left = delayEnd ? Math.max(0, Math.ceil((delayEnd - Date.now()) / 1000)) : 0;
+  $("delayBar").firstElementChild.style.width = (delayLen && left ? 100 * left / delayLen : 0) + "%";
+  if (delayEnd && left) $("delayTxt").textContent = "ระบบจะเริ่มเฝ้าในอีก " + left + " วินาที: ใครยังอยู่ในโกดังให้ออก";
+  else if (delayEnd) { delayEnd = 0; $("delayTxt").textContent = "เริ่มเฝ้าแล้ว"; if (!thiefAt) setAlert("safe", "เฝ้าอยู่ ปลอดภัย"); }
+  if (thiefAt && Date.now() - thiefAt > ESCALATE_MS && $("alert").className !== "escalate") {
+    setAlert("escalate", "ไม่มีใครรับทราบเกิน 1 นาที: โทรหายามหรือเจ้าของโกดังเดี๋ยวนี้");
+    beep([1200, 1200, 1200]);
+  }
+}, 500);
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "bad"); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  setStatus("กำลังต่อ broker...", "");
+  client = mqtt.connect(BROKER_URL, { clientId: "whdoor-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว ฟัง " + ROOT + "/" + team + "/#", "ok"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("reconnect", () => setStatus("ต่อใหม่...", ""));
+  client.on("error", () => setStatus("ต่อ broker ไม่ได้", "bad"));
+  client.on("message", (topic, payload) => {
+    let o;
+    try { o = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) return;
+    if (String(topic.split("/").pop()) === "event") onEvent(o);
+  });
+}
+
+$("ack").addEventListener("click", () => {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ broker", "bad"); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify({ cmd: "ack" }));
+  thiefAt = 0;                         // คนกดรับทราบแล้ว: ไม่เตือนขั้นสอง (บอร์ดตอบ ack เฉพาะตอนคนยังอยู่ที่ประตู)
+  setAlert("wait", "ส่งรับทราบแล้ว รอบอร์ดตอบ");
+});
+$("sound").addEventListener("click", () => {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); beep([880]); $("sound").textContent = "เสียงเปิดอยู่"; }
+  catch (e) { setStatus("เบราว์เซอร์นี้เล่นเสียงไม่ได้", "bad"); }
+});
+$("go").addEventListener("click", connect);
+$("team").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+
+$("csv").addEventListener("click", () => {
+  const head = ["time", "event", "count", "cm", "loiter", "delay_s", "by", "on"];
+  const esc = (v) => { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(esc).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "warehouse_door_" + (team || "team") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$("team").value = team;
+drawHours();
+if (okTeam(team)) connect();
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<!--
+  idea_21.html - พัดลมโรงเรือน: แผงเฝ้าพัดลมระบายอากาศ (คู่กับ project/idea_21_fan_doctor.py)
+  เปิดแบบนี้: web/idea_21.html?team=team05
+  ฟัง bento-aiot/<ทีม>/# (telemetry + event "vib") ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์ของเรื่องนี้: spikes (สั่นกระตุก) hot_s (วินาทีที่ร้อนแต่พัดลมหยุด)  soil = VR1 ความร้อน %  tank = ไฟสำรอง
+  กฎฝั่งแอป: ยังร้อน (HOT_C) และ hot_s ถึง HOT_ALERT_S = เตือน "เปิดหน้าต่าง/ม่าน" เพราะพัดลมช่วยไม่ได้
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>พัดลมโรงเรือน</title>
+<style>
+  :root { --bg:#f1f8ee; --card:#ffffff; --ink:#13241a; --dim:#5b7360; --line:#d4e6d0; --accent:#3f9b55; --ok:#3f9b55; --warn:#c99a12; --bad:#d4483a; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0c1810; --card:#13241a; --ink:#eaf7e4; --dim:#93a88c; --line:#24402c; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  h1 { font-size:1.25rem; margin:0; flex:1 1 100%; }
+  input, button { font:inherit; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; }
+  button.go { background:var(--accent); color:#fff; border:0; }
+  button.stop { background:var(--bad); color:#fff; border:0; }
+  .pill { padding:4px 10px; border-radius:99px; font-size:.85rem; background:var(--line); }
+  .pill.on { background:var(--ok); color:#fff; } .pill.alarm { background:var(--bad); color:#fff; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--dim); font-size:.9rem; }
+  .banner { display:none; margin:0 16px; padding:12px 14px; border-radius:12px; background:var(--bad); color:#fff; font-weight:700; }
+  .banner.show { display:block; }
+  svg { width:100%; height:auto; display:block; }
+  footer { padding:16px; font-size:.85rem; color:var(--dim); }
+  header { background:linear-gradient(90deg,var(--accent),transparent); }
+  main { padding:12px 16px; display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); }
+  main > * { min-width:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px; border-left:6px solid var(--accent); }
+  .card h2 { margin:0 0 8px; font-size:1rem; }
+  .fanbox { display:flex; gap:16px; align-items:center; }
+  .fanbox svg { width:120px; flex:none; }
+  #blades { transform-origin:60px 60px; }
+  #blades.spin { animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .big { font-size:1.5rem; font-weight:700; }
+  .stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat { background:var(--bg); border-radius:6px; padding:8px; }
+  .stat b { display:block; font-size:1.4rem; }
+  ol { margin:0; padding-left:20px; max-height:200px; overflow:auto; }
+  li.bad { color:var(--bad); } li.ok { color:var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <h1>แผงพัดลมโรงเรือน - ฟังใบพัดจากมือถือ</h1>
+  <input id="team" size="10" value="teamXX" aria-label="เลขทีม เช่น team05">
+  <button id="connect" class="go">ต่อ</button>
+  <span id="status" class="pill">ยังไม่ต่อ</span>
+</header>
+<div id="banner" class="banner" role="alert"></div>
+<main>
+  <section class="card">
+    <h2>พัดลม</h2>
+    <div class="fanbox">
+      <svg viewBox="0 0 120 120" aria-label="พัดลม">
+        <circle cx="60" cy="60" r="56" fill="none" stroke="var(--line)" stroke-width="6"/>
+        <g id="blades" fill="var(--accent)">
+          <ellipse cx="60" cy="30" rx="12" ry="26"/>
+          <ellipse cx="60" cy="30" rx="12" ry="26" transform="rotate(120 60 60)"/>
+          <ellipse cx="60" cy="30" rx="12" ry="26" transform="rotate(240 60 60)"/>
+        </g>
+        <circle cx="60" cy="60" r="8" fill="var(--ink)"/>
+      </svg>
+      <div>
+        <div class="big" id="fan">--</div>
+        <div class="muted" id="verdict">รอข้อมูล</div>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>กราฟสั่นใบพัด (เหมือนเครื่องวัดแผ่นดินไหว)</h2>
+    <svg viewBox="0 0 300 110" aria-label="กราฟสั่น">
+      <rect x="0" y="0" width="300" height="110" fill="none" stroke="var(--line)"/>
+      <line x1="0" y1="55" x2="300" y2="55" stroke="var(--line)"/>
+      <path id="seis" fill="none" stroke="var(--accent)" stroke-width="1.5" d=""/>
+    </svg>
+    <div class="muted">เส้นยิ่งแกว่งกว้าง ใบพัดยิ่งสั่น (80 จุดล่าสุด)</div>
+  </section>
+  <section class="card">
+    <h2>ความร้อนกับไฟสำรอง</h2>
+    <div class="stats">
+      <div class="stat"><span class="muted">ความร้อน (VR1)</span><b id="temp">-- C</b></div>
+      <div class="stat"><span class="muted">ร้อนแต่พัดลมหยุด</span><b id="hot">--</b></div>
+      <div class="stat"><span class="muted">สั่นกระตุก</span><b id="spikes">--</b></div>
+      <div class="stat"><span class="muted">ไฟสำรอง (VR4)</span><b id="tank">-- %</b></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>สั่งพัดลม</h2>
+    <div class="row">
+      <button class="go" data-sec="10">เปิดพัดลม 10 วิ</button>
+      <button class="go" data-sec="30">เปิดพัดลม 30 วิ</button>
+      <button class="stop" id="off">ปิดพัดลม</button>
+      <button id="beep">เรียกคนที่โรงเรือน</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น FIX FAN">
+      <button id="sayBtn">ขึ้นจอไฟ</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>บันทึกเหตุการณ์</h2>
+    <ol id="log"><li class="muted">ยังไม่มีเหตุการณ์</li></ol>
+    <div class="row" style="margin-top:8px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <button id="clear">ล้างข้อมูล</button>
+      <span class="muted" id="rows">0 แถว</span>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const $ = (id) => document.getElementById(id);
+let client = null;
+let team = new URLSearchParams(location.search).get("team") || "teamXX";
+let lastAt = 0;
+const rows = [];
+$("team").value = team;
+
+// ตัวเลขที่ใช้ได้เท่านั้น อย่างอื่น (null, ข้อความ, NaN) = null
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function show(v, digits) { return v === null ? "--" : (digits ? v.toFixed(digits) : String(Math.round(v))); }
+function setStatus(text, cls) { $("status").textContent = text; $("status").className = "pill " + (cls || ""); }
+function validTeam(t) { return /^team[0-9a-z_]{2,24}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function banner(text) { $("banner").textContent = text || ""; $("banner").className = "banner" + (text ? " show" : ""); }
+function svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function addLog(text, cls) {
+  const ol = $("log");
+  if (ol.firstElementChild && ol.firstElementChild.classList.contains("muted")) ol.textContent = "";
+  const li = document.createElement("li");
+  li.className = cls || "";
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  " + text;
+  ol.prepend(li);
+  while (ol.children.length > 50) ol.lastElementChild.remove();
+}
+
+const HOT_ALERT_S = 60;        // กฎฝั่งแอป: ร้อนแต่พัดลมหยุดนานเท่านี้ = เตือน
+const HOT_C = 35;              // ต้องตรงกับ HOT_C ในบอร์ด
+const SEIS_N = 80;
+const CSV_COLS = ["time", "n", "temp_c", "soil", "tank", "pump", "vib", "vib_bad", "spikes", "hot_s"];
+const CSV_NAME = "fan_doctor";
+const seis = [];
+let lastSpikes = null;
+
+function tempC(pct) { return pct === null ? null : 20 + Math.floor(pct * 25 / 100); }   // ปัดลงแบบบอร์ด
+function mmss(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+
+function drawSeis() {
+  // วาดเป็นคลื่นขึ้นลงสลับกัน ความสูง = ค่าสั่น
+  const max = Math.max(0.05, ...seis);
+  let d = "";
+  seis.forEach((v, i) => {
+    const x = (i * 300 / (SEIS_N - 1)).toFixed(1);
+    const y = (55 + (i % 2 ? 1 : -1) * (v / max) * 50).toFixed(1);
+    d += (i ? " L" : "M") + x + " " + y;
+  });
+  $("seis").setAttribute("d", d);
+}
+
+function onTelemetry(d) {
+  const vib = num(d.vib), bad = d.vib_bad === 1, pump = num(d.pump), soil = num(d.soil), tank = num(d.tank);
+  const spikes = num(d.spikes), hot = num(d.hot_s), t = tempC(soil);
+  if (vib !== null) { seis.push(vib); if (seis.length > SEIS_N) seis.shift(); drawSeis(); }
+  $("blades").classList.toggle("spin", pump === 1);
+  $("blades").setAttribute("fill", bad ? "var(--bad)" : "var(--accent)");
+  $("fan").textContent = pump === 1 ? "กำลังหมุน" : (pump === 0 ? "หยุด" : "--");
+  $("verdict").textContent = vib === null ? "บอร์ดกำลังเรียนรู้ใบพัดปกติ" : (bad ? "ใบพัดผิดปกติ! ห้ามเปิด" : "ใบพัดหมุนเรียบ ค่าสั่น " + show(vib, 2));
+  $("temp").textContent = show(t) + " C";
+  $("hot").textContent = hot === null ? "--" : mmss(Math.max(0, Math.floor(hot)));
+  $("spikes").textContent = show(spikes) + " ครั้ง";
+  $("tank").textContent = show(tank) + " %";
+  if (spikes !== null && lastSpikes !== null && spikes > lastSpikes) addLog("สั่นกระตุก +" + (spikes - lastSpikes), "");
+  if (spikes !== null) lastSpikes = spikes;
+  // กฎฝั่งแอป: ตอนนี้ยังร้อน พัดลมหยุด และสะสมนานแล้ว
+  banner(hot !== null && hot >= HOT_ALERT_S && t !== null && t >= HOT_C && pump !== 1 ? "ร้อนแต่พัดลมหยุด " + mmss(Math.floor(hot)) + " เปิดหน้าต่าง/ม่านพรางแสงก่อนพืชเฉา" : "");
+  rows.push([new Date().toISOString(), num(d.n), t, soil, tank, pump, vib, bad ? 1 : 0, spikes, hot]);
+}
+
+function onVibEvent(bad, vib) {
+  addLog((bad ? "ใบพัดสั่นผิดปกติ พัดลมหยุด" : "ใบพัดกลับมาปกติ") + (vib === null ? "" : " (" + vib.toFixed(2) + ")"), bad ? "bad" : "ok");
+}
+
+function resetView() { seis.length = 0; drawSeis(); lastSpikes = null; banner(""); }
+
+// คำสั่งห่างกันอย่างน้อย 400 ms เพราะกล่องรับของบอร์ดมีช่องเดียว
+const queue = []; let sending = false;
+function toBoard(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ ส่งไม่ได้", "alarm"); return; }
+  queue.push(JSON.stringify(obj));
+  if (!sending) drain();
+}
+function drain() {
+  const next = queue.shift();
+  if (next === undefined) { sending = false; return; }
+  sending = true;
+  client.publish(ROOT + "/" + team + "/cmd", next);
+  setTimeout(drain, 400);
+}
+
+function downloadCsv() {
+  const cell = (v) => (v === null || v === undefined) ? "" : '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [CSV_COLS.join(",")].concat(rows.map((r) => r.map(cell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = CSV_NAME + "_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!validTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "alarm"); $("team").focus(); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ (ต่อเน็ตก่อน)", "alarm"); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "fan-doc-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, "on"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", "alarm"));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!d || typeof d !== "object" || Array.isArray(d)) return;
+    if (topic.endsWith("/telemetry")) { lastAt = Date.now(); onTelemetry(d); $("rows").textContent = rows.length + " แถว"; }
+    else if (topic.endsWith("/event") && d.event === "vib") onVibEvent(d.bad === 1, num(d.vib));
+  });
+}
+
+// บอร์ดเงียบเกิน SILENT_S วินาที
+setInterval(() => {
+  if (!client || !client.connected || !lastAt) return;
+  const quiet = Math.round((Date.now() - lastAt) / 1000);
+  if (quiet > SILENT_S) setStatus("โรงเรือนเงียบ " + quiet + " วิ", "alarm");
+  else setStatus("ต่อแล้ว " + team, "on");
+}, 1000);
+
+// ปุ่มคำสั่ง: data-sec = เปิดกี่วินาที
+document.querySelectorAll("button[data-sec]").forEach((b) => {
+  b.addEventListener("click", () => toBoard({ cmd: "pump", on: 1, sec: Number(b.dataset.sec) }));
+});
+$("off").addEventListener("click", () => toBoard({ cmd: "pump", on: 0 }));
+$("beep").addEventListener("click", () => toBoard({ cmd: "beep" }));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) toBoard({ cmd: "say", text: text });
+});
+$("csv").addEventListener("click", downloadCsv);
+$("clear").addEventListener("click", () => { rows.length = 0; $("rows").textContent = "0 แถว"; resetView(); });
+$("connect").addEventListener("click", connect);
+resetView();
+if (validTeam(team)) connect(); else setStatus("ใส่เลขทีมแล้วกด ต่อ", "alarm");
+</script>
+</body>
+</html>

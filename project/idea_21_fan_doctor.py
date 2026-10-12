@@ -1,14 +1,10 @@
 # idea_21_fan_doctor.py - พัดลมโรงเรือนสั่นผิดปกติ: สั่นผิดปกติ = หยุดพัดลม ไม่รับคำสั่งเปิด แจ้งมือถือ
-# แม่แบบ C = idea_7_pump_doctor.py · สร้างจาก project/stories.json ด้วย tools/gen_stories.py (คัดลอกไปแก้ ไม่แก้ไฟล์นี้ตรง ๆ)
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
-# ต่อยอดจาก s2/sf2_03_remote_pump.py + กฎการสั่นย่อจาก s3/sf3_03_pump_vibration.py
-# เปลี่ยน: Vib, on_vib, การ์ดการสั่น, send() ใช้ทั้ง telemetry และ event
-# ทีมต้องแก้ 3 อย่าง: 1) K_BAD CONFIRM_N จากการลองเอง 2) หัวจอและป้าย 3) คำบนจอไฟ RGB และเสียง
-# MQTT: ของ sf2_03 ครบ (สัญญา 3.2, 4) + telemetry "vib" (m/s^2, null ตอนเริ่ม) "vib_bad" 0/1
-#   + event {"id":"team05","event":"vib","bad":1,"vib":0.84} ตอนเปลี่ยน · vib_bad 1 = ไม่รับคำสั่งเปิด
-# เกณฑ์ = ค่าสาธิต · ลองเล่น: วางนิ่ง 5 วิแรก แล้วเขย่าบอร์ด (ใบพัดเสีย/น็อตหลวม)
-# ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM (เลขกลุ่ม)
-# กับดัก    : get_message() ไม่บล็อก กล่องรับมีช่องเดียว ต้องถามทุก 100 ms
+# ต่อยอดจาก s2/sf2_03 + กฎการสั่นจาก s3/sf3_03 / จอ: กราฟสั่นใบพัดแบบเครื่องวัดแผ่นดินไหว + วงแหวนพัดลม
+# MQTT: ของ sf2_03 ครบ + telemetry "vib" (null ตอนเริ่ม) "vib_bad" 0/1 + event "vib" ตอนเปลี่ยน
+#   + "spikes" ครั้งที่สั่นกระตุกเกินเส้น  "hot_s" วินาทีที่ร้อนเกิน HOT_C ตอนพัดลมหยุด
+#   vib_bad 1 = ไม่รับคำสั่งเปิด / VR1 = ความร้อน (soil ยังส่งเป็น %) VR4 = ไฟสำรอง (tank)
+# ลองเล่น: วางนิ่ง 5 วิแรก แล้วเคาะหรือเขย่าบอร์ด (ใบพัดเสีย/น็อตหลวม) / แก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM
 
 import buttons
 import gpio
@@ -23,8 +19,8 @@ import ui
 import wifi
 
 # ---- 1) ตั้งค่า ----
-WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"  # อังกฤษ/ตัวเลข ไม่มีเว้นวรรค
-WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"  # อย่าส่งไฟล์ที่มีรหัสจริงให้ใคร
+WIFI_SSID = "<ชื่อ Hotspot ของกลุ่ม>"
+WIFI_PASS = "<รหัส Hotspot ของกลุ่ม>"
 TEAM = "teamXX"
 
 BROKER = "broker.hivemq.com"
@@ -34,16 +30,19 @@ TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
 BTN_NAMES = ("SW5", "SW6")
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30
-TANK_MIN = 10  # ถังต่ำกว่านี้ห้ามปั๊ม
+TANK_MIN = 10  # ไฟสำรอง ต่ำกว่านี้ห้ามเปิด
 LEARN_MS, WIN = 5000, 10
 K_BAD, MIN_BASE, CONFIRM_N = 4.0, 0.05, 5  # ค่าสาธิต
+HOT_C = 35  # ร้อนเกินนี้ แต่พัดลมหยุด = นับเวลาเสี่ยง
+CHART_MAX = 100  # กราฟ: ค่าสั่น x100
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
 SPEAKER = 40
 VOLUME = 25
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
+# ธีมโรงเรือน: เขียวใบไม้
+COL_TEXT, COL_DIM = 0xEAF7E4, 0x93A88C
+COL_CARD = 0x13241A
+COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x7BD88F, 0xF4D35E, 0xEE6352, 0x9AD1D4
 
 
 # ---- 2) ฮาร์ดแวร์ ----
@@ -55,6 +54,7 @@ def beep(name):
     for n in TUNES[name]:
         ui.tone(n, ui.WAVE_SINE, VOLUME, 90)
         time.sleep_ms(100)
+
 
 def knob_percent(i):
     return pots.read(i) * 100 // 4095
@@ -123,7 +123,8 @@ def pump_seconds(sec):
 
 
 def ascii_only(text):
-    return "".join(c for c in str(text) if " " <= c <= "~")[:20]
+    # จอไฟ RGB รับเฉพาะอักษรอังกฤษตัวใหญ่
+    return "".join(c for c in str(text) if " " <= c <= "~")[:20].upper()
 
 
 def handle_command(raw, tank, bad):
@@ -136,18 +137,18 @@ def handle_command(raw, tank, bad):
         return "deny", 0, "อ่านคำสั่งไม่ได้", COL_BAD
     act, on = cmd.get("cmd", ""), cmd.get("on", 1)
     if act == "led" and cmd.get("n", 0) != 0:
-        return "deny", 0, "ไม่มีพัดลมตัวที่ " + str(cmd.get("n")), COL_WARN
+        return "deny", 0, "ไม่มีพัดลมตัวที่ " + str(cmd.get("n"))[:6], COL_WARN
     if act in ("led", "pump") and not on:
         return "off", 0, "สั่งปิดพัดลม", COL_OK
     if act in ("led", "pump") and bad:
-        return "deny", 0, "สั่นผิดปกติ ไม่เปิด", COL_BAD
+        return "deny", 0, "ใบพัดสั่นผิดปกติ ไม่เปิด", COL_BAD
     if act in ("led", "pump") and tank < TANK_MIN:
-        return "deny", 0, "แบตเหลือ %d%% ไม่ยอมเปิด" % tank, COL_BAD
+        return "deny", 0, "ไฟสำรองเหลือ %d%% ไม่ยอมเปิด" % tank, COL_BAD
     if act in ("led", "pump"):
         sec = pump_seconds(cmd.get("sec", PUMP_DEFAULT_S))
         return "on", sec, "เปิดพัดลม %d วิ" % sec, COL_OK
     if act == "beep":
-        return "beep", 0, "เจ้าของฟาร์มเรียก!", COL_INFO
+        return "beep", 0, "เจ้าของเรียกที่โรงเรือน!", COL_INFO
     if act == "say":
         text = ascii_only(cmd.get("text", ""))
         return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_INFO
@@ -159,10 +160,11 @@ def handle_command(raw, tank, bad):
 
 
 class Vib:
-    # ย่อจาก sf3_03
+    # ย่อจาก sf3_03 + นับสั่นกระตุก
     def __init__(self, now):
         self.buf, self.vib, self.base, self.total, self.n = [], None, None, 0.0, 0
         self.t0, self.bad, self.streak = now, False, 0
+        self.over, self.spikes = False, 0
 
     def push(self, m, now):
         self.buf.append(m)
@@ -177,11 +179,24 @@ class Vib:
             if time.ticks_diff(now, self.t0) >= LEARN_MS:
                 self.base = max(MIN_BASE, self.total / self.n)
             return False
+        over = self.vib > self.base * K_BAD
+        if over and not self.over:
+            self.spikes += 1
+        self.over = over
         self.streak = self.streak + 1 if (self.vib > self.base * K_BAD) != self.bad else 0
         if self.streak < CONFIRM_N:
             return False
         self.bad, self.streak = not self.bad, 0
         return True
+
+
+def temp_c(pct):
+    # VR1 0-100 % = 20-45 C
+    return 20 + pct * 25 // 100
+
+
+def mmss(sec):
+    return "%02d:%02d" % (sec // 60, sec % 60)
 
 
 # ---- 4) เครือข่าย ----
@@ -202,11 +217,11 @@ def connect_broker(w):
 
 def connect_farm(w):
     show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
-    ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
+    ui.poll()
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
     linked = connect_broker(w)
-    if not linked or not mqtt.subscribe(TOPIC_CMD):     # subscribe ต้องมาหลัง connect เสมอ
+    if not linked or not mqtt.subscribe(TOPIC_CMD):
         return "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่"
     return ""
 
@@ -233,22 +248,28 @@ def show_link(w, ok):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("พัดลมโรงเรือน ฟังการสั่น", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("พัดลมโรงเรือน ฟังเสียงใบพัด", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
-    w["title"] = card(12, 44, 440, 290, "พัดลมโรงเรือน = ไฟสีฟ้า (คำสั่ง 0)")
-    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)
-    w["pump"] = ui.Label("ปิด", x=90, y=90, color=COL_DIM, value=24)
-    w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
-    w["arc"].color(COL_OK)
-    w["soil"] = ui.Label("อุณหภูมิโรงเรือน (VR1) -- %", x=28, y=150, color=COL_TEXT)
-    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
-    card(462, 44, 318, 150, "ไฟแบตสำรอง (VR4)")
-    w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
-    w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
-    card(462, 204, 318, 130, "การสั่นของพัดลม (IMU)")
-    w["vib"] = ui.Label("วางนิ่ง 5 วิ เรียนรู้ค่าปกติ", x=476, y=240, color=COL_WARN, value=16)
+    card(12, 44, 420, 206, "กราฟสั่นใบพัด (ค่าสั่น x100)")
+    w["chart"] = ui.Chart(x=22, y=74, w=400, h=124, color=COL_OK, min=0, max=CHART_MAX)
+    w["chart"].prop(ui.PROP_CHART_POINTS, 400)
+    w["s_lim"] = w["chart"].add_series(COL_BAD)
+    ui.Label("เขียว = สั่น  แดง = เส้นเสีย", x=22, y=212, color=COL_DIM, value=14)
+    w["spikes"] = ui.Label("กระตุก 0 ครั้ง", x=260, y=210, color=COL_TEXT, value=16)
+    w["title"] = card(442, 44, 338, 206, "พัดลม = ไฟสีฟ้า (คำสั่ง 0)")
+    w["ring"] = ui.Arc(x=456, y=76, w=120, h=120, min=0, max=PUMP_MAX_S, value=0)
+    w["ring"].color(COL_INFO)
+    w["led"] = ui.Led(x=596, y=84, w=36, h=36, color=COL_INFO)
+    w["fan"] = ui.Label("หยุด", x=596, y=130, color=COL_DIM, value=20)
+    w["verdict"] = ui.Label("วางนิ่ง 5 วิ เรียนรู้ใบพัดปกติ", x=456, y=212, color=COL_WARN, value=16)
+    card(12, 260, 420, 84, "ความร้อนในโรงเรือน (VR1)")
+    w["heat_bar"] = ui.Bar(x=24, y=292, w=280, h=18, min=20, max=45, value=20)
+    w["heat"] = ui.Label("-- C", x=318, y=286, color=COL_TEXT)
+    w["hot"] = ui.Label("ร้อนแต่พัดลมหยุด 00:00", x=24, y=316, color=COL_DIM, value=14)
+    card(442, 260, 338, 84, "ไฟสำรอง (VR4)")
+    w["tank_bar"] = ui.Bar(x=456, y=292, w=200, h=18)
+    w["tank"] = ui.Label("-- %", x=670, y=286, color=COL_TEXT)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=456, y=316, color=COL_DIM, value=14)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
@@ -263,19 +284,32 @@ def show_note(w, text, col):
 
 def show_pump(w, sec_left):
     w["led"].value(1 if sec_left else 0)
-    w["pump"].color(COL_OK if sec_left else COL_DIM)
-    w["pump"].text("เปิด อีก %d วิ" % sec_left if sec_left else "ปิด")
-    w["arc"].value(sec_left)
+    w["fan"].color(COL_OK if sec_left else COL_DIM)
+    w["fan"].text("หมุน อีก %d วิ" % sec_left if sec_left else "หยุด")
+    w["ring"].value(sec_left)
 
 
-def show_vib(w, vib):
-    if vib.base is not None:
-        w["vib"].color(COL_BAD if vib.bad else COL_OK)
-        w["vib"].text("%s\nค่าสั่น %.2f ปกติ %.2f" % ("ผิดปกติ! พัดลมหยุด" if vib.bad else "สั่นปกติ", vib.vib, vib.base))
+def show_vib(w, vib, last):
+    # กราฟเลื่อนทุกรอบ ป้ายวาดใหม่เมื่อเปลี่ยน
+    if vib.base is None:
+        return last
+    w["chart"].set_next(0, min(CHART_MAX, int(vib.vib * 100)))
+    w["chart"].set_next(w["s_lim"], min(CHART_MAX, int(vib.base * K_BAD * 100)))
+    if (vib.bad, vib.spikes) == last:
+        return last
+    w["verdict"].color(COL_BAD if vib.bad else COL_OK)
+    w["verdict"].text("ใบพัดผิดปกติ! พัดลมหยุด" if vib.bad else "ใบพัดหมุนเรียบ")
+    w["spikes"].text("กระตุก %d ครั้ง" % vib.spikes)
+    return (vib.bad, vib.spikes)
 
 
-def show_knobs(w, soil, tank):
-    w["soil"].text("อุณหภูมิโรงเรือน (VR1) %d %%" % soil)
+def show_knobs(w, soil, tank, hot_s):
+    t = temp_c(soil)
+    w["heat_bar"].value(t)
+    w["heat"].color(COL_BAD if t >= HOT_C else COL_TEXT)
+    w["heat"].text("%d C" % t)
+    w["hot"].color(COL_WARN if hot_s else COL_DIM)
+    w["hot"].text("ร้อนแต่พัดลมหยุด " + mmss(hot_s))
     w["tank_bar"].value(tank)
     w["tank_bar"].color(COL_INFO if tank >= TANK_MIN else COL_BAD)
     w["tank"].text("%d %%" % tank)
@@ -298,17 +332,17 @@ def stop(w, pump, msg, col=COL_BAD):
 
 
 def on_vib(w, vib, pump):
-    # ดับปั๊ม แจ้งออกเน็ต
+    # ดับพัดลม แจ้งออกเน็ต
     rgbmatrix.scroll("")
     rgbmatrix.clear()
     if vib.bad:
         set_led(pump, False)
         show_pump(w, 0)
-        show_note(w, "สั่นผิดปกติ! หยุดพัดลมแล้ว", COL_BAD)
-        rgbmatrix.scroll("FAN", rgbmatrix.RED, 80)
+        show_note(w, "ใบพัดสั่นผิดปกติ! หยุดพัดลมแล้ว", COL_BAD)
+        rgbmatrix.scroll("FAN STOP", rgbmatrix.RED, 80)
         beep("empty")
     else:
-        show_note(w, "สั่นปกติแล้ว สั่งเปิดได้", COL_OK)
+        show_note(w, "ใบพัดกลับมาปกติ สั่งเปิดได้", COL_OK)
         beep("good")
     if not send(TOPIC_EVENT, {"id": TEAM, "event": "vib", "bad": int(vib.bad), "vib": round(vib.vib, 2)}):
         stop(w, pump, "สายหลุด")
@@ -346,9 +380,9 @@ def main():
     show_link(w, True)
     show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
     stop_btn = Button(1)
-    got = n = pump_ms = pump_t0 = 0
-    shown = -1
-    t_send = t0 = time.ticks_ms()
+    got = n = pump_ms = pump_t0 = hot_ms = 0
+    shown, drawn = -1, None
+    t_send = t_loop = t0 = time.ticks_ms()
     vib = Vib(t0)
     while time.ticks_diff(time.ticks_ms(), t0) < LISTEN_MS:
         now = time.ticks_ms()
@@ -361,28 +395,32 @@ def main():
             on_vib(w, vib, pump)
             pump_ms, shown = 0, 0
         soil, tank = knob_percent(0), knob_percent(3)
-        msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
+        if temp_c(soil) >= HOT_C and not pump_ms:                   # ร้อนแต่พัดลมไม่หมุน
+            hot_ms += time.ticks_diff(now, t_loop)
+        t_loop = now
+        msg = mqtt.get_message()
         if msg is not None:
             got += 1
-            w["title"].text("พัดลมโรงเรือน = ไฟสีฟ้า (คำสั่ง %d)" % got)
+            w["title"].text("พัดลม = ไฟสีฟ้า (คำสั่ง %d)" % got)
             pump_ms, pump_t0 = act_on(w, msg[1], tank, now, pump_ms, pump_t0, vib.bad)
         left = pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
-        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
+        if pump_ms and (left <= 0 or tank < TANK_MIN):
             pump_ms = 0
-            show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "แบตหมด ดับเอง", COL_INFO)
+            show_note(w, "ครบเวลา ดับเอง" if left <= 0 else "ไฟสำรองหมด ดับเอง", COL_INFO)
             beep("stop")
         set_led(pump, pump_ms)
         sec_left = (left + 999) // 1000 if pump_ms else 0
         if sec_left != shown:
             shown = matrix_countdown(sec_left, shown)
             show_pump(w, sec_left)
-        show_knobs(w, soil, tank)
-        show_vib(w, vib)
+        show_knobs(w, soil, tank, hot_ms // 1000)
+        drawn = show_vib(w, vib, drawn)
         if time.ticks_diff(now, t_send) >= SEND_MS:
             t_send, n = now, n + 1
             v = None if vib.vib is None else round(vib.vib, 2)
             if not send(TOPIC, {"id": TEAM, "n": n, "soil": soil, "tank": tank, "pump": 1 if pump_ms else 0,
-                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad)}):
+                                "sim": "soil tank", "vib": v, "vib_bad": int(vib.bad),
+                                "spikes": vib.spikes, "hot_s": hot_ms // 1000}):
                 stop(w, pump, "สายหลุด")
         if not mqtt.is_connected():
             stop(w, pump, "สายหลุด")
@@ -402,6 +440,5 @@ finally:
         pass
 
 # ---- ตาคุณ ----
-# 1) CONFIRM_N = 1 แล้วเคาะโต๊ะทีเดียว เทียบกับ 5
-# 2) ให้ SW6 (Button(0)) = เรียนรู้ค่าปกติใหม่ (vib = Vib(now)) หลังเปลี่ยนใบพัด
-# 3) นับจำนวนครั้งที่สั่นผิดปกติต่อวัน แล้วส่งขึ้นเว็บ ให้ช่างวางแผนซ่อม
+# 1) CONFIRM_N = 1 แล้วเคาะโต๊ะทีเดียว เทียบกับ 5 ดูจำนวน spikes ที่เพิ่ม
+# 2) ร้อนเกิน HOT_C นานเกิน 60 วิ แต่พัดลมเปิดไม่ได้ = ส่ง event แจ้งให้คนมาเปิดหน้าต่าง

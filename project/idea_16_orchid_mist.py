@@ -1,16 +1,15 @@
-# idea_16_orchid_mist.py - พ่นหมอกโรงกล้วยไม้: อากาศแห้ง สั่งพ่นหมอกจากมือถือ ปั๊มหมอกมีเพดานเวลา
-# แม่แบบ B = idea_4_greenhouse.py · สร้างจาก project/stories.json ด้วย tools/gen_stories.py (คัดลอกไปแก้ ไม่แก้ไฟล์นี้ตรง ๆ)
+# idea_16_orchid_mist.py - พ่นหมอกโรงกล้วยไม้: อากาศแห้งตอนบ่าย สั่งพ่นหมอกจากมือถือ ปั๊มหมอกมีเพดานเวลา
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
-# ต่อยอดจาก s2/sf2_03_remote_pump.py (โครงโค้ดเดิม ใช้ diff เทียบได้)
-# เปลี่ยน: ข้อความจอ, ปั๊ม = ปั๊มพ่นหมอก, SOIL_DRY + ป้าย "แห้ง ควรพ่น" ที่ความชื้นอากาศ (VR1 จำลอง)
-# ทีมต้องแก้ 3 อย่าง: 1) SOIL_DRY PUMP_MAX_S จากค่าที่ลองเอง 2) หัวจอและป้าย 3) เสียงใน TUNES
-# MQTT: หัวข้อ/คีย์/คำสั่งเหมือน sf2_03 ทุกตัว (สัญญา 3.2, 4) ไม่มีคีย์ใหม่ · soil = ความชื้นอากาศ (VR1) · tank = น้ำในถังหมอก (VR4)
+# ต่อยอดจาก s2/sf2_03_remote_pump.py · ปั๊ม = ปั๊มหมอก, soil = ความชื้นอากาศ (VR1), tank = ถังหมอก (VR4)
+# ภาพหลัก = วงแหวนใหญ่ความชื้นอากาศ เปลี่ยนสีตามช่วง
+# MQTT: ของเดิม sf2_03 ครบ (สัญญา 3.2, 4) + 2 คีย์ใหม่ที่บอร์ดคิดเอง
+#   bursts = พ่นหมอกไปแล้วกี่รอบ  rh_min = ความชื้นอากาศต่ำสุดตั้งแต่เปิดเครื่อง
+# ทีมต้องแก้ 3 อย่าง: 1) RH_DRY RH_WET PUMP_MAX_S จากค่าที่ลองเอง 2) หัวจอและป้าย 3) เสียงใน TUNES
 # เกณฑ์ = ค่าสาธิตในห้องเรียน ไม่ใช่คำแนะนำทางเกษตร
 #
-# ลองเล่น  : สั่งจาก farm_web.html?team=<เลขกลุ่ม>
+# ลองเล่น  : สั่งจาก project/web/idea_16.html?team=<เลขกลุ่ม>
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM (เลขกลุ่ม)
-# บนจอ     : ไฟปั๊มหมอก วงแหวนนับถอยหลัง หลอดถังน้ำ
-# กับดัก    : get_message() ไม่บล็อก กล่องรับมีช่องเดียว ต้องถามทุก 100 ms
+# กับดัก    : get_message() ไม่บล็อก ต้องถามทุก 100 ms
 
 import buttons
 import gpio
@@ -33,19 +32,21 @@ TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd"
 TOPIC = "bento-aiot/" + TEAM + "/telemetry"
 BTN_NAMES = ("SW5", "SW6")
 PUMP_DEFAULT_S, PUMP_MAX_S = 10, 30    # ใครสั่ง 9999 วินาที ก็ได้แค่ 30
-TANK_MIN = 10  # ต่ำกว่านี้ห้ามพ่น (ปั๊มแห้งพัง)
-SOIL_DRY = 50  # ค่าสาธิต: ความชื้นอากาศ (VR1) ต่ำกว่านี้ขึ้นว่าแห้ง
+TANK_MIN = 10  # ถังหมอกต่ำกว่านี้ห้ามพ่น (ปั๊มแห้งพัง)
+RH_DRY, RH_WET = 50, 90                # ค่าสาธิต: ต่ำกว่า = แห้ง ควรพ่น  สูงกว่า = ชื้นเกิน ระวังรากเน่า
 SEND_MS, POLL_MS, LISTEN_MS = 5000, 100, 1800000
 
 SPEAKER = 40
-VOLUME = 25
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
+VOLUME = 20                            # โรงกล้วยไม้เงียบ เสียงเบากว่าเรื่องอื่น
+# สีกล้วยไม้: ม่วงกลีบ ชมพู ฟ้าหมอก
+COL_TEXT, COL_DIM = 0xF1E8F4, 0x9E8FA6
+COL_CARD = 0x231A2B
+COL_PETAL, COL_PINK, COL_MIST = 0xC77DDB, 0xF08DB8, 0x8FD6F0
+COL_DRY, COL_BAD = 0xF0A030, 0xE5484D
 
 
 # ---- 2) ฮาร์ดแวร์ ----
-TUNES = {"tap": (76,), "start": (72, 79), "stop": (79, 72), "good": (72, 79, 84),
+TUNES = {"tap": (81,), "start": (76, 83), "stop": (83, 76), "good": (76, 81, 88),
          "bad": (84, 76), "empty": (84, 76, 69), "hit": (88,)}
 
 
@@ -101,20 +102,29 @@ def matrix_countdown(sec_left, shown):
         rgbmatrix.scroll("")
         rgbmatrix.clear()
     if sec_left:
-        rgbmatrix.score(sec_left, rgbmatrix.BLUE)
+        rgbmatrix.score(sec_left, rgbmatrix.CYAN)
     return sec_left
 
 
 # ---- 3) สมอง ----
 def pump_seconds(sec):
     # ตรวจเวลาที่สั่ง: ไม่ใช่จำนวนเต็มบวก = ค่าตั้งต้น  เกินเพดาน = เพดาน
-    if isinstance(sec, bool) or not isinstance(sec, int) or sec <= 0:  # true/false ใน JSON ไม่ใช่จำนวนเต็ม (สัญญาข้อ 4) แม้ Python นับ bool เป็น int
+    if isinstance(sec, bool) or not isinstance(sec, int) or sec <= 0:  # bool ไม่ใช่จำนวนเต็ม (สัญญาข้อ 4)
         sec = PUMP_DEFAULT_S
     return min(sec, PUMP_MAX_S)
 
 
 def ascii_only(text):
     return "".join(c for c in str(text) if " " <= c <= "~")[:20]
+
+
+def rh_band(rh):
+    # ช่วงความชื้น -> (คำบนจอ, สี)
+    if rh < RH_DRY:
+        return "แห้ง ควรพ่น", COL_DRY
+    if rh > RH_WET:
+        return "ชื้นเกิน", COL_MIST
+    return "พอดี", COL_PETAL
 
 
 def handle_command(raw, tank):
@@ -127,32 +137,32 @@ def handle_command(raw, tank):
         return "deny", 0, "อ่านคำสั่งไม่ได้", COL_BAD
     act, on = cmd.get("cmd", ""), cmd.get("on", 1)
     if act == "led" and cmd.get("n", 0) != 0:
-        return "deny", 0, "ไม่มีหัวพ่นที่ " + str(cmd.get("n")), COL_WARN
+        return "deny", 0, "ไม่มีหัวพ่นที่ " + str(cmd.get("n"))[:6], COL_DRY
     if act in ("led", "pump") and not on:
-        return "off", 0, "สั่งหยุดพ่นหมอก", COL_OK
+        return "off", 0, "สั่งหยุดพ่นหมอก", COL_PETAL
     if act in ("led", "pump") and tank < TANK_MIN:
-        return "deny", 0, "น้ำในถังเหลือ %d%% ไม่พ่น" % tank, COL_BAD
+        return "deny", 0, "ถังหมอกเหลือ %d%% ไม่พ่น" % tank, COL_BAD
     if act in ("led", "pump"):
         sec = pump_seconds(cmd.get("sec", PUMP_DEFAULT_S))
-        return "on", sec, "พ่นหมอก %d วิ" % sec, COL_OK
+        return "on", sec, "พ่นหมอก %d วิ" % sec, COL_MIST
     if act == "beep":
-        return "beep", 0, "เจ้าของฟาร์มเรียก!", COL_INFO
+        return "beep", 0, "เจ้าของสวนกล้วยไม้เรียก!", COL_PINK
     if act == "say":
         text = ascii_only(cmd.get("text", ""))
-        return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_INFO
+        return "say", text, "ข้อความ: " + (text or "ไม่มีอักษรอังกฤษ"), COL_PINK
     if act == "ack":  # ack เป็นของ sf2_04
-        return "", 0, "ไม่มีแจ้งเตือน (sf2_04)", COL_INFO
+        return "", 0, "ไม่มีแจ้งเตือน (sf2_04)", COL_DIM
     if act != "":
-        return "deny", 0, "ไม่รู้จัก " + str(act)[:12], COL_WARN
-    return "", 0, "", COL_INFO
+        return "deny", 0, "ไม่รู้จัก " + str(act)[:12], COL_DRY
+    return "", 0, "", COL_DIM
 
 
 # ---- 4) เครือข่าย ----
 def connect_broker(w):
-    # broker สาธารณะบางเครื่องไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง ใช้ client_id ใหม่ทุกครั้ง
+    # broker สาธารณะไม่ตอบเป็นพัก ๆ: ลอง 3 ครั้ง client_id ใหม่ทุกครั้ง
     for n in (1, 2, 3):
         if n > 1:
-            show_note(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_WARN)
+            show_note(w, "ลองต่อ broker ใหม่ %d/3" % n, COL_DRY)
             ui.poll()
         try:
             if mqtt.connect(BROKER, port=1883, keepalive=60,
@@ -164,8 +174,8 @@ def connect_broker(w):
 
 
 def connect_farm(w):
-    # บันไดสามขั้น WiFi -> IP -> broker + subscribe ขั้นไหนพังคืนข้อความบอกว่าพังตรงไหน
-    show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
+    # WiFi -> IP -> broker + subscribe ขั้นไหนพังบอกตรงนั้น
+    show_note(w, "ต่อ WiFi... จอนิ่งได้", COL_DRY)
     ui.poll()                          # ป้ายต้องขึ้นจอก่อนบรรทัดที่บล็อก
     if not wifi.connect(WIFI_SSID, WIFI_PASS) or wifi.ip() == "0.0.0.0":
         return "ต่อ WiFi ไม่ได้"
@@ -175,22 +185,18 @@ def connect_farm(w):
     return ""
 
 
-def send_report(n, soil, tank, running):
-    # publish ตอนสายหลุดโยน OSError
+def send_report(n, rh, tank, running, bursts, rh_min):
+    # publish ตอนสายหลุดโยน OSError  (soil = ความชื้นอากาศ เพื่อให้สัญญาเดิมใช้ได้)
     try:
-        mqtt.publish(TOPIC, json.dumps({"id": TEAM, "n": n, "soil": soil, "tank": tank,
-                                        "pump": 1 if running else 0, "sim": "soil tank"}))
+        mqtt.publish(TOPIC, json.dumps({"id": TEAM, "n": n, "soil": rh, "tank": tank,
+                                        "pump": 1 if running else 0, "sim": "soil tank",
+                                        "bursts": bursts, "rh_min": rh_min}))
         return True
     except OSError:
         return False
 
 
 # ---- 5) หน้าจอ ----
-def card(x, y, w, h, title):
-    ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
-
-
 def show_link(w, ok):
     w["mq"].value(1 if ok else 0)
     w["mq_t"].text("MQTT: เชื่อมต่อแล้ว" if ok else "MQTT: ออฟไลน์")
@@ -199,22 +205,26 @@ def show_link(w, ok):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("โรงกล้วยไม้ พ่นหมอกจากมือถือ", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("โรงกล้วยไม้ พ่นหมอกจากมือถือ", x=12, y=6, color=COL_PINK, value=24)
     w = {}
-    w["title"] = card(12, 44, 440, 290, "ปั๊มหมอก = ไฟสีฟ้า (คำสั่ง 0)")
-    w["led"] = ui.Led(x=28, y=80, w=48, h=48, color=COL_INFO)
-    w["pump"] = ui.Label("หยุด", x=90, y=90, color=COL_DIM, value=24)
-    w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
-    w["arc"].color(COL_OK)
-    w["soil"] = ui.Label("ความชื้นอากาศ (VR1) -- %", x=28, y=150, color=COL_TEXT)
-    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = หยุดพ่นฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
-    card(462, 44, 318, 150, "น้ำในถังหมอก (VR4)")
-    w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
-    w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
+    w["arc"] = ui.Arc(x=40, y=60, w=230, h=230, min=0, max=100, value=0)
+    w["arc"].color(COL_PETAL)
+    w["rh"] = ui.Label("-- %", x=112, y=148, color=COL_TEXT, value=28)
+    w["band"] = ui.Label("ความชื้นอากาศ", x=104, y=186, color=COL_DIM, value=16)
+    w["minmax"] = ui.Label("ต่ำสุด -- สูงสุด --", x=40, y=300, color=COL_DIM, value=16)
+    ui.Panel(x=300, y=60, w=480, h=150, color=COL_CARD, min=COL_MIST, max=14, value=1)
+    w["title"] = ui.Label("ปั๊มหมอก (คำสั่ง 0)", x=314, y=66, color=COL_MIST, value=16)
+    w["led"] = ui.Led(x=316, y=100, w=40, h=40, color=COL_MIST)
+    w["pump"] = ui.Label("หยุด", x=370, y=106, color=COL_DIM, value=24)
+    w["left"] = ui.Bar(x=316, y=160, w=448, h=16, min=0, max=PUMP_MAX_S, value=0)
+    w["bursts"] = ui.Label("พ่นแล้ว 0 รอบ", x=316, y=182, color=COL_PINK, value=16)
+    ui.Label("ถังหมอก (VR4)", x=300, y=226, color=COL_DIM, value=16)
+    w["tank_bar"] = ui.Bar(x=420, y=230, w=240, h=16)
+    w["tank"] = ui.Label("-- %", x=672, y=224, color=COL_TEXT, value=16)
+    ui.Label("ถังต่ำกว่า %d%% ไม่พ่น / พ่นนานสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=300, y=262, color=COL_DIM, value=14)
+    ui.Label(BTN_NAMES[0] + " = หยุดพ่นทันที", x=300, y=290, color=COL_DRY, value=14)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_PETAL, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
     ui.poll()
     return w
@@ -227,16 +237,21 @@ def show_note(w, text, col):
 
 def show_pump(w, sec_left):
     w["led"].value(1 if sec_left else 0)
-    w["pump"].color(COL_OK if sec_left else COL_DIM)
+    w["pump"].color(COL_MIST if sec_left else COL_DIM)
     w["pump"].text("กำลังพ่น อีก %d วิ" % sec_left if sec_left else "หยุด")
-    w["arc"].value(sec_left)
+    w["left"].value(sec_left)
 
 
-def show_knobs(w, soil, tank):
-    w["soil"].color(COL_WARN if soil < SOIL_DRY else COL_TEXT)
-    w["soil"].text("ความชื้นอากาศ (VR1) %d %%%s" % (soil, " แห้ง ควรพ่น" if soil < SOIL_DRY else ""))
+def show_air(w, rh, tank, rh_min, rh_max):
+    word, col = rh_band(rh)
+    w["arc"].value(rh)
+    w["arc"].color(col)
+    w["rh"].text("%d %%" % rh)
+    w["band"].color(col)
+    w["band"].text(word)
+    w["minmax"].text("ต่ำสุด %d  สูงสุด %d  (รอบนี้)" % (rh_min, rh_max))
     w["tank_bar"].value(tank)
-    w["tank_bar"].color(COL_INFO if tank >= TANK_MIN else COL_BAD)
+    w["tank_bar"].color(COL_MIST if tank >= TANK_MIN else COL_BAD)
     w["tank"].text("%d %%" % tank)
 
 
@@ -247,7 +262,7 @@ class Stop(Exception):
 
 
 def stop(w, pump, msg, col=COL_BAD):
-    # ดับปั๊มก่อนเสมอ
+    # หยุดปั๊มหมอกก่อนเสมอ
     show_link(w, False)
     set_led(pump, False)
     rgbmatrix.scroll("")
@@ -287,9 +302,10 @@ def main():
     if problem:
         stop(w, pump, problem)
     show_link(w, True)
-    show_note(w, "ฟัง " + TOPIC_CMD, COL_OK)
+    show_note(w, "ฟัง " + TOPIC_CMD, COL_PETAL)
     stop_btn = Button(1)
-    got = n = pump_ms = pump_t0 = 0
+    got = n = pump_ms = pump_t0 = bursts = 0
+    rh_min, rh_max = 100, 0            # ต่ำสุด/สูงสุดตั้งแต่เปิดเครื่อง
     shown = -1
     t_send = t0 = time.ticks_ms()
     while time.ticks_diff(time.ticks_ms(), t0) < LISTEN_MS:
@@ -298,32 +314,37 @@ def main():
             pump_ms = 0
             show_note(w, "หยุดพ่นฉุกเฉิน " + BTN_NAMES[0], COL_BAD)
             beep("stop")
-        soil, tank = knob_percent(0), knob_percent(3)
+        rh, tank = knob_percent(0), knob_percent(3)
+        rh_min, rh_max = min(rh_min, rh), max(rh_max, rh)
         msg = mqtt.get_message()       # None = ยังไม่มีอะไรมา / (topic, bytes)
         if msg is not None:
             got += 1
-            w["title"].text("ปั๊มหมอก = ไฟสีฟ้า (คำสั่ง %d)" % got)
+            w["title"].text("ปั๊มหมอก (คำสั่ง %d)" % got)
+            was_on = pump_ms
             pump_ms, pump_t0 = act_on(w, msg[1], tank, now, pump_ms, pump_t0)
+            if pump_ms and not was_on:  # นับรอบเฉพาะตอนเริ่มพ่นใหม่ สั่งต่อเวลาไม่นับซ้ำ
+                bursts += 1
+                w["bursts"].text("พ่นแล้ว %d รอบ" % bursts)
         left = pump_ms - time.ticks_diff(now, pump_t0) if pump_ms else 0
-        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มดับเองเมื่อครบเวลาหรือน้ำหมดถัง
+        if pump_ms and (left <= 0 or tank < TANK_MIN):   # ปั๊มหมอกหยุดเองเมื่อครบเวลาหรือถังแห้ง
             pump_ms = 0
-            show_note(w, "ครบเวลา หยุดพ่นเอง" if left <= 0 else "ถังแห้ง หยุดพ่นเอง", COL_INFO)
+            show_note(w, "ครบเวลา หยุดพ่นเอง" if left <= 0 else "ถังหมอกแห้ง หยุดพ่นเอง", COL_MIST)
             beep("stop")
         set_led(pump, pump_ms)
         sec_left = (left + 999) // 1000 if pump_ms else 0     # ปัดขึ้น: สั่ง 10 วิ เริ่มนับที่ 10 ไม่ใช่ 11
         if sec_left != shown:
             shown = matrix_countdown(sec_left, shown)
             show_pump(w, sec_left)
-        show_knobs(w, soil, tank)
+        show_air(w, rh, tank, rh_min, rh_max)
         if time.ticks_diff(now, t_send) >= SEND_MS:
             t_send, n = now, n + 1
-            if not send_report(n, soil, tank, pump_ms):
+            if not send_report(n, rh, tank, pump_ms, bursts, rh_min):
                 stop(w, pump, "สายหลุด")
         if not mqtt.is_connected():
             stop(w, pump, "สายหลุด")
         ui.poll()
         wait_ms(POLL_MS, (stop_btn,))
-    stop(w, pump, "เลิกฟัง ได้รับ %d คำสั่ง" % got, COL_DIM)
+    stop(w, pump, "เลิกฟัง พ่นไป %d รอบ" % bursts, COL_DIM)
 
 
 try:
@@ -337,6 +358,5 @@ finally:
         pass
 
 # ---- ตาคุณ ----
-# 1) ส่ง {"cmd":"pump","on":1,"sec":9999} พ่นกี่วิ ทำไมต้องมีเพดาน
-# 2) ระดับ 2: ความชื้นอากาศต่ำกว่า SOIL_DRY = พ่นเองอัตโนมัติ เว้น 60 วิก่อนพ่นซ้ำ (ดู s1/sf1_03_auto_irrigation.py)
-# 3) ใช้ความชื้นจริงจาก SHT40 แทน VR1 (ดู idea_3_silo.py read_climate)
+# 1) ส่ง {"cmd":"pump","on":1,"sec":9999} พ่นกี่วิ ทำไมหมอกต้องมีเพดาน (ใบเปียกนานเกิดเชื้อรา)
+# 2) ระดับ 2: ความชื้นต่ำกว่า RH_DRY = พ่นเองสั้น ๆ 5 วิ แล้วรอ 2 นาทีก่อนพ่นซ้ำ

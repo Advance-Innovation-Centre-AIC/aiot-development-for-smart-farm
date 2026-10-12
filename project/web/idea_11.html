@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<!--
+  idea_11.html - โรงอบลำไย: หน้าเตาบนมือถือ (ปรอทข้างเตา + ขีดไฟเตา) + เป้ารอบอบ + สมุดเตา
+  เปิดแบบนี้: idea_11.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง event ตอนระดับเปลี่ยน) และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด idea_11_longan_dryer.py: level alert temp_c rh sun_c crop + peak_c bake_min
+  กฎฝั่งแอป: level 2 = แถบเตือนค้าง + นับวินาทีที่ยังไม่มีใครรับทราบ (หายเมื่อส่ง ack สำเร็จหรือบอร์ดกลับระดับต่ำ)
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โรงอบลำไย</title>
+<style>
+  :root {
+    --bg: #1c0b0d; --card: #2a1114; --line: #55262a; --ink: #fff0e6; --dim: #d0a39a;
+    --gold: #f4c95d; --ember: #ff7a2f; --ok: #9bc53d; --warn: #f0a024; --bad: #ff4d5e;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: linear-gradient(180deg, #2b0f12 0, var(--bg) 320px); color: var(--ink);
+    font-family: var(--font); line-height: 1.45; min-height: 100vh; }
+  .bricks { height: 12px; background: repeating-linear-gradient(90deg, #7a2e22 0 28px, #1c0b0d 28px 31px); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 14px; }
+  header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  h1 { margin: 0; font-size: 22px; color: var(--gold); letter-spacing: .5px; }
+  .sub { color: var(--dim); font-size: 14px; margin: 2px 0 0; }
+  .chip { padding: 5px 12px; border-radius: 6px; border: 1px dashed var(--line); font-size: 13px; color: var(--dim); }
+  .chip.on { color: var(--ok); border: 1px solid var(--ok); }
+  input, button { font: inherit; border-radius: 6px; border: 1px solid var(--line); background: #140708; color: var(--ink); padding: 8px 12px; min-height: 40px; }
+  button { background: #3d171b; cursor: pointer; font-weight: 600; }
+  button.hot { background: var(--ember); border-color: var(--ember); color: #1c0b0d; }
+  .alarm { display: none; margin: 12px 0; padding: 14px; border-radius: 6px; border-left: 8px solid var(--gold); background: #7d1420; color: #fff; font-weight: 700; }
+  .alarm.show { display: block; animation: glow 1.4s infinite; }
+  @keyframes glow { 50% { background: #a51c2b; } }
+  .top { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; margin-top: 12px; }
+  @media (max-width: 680px) { .top { grid-template-columns: 1fr; } }
+  .top > *, .row > * { min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; }
+  .card h2 { margin: 0 0 8px; font-size: 15px; color: var(--gold); }
+  .kiln { display: grid; grid-template-columns: 92px 1fr; gap: 12px; align-items: start; }
+  .big { font-size: 52px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .flames { display: flex; align-items: flex-end; gap: 4px; height: 44px; margin: 6px 0 2px; }
+  .flames span { flex: 1 1 0; max-width: 16px; border-radius: 8px 8px 2px 2px; background: #3d171b; }
+  .flames span.lit { background: linear-gradient(0deg, var(--bad), var(--ember) 60%, var(--gold)); }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 10px 0 0; font-size: 15px; }
+  dt { color: var(--dim); } dd { margin: 0; font-weight: 700; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .bake { font-size: 44px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .goal { height: 18px; border-radius: 4px; background: #140708; border: 1px solid var(--line); overflow: hidden; margin-top: 8px; }
+  .goal i { display: block; height: 100%; width: 0; background: repeating-linear-gradient(-45deg, var(--gold) 0 10px, #e0b040 10px 20px); }
+  ol.log { list-style: none; padding: 0; margin: 0; max-height: 260px; overflow: auto; }
+  ol.log li { display: grid; grid-template-columns: 64px 64px 1fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .lv0 { color: var(--ok); } .lv1 { color: var(--warn); } .lv2 { color: var(--bad); }
+  .muted { color: var(--dim); font-size: 13px; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="bricks"></div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>โรงอบลำไย</h1>
+      <p class="sub">หน้าเตาบนมือถือ คนคุมเตาไม่ต้องเดินไปเปิดประตูดู</p>
+    </div>
+    <div class="row">
+      <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+      <button id="go">เชื่อมต่อ</button>
+      <span id="conn" class="chip">ยังไม่ต่อ</span>
+    </div>
+  </header>
+
+  <div id="alarm" class="alarm" role="alert">
+    <span id="alarmText">เตาผิดปกติ ไปดูเตาด่วน</span>
+    <span id="alarmAge"></span>
+  </div>
+
+  <div class="top">
+    <section class="card">
+      <h2>หน้าเตา</h2>
+      <div class="kiln">
+        <svg id="thermo" width="92" height="300" viewBox="0 0 92 300" aria-label="ปรอทข้างเตา">
+          <rect x="18" y="10" width="34" height="240" rx="17" fill="#140708" stroke="#55262a" stroke-width="2"/>
+          <circle cx="35" cy="268" r="26" fill="#140708" stroke="#55262a" stroke-width="2"/>
+          <rect id="merc" x="25" y="240" width="20" height="30" rx="10" fill="#d0a39a"/>
+          <circle id="bulb" cx="35" cy="268" r="19" fill="#d0a39a"/>
+          <g id="ticks" fill="#d0a39a" font-size="11"></g>
+          <line id="limLine" x1="12" x2="58" y1="0" y2="0" stroke="#ff4d5e" stroke-width="3" visibility="hidden"/>
+          <line id="peakLine" x1="12" x2="58" y1="0" y2="0" stroke="#f4c95d" stroke-width="2" stroke-dasharray="4 3" visibility="hidden"/>
+        </svg>
+        <div>
+          <div class="row" style="align-items:baseline"><span class="big" id="temp">--.-</span><span class="muted">C ในห้องอบ</span></div>
+          <p id="mood" class="muted" style="margin:6px 0 0">รอข้อความแรกจากบอร์ด</p>
+          <div class="flames" id="flames" aria-label="ไฟเตา"></div>
+          <div class="muted">ไฟเตา (VR3) <b id="fire">--</b> จาก 10</div>
+          <dl>
+            <dt>ความชื้น</dt><dd id="rh">--</dd>
+            <dt>ร้อนสุดรอบนี้</dt><dd id="peak">--</dd>
+            <dt>เกณฑ์ไหม้</dt><dd id="lim">--</dd>
+          </dl>
+        </div>
+      </div>
+      <p class="muted">เส้นแดงที่ปรอท = เกณฑ์ไหม้  เส้นทองประ = ร้อนสุด</p>
+    </section>
+
+    <section class="card">
+      <h2>รอบอบนี้</h2>
+      <div class="row" style="align-items:baseline"><span class="bake" id="bake">--</span><span class="muted">นาทีที่อบพอดี (บอร์ดนับ)</span></div>
+      <div class="goal"><i id="goalBar"></i></div>
+      <p class="muted"><label>เป้าอบพอดี <input id="goalMin" type="number" min="1" max="1440" value="30" style="width:84px"> นาที</label>  <span id="goalTxt"></span></p>
+      <p class="muted">ลำไย: <b id="crop">--</b></p>
+      <h2 style="margin-top:14px">สั่งบอร์ด</h2>
+      <div class="row">
+        <button id="ack" class="hot">รับทราบ (ack)</button>
+        <label class="muted">เกณฑ์ไหม้ใหม่ <input id="thi" type="number" min="16" max="45" value="32" style="width:76px"> C</label>
+        <button id="set">ส่ง set t_hi</button>
+      </div>
+      <p id="cmdMsg" class="muted"></p>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <h2>สมุดเตา <span class="muted">(ล่าสุดอยู่บน)</span></h2>
+    <ol id="log" class="log"></ol>
+    <div class="row" style="margin-top:10px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <span id="other" class="muted"></span>
+    </div>
+  </section>
+
+  <footer>
+    <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+    <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const T_LO = 20, T_HI = 50;                      // ช่วงปรอทบนจอ เท่ากับบนบอร์ด
+const KNOWN = ["id", "crop", "level", "alert", "temp_c", "rh", "sun_c", "peak_c", "bake_min"];
+const CROP_TH = { whole: "ลำไยทั้งลูก", golden: "ลำไยสีทอง", dried: "ลำไยแห้ง" };
+const LIMIT = { whole: 32, golden: 31, dried: 30 };   // T สูง ใน CROPS ของไฟล์บอร์ด (แก้คู่กัน)
+const MOOD = ["อบพอดี ลำไยสีสวย", "ระวัง", "อันตราย"];
+const CAUSE = { hot: "เตาร้อน", cold: "เตาเย็น", wet: "ชื้นค้าง", dry: "แห้งไป" };
+const $ = (id) => document.getElementById(id);
+let client = null, team = new URLSearchParams(location.search).get("team") || "";
+let hotSince = 0, acked = true, userLimit = null, lastBake = null;
+const rows = [];
+$("team").value = team;
+
+function num(v) { return typeof v === "number" && Number.isFinite(v) ? v : null; }
+function yOf(t) { const f = (Math.max(T_LO, Math.min(T_HI, t)) - T_LO) / (T_HI - T_LO); return 250 - f * 230; }
+function hhmm(d) { return d.toTimeString().slice(0, 8); }
+function setStatus(msg, ok) { $("conn").textContent = msg; $("conn").className = ok ? "chip on" : "chip"; }
+function causeTh(a) { return a.split("+").map((k) => CAUSE[k] || "").filter(Boolean).join(" + "); }
+
+function drawTicks() {
+  const g = $("ticks");
+  for (let t = T_LO; t <= T_HI; t += 10) {
+    const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    tx.setAttribute("x", "60"); tx.setAttribute("y", String(yOf(t) + 4));
+    tx.textContent = String(t);
+    g.appendChild(tx);
+  }
+  const box = $("flames");
+  for (let i = 1; i <= 10; i++) { const s = document.createElement("span"); s.style.height = (14 + i * 3) + "px"; box.appendChild(s); }
+}
+
+function marker(line, t) {
+  const y = yOf(t);
+  $(line).setAttribute("y1", y); $(line).setAttribute("y2", y); $(line).setAttribute("visibility", "visible");
+}
+function showLimit(v) { marker("limLine", v); $("lim").textContent = v + " C"; }
+
+function drawThermo(t, level) {
+  const y = yOf(t);
+  const col = ["#9bc53d", "#f0a024", "#ff4d5e"][level] || "#d0a39a";
+  $("merc").setAttribute("y", y); $("merc").setAttribute("height", 268 - y);
+  $("merc").setAttribute("fill", col); $("bulb").setAttribute("fill", col);
+}
+
+function showFire(f) {
+  const n = Math.max(0, Math.min(10, Math.round(f)));
+  Array.from($("flames").children).forEach((s, i) => { s.className = i < n ? "lit" : ""; });
+  $("fire").textContent = String(n);
+}
+
+function showGoal() {
+  const goal = Number($("goalMin").value);
+  const g = Number.isInteger(goal) && goal > 0 ? goal : 30;
+  const pct = lastBake === null ? 0 : Math.min(100, lastBake * 100 / g);
+  $("goalBar").style.width = pct + "%";
+  $("goalTxt").textContent = lastBake === null ? "" : (lastBake >= g ? "ครบเป้าแล้ว กลับลำไยได้" : "อีก " + (g - lastBake) + " นาที");
+}
+
+// กฎฝั่งแอป: level 2 = แถบเตือนค้าง และนับว่าค้างมานานเท่าไรโดยยังไม่มีคนรับทราบ
+function tickAlarm() {
+  const on = hotSince > 0 && !acked;
+  $("alarm").className = on ? "alarm show" : "alarm";
+  if (on) $("alarmAge").textContent = " (ค้าง " + Math.round((Date.now() - hotSince) / 1000) + " วินาที)";
+}
+setInterval(tickAlarm, 1000);
+
+function onEvent(d) {
+  const level = Number.isInteger(d.level) && d.level >= 0 && d.level <= 2 ? d.level : null;
+  const t = num(d.temp_c), rh = num(d.rh), fire = num(d.sun_c), peak = num(d.peak_c), bake = num(d.bake_min);
+  const alert = typeof d.alert === "string" ? d.alert.slice(0, 30) : "";
+  if (t !== null) { $("temp").textContent = t.toFixed(1); drawThermo(t, level === null ? -1 : level); }
+  if (rh !== null) $("rh").textContent = rh.toFixed(0) + " %";
+  if (fire !== null) showFire(fire);
+  if (peak !== null) { $("peak").textContent = peak.toFixed(1) + " C"; marker("peakLine", peak); }
+  if (bake !== null && bake >= 0) { lastBake = Math.floor(bake); $("bake").textContent = String(lastBake); }
+  showGoal();
+  if (typeof d.crop === "string") {
+    $("crop").textContent = CROP_TH[d.crop] || d.crop.slice(0, 20);
+    if (userLimit === null && LIMIT[d.crop]) showLimit(LIMIT[d.crop]);
+  }
+  if (level !== null) {
+    const why = causeTh(alert);
+    $("mood").textContent = MOOD[level] + (level && why ? ": " + why : "");
+    $("mood").className = "lv" + level;
+    if (level === 2) {
+      if (!hotSince) hotSince = Date.now();
+      acked = false;
+      $("alarmText").textContent = alert.includes("hot") ? "เตาร้อนเกิน ลดไฟด่วน ลำไยจะไหม้" : "เตาผิดปกติ (" + (why || alert) + ") ไปดูเตาด่วน";
+    } else { hotSince = 0; acked = true; }
+    tickAlarm();
+  }
+  const extra = Object.keys(d).filter((k) => !KNOWN.includes(k));
+  $("other").textContent = extra.length ? "คีย์ที่หน้านี้ยังไม่รู้จัก: " + extra.slice(0, 6).join(", ") : "";
+  const now = new Date();
+  rows.push([now.toISOString(), level, t, rh, fire, peak, bake, typeof d.alert === "string" ? d.alert : ""]);
+  const li = document.createElement("li");
+  const a = document.createElement("span"); a.textContent = hhmm(now);
+  const b = document.createElement("span"); b.textContent = level === null ? "?" : ["พอดี", "ระวัง", "อันตราย"][level];
+  b.className = level === null ? "" : "lv" + level;
+  const c = document.createElement("span"); c.textContent = (t === null ? "--" : t.toFixed(1) + " C") + (bake === null ? "" : "  อบพอดี " + bake + " นาที");
+  li.append(a, b, c);
+  $("log").prepend(li);
+  while ($("log").children.length > 80) $("log").lastChild.remove();
+}
+
+function send(obj, label) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker คำสั่งยังไม่ถึงบอร์ด"; return false; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + label + " " + hhmm(new Date());
+  return true;
+}
+
+function csvCell(v) { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function downloadCsv() {
+  const head = ["time", "level", "temp_c", "rh", "sun_c", "peak_c", "bake_min", "alert"];
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(csvCell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านไทยได้
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "longan_kiln_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลดไลบรารี MQTT ไม่ได้ ตรวจเน็ต", false); return; }
+  if (client) client.end(true);
+  setStatus("กำลังต่อ " + team, false);
+  client = mqtt.connect(BROKER_URL, { clientId: "longan-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", false));
+  client.on("message", (topic, payload) => {
+    if (!topic.endsWith("/event")) return;
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (d && typeof d === "object" && !Array.isArray(d)) onEvent(d);
+  });
+}
+
+$("go").onclick = connect;
+$("ack").onclick = () => { if (send({ cmd: "ack" }, "รับทราบ")) { acked = true; tickAlarm(); } };
+$("set").onclick = () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v < 16 || v > 45) { $("cmdMsg").textContent = "เกณฑ์ต้องเป็นจำนวนเต็ม 16-45"; return; }
+  if (send({ cmd: "set", t_hi: v }, "t_hi " + v)) { userLimit = v; showLimit(v); }
+};
+$("goalMin").oninput = showGoal;
+$("csv").onclick = downloadCsv;
+drawTicks();
+showLimit(LIMIT.whole);
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<!--
+  idea_5.html - คอกปศุสัตว์กลางคืน: เส้นเวลาของคืนนี้ เตือนเมื่อมีผู้บุกรุก กดรับทราบจากมือถือ
+  เปิดแบบนี้: web/idea_5.html?team=team05  (หรือพิมพ์เลขกลุ่มในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# · ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd · คู่กับบอร์ด project/idea_5_night_pen.py
+  event: intruder {count, cm, shift_s, quiet_s} · clear {count} · ack {by, count} · armed {on}
+  กฎฝั่งแอป: intruder (หรือ level เป็น 2) = เตือนแรงบนจอ + เสียงซ้ำทุก 5 วินาที จนกว่าจะรับทราบ
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เวรยามคอกสัตว์</title>
+<style>
+  :root { --bg:#0b0d24; --card:#161a3a; --line:#2a2f5e; --ink:#e9e7ff; --dim:#8c8fb8;
+          --moon:#f4e3a1; --safe:#6ee7b7; --bad:#ff4d6d; --warn:#ffb86b; --info:#7aa2ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:radial-gradient(circle at 85% 0%, #23285a, var(--bg) 55%); color:var(--ink); font-family: system-ui, "Noto Sans Thai", sans-serif; min-height:100vh; }
+  body.alarm { background:#3a0d1c; }
+  header { padding:14px 16px 4px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  h1 { margin:0; font-size:1.25rem; color:var(--moon); flex:1 1 200px; }
+  input, button { font:inherit; border-radius:10px; border:1px solid var(--line); background:#1d2250; color:var(--ink); padding:8px 12px; }
+  button { cursor:pointer; }
+  #status { width:100%; font-size:.85rem; color:var(--dim); } #status.ok { color:var(--safe); } #status.bad { color:var(--bad); }
+  main { padding:8px 16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; }
+  h2 { margin:0 0 8px; font-size:.95rem; color:var(--moon); }
+  #guard { text-align:center; }
+  #moon { width:84px; height:84px; }
+  #state { font-size:1.6rem; font-weight:700; margin:4px 0; color:var(--safe); }
+  .alarm #state { color:var(--bad); }
+  #ack { display:none; width:100%; margin-top:8px; padding:14px; font-size:1.15rem; font-weight:700; background:var(--bad); border-color:var(--bad); color:#fff; }
+  .alarm #ack { display:block; }
+  .nums { display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; margin-top:10px; }
+  .num { background:#10132e; border-radius:10px; padding:8px; }
+  .num b { display:block; font-size:1.25rem; font-variant-numeric: tabular-nums; }
+  .num span { font-size:.72rem; color:var(--dim); }
+  #line { width:100%; height:110px; display:block; }
+  .legend { font-size:.75rem; color:var(--dim); }
+  #events { width:100%; border-collapse:collapse; font-size:.82rem; }
+  #events td { border-top:1px solid var(--line); padding:5px 4px; }
+  #events tr.intruder td { color:var(--bad); }
+  .wide { grid-column: 1 / -1; }
+  footer { padding:12px 16px 28px; color:var(--dim); font-size:.8rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>เวรยามคอกสัตว์กลางคืน</h1>
+  <input id="team" size="10" placeholder="team05" autocomplete="off" aria-label="เลขทีม">
+  <button id="go">ต่อ</button>
+  <button id="sound">เปิดเสียงเตือน</button>
+  <div id="status">ใส่เลขทีม เช่น team05 แล้วกด ต่อ · กด เปิดเสียงเตือน ก่อนนอน</div>
+</header>
+<main>
+  <section id="guard">
+    <svg id="moon" viewBox="0 0 80 80" aria-hidden="true">
+      <circle id="moonBody" cx="40" cy="40" r="30" fill="#f4e3a1"/>
+      <circle id="shade" cx="54" cy="32" r="26" fill="#161a3a"/>
+    </svg>
+    <div id="state">ยังไม่ได้ยินจากคอก</div>
+    <div id="detail" class="legend">สัตว์ถูกขโมยหรือสัตว์อื่นเข้าคอกตอนกลางคืน: หน้านี้ปลุกคนเฝ้าแทน</div>
+    <button id="ack">รับทราบ ไปดูคอกแล้ว</button>
+    <div class="nums">
+      <div class="num"><b id="count">0</b><span>ผู้บุกรุกคืนนี้</span></div>
+      <div class="num"><b id="quiet">--</b><span>สงบก่อนครั้งล่าสุด</span></div>
+      <div class="num"><b id="armed">--</b><span>ระบบเฝ้า</span></div>
+      <div class="num"><b id="slow">--</b><span>รับทราบช้าสุดคืนนี้ (นาที:วินาที)</span></div>
+    </div>
+  </section>
+  <section>
+    <h2>เส้นเวลาของคืนนี้ (นับจากเริ่มเฝ้า)</h2>
+    <svg id="line" viewBox="0 0 320 110" aria-label="เส้นเวลา"></svg>
+    <div class="legend">แดง = ผู้บุกรุก (สูง = ใกล้รั้ว) · เขียว = ออกไปแล้ว · ฟ้า = รับทราบ · เทา = เปิด/ปิดเฝ้า</div>
+  </section>
+  <section class="wide">
+    <h2>สมุดเวรยาม <button id="csv" style="float:right;padding:4px 10px">ดาวน์โหลด CSV</button></h2>
+    <table id="events"><tbody></tbody></table>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const RING_MS = 5000, MAX_CM = 300;
+let client = null, team = new URLSearchParams(location.search).get("team") || "";
+let alarm = false, audio = null, ringTimer = 0;
+let alarmAt = 0, slowest = 0;        // วัดว่าคนเฝ้าตื่นมารับทราบช้าแค่ไหน
+let shiftRef = null;                 // {shift_s, at} จาก intruder ล่าสุด ใช้วาง event อื่นบนเส้นเวลา
+const t0 = Date.now(), marks = [], rows = [];
+
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? v : null; }
+function okTeam(t) { return /^team[a-z0-9_]{2,20}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function mmss(s) { return Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0"); }
+function setStatus(text, cls) { const s = $("status"); s.textContent = text; s.className = cls || ""; }
+
+// เสียงไซเรนสั้น ๆ (เบราว์เซอร์ต้องให้ผู้ใช้กดก่อนถึงจะเล่นเสียงได้)
+function ring() {
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+  if (!audio) return;
+  [880, 660, 880, 660].forEach((f, i) => {
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = "square"; o.frequency.value = f; g.gain.value = 0.08;
+    o.connect(g); g.connect(audio.destination);
+    o.start(audio.currentTime + i * 0.18); o.stop(audio.currentTime + i * 0.18 + 0.15);
+  });
+}
+
+function setAlarm(on, text) {
+  alarm = on;
+  document.body.classList.toggle("alarm", on);
+  $("moonBody").setAttribute("fill", on ? "#ff4d6d" : "#f4e3a1");   // พระจันทร์แดง = มีเหตุ
+  clearInterval(ringTimer);
+  if (on) { ring(); ringTimer = setInterval(ring, RING_MS); }
+  if (text) $("state").textContent = text;
+}
+
+// เวลาจากเตือนถึงรับทราบ: คนเฝ้าหลับลึกแค่ไหน
+function noteAck() {
+  if (!alarmAt) return;
+  slowest = Math.max(slowest, (Date.now() - alarmAt) / 1000);
+  alarmAt = 0;
+  $("slow").textContent = mmss(slowest);
+}
+
+function nowShift() {
+  if (!shiftRef) return (Date.now() - t0) / 1000;
+  return shiftRef.shift_s + (Date.now() - shiftRef.at) / 1000;
+}
+
+function drawLine() {
+  const svg = $("line"), ns = "http://www.w3.org/2000/svg";
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  const span = Math.max(600, nowShift());       // อย่างน้อย 10 นาที
+  const base = document.createElementNS(ns, "line");
+  base.setAttribute("x1", "10"); base.setAttribute("x2", "310"); base.setAttribute("y1", "90"); base.setAttribute("y2", "90");
+  base.setAttribute("stroke", "#2a2f5e"); base.setAttribute("stroke-width", "2");
+  svg.appendChild(base);
+  [0, 0.5, 1].forEach((f) => {
+    const t = document.createElementNS(ns, "text");
+    t.setAttribute("x", String(10 + f * 290)); t.setAttribute("y", "106"); t.setAttribute("fill", "#8c8fb8");
+    t.setAttribute("font-size", "9"); t.setAttribute("text-anchor", f === 0 ? "start" : f === 1 ? "end" : "middle");
+    t.textContent = mmss(span * f);
+    svg.appendChild(t);
+  });
+  const col = { intruder: "#ff4d6d", clear: "#6ee7b7", ack: "#7aa2ff", armed: "#8c8fb8" };
+  marks.forEach((m) => {
+    const x = 10 + Math.min(1, m.t / span) * 300;
+    const h = m.kind === "intruder" ? 20 + (m.cm === null ? 30 : 60 * (1 - Math.min(m.cm, MAX_CM) / MAX_CM)) : 14;
+    const r = document.createElementNS(ns, "rect");
+    r.setAttribute("x", String(x - 2)); r.setAttribute("width", "4");
+    r.setAttribute("y", String(90 - h)); r.setAttribute("height", String(h));
+    r.setAttribute("fill", col[m.kind] || "#8c8fb8");
+    svg.appendChild(r);
+  });
+}
+
+function logRow(kind, text) {
+  const tb = $("events").tBodies[0], tr = document.createElement("tr");
+  tr.className = kind;
+  [new Date().toLocaleTimeString("th-TH"), text].forEach((v) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+  tb.insertBefore(tr, tb.firstChild);
+  while (tb.rows.length > 40) tb.deleteRow(-1);
+}
+
+function onEvent(o) {
+  const ev = typeof o.event === "string" ? o.event.slice(0, 20) : "";
+  const count = num(o.count, 0, 1e6), cm = num(o.cm, 0, 2000);
+  const shift = num(o.shift_s, 0, 1e7), quiet = num(o.quiet_s, 0, 1e7);
+  const level = num(o.level, 0, 9);
+  if (shift !== null) shiftRef = { shift_s: shift, at: Date.now() };
+  if (count !== null) $("count").textContent = String(count);
+  if (ev === "intruder" || level === 2) {
+    if (!alarm) alarmAt = Date.now();
+    setAlarm(true, "มีผู้บุกรุกที่คอก!");
+    $("detail").textContent = "ครั้งที่ " + (count ?? "-") + " ระยะ " + (cm ?? "-") + " cm" + (shift !== null ? " เฝ้ามาแล้ว " + mmss(shift) : "");
+    if (quiet !== null) $("quiet").textContent = mmss(quiet);
+    logRow("intruder", "ผู้บุกรุกครั้งที่ " + (count ?? "-") + " ระยะ " + (cm ?? "-") + " cm");
+  } else if (ev === "clear") {
+    $("state").textContent = alarm ? "ออกไปแล้ว แต่ยังไม่มีคนรับทราบ" : "สัตว์ปลอดภัย";
+    logRow("clear", "ผู้บุกรุกออกไปแล้ว (รวม " + (count ?? "-") + ")");
+  } else if (ev === "ack") {
+    noteAck();
+    setAlarm(false, "รับทราบแล้ว (" + String(o.by ?? "-").slice(0, 8) + ")");
+    logRow("ack", "รับทราบโดย " + String(o.by ?? "-").slice(0, 8));
+  } else if (ev === "armed") {
+    const on = o.on === 1 ? 1 : o.on === 0 ? 0 : null;
+    $("armed").textContent = on === 1 ? "เปิด" : on === 0 ? "ปิด" : "--";
+    if (on === 0) setAlarm(false, "ปิดระบบเฝ้า");
+    if (on === 1 && !alarm) $("state").textContent = "สัตว์ปลอดภัย";
+    logRow("armed", on === 1 ? "เปิดระบบเฝ้า" : "ปิดระบบเฝ้า");
+  } else {
+    logRow("other", "event อื่น: " + JSON.stringify(o).slice(0, 80));
+  }
+  if (["intruder", "clear", "ack", "armed"].includes(ev)) marks.push({ kind: ev, t: shift ?? nowShift(), cm });
+  drawLine();
+  rows.push([new Date().toISOString(), ev, count, cm, shift, quiet, o.by === undefined ? "" : String(o.by).slice(0, 8), o.on === 1 || o.on === 0 ? o.on : ""]);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "bad"); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  setStatus("กำลังต่อ broker...", "");
+  client = mqtt.connect(BROKER_URL, { clientId: "nightpen-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว ฟัง " + ROOT + "/" + team + "/#", "ok"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("reconnect", () => setStatus("ต่อใหม่...", ""));
+  client.on("error", () => setStatus("ต่อ broker ไม่ได้", "bad"));
+  client.on("message", (topic, payload) => {
+    let o;
+    try { o = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) return;
+    if (String(topic.split("/").pop()) === "event") onEvent(o);
+  });
+}
+
+$("ack").addEventListener("click", () => {
+  if (!client || !client.connected) { setStatus("ยังไม่ได้ต่อ broker", "bad"); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify({ cmd: "ack" }));
+  setAlarm(false, "ส่งรับทราบแล้ว รอบอร์ดตอบ");
+});
+$("sound").addEventListener("click", () => {
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); ring(); $("sound").textContent = "เสียงเตือนเปิดอยู่"; }
+  catch (e) { setStatus("เบราว์เซอร์นี้เล่นเสียงไม่ได้", "bad"); }
+});
+$("go").addEventListener("click", connect);
+$("team").addEventListener("keydown", (e) => { if (e.key === "Enter") connect(); });
+setInterval(drawLine, 10000);
+
+$("csv").addEventListener("click", () => {
+  const head = ["time", "event", "count", "cm", "shift_s", "quiet_s", "by", "on"];
+  const esc = (v) => { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(esc).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "night_pen_" + (team || "team") + ".csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+$("team").value = team;
+drawLine();
+if (okTeam(team)) connect();
+</script>
+</body>
+</html>

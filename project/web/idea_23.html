@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!--
+  idea_23.html - ถาดไข่ระหว่างขนส่ง: บันทึกเที่ยวรถไข่ (คู่กับ project/idea_23_egg_tray_transit.py)
+  เปิดแบบนี้: web/idea_23.html?team=team05
+  ฟัง bento-aiot/<ทีม>/# (telemetry + event "vib") ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์ของเรื่องนี้: bumps (กระแทกในเที่ยวนี้) trip_s (วินาทีตั้งแต่เริ่มเที่ยว)  soil = ความเร็ว %  tank = แบต
+  pump/led = ไฟขับปกติบนรถ  กฎฝั่งแอป: กระแทก BURST_N ครั้งภายใน BURST_S วินาที = เตือนให้ชะลอ/เลี่ยงถนน
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>บันทึกเที่ยวรถไข่</title>
+<style>
+  :root { --bg:#fdf8ef; --card:#ffffff; --ink:#241c14; --dim:#86755b; --line:#efe3cc; --accent:#d9a21b; --ok:#6d9b2b; --warn:#e0a400; --bad:#d64545; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#17120c; --card:#241c14; --ink:#fff8e7; --dim:#b8a88a; --line:#41352a; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,"Noto Sans Thai",sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  h1 { font-size:1.25rem; margin:0; flex:1 1 100%; }
+  input, button { font:inherit; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; }
+  button.go { background:var(--accent); color:#fff; border:0; }
+  button.stop { background:var(--bad); color:#fff; border:0; }
+  .pill { padding:4px 10px; border-radius:99px; font-size:.85rem; background:var(--line); }
+  .pill.on { background:var(--ok); color:#fff; } .pill.alarm { background:var(--bad); color:#fff; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--dim); font-size:.9rem; }
+  .banner { display:none; margin:0 16px; padding:12px 14px; border-radius:12px; background:var(--bad); color:#fff; font-weight:700; }
+  .banner.show { display:block; }
+  svg { width:100%; height:auto; display:block; }
+  footer { padding:16px; font-size:.85rem; color:var(--dim); }
+  header { background:var(--card); border-bottom:4px solid var(--accent); }
+  main { padding:12px 16px; display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); }
+  main > * { min-width:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:24px; padding:14px 16px; }
+  .card h2 { margin:0 0 8px; font-size:1rem; }
+  .dash { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .dash div { background:var(--bg); border-radius:16px; padding:10px; text-align:center; }
+  .seg { font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:2.2rem; font-weight:700; letter-spacing:2px; }
+  #risk { margin-top:8px; font-weight:700; }
+  .legend { display:flex; gap:10px; flex-wrap:wrap; font-size:.8rem; color:var(--dim); margin-top:6px; }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:middle; margin-right:3px; }
+  ol { margin:0; padding-left:20px; max-height:200px; overflow:auto; }
+  li.bad { color:var(--bad); } li.ok { color:var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <h1>บันทึกเที่ยวรถไข่ - นับแรงกระแทกทั้งเที่ยว</h1>
+  <input id="team" size="10" value="teamXX" aria-label="เลขทีม เช่น team05">
+  <button id="connect" class="go">ต่อ</button>
+  <span id="status" class="pill">ยังไม่ต่อ</span>
+</header>
+<div id="banner" class="banner" role="alert"></div>
+<main>
+  <section class="card">
+    <h2>เที่ยวนี้</h2>
+    <div class="dash">
+      <div><span class="muted">กระแทก</span><div class="seg" id="bumps">--</div></div>
+      <div><span class="muted">เวลาเดินทาง</span><div class="seg" id="trip">--:--</div></div>
+    </div>
+    <div id="risk">รอข้อมูล</div>
+    <div class="muted" id="speed">ความเร็ว -- % / แบต -- %</div>
+  </section>
+  <section class="card">
+    <h2>แถบกระแทก (ช่องละ 5 วิ ตามที่บอร์ดรายงาน)</h2>
+    <svg viewBox="0 0 300 150" id="strip" aria-label="แถบกระแทกตามเวลา"></svg>
+    <div class="legend">
+      <span><i style="background:var(--line)"></i>นิ่ง</span>
+      <span><i style="background:var(--warn)"></i>1 ครั้ง</span>
+      <span><i style="background:#f07b3f"></i>2 ครั้ง</span>
+      <span><i style="background:var(--bad)"></i>3+ / สั่นต่อเนื่อง</span>
+    </div>
+  </section>
+  <section class="card">
+    <h2>สั่งไฟบนรถ</h2>
+    <div class="row">
+      <button class="go" data-sec="10">ไฟขับปกติ 10 วิ</button>
+      <button class="go" data-sec="30">ไฟขับปกติ 30 วิ</button>
+      <button class="stop" id="off">ดับไฟขับ</button>
+      <button id="beep">เรียกคนขับ</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input id="say" maxlength="20" placeholder="ข้อความอังกฤษ เช่น SLOW">
+      <button id="sayBtn">ขึ้นจอไฟ</button>
+    </div>
+  </section>
+  <section class="card">
+    <h2>บันทึกเที่ยว</h2>
+    <ol id="log"><li class="muted">ยังไม่มีเหตุการณ์</li></ol>
+    <div class="row" style="margin-top:8px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <button id="clear">ล้างข้อมูล</button>
+      <span class="muted" id="rows">0 แถว</span>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const SILENT_S = 15;          // ไม่มี telemetry เกินนี้ = บอร์ดเงียบ (บอร์ดส่งทุก 5 วิ)
+const $ = (id) => document.getElementById(id);
+let client = null;
+let team = new URLSearchParams(location.search).get("team") || "teamXX";
+let lastAt = 0;
+const rows = [];
+$("team").value = team;
+
+// ตัวเลขที่ใช้ได้เท่านั้น อย่างอื่น (null, ข้อความ, NaN) = null
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function show(v, digits) { return v === null ? "--" : (digits ? v.toFixed(digits) : String(Math.round(v))); }
+function setStatus(text, cls) { $("status").textContent = text; $("status").className = "pill " + (cls || ""); }
+function validTeam(t) { return /^team[0-9a-z_]{2,24}$/.test(t) && t !== "teamXX" && t !== "team00"; }
+function banner(text) { $("banner").textContent = text || ""; $("banner").className = "banner" + (text ? " show" : ""); }
+function svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function addLog(text, cls) {
+  const ol = $("log");
+  if (ol.firstElementChild && ol.firstElementChild.classList.contains("muted")) ol.textContent = "";
+  const li = document.createElement("li");
+  li.className = cls || "";
+  li.textContent = new Date().toLocaleTimeString("th-TH") + "  " + text;
+  ol.prepend(li);
+  while (ol.children.length > 50) ol.lastElementChild.remove();
+}
+
+const BURST_N = 3, BURST_S = 60;   // กฎฝั่งแอป: กระแทก 3 ครั้งใน 60 วิ = ถนนช่วงนี้แย่
+const COLS = 12, ROWS_N = 6, CELL = 25;
+const CSV_COLS = ["time", "n", "speed", "tank", "pump", "vib", "vib_bad", "bumps", "trip_s"];
+const CSV_NAME = "egg_trip";
+let lastBumps = null, lastTrip = null, cells = [];
+const hits = [];                    // เวลาที่เห็นกระแทกเพิ่ม (ms)
+
+function mmss(s) { return String(Math.floor(s / 60) % 100).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function cellColor(k, bad) {
+  if (bad || k >= 3) return "var(--bad)";
+  return ["var(--line)", "var(--warn)", "#f07b3f"][k];
+}
+
+function drawStrip() {
+  const svg = $("strip");
+  svg.textContent = "";
+  const first = Math.max(0, cells.length - COLS * ROWS_N);
+  const shown = cells.slice(first);
+  for (let i = 0; i < COLS * ROWS_N; i++) {
+    const c = shown[i];       // ช่องที่ยังไม่มีข้อมูล = กรอบเปล่า
+    svg.appendChild(svgEl("rect", { x: (i % COLS) * CELL + 1, y: Math.floor(i / COLS) * CELL + 1,
+      width: CELL - 3, height: CELL - 3, rx: 4, fill: c ? cellColor(c.k, c.bad) : "none", stroke: "var(--line)" }));
+  }
+}
+
+function onTelemetry(d) {
+  const vib = num(d.vib), bad = d.vib_bad === 1, pump = num(d.pump), speed = num(d.soil), tank = num(d.tank);
+  const bumps = num(d.bumps), trip = num(d.trip_s);
+  if (trip !== null && lastTrip !== null && trip < lastTrip) {
+    addLog("เริ่มเที่ยวใหม่ (เที่ยวก่อนกระแทก " + show(lastBumps) + " ครั้ง)", "ok");
+    cells = []; lastBumps = null;
+  }
+  if (trip !== null) lastTrip = trip;
+  let k = 0;
+  if (bumps !== null) {
+    if (lastBumps !== null && bumps > lastBumps) {
+      k = bumps - lastBumps;
+      for (let i = 0; i < k; i++) hits.push(Date.now());
+      addLog("กระแทก +" + k + " (รวม " + bumps + ")", k >= 2 ? "bad" : "");
+    }
+    lastBumps = bumps;
+  }
+  cells.push({ k: k, bad: bad });
+  drawStrip();
+  $("bumps").textContent = show(bumps);
+  $("trip").textContent = trip === null ? "--:--" : mmss(Math.max(0, Math.floor(trip)));
+  const risk = bumps === null ? -1 : (bumps < 3 ? 0 : (bumps < 8 ? 1 : 2));
+  $("risk").textContent = ["รอข้อมูล", "ไข่ปลอดภัย", "เสี่ยงร้าว เช็กถาดตอนจอด", "เสี่ยงแตก ตรวจถาดทันที"][risk + 1];
+  $("risk").style.color = ["var(--dim)", "var(--ok)", "var(--warn)", "var(--bad)"][risk + 1];
+  $("speed").textContent = "ความเร็ว " + show(speed) + " % / แบต " + show(tank) + " % / ไฟขับ " + (pump === 1 ? "เปิด" : "ดับ");
+  // กฎฝั่งแอป: กระแทกถี่
+  while (hits.length && Date.now() - hits[0] > BURST_S * 1000) hits.shift();
+  banner(hits.length >= BURST_N ? "กระแทก " + hits.length + " ครั้งใน " + BURST_S + " วิ ถนนช่วงนี้แย่ ชะลอหรือเลี่ยงเส้นทาง" : "");
+  rows.push([new Date().toISOString(), num(d.n), speed, tank, pump, vib, bad ? 1 : 0, bumps, trip]);
+}
+
+function onVibEvent(bad, vib) {
+  addLog((bad ? "กระแทกต่อเนื่อง บอกคนขับชะลอ" : "ถนนเรียบแล้ว") + (vib === null ? "" : " (" + vib.toFixed(2) + ")"), bad ? "bad" : "ok");
+}
+
+function resetView() { cells = []; hits.length = 0; lastBumps = null; lastTrip = null; drawStrip(); banner(""); }
+
+// คำสั่งห่างกันอย่างน้อย 400 ms เพราะกล่องรับของบอร์ดมีช่องเดียว
+const queue = []; let sending = false;
+function toBoard(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ ส่งไม่ได้", "alarm"); return; }
+  queue.push(JSON.stringify(obj));
+  if (!sending) drain();
+}
+function drain() {
+  const next = queue.shift();
+  if (next === undefined) { sending = false; return; }
+  sending = true;
+  client.publish(ROOT + "/" + team + "/cmd", next);
+  setTimeout(drain, 400);
+}
+
+function downloadCsv() {
+  const cell = (v) => (v === null || v === undefined) ? "" : '"' + String(v).replace(/"/g, '""') + '"';
+  const lines = [CSV_COLS.join(",")].concat(rows.map((r) => r.map(cell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = CSV_NAME + "_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!validTeam(team)) { setStatus("ใส่เลขทีม เช่น team05", "alarm"); $("team").focus(); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลด mqtt.js ไม่ได้ (ต่อเน็ตก่อน)", "alarm"); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "egg-trip-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, "on"); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", "alarm"));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (!d || typeof d !== "object" || Array.isArray(d)) return;
+    if (topic.endsWith("/telemetry")) { lastAt = Date.now(); onTelemetry(d); $("rows").textContent = rows.length + " แถว"; }
+    else if (topic.endsWith("/event") && d.event === "vib") onVibEvent(d.bad === 1, num(d.vib));
+  });
+}
+
+// บอร์ดเงียบเกิน SILENT_S วินาที
+setInterval(() => {
+  if (!client || !client.connected || !lastAt) return;
+  const quiet = Math.round((Date.now() - lastAt) / 1000);
+  if (quiet > SILENT_S) setStatus("รถเงียบ (สัญญาณหาย?) " + quiet + " วิ", "alarm");
+  else setStatus("ต่อแล้ว " + team, "on");
+}, 1000);
+
+// ปุ่มคำสั่ง: data-sec = เปิดกี่วินาที
+document.querySelectorAll("button[data-sec]").forEach((b) => {
+  b.addEventListener("click", () => toBoard({ cmd: "pump", on: 1, sec: Number(b.dataset.sec) }));
+});
+$("off").addEventListener("click", () => toBoard({ cmd: "pump", on: 0 }));
+$("beep").addEventListener("click", () => toBoard({ cmd: "beep" }));
+$("sayBtn").addEventListener("click", () => {
+  const text = $("say").value.replace(/[^ -~]/g, "").toUpperCase().slice(0, 20);
+  if (text) toBoard({ cmd: "say", text: text });
+});
+$("csv").addEventListener("click", downloadCsv);
+$("clear").addEventListener("click", () => { rows.length = 0; $("rows").textContent = "0 แถว"; resetView(); });
+$("connect").addEventListener("click", connect);
+resetView();
+if (validTeam(team)) connect(); else setStatus("ใส่เลขทีมแล้วกด ต่อ", "alarm");
+</script>
+</body>
+</html>

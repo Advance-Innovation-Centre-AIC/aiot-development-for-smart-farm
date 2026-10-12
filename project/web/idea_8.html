@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!--
+  idea_8.html - เล้าไก่กันเครียดฝูง: แถบดัชนีร้อนชื้น (THI) 4 โซน ฝูงไก่เปลี่ยนสีตามความเครียด และเวลาเครียดสะสม
+  เปิดแบบนี้: web/idea_8.html?team=team05  (หรือพิมพ์ทีมในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง /event เมื่อระดับเปลี่ยน) ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด: id crop level alert temp_c rh sun_c + thi stress_s (ดู project/idea_8_coop.py)
+  กฎฝั่งแอป: level 2 = ป้ายแดง "เปิดพัดลม/พ่นน้ำ" และนับว่ารอมากี่นาทีแล้ว
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เล้าไก่กันเครียด</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fdf3e7; --card: #fffaf3; --line: #e8cfb4; --ink: #3a1d12; --dim: #8a5a44;
+    --straw: #d99a1e; --ok: #4a9a50; --warn: #d9711c; --bad: #c43d1c; --crit: #7a1a0c; --barn: #8c2f1b;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1e120d; --card: #2b1a14; --line: #6b3a2a; --ink: #fff1e0; --dim: #c9a98c;
+      --straw: #f2c14e; --ok: #7bc47f; --warn: #f28c28; --bad: #e4572e; --crit: #ff8a80; --barn: #b5432a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 16px; }
+  .top { background: var(--barn); color: #fff; margin: -16px -16px 0; padding: 16px; }
+  .top h1 { margin: 0; font-size: 21px; }
+  .top p { margin: 2px 0 10px; opacity: .85; font-size: 14px; }
+  .top input, .top button { border-color: rgba(255,255,255,.5); }
+  h2 { margin: 0 0 8px; font-size: 16px; color: var(--barn); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 14px; margin-top: 12px;
+    border-top: 4px solid var(--straw); }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .thi { font-size: 46px; font-weight: 800; line-height: 1; }
+  .zone { font-size: 20px; font-weight: 700; }
+  .sub { color: var(--dim); font-size: 14px; margin: 0; }
+  .meter { height: 18px; background: var(--line); border-radius: 9px; overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 0; background: var(--warn); transition: width .4s; }
+  #alarm { display: none; margin-top: 12px; padding: 12px; border-radius: 4px; background: var(--bad); color: #fff; font-weight: 700; }
+  #alarm.on { display: block; }
+  button, input { font: inherit; min-height: 40px; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); }
+  button.main { background: var(--straw); border-color: var(--straw); color: #2b1a14; font-weight: 700; }
+  input[type=number] { width: 80px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--dim); font-weight: 600; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top">
+  <h1>เล้าไก่: ร้อนชื้นจนไก่เครียดไหม</h1>
+  <p>ดัชนีร้อนชื้น THI รวมอุณหภูมิกับความชื้นเป็นเลขเดียว</p>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" aria-label="ชื่อทีม">
+    <button id="go">ต่อ</button>
+    <span id="conn">ยังไม่ต่อ</span>
+  </div>
+</div>
+<div id="alarm" role="alert"></div>
+
+<section class="card">
+  <h2>ดัชนีร้อนชื้น (THI)</h2>
+  <div class="row" style="gap:16px">
+    <span class="thi" id="thi">--</span>
+    <span class="zone" id="zone">-</span>
+  </div>
+  <svg viewBox="0 0 320 46" width="100%" aria-label="แถบโซน THI">
+    <rect x="0" y="10" width="112" height="16" fill="var(--ok)"/>
+    <rect x="112" y="10" width="40" height="16" fill="var(--straw)"/>
+    <rect x="152" y="10" width="40" height="16" fill="var(--warn)"/>
+    <rect x="192" y="10" width="128" height="16" fill="var(--bad)"/>
+    <polygon id="mark" points="0,6 -6,0 6,0" fill="currentColor"/>
+    <text x="0" y="42" font-size="10" fill="currentColor">60</text>
+    <text x="104" y="42" font-size="10" fill="currentColor">74</text>
+    <text x="144" y="42" font-size="10" fill="currentColor">79</text>
+    <text x="184" y="42" font-size="10" fill="currentColor">84</text>
+    <text x="300" y="42" font-size="10" fill="currentColor">100</text>
+  </svg>
+  <p class="sub" id="climate">รอข้อความจากบอร์ด</p>
+</section>
+
+<section class="card">
+  <h2>ฝูงไก่ตอนนี้</h2>
+  <svg id="flock" viewBox="0 0 320 70" width="100%" aria-label="ฝูงไก่"></svg>
+  <p class="sub" id="mood">-</p>
+  <p class="sub" style="margin-top:8px">เครียดสะสม <b id="stress">0</b> วิ (แถบเต็ม = 300 วิ)</p>
+  <div class="meter"><i id="stressBar"></i></div>
+</section>
+
+<section class="card">
+  <h2>สั่งเล้า</h2>
+  <div class="row">
+    <button class="main" id="ack">รับทราบ เปิดพัดลมแล้ว (ack)</button>
+    <input id="thiSet" type="number" min="19" max="45" value="30" aria-label="t_hi"><button id="set">ตั้งเกณฑ์ร้อน t_hi</button>
+    <button id="csv">ดาวน์โหลด CSV</button>
+  </div>
+  <p class="sub" id="cmdMsg"></p>
+</section>
+
+<section class="card">
+  <h2>บันทึกเล้า</h2>
+  <table><thead><tr><th>เวลา</th><th>ระดับ</th><th>THI</th><th>C / %</th></tr></thead><tbody id="rows"></tbody></table>
+</section>
+
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const LEVEL_TH = ["ไก่สบาย", "เริ่มเครียด", "เครียดหนัก"];
+const LEVEL_VAR = ["--ok", "--warn", "--bad"];
+const ALERT_TH = { ok: "ไก่สบาย", cold: "เล้าหนาว", hot: "เล้าร้อน", dry: "ฝุ่นแห้ง", wet: "เล้าชื้น" };
+const CROP_TH = { layer: "ไก่ไข่", broiler: "ไก่เนื้อ", chick: "ลูกเจี๊ยบ" };
+// โซน THI เดียวกับ THI_ZONES ในบอร์ด
+const ZONES = [[74, "สบาย", "--ok"], [79, "เฝ้าระวัง", "--straw"], [84, "อันตราย", "--warn"], [999, "วิกฤต", "--bad"]];
+const STRESS_MAX_S = 300, HENS = 6;
+const $ = (id) => document.getElementById(id);
+const rows = [];
+let client = null, team = "", alarmSince = 0, alarmTimer = null;
+
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function str(v, max) { return typeof v === "string" ? v.slice(0, max || 40) : ""; }
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function okTeam(t) { return /^team[0-9a-z_]{2,16}$/i.test(t) && t !== "teamXX" && t !== "team00"; }
+function alertTh(code) { return str(code, 60).split("+").map((c) => ALERT_TH[c] || c).join(" + "); }
+function setConn(t, ok) { $("conn").textContent = t; $("conn").style.opacity = ok ? "1" : ".7"; }
+function zoneOf(thi) { return ZONES.find((z) => thi < z[0]) || ZONES[ZONES.length - 1]; }
+
+function svgEl(tag, attrs) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function drawFlock(level) {                     // ไก่ 6 ตัว: เครียดมากขึ้น = สีเปลี่ยนและอ้าปากหอบ
+  const svg = $("flock");
+  while (svg.firstChild) svg.firstChild.remove();
+  const body = level === 0 ? "var(--card)" : `var(${LEVEL_VAR[level]})`;
+  for (let i = 0; i < HENS; i++) {
+    const x = 26 + i * 52, y = 40 + (i % 2) * 6;
+    svg.appendChild(svgEl("ellipse", { cx: x, cy: y, rx: 18, ry: 13, fill: body, stroke: "currentColor", "stroke-width": 1.5 }));
+    svg.appendChild(svgEl("circle", { cx: x + 14, cy: y - 14, r: 8, fill: body, stroke: "currentColor", "stroke-width": 1.5 }));
+    svg.appendChild(svgEl("path", { d: `M${x + 10} ${y - 24} q4 -6 8 0`, fill: "var(--bad)" }));
+    const open = level > 0 ? 4 : 0;
+    svg.appendChild(svgEl("polygon", { points: `${x + 22},${y - 15} ${x + 28},${y - 13 + open / 2} ${x + 22},${y - 11 + open}`, fill: "var(--straw)" }));
+    svg.appendChild(svgEl("circle", { cx: x + 16, cy: y - 16, r: 1.5, fill: "currentColor" }));
+  }
+}
+
+function drawThi(thi) {
+  const v = Math.max(60, Math.min(100, thi));
+  $("mark").setAttribute("transform", `translate(${((v - 60) * 8).toFixed(1)} 4)`);
+  const z = zoneOf(thi);
+  $("thi").textContent = thi.toFixed(1);
+  $("zone").textContent = z[1];
+  $("zone").style.color = cssVar(z[2]);
+}
+
+function addRow(level, thi, t, rh) {
+  const tr = document.createElement("tr");
+  const cells = [new Date().toTimeString().slice(0, 8), LEVEL_TH[level], thi === null ? "-" : thi.toFixed(1),
+    (t === null ? "-" : t.toFixed(1)) + " / " + (rh === null ? "-" : rh.toFixed(0))];
+  for (const c of cells) { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }
+  tr.children[1].style.color = cssVar(LEVEL_VAR[level]);
+  $("rows").prepend(tr);
+  while ($("rows").children.length > 40) $("rows").lastChild.remove();
+}
+
+// กฎฝั่งแอป: เครียดหนัก (level 2) = ป้ายแดงพร้อมนาทีที่รอ จนกว่าจะรับทราบหรือระดับลด
+function alarm(on, why) {
+  clearInterval(alarmTimer); alarmTimer = null;
+  $("alarm").className = on ? "on" : "";
+  if (!on) { $("alarm").textContent = ""; return; }
+  alarmSince = Date.now();
+  const tick = () => { $("alarm").textContent = "ไก่เครียดหนัก: " + why + "  เปิดพัดลม/พ่นน้ำ (รอมา " + Math.floor((Date.now() - alarmSince) / 60000) + " นาที)"; };
+  tick(); alarmTimer = setInterval(tick, 5000);
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+
+function onEvent(topic, d) {
+  const level = num(d.level);
+  if (level === null || level < 0 || level > 2) return;
+  const t = num(d.temp_c), rh = num(d.rh), sun = num(d.sun_c), thi = num(d.thi), stress = num(d.stress_s);
+  const why = alertTh(d.alert), crop = str(d.crop, 20);
+  if (thi !== null) drawThi(thi);
+  drawFlock(level);
+  $("climate").textContent = (CROP_TH[crop] || crop || "ไก่") + "  " + (t === null ? "--" : t.toFixed(1)) + " C  "
+    + (rh === null ? "--" : rh.toFixed(0)) + " %" + (sun ? "  แดด +" + sun : "");
+  $("mood").textContent = LEVEL_TH[level] + (level ? ": " + why : "");
+  $("mood").style.color = cssVar(LEVEL_VAR[level]);
+  if (stress !== null) {
+    $("stress").textContent = String(stress);
+    $("stressBar").style.width = Math.min(100, stress * 100 / STRESS_MAX_S).toFixed(0) + "%";
+  }
+  addRow(level, thi, t, rh);
+  rows.push([new Date().toISOString(), topic, level, str(d.alert, 60), t, rh, sun, thi, stress]);
+  alarm(level === 2, why);
+}
+
+function onMessage(topic, payload) {
+  let d = null;
+  try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return;
+  if (topic.endsWith("/cmd")) { if (d.cmd === "ack") alarm(false); return; }
+  if (topic.endsWith("/event")) onEvent(topic, d);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setConn("ใส่ทีม เช่น team05", false); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea8-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setConn("กำลังต่อ...", false);
+  client.on("connect", () => { setConn("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setConn("หลุด กำลังต่อใหม่...", false));
+  client.on("message", onMessage);
+}
+
+function toBoard(obj) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker"; return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + JSON.stringify(obj);
+}
+
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCsv() {
+  if (!rows.length) { $("cmdMsg").textContent = "ยังไม่มีข้อมูลให้ดาวน์โหลด"; return; }
+  const head = ["time", "topic", "level", "alert", "temp_c", "rh", "sun_c", "thi", "stress_s"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "coop_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("go").addEventListener("click", connect);
+$("ack").addEventListener("click", () => toBoard({ cmd: "ack" }));
+$("set").addEventListener("click", () => {
+  const v = Number($("thiSet").value);
+  if (!Number.isInteger(v) || v < 19 || v > 45) { $("cmdMsg").textContent = "t_hi ต้องเป็นเลขเต็ม 19-45"; return; }
+  toBoard({ cmd: "set", t_hi: v });
+});
+$("csv").addEventListener("click", downloadCsv);
+
+drawFlock(0);
+team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+if (okTeam(team)) connect(); else setConn("ใส่ทีมแล้วกด ต่อ", false);
+</script>
+</body>
+</html>

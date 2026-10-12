@@ -1,14 +1,16 @@
-# idea_5_night_pen.py - คอกสัตว์กลางคืน: เรดาร์จับผู้บุกรุก แจ้งมือถือ (ขั้นสูง)
+# idea_5_night_pen.py - คอกสัตว์กลางคืน: เรดาร์จับผู้บุกรุกที่รั้วคอก แจ้งมือถือ (ขั้นสูง)
 # ไฟล์นี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)
 # ต่อยอดจาก s3/sf3_01_pen_guard.py + WiFi/MQTT, send(), ack แบบ s2/sf2_04_crop_alert.py
-# เปลี่ยน: ไซเรนซ้ำทุก BEEP_MS จนรับทราบ, SW6 = รับทราบ, เน็ตหลุด = เฝ้าต่อแบบออฟไลน์
+# จอ: นาฬิกากะกลางคืน + เวลาสงบ + บันทึก 3 ครั้งล่าสุดของคืนนี้ · ไซเรนซ้ำทุก BEEP_MS จนรับทราบ
 # ทีมต้องแก้ 3 อย่าง: 1) MIN_CM SPAN_CM CONFIRM_N จากการลองเดินเอง 2) หัวจอและป้าย 3) คำบนจอไฟ RGB และเสียง
 # MQTT (ใหม่ ไม่มีในสัญญา) ทาง event เฉพาะตอนเกิด · รับ cmd {"cmd":"ack"} อย่างเดียว:
-#   {"id":"team05","event":"intruder","count":3,"cm":120}  {"id":"team05","event":"clear","count":3}
-#   {"id":"team05","event":"ack","by":"app","count":3} (by app/sw6)  {"id":"team05","event":"armed","on":0}
+#   {"id":"team05","event":"intruder","count":3,"cm":120,"shift_s":1830,"quiet_s":600}
+#   {"id":"team05","event":"clear","count":3}  {"id":"team05","event":"armed","on":0}
+#   {"id":"team05","event":"ack","by":"app","count":3} (by app/sw6)
+#   คีย์เพิ่ม: shift_s = เฝ้ามากี่วินาทีแล้วคืนนี้ · quiet_s = สงบมากี่วินาทีก่อนครั้งนี้
 # เกณฑ์ = ค่าสาธิต ไม่ใช่ระบบรักษาความปลอดภัยจริง
 #
-# ลองเล่น : ถอยห่างตอนเริ่ม แล้วเดินเข้าหา · VR3 = เขตเตือน · SW5 = เปิด/ปิดเฝ้า · SW6 = รับทราบ
+# ลองเล่น : ถอยห่างตอนเริ่ม แล้วเดินเข้าหา · VR3 = รั้วคอก · SW5 = เปิด/ปิดเฝ้า · SW6 = รับทราบ
 # ต้องแก้ก่อนรัน: WIFI_SSID, WIFI_PASS, TEAM · Emulator: VR1 = ระยะเป้า, Shake = เคลื่อนไหว
 
 import buttons
@@ -30,27 +32,27 @@ CLIENT_ID = "bento-farm-" + TEAM       # + เลขจากนาฬิกา�
 TOPIC_EVENT = "bento-aiot/" + TEAM + "/event"
 TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd"
 BEEP_MS = 5000  # ไซเรนซ้ำทุกกี่ ms จนมีคนรับทราบ
-MIN_CM, SPAN_CM = 50, 200  # VR3 ตั้งเขตเตือนได้ 50-250 cm
+MIN_CM, SPAN_CM = 50, 200  # VR3 ตั้งรั้วคอกได้ 50-250 cm
 CONFIRM_N = 3  # ต้องเห็นติดกันกี่รอบถึงเชื่อ (1 ขึ้นไป)
 THRESH_DB = 4.0  # เป้าต้องแรงกว่าฉากนิ่งกี่ dB (0.1-60)
-MAX_CM = 300  # ระยะไกลสุดบนแถบ ไม้บรรทัด กราฟ (cm)
+MAX_CM = 300  # ระยะไกลสุดบนกราฟ (cm)
 BTN_NAMES = ("SW5", "SW6")  # SW5 = ล่าง = pressed(1), SW6 = บน = pressed(0)
-VOLUME = 25  # ความดังเสียง 0-127
-SPEAKER = 40  # ลำโพงรวม 0-100%
+VOLUME = 25
+SPEAKER = 40
 RUN_MS = 600000  # เวลาเล่นต่อรอบ ms (10 นาที)
 SAMPLE_MS = 250  # อ่านเรดาร์ทุกกี่ ms
 TICK_MS = 500  # อัปเดตจอทุกกี่ ms
-MATRIX_MS = 3000  # ส่งภาพจอไฟ RGB ซ้ำทุกกี่ ms
 
-COL_TEXT, COL_DIM = 0xE8EAED, 0x9AA3AF  # สี 0xRRGGBB
-COL_CARD = 0x171B22
-COL_OK, COL_WARN, COL_BAD, COL_INFO = 0x30A46C, 0xF5A623, 0xE5484D, 0x4A9EFF
-COL_SAFE_BG, COL_ALERT_BG = 0x123322, 0x4A1216
+# สีคืนเดือนหงาย
+COL_TEXT, COL_DIM = 0xE9E7FF, 0x8C8FB8
+COL_CARD, COL_NIGHT = 0x161A3A, 0x0E1030
+COL_MOON, COL_SAFE = 0xF4E3A1, 0x6EE7B7
+COL_BAD, COL_WARN = 0xFF4D6D, 0xFFB86B
+COL_ALERT_BG = 0x4A1230
 
 
 # ---- 2) ฮาร์ดแวร์ ----
 def beep(*notes):
-    # เบากว่า ui.sfx
     for n in notes:
         ui.tone(n, ui.WAVE_SINE, VOLUME, 120)
         time.sleep_ms(120)
@@ -82,12 +84,8 @@ def calibrate_radar():
 
 
 class Button:
-    # 1 = SW5 (ล่าง), 0 = SW6 (บน)
-
     def __init__(self, index):
-        self.index = index
-        self.down = False
-        self.clicked = False
+        self.index, self.down, self.clicked = index, False, False
 
     def sample(self):
         now_down = buttons.pressed(self.index)
@@ -96,8 +94,7 @@ class Button:
         self.down = now_down
 
     def pressed_now(self):
-        fired = self.clicked
-        self.clicked = False
+        fired, self.clicked = self.clicked, False
         return fired
 
 
@@ -113,19 +110,19 @@ def wait_ms(ms, btns):
 
 
 def show_matrix(armed, inside, count):
+    # เรียกเฉพาะตอนสถานะเปลี่ยน
     try:
-        if not armed:
-            rgbmatrix.clear()
-        elif inside:
-            rgbmatrix.scroll("INTRUDER", rgbmatrix.RED, 60)
-        else:
-            rgbmatrix.score(count, rgbmatrix.GREEN)
+        rgbmatrix.scroll("")
+        rgbmatrix.clear()
+        if armed and inside:
+            rgbmatrix.scroll("PEN ALERT", rgbmatrix.RED, 60)
+        elif armed:
+            rgbmatrix.score(count, rgbmatrix.CYAN)
     except OSError:
         pass
 
 
 def siren():
-    # เลขโน้ต MIDI
     for note in (81, 74, 81, 74):
         ui.tone(note, ui.WAVE_SQUARE, VOLUME, 140)
         time.sleep_ms(150)
@@ -145,7 +142,7 @@ def in_zone(armed, cm, alert_cm):
 
 
 def confirm(inside, streak, near):
-    # สถานะใหม่ต้องค้าง CONFIRM_N รอบ คืน (สถานะ, รอบที่เห็นติดกัน)
+    # สถานะใหม่ต้องค้าง CONFIRM_N รอบ
     if near == inside:
         return inside, 0
     if streak + 1 >= CONFIRM_N:
@@ -153,9 +150,16 @@ def confirm(inside, streak, near):
     return inside, streak + 1
 
 
+def hhmm(sec):
+    return "%02d:%02d" % (sec // 3600, sec // 60 % 60)
+
+
+def mmss(sec):
+    return "%d:%02d" % (sec // 60, sec % 60)
+
+
 # ---- 3b) เครือข่าย ----
 def connect_broker(w):
-    # ลอง 3 ครั้ง client_id ใหม่ทุกครั้ง
     for n in (1, 2, 3):
         try:
             if mqtt.connect(BROKER, port=1883, keepalive=60,
@@ -167,7 +171,7 @@ def connect_broker(w):
 
 
 def go_online(w):
-    # คืน "" = ต่อแล้ว · ต่อไม่ได้ = เฝ้าแบบออฟไลน์ต่อ
+    # "" = ต่อแล้ว · ไม่ได้ = เฝ้าออฟไลน์ต่อ
     if len(TEAM) != 6 or TEAM[:4] != "team" or not TEAM[4:].isdigit() or TEAM == "team00":
         return "แก้ TEAM ก่อน"
     say(w, "ต่อ WiFi... จอนิ่งได้", COL_WARN)
@@ -199,63 +203,46 @@ def is_ack(raw):
 
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
-    box = ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    box = ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=10, value=1)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_MOON, value=16)
     return box
-
-
-def line_chart(x, y, w, h, lo, hi, color, parent=None):
-    ch = ui.Chart(x=x, y=y, w=min(w, 400), h=h, color=color, min=lo, max=hi, parent=parent)
-    ch.prop(ui.PROP_CHART_POINTS, 400)
-    return ch
-
-
-def build_gate(w):
-    w["gate"] = card(12, 44, 470, 196, "ประตูคอกกลางคืน (เรดาร์)")
-    w["state"] = ui.Label("สัตว์ปลอดภัย", x=24, y=72, color=COL_OK, value=28)
-    w["cm"] = ui.Seg7(text="---", x=24, y=112, w=150, h=56, color=COL_INFO)
-    ui.Label("cm", x=182, y=140, color=COL_DIM, value=16)
-    w["led"] = ui.Led(x=300, y=116, w=28, h=28, color=COL_WARN, value=0)
-    ui.Label("การเคลื่อนไหว", x=338, y=118, color=COL_DIM, value=16)
-    w["bar"] = ui.Bar(x=24, y=176, w=446, h=20, min=0, max=MAX_CM, value=0)
-    ruler = ui.Scale(x=24, y=198, w=446, h=34, color=COL_DIM, min=0, max=MAX_CM)
-    ruler.ticks(13, 2)
-
-
-def build_counter(w):
-    card(492, 44, 288, 196, "ผู้บุกรุก (ครั้ง)")
-    w["n"] = ui.Seg7(text="0", x=504, y=72, w=150, h=60, color=COL_BAD)
-    w["sw"] = ui.Switch(x=504, y=146, w=64, h=32, value=1)
-    w["arm"] = ui.Label(" ", x=578, y=150, color=COL_OK, value=16)
-    w["zone"] = ui.Label("เขตเตือน - cm (VR3)", x=504, y=196, color=COL_INFO, value=16)
-    show_arm(w, True)
-
-
-def build_log(w):
-    ui.Label("ฟ้า = ระยะเป้า   แดง = เขตเตือน", x=12, y=244, color=COL_DIM, value=14)
-    w["chart"] = line_chart(12, 264, 400, 74, 0, MAX_CM, COL_INFO)
-    w["s_zone"] = w["chart"].add_series(COL_BAD)
-    card(422, 250, 358, 88, "บันทึกเรดาร์")
-    w["last"] = ui.Label("ยังไม่มี", x=434, y=280, color=COL_TEXT, value=16)
-    w["energy"] = ui.Label("energy: -", x=434, y=308, color=COL_DIM, value=14)
-
-
-def show_link(w, why):
-    w["mq_t"].color(COL_DIM if why else COL_OK)
-    w["mq_t"].text("MQTT: ออฟไลน์ (" + why + ")" if why else "MQTT: เชื่อมต่อแล้ว")
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("คอกสัตว์กลางคืน", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("เวรยามคอกสัตว์กลางคืน", x=12, y=6, color=COL_MOON, value=24)
     w = {"mq_t": ui.Label("MQTT: ออฟไลน์", x=500, y=10, color=COL_DIM, value=16)}
-    build_gate(w)
-    build_counter(w)
-    build_log(w)
+    w["pen"] = card(12, 44, 520, 190, "รั้วคอก (เรดาร์)")
+    w["state"] = ui.Label("สัตว์ปลอดภัย", x=24, y=70, color=COL_SAFE, value=28)
+    w["cm"] = ui.Label("ระยะ --- cm", x=330, y=78, color=COL_TEXT, value=16)
+    # Chart กว้างไม่เกิน 400 จุด >= ความกว้าง บอร์ดจึงไม่วาดจุดกลม (แบบ s3/sf3_01)
+    w["chart"] = ui.Chart(x=24, y=112, w=400, h=112, color=COL_MOON, min=0, max=MAX_CM)
+    w["chart"].prop(ui.PROP_CHART_POINTS, 400)
+    w["s_zone"] = w["chart"].add_series(COL_BAD)
+    ui.Label("เหลือง = ระยะ\nแดง = รั้ว", x=432, y=114, color=COL_DIM, value=14)
+    w["led"] = ui.Led(x=434, y=184, w=22, h=22, color=COL_WARN, value=0)
+    ui.Label("ขยับ", x=464, y=186, color=COL_DIM, value=14)
+    card(544, 44, 236, 190, "เฝ้ามาแล้ว (ชม:นาที)")
+    w["shift"] = ui.Seg7(text="00:00", x=560, y=76, w=200, h=60, color=COL_MOON)
+    w["quiet"] = ui.Label("สงบมา 0:00", x=560, y=150, color=COL_SAFE, value=16)
+    w["n"] = ui.Label("คืนนี้ 0 ครั้ง", x=560, y=182, color=COL_TEXT, value=16)
+    # มุมขวาล่างสุดเว้นไว้ให้ปุ่ม Console
+    card(12, 244, 400, 96, "บันทึกคืนนี้ (3 ครั้งล่าสุด)")
+    w["log"] = ui.Label("ยังเงียบ", x=24, y=272, color=COL_TEXT, value=16)
+    card(424, 244, 260, 96, "ระบบเฝ้า")
+    w["sw"] = ui.Switch(x=436, y=276, w=64, h=32, value=1)
+    w["arm"] = ui.Label(" ", x=510, y=272, color=COL_SAFE, value=14)
+    w["zone"] = ui.Label("รั้ว - cm (VR3)", x=510, y=300, color=COL_DIM, value=14)
     w["status"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=16)
+    show_arm(w, True)
     ui.poll()
     return w
+
+
+def show_link(w, why):
+    w["mq_t"].color(COL_DIM if why else COL_SAFE)
+    w["mq_t"].text("MQTT: ออฟไลน์ (" + why + ")" if why else "MQTT: เชื่อมต่อแล้ว")
 
 
 def say(w, text, col):
@@ -264,45 +251,49 @@ def say(w, text, col):
 
 
 def show_arm(w, armed):
-    w["arm"].text("ระบบเฝ้า: " + ("เปิด" if armed else "ปิด") + " (" + BTN_NAMES[0] + ")")
-    w["arm"].color(COL_OK if armed else COL_DIM)
+    w["arm"].text("เปิดเฝ้า (" + BTN_NAMES[0] + ")" if armed else "ปิดเฝ้า (" + BTN_NAMES[0] + ")")
+    w["arm"].color(COL_SAFE if armed else COL_DIM)
 
 
-def show_gate(w, g, near, cm, moving):
-    w["gate"].color(COL_ALERT_BG if g.inside else COL_SAFE_BG)
-    w["state"].color(COL_BAD if g.inside else (COL_OK if g.armed else COL_DIM))
-    w["state"].text("มีผู้บุกรุก!" if g.inside else ("สัตว์ปลอดภัย" if g.armed else "ปิดระบบเฝ้า"))
-    w["cm"].text("---" if cm is None else str(cm))
-    w["bar"].value(MAX_CM if cm is None else min(cm, MAX_CM))
-    w["bar"].color(COL_BAD if near else COL_OK)
+def show_pen(w, g, cm, alert_cm, now, moving):
+    w["pen"].color(COL_ALERT_BG if g.inside else COL_CARD)
     w["led"].value(1 if moving else 0)
-
-
-def show_zone(w, alert_cm, cm, energy):
-    w["zone"].text("เขตเตือน %d cm (VR3)" % alert_cm)
-    w["energy"].text("energy: %.0f" % energy)
+    w["state"].color(COL_BAD if g.inside else (COL_SAFE if g.armed else COL_DIM))
+    w["state"].text("มีผู้บุกรุก!" if g.inside else ("สัตว์ปลอดภัย" if g.armed else "ปิดระบบเฝ้า"))
+    w["cm"].text("ระยะ --- cm" if cm is None else "ระยะ %d cm" % cm)
     w["chart"].set_next(0, MAX_CM if cm is None else min(cm, MAX_CM))
     w["chart"].set_next(w["s_zone"], alert_cm)
+    w["zone"].text("รั้ว %d cm (VR3)" % alert_cm)
+    w["shift"].text(hhmm(g.shift_s(now)))
+    w["quiet"].text("กำลังเตือน" if g.inside else "สงบมา " + mmss(g.quiet_s(now)))
 
 
 # ---- 5) โปรแกรมหลัก ----
 class Guard:
     def __init__(self):
         self.armed, self.inside, self.streak, self.count = True, False, 0, 0
-        self.hist = []
+        self.hist, self.log = [], []
         self.radar_ok = True
         self.acked, self.online, self.t_beep = True, False, 0
-        self.shown, self.sent = None, 0
+        self.shown = None
+        self.t_start = self.t_quiet = time.ticks_ms()
+
+    def shift_s(self, now):
+        return time.ticks_diff(now, self.t_start) // 1000
+
+    def quiet_s(self, now):
+        return time.ticks_diff(now, self.t_quiet) // 1000
 
 
-def start_guard(w):
+def start_guard(w, g):
     for i in (3, 2, 1):
         say(w, "ถอยห่างบอร์ด! จำฉากนิ่งใน %d วินาที" % i, COL_WARN)
         time.sleep_ms(1000)
     if calibrate_radar():
-        say(w, "เฝ้าคอกแล้ว เดินเข้าหาบอร์ดได้เลย", COL_OK)
+        say(w, "เฝ้าคอกแล้ว เดินเข้าหาบอร์ดได้เลย", COL_SAFE)
     else:
         say(w, "จำฉากไม่สำเร็จ ใช้ฉากเดิม", COL_BAD)
+    g.t_start = g.t_quiet = time.ticks_ms()
     beep(72, 79)
 
 
@@ -326,7 +317,7 @@ def on_ack(w, g, by):
     # หยุดไซเรนซ้ำ (จอยังแดง)
     if g.inside and not g.acked:
         g.acked = True
-        say(w, "รับทราบแล้ว (" + by + ")", COL_OK)
+        say(w, "รับทราบแล้ว (" + by + ")", COL_SAFE)
         beep(76)
         send(w, g, {"id": TEAM, "event": "ack", "by": by, "count": g.count})
 
@@ -335,43 +326,42 @@ def on_radar(w, g, ok):
     if ok != g.radar_ok:
         g.radar_ok = ok
         say(w, "เรดาร์กลับมาแล้ว" if ok else "เรดาร์ไม่ตอบ กำลังลองใหม่",
-            COL_OK if ok else COL_BAD)
+            COL_SAFE if ok else COL_BAD)
 
 
 def decide(w, g, cm, alert_cm):
     # เฉพาะตอนสถานะเปลี่ยน
     was = g.inside
-    near = in_zone(g.armed, cm, alert_cm)
-    g.inside, g.streak = confirm(g.inside, g.streak, near)
+    g.inside, g.streak = confirm(g.inside, g.streak, in_zone(g.armed, cm, alert_cm))
+    now = time.ticks_ms()
     if g.inside and not was:
         g.count += 1
-        w["n"].text(str(g.count))
-        msg = "คนที่ %d  ระยะ %d cm" % (g.count, cm)
-        w["last"].text(msg)
-        print("ผู้บุกรุก" + msg)
-        g.acked, g.t_beep = False, time.ticks_ms()
-        send(w, g, {"id": TEAM, "event": "intruder", "count": g.count, "cm": cm})
+        quiet, shift = g.quiet_s(now), g.shift_s(now)
+        g.log = (g.log + ["%s น. %d cm" % (hhmm(shift), cm)])[-3:]
+        w["log"].text("  ".join(g.log))
+        w["n"].text("คืนนี้ %d ครั้ง" % g.count)
+        g.acked, g.t_beep = False, now
+        send(w, g, {"id": TEAM, "event": "intruder", "count": g.count, "cm": cm,
+                    "shift_s": shift, "quiet_s": quiet})
         siren()
     elif was and not g.inside:
-        g.acked = True
+        g.acked, g.t_quiet = True, now
         send(w, g, {"id": TEAM, "event": "clear", "count": g.count})
-        beep(79, 84)  # ออกไปแล้ว
-    return near
+        beep(79, 84)
 
 
 def matrix_tick(g):
     look = (g.armed, g.inside, g.count)
-    now = time.ticks_ms()
-    if look != g.shown or time.ticks_diff(now, g.sent) >= MATRIX_MS:
+    if look != g.shown:
         show_matrix(g.armed, g.inside, g.count)
-        g.shown, g.sent = look, now
+        g.shown = look
 
 
-def finish(w, count):
-    show_matrix(False, False, count)
+def finish(w, g):
+    show_matrix(False, False, g.count)
     say(w, "จบรอบแล้ว - กด Program to Device เพื่อเล่นใหม่", COL_WARN)
     ui.poll()
-    print("เฝ้าคอกครบเวลา พบผู้บุกรุก", count, "ครั้ง")
+    print("เวรคืนนี้จบ พบผู้บุกรุก", g.count, "ครั้ง")
     try:
         mqtt.disconnect()
     except Exception:
@@ -379,19 +369,19 @@ def finish(w, count):
 
 
 def main():
-    if hasattr(ui, "volume"):  # fw 2.4.1 ข้าม
+    if hasattr(ui, "volume"):
         ui.volume(SPEAKER)
     w = build_screen()
     g, sw5, sw6 = Guard(), Button(1), Button(0)
     why = go_online(w)
     g.online = not why
     show_link(w, why)
-    start_guard(w)
+    start_guard(w, g)
     every = TICK_MS // SAMPLE_MS
     tick, t0 = 0, time.ticks_ms()
     try:
         while time.ticks_diff(time.ticks_ms(), t0) < RUN_MS:
-            on_arm(w, g, sw5)  # 0) ปุ่ม + คำสั่งจากแอป
+            on_arm(w, g, sw5)  # 0) ปุ่ม + สวิตช์
             if g.online and not mqtt.is_connected():
                 g.online = False
                 show_link(w, "สายหลุด")
@@ -403,26 +393,25 @@ def main():
             got = read_radar()  # 1) อ่าน
             on_radar(w, g, got is not None)
             if got is not None:
-                raw, moving, energy = got
+                raw = got[0]
                 cm = None if raw is None else smooth(g.hist, raw)
                 alert_cm = zone_cm()
-                near = decide(w, g, cm, alert_cm)  # 2) ตัดสิน + 3) ทำ
+                decide(w, g, cm, alert_cm)  # 2) ตัดสิน + 3) ทำ
                 if tick % every == 0:  # 4) โชว์
-                    show_gate(w, g, near, cm, moving)
-                    show_zone(w, alert_cm, cm, energy)
+                    show_pen(w, g, cm, alert_cm, time.ticks_ms(), got[1])
             if g.inside and not g.acked and time.ticks_diff(time.ticks_ms(), g.t_beep) >= BEEP_MS:
                 g.t_beep = time.ticks_ms()
                 siren()  # ร้องซ้ำจนมีคนรับทราบ
             matrix_tick(g)
             tick += 1
-            wait_ms(SAMPLE_MS, (sw5, sw6))  # รอ + ฟังปุ่ม
+            wait_ms(SAMPLE_MS, (sw5, sw6))
     finally:
-        finish(w, g.count)
+        finish(w, g)
 
 
 main()
 
 # ----- ตาคุณ แก้แล้วรันใหม่ -----
 # 1) CONFIRM_N = 1 เดินผ่านเร็ว ๆ เทียบกับ 3: แบบไหนเตือนผิดน้อย
-# 2) นับเฉพาะตอนมีการเคลื่อนไหว (moving เข้า in_zone())
+# 2) นับเฉพาะตอนมีการเคลื่อนไหว (got[1] = moving เข้า in_zone())
 # 3) รับ {"cmd":"arm","on":0} จากแอปให้เปิด/ปิดระบบเฝ้าได้

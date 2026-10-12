@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<!--
+  idea_1.html - กล่องผลไม้ห้องเย็น: ปรอทกล่อง + งบความร้อนของผลไม้ + บันทึกเที่ยวขนส่ง
+  เปิดแบบนี้: web/idea_1.html?team=team05  (หรือพิมพ์ทีมในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง /event เมื่อระดับเปลี่ยน) ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด: id crop level alert temp_c rh sun_c + warm_s t_max (ดู project/idea_1_cold_chain.py)
+  กฎฝั่งแอป: level 2 = แถบแดงกะพริบ + นับนาทีที่ยังไม่มีใครรับทราบ
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>กล่องผลไม้ห้องเย็น</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #eef6fb; --card: #ffffff; --line: #cfe1ee; --ink: #0d2236; --dim: #557089;
+    --ice: #1f8fd6; --ok: #138a7e; --warn: #b36b00; --bad: #c62f3a; --track: #dbe9f3;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #08121d; --card: #0e1a2b; --line: #22405c; --ink: #eaf6ff; --dim: #8fa9bf;
+      --ice: #7fd3ff; --ok: #3dd6c6; --warn: #ffb547; --bad: #ff6b70; --track: #1a2d42; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  h1 { font-size: 21px; margin: 0; }
+  h2 { font-size: 16px; margin: 0 0 10px; color: var(--ice); }
+  .sub { margin: 0; color: var(--dim); font-size: 14px; }
+  .pill { padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-top: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+  .big { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dim { color: var(--dim); font-size: 14px; }
+  #alarm { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--bad); color: #fff; font-weight: 600; }
+  #alarm.on { display: block; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .65; } }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, input { font: inherit; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); min-height: 40px; }
+  button.main { background: var(--ice); color: #04121e; border-color: var(--ice); font-weight: 600; }
+  input[type=number] { width: 80px; }
+  ol#trip { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; }
+  ol#trip li { display: grid; grid-template-columns: 64px 14px 1fr; gap: 8px; align-items: center; padding: 6px 0;
+    border-bottom: 1px solid var(--line); font-size: 14px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+  .wide { grid-column: span 2; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 110px minmax(0, 1fr); } .grid .wide, .grid .full { grid-column: 1 / -1; }
+    .big { font-size: 32px; } #thermo { height: 200px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>กล่องผลไม้ห้องเย็น</h1>
+    <p class="sub">ความร้อนสะสมระหว่างขนส่ง ไม่ใช่แค่ค่าตอนนี้</p>
+  </div>
+  <div class="row">
+    <input id="team" size="10" value="" placeholder="team05" aria-label="ชื่อทีม">
+    <button id="go">ต่อ</button>
+    <span id="conn" class="pill">ยังไม่ต่อ</span>
+  </div>
+</header>
+<div id="alarm" role="alert"></div>
+
+<div class="grid">
+  <section class="card">
+    <h2>ปรอทกล่อง</h2>
+    <svg id="thermo" viewBox="0 0 120 260" width="100%" height="240" aria-label="ปรอทกล่อง">
+      <rect x="44" y="10" width="32" height="210" rx="16" fill="var(--track)"/>
+      <rect id="merc" x="48" y="214" width="24" height="2" rx="12" fill="var(--ice)"/>
+      <circle cx="60" cy="232" r="22" fill="var(--ice)" id="bulb"/>
+      <line id="hiLine" x1="36" x2="84" y1="80" y2="80" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="88" y="16" font-size="11" fill="currentColor">40</text>
+      <text x="88" y="220" font-size="11" fill="currentColor">0</text>
+      <text id="hiTxt" x="0" y="76" font-size="11" fill="var(--bad)">เกณฑ์</text>
+    </svg>
+  </section>
+
+  <section class="card">
+    <h2>ในกล่องตอนนี้</h2>
+    <div class="big"><span id="temp">--.-</span> C</div>
+    <div id="mood" class="dim">รอข้อความจากบอร์ด</div>
+    <p class="dim">ความชื้น <b id="rh">--</b> %<br>ร้อนจากนอกกล่อง +<b id="sun">-</b> C</p>
+    <p class="dim">สูงสุดตั้งแต่ออกรถ <b id="tmax">--</b> C</p>
+    <p class="dim">ผลไม้ <b id="crop">-</b></p>
+  </section>
+
+  <section class="card full">
+    <h2>งบความร้อนผลไม้</h2>
+    <svg viewBox="0 0 140 140" width="140" height="140" aria-label="งบความร้อนที่เหลือ">
+      <circle cx="70" cy="70" r="56" fill="none" stroke="var(--track)" stroke-width="14"/>
+      <circle id="ring" cx="70" cy="70" r="56" fill="none" stroke="var(--ok)" stroke-width="14"
+              stroke-linecap="round" transform="rotate(-90 70 70)" stroke-dasharray="351.9" stroke-dashoffset="0"/>
+      <text id="ringTxt" x="70" y="76" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor">100%</text>
+    </svg>
+    <p class="dim">อุ่นเกินสะสม <b id="warm">0</b> วิ จากงบ
+      <input id="budget" type="number" min="10" max="3600" value="180" aria-label="งบวินาที"> วิ</p>
+  </section>
+
+  <section class="card wide">
+    <h2>บันทึกเที่ยวนี้</h2>
+    <ol id="trip"></ol>
+  </section>
+
+  <section class="card full">
+    <h2>สั่งบอร์ด</h2>
+    <div class="row"><button class="main" id="ack">รับทราบ (ack)</button></div>
+    <p class="dim">เกณฑ์ร้อนใหม่ (t_hi, C)</p>
+    <div class="row"><input id="thi" type="number" min="16" max="45" value="30"><button id="set">ส่ง set</button></div>
+    <p class="dim" id="cmdMsg"></p>
+    <div class="row"><button id="csv">ดาวน์โหลด CSV</button></div>
+  </section>
+</div>
+
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const T_MAX_SCALE = 40;                       // ปรอทบนจอ 0-40 C เหมือนบอร์ด
+const LEVEL_TH = ["เย็นดี", "เริ่มอุ่น", "ร้อนเกิน"];
+const LEVEL_VAR = ["--ok", "--warn", "--bad"];
+const CROP_TH = { mango: "มะม่วง", strawberry: "สตรอว์เบอร์รี", durian: "ทุเรียน" };
+const BUDGET_S = { mango: 180, strawberry: 90, durian: 240 };   // งบความร้อน (วิ) ตรงกับ CROPS ในบอร์ด
+const ALERT_TH = { ok: "เย็นดี", cold: "เย็นจัด", hot: "กล่องอุ่น", dry: "แห้งไป", wet: "ไอน้ำเกาะ" };
+const $ = (id) => document.getElementById(id);
+const rows = [];                              // เก็บไว้ทำ CSV
+let client = null, team = "", tHi = 30, alarmSince = 0, alarmTimer = null, budgetByHand = false;
+
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function str(v, max) { return typeof v === "string" ? v.slice(0, max || 40) : ""; }
+function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function okTeam(t) { return /^team[0-9a-z_]{2,16}$/i.test(t) && t !== "teamXX" && t !== "team00"; }
+function hhmm(d) { return d.toTimeString().slice(0, 8); }
+function alertTh(code) {
+  return str(code, 60).split("+").map((c) => ALERT_TH[c] || c).join(" + ");
+}
+
+function setConn(text, ok) { $("conn").textContent = text; $("conn").style.color = ok ? cssVar("--ok") : cssVar("--warn"); }
+
+function yOf(c) {                              // อุณหภูมิ -> y บน SVG (บน = ร้อน)
+  const v = Math.max(0, Math.min(T_MAX_SCALE, c));
+  return 214 - v * 204 / T_MAX_SCALE;
+}
+
+function drawThermo(t, level) {
+  const y = yOf(t);
+  const m = $("merc");
+  m.setAttribute("y", y.toFixed(1));
+  m.setAttribute("height", (216 - y).toFixed(1));
+  const col = `var(${LEVEL_VAR[level] || "--ice"})`;
+  m.setAttribute("fill", col);
+  $("bulb").setAttribute("fill", col);
+}
+
+function drawHiLine() {
+  const y = yOf(tHi);
+  $("hiLine").setAttribute("y1", y); $("hiLine").setAttribute("y2", y);
+  $("hiTxt").setAttribute("y", y - 4);
+  $("hiTxt").textContent = tHi + " C";
+}
+
+function drawBudget(warm) {
+  const budget = Math.max(10, Number($("budget").value) || 180);
+  const left = Math.max(0, budget - warm);
+  const pct = Math.round(left * 100 / budget);
+  const C = 351.9;
+  $("ring").setAttribute("stroke-dashoffset", (C * (1 - pct / 100)).toFixed(1));
+  $("ring").setAttribute("stroke", cssVar(pct > 50 ? "--ok" : pct > 0 ? "--warn" : "--bad"));
+  $("ringTxt").textContent = pct > 0 ? pct + "%" : "หมดงบ";
+  $("warm").textContent = String(warm);
+}
+
+function addTrip(d, level, text) {
+  const li = document.createElement("li");
+  const t = document.createElement("span"); t.textContent = hhmm(d);
+  const dot = document.createElement("span"); dot.className = "dot";
+  dot.style.background = cssVar(LEVEL_VAR[level] || "--dim");
+  const msg = document.createElement("span"); msg.textContent = text;
+  li.append(t, dot, msg);
+  $("trip").prepend(li);
+  while ($("trip").children.length > 60) $("trip").lastChild.remove();
+}
+
+// กฎฝั่งแอป: ร้อนเกิน (level 2) = แถบแดงค้างจนกว่าจะรับทราบ บอกด้วยว่ารอมากี่นาทีแล้ว
+function alarmOn(why) {
+  alarmSince = Date.now();
+  const tick = () => {
+    const m = Math.floor((Date.now() - alarmSince) / 60000);
+    $("alarm").textContent = "กล่องร้อนเกิน: " + why + "  ยังไม่มีใครรับทราบมา " + m + " นาที";
+  };
+  tick();
+  clearInterval(alarmTimer); alarmTimer = setInterval(tick, 5000);
+  $("alarm").className = "on";
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+function alarmOff() { clearInterval(alarmTimer); alarmTimer = null; $("alarm").className = ""; }
+
+function onEvent(topic, data) {
+  const level = num(data.level);
+  if (level === null || level < 0 || level > 2) return;      // ไม่ใช่ event เตือนของเรื่องนี้
+  const t = num(data.temp_c), rh = num(data.rh), sun = num(data.sun_c);
+  const warm = num(data.warm_s), tmax = num(data.t_max);
+  const why = alertTh(data.alert);
+  const now = new Date();
+  if (t !== null) { $("temp").textContent = t.toFixed(1); drawThermo(t, level); }
+  $("rh").textContent = rh === null ? "--" : rh.toFixed(0);
+  $("sun").textContent = sun === null ? "-" : String(sun);
+  $("tmax").textContent = tmax === null ? "--" : tmax.toFixed(1);
+  const crop = str(data.crop, 20);
+  $("crop").textContent = CROP_TH[crop] || crop || "-";
+  if (BUDGET_S[crop] && !budgetByHand) $("budget").value = BUDGET_S[crop];   // งบตามผลไม้ที่บอร์ดใช้
+  $("mood").textContent = LEVEL_TH[level] + (level ? ": " + why : "");
+  $("mood").style.color = cssVar(LEVEL_VAR[level]);
+  if (warm !== null) drawBudget(warm);
+  addTrip(now, level, LEVEL_TH[level] + (level ? " (" + why + ")" : "") + (t === null ? "" : "  " + t.toFixed(1) + " C"));
+  rows.push([now.toISOString(), topic, level, str(data.alert, 60), t, rh, sun, warm, tmax]);
+  if (level === 2) alarmOn(why); else alarmOff();
+}
+
+function onMessage(topic, payload) {
+  let data = null;
+  try { data = JSON.parse(payload.toString()); } catch (e) { return; }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return;
+  if (topic.endsWith("/cmd")) {                                // คำสั่งของเราเองสะท้อนกลับมา
+    if (data.cmd === "ack") { alarmOff(); addTrip(new Date(), 0, "รับทราบแล้ว (จากแอป)"); }
+    return;
+  }
+  if (topic.endsWith("/event")) onEvent(topic, data);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setConn("ใส่ทีม เช่น team05", false); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea1-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setConn("กำลังต่อ...", false);
+  client.on("connect", () => { setConn("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setConn("หลุด กำลังต่อใหม่...", false));
+  client.on("message", onMessage);
+}
+
+function toBoard(obj) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker"; return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + JSON.stringify(obj);
+}
+
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCsv() {
+  if (!rows.length) { $("cmdMsg").textContent = "ยังไม่มีข้อมูลให้ดาวน์โหลด"; return; }
+  const head = ["time", "topic", "level", "alert", "temp_c", "rh", "sun_c", "warm_s", "t_max"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "cold_chain_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("go").addEventListener("click", connect);
+$("ack").addEventListener("click", () => toBoard({ cmd: "ack" }));
+$("set").addEventListener("click", () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v < 16 || v > 45) { $("cmdMsg").textContent = "t_hi ต้องเป็นเลขเต็ม 16-45"; return; }
+  tHi = v; drawHiLine();
+  toBoard({ cmd: "set", t_hi: v });
+});
+$("budget").addEventListener("change", () => { budgetByHand = true; drawBudget(Number($("warm").textContent) || 0); });
+$("csv").addEventListener("click", downloadCsv);
+
+drawHiLine(); drawBudget(0);
+team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+if (okTeam(team)) connect(); else setConn("ใส่ทีมแล้วกด ต่อ", false);
+</script>
+</body>
+</html>

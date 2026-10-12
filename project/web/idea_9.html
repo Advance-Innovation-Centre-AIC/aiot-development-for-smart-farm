@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<!--
+  idea_9.html - โรงเพาะเห็ด: ชั้นก้อนเชื้อซีดลงเมื่อแห้ง นาฬิกาแห้งติดกัน และสมุดคำขอพ่นหมอก
+  เปิดแบบนี้: web/idea_9.html?team=team05  (หรือพิมพ์ทีมในช่องบนหน้า)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง /event เมื่อระดับเปลี่ยน) ส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด: id crop level alert temp_c rh sun_c + dry_s mist_n (ดู project/idea_9_mushroom_house.py)
+  กฎฝั่งแอป: level 2 = ป้ายแดง "พ่นหมอกเดี๋ยวนี้" และนาฬิกาแห้งเดินต่อในหน้าเว็บจนกว่าจะชื้นพอ
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โรงเพาะเห็ด</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #eef5ec; --card: #fbfdf9; --line: #c9dcc4; --ink: #18301f; --dim: #5a7a62;
+    --moss: #3f8f4a; --ok: #2e9e6e; --warn: #b8860b; --bad: #c4553a; --bag: #f1ead8; --cap: #c8a27a;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1912; --card: #14231a; --line: #2f5a3b; --ink: #eaf7e6; --dim: #9db8a0;
+      --moss: #8bd17c; --ok: #5fd3a0; --warn: #f2cc8f; --bad: #e07a5f; --bag: #d9d0bb; --cap: #b48a63; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.5; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: center; }
+  h1 { margin: 0; font-size: 21px; color: var(--moss); }
+  h2 { margin: 0 0 8px; font-size: 16px; }
+  .sub { margin: 0; color: var(--dim); font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 14px; margin-top: 12px; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .two .card { margin-top: 0; }
+  .big { font-size: 40px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .rhbar { position: relative; height: 26px; border-radius: 13px; background: var(--line); margin: 12px 0 22px; }
+  .rhbar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 13px; background: var(--moss); transition: width .4s; }
+  .rhbar b { position: absolute; top: -4px; bottom: -4px; width: 3px; background: var(--bad); }
+  .rhbar span { position: absolute; top: 30px; font-size: 12px; color: var(--bad); transform: translateX(-50%); white-space: nowrap; }
+  #alarm { display: none; margin-top: 12px; padding: 12px; border-radius: 22px; background: var(--bad); color: #fff; font-weight: 700; }
+  #alarm.on { display: block; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, input { font: inherit; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); }
+  button.main { background: var(--moss); border-color: var(--moss); color: #0d1912; font-weight: 700; }
+  input[type=number] { width: 80px; }
+  #mists { margin: 0; padding-left: 20px; font-size: 14px; max-height: 200px; overflow: auto; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+  @media (max-width: 600px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>โรงเพาะเห็ด</h1>
+    <p class="sub">อากาศชื้นพอให้ก้อนเชื้อออกดอกไหม</p>
+  </div>
+  <div class="row">
+    <input id="team" size="10" placeholder="team05" aria-label="ชื่อทีม">
+    <button id="go">ต่อ</button>
+    <span id="conn" class="sub">ยังไม่ต่อ</span>
+  </div>
+</header>
+<div id="alarm" role="alert"></div>
+
+<section class="card">
+  <h2>ชั้นวางก้อนเชื้อ</h2>
+  <svg id="shelf" viewBox="0 0 320 120" width="100%" aria-label="ชั้นก้อนเชื้อ"></svg>
+  <p class="sub" id="mood">รอข้อความจากบอร์ด</p>
+</section>
+
+<div class="two" style="margin-top:12px">
+  <section class="card">
+    <h2>ความชื้นในโรง</h2>
+    <div class="big"><span id="rh">--</span> %</div>
+    <div class="rhbar"><i id="rhFill"></i><b id="loMark" style="left:65%"></b><span id="loTxt" style="left:65%">ต่ำสุด 65</span></div>
+    <p class="sub" id="temp">-</p>
+  </section>
+  <section class="card">
+    <h2>แห้งติดกันมา</h2>
+    <div class="big" id="dry">0:00</div>
+    <p class="sub">นาที:วินาที (เว็บนับต่อจากค่าที่บอร์ดส่งมา)</p>
+    <p class="sub">ขอพ่นหมอกแล้ว <b id="mistN">0</b> ครั้ง</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>สมุดพ่นหมอก</h2>
+  <ol id="mists"></ol>
+</section>
+
+<section class="card">
+  <h2>สั่งโรงเพาะ</h2>
+  <div class="row">
+    <button class="main" id="ack">พ่นหมอกแล้ว (ack)</button>
+    <input id="thi" type="number" min="19" max="45" value="32" aria-label="t_hi"><button id="set">ตั้งเกณฑ์ร้อน t_hi</button>
+    <button id="csv">ดาวน์โหลด CSV</button>
+  </div>
+  <p class="sub" id="cmdMsg"></p>
+</section>
+
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const LEVEL_TH = ["ชื้นดี", "เริ่มแห้ง", "แห้งเกิน"];
+const LEVEL_VAR = ["--ok", "--warn", "--bad"];
+const ALERT_TH = { ok: "ชื้นดี", cold: "โรงหนาว", hot: "โรงร้อน", dry: "อากาศแห้ง", wet: "ชื้นเกิน" };
+// ชื่อไทยและ RH ต่ำสุดของเห็ดแต่ละชนิด ตรงกับ CROPS ในบอร์ด
+const CROPS = { oyster: ["เห็ดนางฟ้า", 65], straw: ["เห็ดฟาง", 65], ear: ["เห็ดหูหนู", 60] };
+const BAGS = 12;
+const $ = (id) => document.getElementById(id);
+const rows = [];
+let client = null, team = "", rhLo = 65, dryBase = 0, dryAt = 0, lastMist = 0;
+
+function num(v) { return (typeof v === "number" && Number.isFinite(v)) ? v : null; }
+function str(v, max) { return typeof v === "string" ? v.slice(0, max || 40) : ""; }
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function okTeam(t) { return /^team[0-9a-z_]{2,16}$/i.test(t) && t !== "teamXX" && t !== "team00"; }
+function alertTh(code) { return str(code, 60).split("+").map((c) => ALERT_TH[c] || c).join(" + "); }
+function setConn(t, ok) { $("conn").textContent = t; $("conn").style.color = cssVar(ok ? "--ok" : "--warn"); }
+
+function svgEl(tag, attrs) {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function drawShelf(level) {                    // ก้อนเชื้อ 12 ก้อน 2 ชั้น: แห้งมาก = ดอกน้อยลงและซีด
+  const svg = $("shelf");
+  while (svg.firstChild) svg.firstChild.remove();
+  const caps = [3, 1, 0][level];
+  for (let r = 0; r < 2; r++) {
+    svg.appendChild(svgEl("rect", { x: 4, y: 54 + r * 58, width: 312, height: 5, fill: "var(--dim)" }));
+    for (let i = 0; i < BAGS / 2; i++) {
+      const x = 14 + i * 51, y = 14 + r * 58;
+      svg.appendChild(svgEl("rect", { x, y, width: 34, height: 40, rx: 8, fill: "var(--bag)", opacity: level === 2 ? 0.55 : 1 }));
+      for (let c = 0; c < caps; c++) {
+        svg.appendChild(svgEl("ellipse", { cx: x + 8 + c * 9, cy: y + 4, rx: 7, ry: 4, fill: "var(--cap)" }));
+      }
+    }
+  }
+}
+
+function drawLo() {
+  $("loMark").style.left = rhLo + "%";
+  $("loTxt").style.left = rhLo + "%";
+  $("loTxt").textContent = "ต่ำสุด " + rhLo;
+}
+
+function tickDry() {
+  const sec = dryAt ? dryBase + Math.floor((Date.now() - dryAt) / 1000) : dryBase;
+  $("dry").textContent = Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+  $("dry").style.color = sec ? cssVar("--bad") : cssVar("--ok");
+}
+
+function addMist(n, rh) {
+  const li = document.createElement("li");
+  li.textContent = new Date().toTimeString().slice(0, 5) + "  ขอพ่นหมอกครั้งที่ " + n + (rh === null ? "" : "  RH " + rh.toFixed(0) + " %");
+  $("mists").prepend(li);
+}
+
+// กฎฝั่งแอป: แห้งเกิน (level 2) = ป้ายแดงจนกว่าจะกด "พ่นหมอกแล้ว" หรือระดับลด
+function alarm(on, why) {
+  $("alarm").className = on ? "on" : "";
+  $("alarm").textContent = on ? "ก้อนเชื้อแห้ง: " + why + "  พ่นหมอกเดี๋ยวนี้ แล้วกดพ่นหมอกแล้ว" : "";
+  if (on && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+}
+
+function onEvent(topic, d) {
+  const level = num(d.level);
+  if (level === null || level < 0 || level > 2) return;
+  const rh = num(d.rh), t = num(d.temp_c), sun = num(d.sun_c), dry = num(d.dry_s), mist = num(d.mist_n);
+  const crop = str(d.crop, 20), why = alertTh(d.alert);
+  if (CROPS[crop] && CROPS[crop][1] !== rhLo) { rhLo = CROPS[crop][1]; drawLo(); }
+  if (rh !== null) { $("rh").textContent = rh.toFixed(0); $("rhFill").style.width = Math.max(0, Math.min(100, rh)) + "%"; }
+  $("rhFill").style.background = cssVar(level ? LEVEL_VAR[level] : "--moss");
+  $("temp").textContent = (CROPS[crop] ? CROPS[crop][0] + "  " : "") + (t === null ? "--" : t.toFixed(1)) + " C" + (sun ? "  แดด +" + sun : "");
+  $("mood").textContent = LEVEL_TH[level] + (level ? ": " + why : "");
+  $("mood").style.color = cssVar(LEVEL_VAR[level]);
+  drawShelf(level);
+  // นาฬิกาแห้ง: เดินต่อในเว็บถ้ายังแห้งอยู่ (rh ต่ำกว่าเกณฑ์) หยุดเมื่อกลับมาชื้น
+  dryBase = dry === null ? 0 : dry;
+  dryAt = (rh !== null && rh < rhLo) ? Date.now() : 0;
+  tickDry();
+  if (mist !== null) {
+    $("mistN").textContent = String(mist);
+    if (mist > lastMist) addMist(mist, rh);
+    lastMist = mist;
+  }
+  rows.push([new Date().toISOString(), topic, level, str(d.alert, 60), t, rh, sun, dry, mist]);
+  alarm(level === 2, why);
+}
+
+function onMessage(topic, payload) {
+  let d = null;
+  try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+  if (!d || typeof d !== "object" || Array.isArray(d)) return;
+  if (topic.endsWith("/cmd")) { if (d.cmd === "ack") alarm(false); return; }
+  if (topic.endsWith("/event")) onEvent(topic, d);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!okTeam(team)) { setConn("ใส่ทีม เช่น team05", false); return; }
+  history.replaceState(null, "", "?team=" + encodeURIComponent(team));
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea9-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setConn("กำลังต่อ...", false);
+  client.on("connect", () => { setConn("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setConn("หลุด กำลังต่อใหม่...", false));
+  client.on("message", onMessage);
+}
+
+function toBoard(obj) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker"; return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + JSON.stringify(obj);
+}
+
+function csvCell(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadCsv() {
+  if (!rows.length) { $("cmdMsg").textContent = "ยังไม่มีข้อมูลให้ดาวน์โหลด"; return; }
+  const head = ["time", "topic", "level", "alert", "temp_c", "rh", "sun_c", "dry_s", "mist_n"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "mushroom_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("go").addEventListener("click", connect);
+$("ack").addEventListener("click", () => toBoard({ cmd: "ack" }));
+$("set").addEventListener("click", () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v < 19 || v > 45) { $("cmdMsg").textContent = "t_hi ต้องเป็นเลขเต็ม 19-45"; return; }
+  toBoard({ cmd: "set", t_hi: v });
+});
+$("csv").addEventListener("click", downloadCsv);
+
+drawShelf(0); drawLo(); setInterval(tickDry, 1000);
+team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+if (okTeam(team)) connect(); else setConn("ใส่ทีมแล้วกด ต่อ", false);
+</script>
+</body>
+</html>

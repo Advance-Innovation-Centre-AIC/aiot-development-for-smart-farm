@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>เติมอากาศบ่อปลา</title>
+<!--
+  เรื่อง 17 · เติมอากาศบ่อปลา (คู่กับ project/idea_17_pond_aerator.py)
+  เปิดแบบนี้: idea_17.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ภาพหลัก: "แถบเฝ้ายาม" ทั้งคืน (canvas) หนึ่งช่อง = หนึ่งรายงาน สีตามขั้นออกซิเจน
+           เขียว = ปลาสบาย  เหลือง = เฝ้าระวัง  แดง = ปลาลอยหัว  ขีดฟ้าใต้ช่อง = เครื่องตีน้ำเดิน
+  กฎของหน้านี้: DO ลดลงตั้งแต่ 1.0 mg/L ภายใน 4 รายงานล่าสุด (ราว 20 วิ) = ป้ายแดง "ออกซิเจนกำลังดิ่ง"
+               แม้ยังไม่ต่ำกว่า 3.0 ก็เตือนก่อน เพราะตอนตีสี่ปลาตายเร็วกว่าที่คนตื่นทัน
+  คีย์ที่ใช้: soil (= DO x10) tank (= น้ำในบ่อ) pump n + dips do_min (คีย์เพิ่มของเรื่องนี้) · คีย์อื่นไม่สนใจ
+-->
+<style>
+:root {
+  --bg: #071a1f;
+  --card: #0f262b;
+  --line: #1d3d44;
+  --ink: #e2f2f0;
+  --dim: #86a3a0;
+  --o2: #3fd6c6;
+  --night: #6c7bd9;
+  --watch: #f2b636;
+  --gasp: #e5484d;
+  --calm: #47c774;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: linear-gradient(180deg, #0b1630 0%, var(--bg) 40%);
+  color: var(--ink);
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  line-height: 1.45;
+}
+header { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+header h1 { margin: 0; font-size: 1.2rem; color: var(--o2); }
+.teamrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+main { max-width: 900px; margin: auto; padding: 0 16px 12px; display: grid; gap: 12px; }
+.card { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.card h2 { margin: 0 0 8px; font-size: 1rem; color: var(--night); }
+#dive {
+  display: none; background: var(--gasp); color: #fff; border-radius: 12px;
+  padding: 10px 14px; font-weight: 600;
+}
+#dive.show { display: block; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+#do { font-size: 3.4rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+#do small { font-size: 1rem; color: var(--dim); font-weight: 400; }
+#step { font-size: 1.2rem; margin-top: 4px; }
+.ladder { display: flex; flex-direction: column; gap: 6px; }
+.ladder i { width: 30px; height: 30px; border-radius: 50%; display: block; opacity: .2; }
+.ladder i.lit { opacity: 1; box-shadow: 0 0 12px currentColor; }
+#strip { width: 100%; height: 90px; display: block; background: #061317; border-radius: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: .8rem; color: var(--dim); margin-top: 6px; }
+.legend b { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.facts div { background: #0a1d21; border-radius: 10px; padding: 8px; }
+.facts b { display: block; font-size: 1.3rem; }
+.facts span { font-size: .8rem; color: var(--dim); }
+button {
+  font: inherit; font-weight: 600; border: 0; border-radius: 10px;
+  padding: 9px 14px; cursor: pointer; background: var(--o2); color: #04211d;
+}
+button.alt { background: #1d3d44; color: var(--ink); }
+button.stop { background: var(--gasp); color: #fff; }
+input { min-width: 0; max-width: 100%; font: inherit; background: #061317; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 7px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+#status.ok { color: var(--calm); }
+#status.bad { color: var(--gasp); }
+.muted { color: var(--dim); font-size: .85rem; }
+footer { max-width: 900px; margin: auto; padding: 16px; color: var(--dim); font-size: .85rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>บ่อปลา: เฝ้าออกซิเจนทั้งคืน</h1>
+  <div class="teamrow">
+    <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+    <button id="go" class="alt">เชื่อมต่อ</button>
+    <span id="status" class="muted">ยังไม่ต่อ</span>
+  </div>
+</header>
+<main>
+  <div id="dive">ออกซิเจนกำลังดิ่ง: <span id="dive_t">--</span> ควรเปิดเครื่องตีน้ำก่อนปลาลอยหัว</div>
+  <section class="card hero">
+    <div>
+      <div id="do">--<small> mg/L</small></div>
+      <div id="step" class="muted">รอรายงานจากบ่อ</div>
+      <p class="muted">DO จำลองจาก VR1 · รายงานล่าสุด <span id="t_age">--</span></p>
+    </div>
+    <div class="ladder" aria-label="บันไดไฟ 3 ขั้น">
+      <i id="l0" style="background:var(--calm);color:var(--calm)"></i>
+      <i id="l1" style="background:var(--watch);color:var(--watch)"></i>
+      <i id="l2" style="background:var(--gasp);color:var(--gasp)"></i>
+    </div>
+  </section>
+  <section class="card">
+    <h2>แถบเฝ้ายาม (ใหม่สุดอยู่ขวา)</h2>
+    <canvas id="strip" width="720" height="90" aria-label="แถบสีออกซิเจนทุกรายงาน"></canvas>
+    <div class="legend">
+      <span><b style="background:var(--calm)"></b>5.0 ขึ้นไป ปลาสบาย</span>
+      <span><b style="background:var(--watch)"></b>3.0-4.9 เฝ้าระวัง</span>
+      <span><b style="background:var(--gasp)"></b>ต่ำกว่า 3.0 ปลาลอยหัว</span>
+      <span><b style="background:var(--o2)"></b>เครื่องตีน้ำเดิน</span>
+    </div>
+  </section>
+  <section class="card">
+    <div class="facts">
+      <div><b id="t_dips">--</b><span>DO ตกต่ำกี่ครั้ง</span></div>
+      <div><b id="t_min">--</b><span>DO ต่ำสุด (mg/L)</span></div>
+      <div><b id="t_tank">--</b><span>น้ำในบ่อ (VR4)</span></div>
+      <div><b id="t_pump">--</b><span>เครื่องตีน้ำ</span></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>สั่งเครื่องตีน้ำ</h2>
+    <div class="row">
+      <label>นาน <input id="sec" type="number" min="1" max="30" value="30" style="width:5em"> วิ</label>
+      <button id="on">เปิดเครื่องตีน้ำ</button>
+      <button id="off" class="stop">หยุด</button>
+    </div>
+    <p class="muted">บอร์ดตัดเหลือไม่เกิน 30 วิ และไม่เปิดถ้าน้ำในบ่อต่ำกว่า 10 % (ใบพัดตีลม)</p>
+    <div class="row"><button id="beep" class="alt">ปลุกคนเฝ้าบ่อ (beep)</button></div>
+    <div class="row">
+      <input id="say" maxlength="20" placeholder="CHECK POND" style="flex:1">
+      <button id="sayb" class="alt">ขึ้นจอไฟ</button>
+    </div>
+    <div class="row"><button id="csv" class="alt">ดาวน์โหลด CSV</button><span id="csvn" class="muted">0 แถว</span></div>
+  </section>
+</main>
+<footer>
+  <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+  <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+"use strict";
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const DO_LOW = 30, DO_OK = 50, DIVE = 10, DIVE_SPAN = 4, CELLS = 72;
+const STEP_COL = ["#47c774", "#f2b636", "#e5484d"];
+const STEP_WORD = ["ปลาสบาย", "เฝ้าระวัง", "ปลาลอยหัว!"];
+const $ = (id) => document.getElementById(id);
+const night = [];         // {do10, pump} หนึ่งช่องต่อรายงาน
+const rows = [];
+let client = null, lastAt = 0;
+let team = new URLSearchParams(location.search).get("team") || "";
+$("team").value = team;
+
+function setStatus(text, ok) { const s = $("status"); s.textContent = text; s.className = ok ? "ok" : "bad"; }
+function num(v, lo, hi) { return (typeof v === "number" && isFinite(v) && v >= lo && v <= hi) ? Math.round(v) : null; }
+function doText(x) { return x === null ? "--" : (x / 10).toFixed(1); }
+function stepOf(x) { return x >= DO_OK ? 0 : x >= DO_LOW ? 1 : 2; }
+
+function drawStrip() {
+  const c = $("strip"), ctx = c.getContext("2d");
+  const W = c.width, H = c.height, cw = W / CELLS;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "#0a1d21";
+  ctx.fillRect(0, 0, W, H - 14);
+  const start = CELLS - night.length;
+  night.forEach((p, i) => {
+    const x = (start + i) * cw;
+    if (p.do10 !== null) {
+      ctx.fillStyle = STEP_COL[stepOf(p.do10)];
+      const h = Math.max(6, (H - 18) * p.do10 / 100);       // สูง = DO มาก
+      ctx.fillRect(x + 1, H - 16 - h, cw - 2, h);
+    }
+    if (p.pump === 1) {
+      ctx.fillStyle = "#3fd6c6";
+      ctx.fillRect(x + 1, H - 10, cw - 2, 8);
+    }
+  });
+  ctx.strokeStyle = "#e5484d";
+  ctx.setLineDash([5, 4]);
+  const yLow = H - 16 - (H - 18) * DO_LOW / 100;
+  ctx.beginPath(); ctx.moveTo(0, yLow); ctx.lineTo(W, yLow); ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function showStep(step) {
+  for (let i = 0; i < 3; i++) $("l" + i).classList.toggle("lit", i === step);
+  $("step").textContent = step === null ? "ไม่มีค่า DO" : STEP_WORD[step];
+  $("step").style.color = step === null ? "" : STEP_COL[step];
+}
+
+function onTelemetry(d) {
+  const do10 = num(d.soil, 0, 100), tank = num(d.tank, 0, 100), pump = num(d.pump, 0, 1);
+  const dips = num(d.dips, 0, 1e6), doMin = num(d.do_min, 0, 100), n = num(d.n, 0, 1e9);
+  lastAt = Date.now();
+  $("do").firstChild.textContent = doText(do10);
+  $("do").style.color = do10 === null ? "" : STEP_COL[stepOf(do10)];
+  showStep(do10 === null ? null : stepOf(do10));
+  $("t_dips").textContent = dips === null ? "--" : dips;
+  $("t_min").textContent = doText(doMin);
+  $("t_tank").textContent = tank === null ? "--" : tank + " %";
+  $("t_tank").style.color = tank !== null && tank < 10 ? "var(--gasp)" : "";
+  $("t_pump").textContent = pump === null ? "--" : pump ? "เดิน" : "หยุด";
+  night.push({ do10, pump });
+  if (night.length > CELLS) night.shift();
+  drawStrip();
+  checkDive();
+  rows.push([new Date().toISOString(), n, do10 === null ? null : doText(do10), tank, pump, dips, doMin === null ? null : doText(doMin)]);
+  $("csvn").textContent = rows.length + " แถว";
+}
+
+// กฎของหน้านี้: ลดลง DIVE (1.0 mg/L) ขึ้นไปภายใน DIVE_SPAN รายงานล่าสุด = ออกซิเจนกำลังดิ่ง
+function checkDive() {
+  const last = night.slice(-DIVE_SPAN).map((p) => p.do10).filter((v) => v !== null);
+  let drop = 0;
+  if (last.length >= 2) drop = Math.max(...last) - last[last.length - 1];
+  const peakFirst = last.length >= 2 && last.indexOf(Math.max(...last)) < last.length - 1;
+  const diving = drop >= DIVE && peakFirst;
+  $("dive").classList.toggle("show", diving);
+  if (diving) $("dive_t").textContent = "ลดลง " + doText(drop) + " mg/L ใน " + last.length + " รายงาน";
+}
+
+setInterval(() => {
+  $("t_age").textContent = lastAt ? Math.round((Date.now() - lastAt) / 1000) + " วิที่แล้ว" : "--";
+}, 1000);
+
+function send(obj) {
+  if (!client || !client.connected) { setStatus("ยังไม่ต่อ broker", false); return; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  setStatus("ส่ง " + JSON.stringify(obj), true);
+}
+
+function csvCell(v) {
+  if (v === undefined || v === null) return "";
+  let t = String(v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;
+  return /[",\n\r]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+
+function downloadCsv() {
+  const head = ["time", "n", "do_mg_l", "tank", "pump", "dips", "do_min_mg_l"];
+  const text = [head.join(","), ...rows.map((r) => r.map(csvCell).join(","))].join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + text], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "pond_aerator_" + team + ".csv";
+  document.body.append(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (client) client.end(true);
+  client = mqtt.connect(BROKER_URL, { clientId: "idea17-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  setStatus("กำลังต่อ...", false);
+  client.on("connect", () => { setStatus("ต่อแล้ว " + ROOT + "/" + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่...", false));
+  client.on("message", (topic, payload) => {
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { d = null; }
+    if (topic.endsWith("/telemetry") && d && typeof d === "object" && !Array.isArray(d)) onTelemetry(d);
+  });
+}
+
+$("go").onclick = connect;
+$("on").onclick = () => {
+  const s = Number($("sec").value);
+  send({ cmd: "pump", on: 1, sec: Number.isInteger(s) && s > 0 ? Math.min(s, 30) : 10 });
+};
+$("off").onclick = () => send({ cmd: "pump", on: 0 });
+$("beep").onclick = () => send({ cmd: "beep" });
+$("sayb").onclick = () => send({ cmd: "say", text: $("say").value.replace(/[^ -~]/g, "").slice(0, 20).toUpperCase() });
+$("csv").onclick = downloadCsv;
+drawStrip();
+showStep(null);
+$("step").textContent = "รอรายงานจากบ่อ";
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>

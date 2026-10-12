@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<!--
+  idea_14.html - ตู้เก็บยาและวัคซีนสัตว์: ใบบันทึกอุณหภูมิตู้ยา + กราฟแถบช่วงที่ยอมได้
+  เปิดแบบนี้: idea_14.html?team=team05  (เปลี่ยน 05 เป็นเลขกลุ่ม)
+  ฟัง bento-aiot/<ทีม>/# (บอร์ดส่ง event ตอนระดับเปลี่ยน) และส่งคำสั่งเข้า bento-aiot/<ทีม>/cmd
+  คีย์จากบอร์ด idea_14_vet_fridge.py: level alert temp_c rh sun_c crop + out_s exc_n
+  กฎฝั่งแอป: level 2 = ป้าย "กักยาไว้ก่อน" ค้างจนกว่าคนกดยืนยันว่าตรวจแล้ว (ไม่หายเองเมื่อกลับเข้าช่วง)
+  broker สาธารณะ ไม่มีรหัสผ่าน ใครก็อ่านและสั่งได้ ห้ามส่งของลับ
+-->
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ตู้ยาและวัคซีนสัตว์</title>
+<style>
+  :root {
+    --bg: #eef4f5; --sheet: #ffffff; --line: #c9dadd; --ink: #10262e; --dim: #52707a;
+    --teal: #0f7c8c; --ok: #0e9f6e; --warn: #c77700; --bad: #d12e3a;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", "Sarabun", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); line-height: 1.45; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 14px; }
+  header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+    border-bottom: 3px solid var(--teal); padding-bottom: 10px; }
+  h1 { margin: 0; font-size: 21px; color: var(--teal); }
+  .sub { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .row > * { min-width: 0; }
+  .chip { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--dim); background: var(--sheet); }
+  .chip.on { color: var(--ok); border-color: var(--ok); }
+  input, button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); padding: 8px 12px; min-height: 40px; }
+  button { cursor: pointer; font-weight: 600; }
+  button.main { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .quarantine { display: none; margin: 12px 0; padding: 14px; border-radius: 10px; border: 2px solid var(--bad); background: #fdecee; color: var(--bad); }
+  .quarantine.show { display: block; }
+  .quarantine b { font-size: 18px; }
+  .sheet { margin-top: 12px; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .sheet h2 { margin: 0 0 10px; font-size: 15px; color: var(--teal); }
+  .now { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .now div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .now b { display: block; font-size: 26px; }
+  .now span { color: var(--dim); font-size: 13px; }
+  svg { width: 100%; height: auto; display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 6px; text-align: left; }
+  th { background: #e4eff1; color: var(--dim); font-weight: 600; }
+  .tablewrap { max-height: 260px; overflow: auto; }
+  .lv0 { color: var(--ok); } .lv1 { color: var(--warn); } .lv2 { color: var(--bad); font-weight: 700; }
+  .muted { color: var(--dim); font-size: 13px; }
+  footer { margin: 18px 0 8px; color: var(--dim); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ใบบันทึกอุณหภูมิ ตู้ยาและวัคซีนสัตว์</h1>
+      <p class="sub">ตู้หลุดช่วงเมื่อไร นานเท่าไร ใครรับทราบ</p>
+    </div>
+    <div class="row">
+      <label class="muted">ทีม <input id="team" size="10" autocomplete="off"></label>
+      <button id="go">เชื่อมต่อ</button>
+      <span id="conn" class="chip">ยังไม่ต่อ</span>
+    </div>
+  </header>
+
+  <div id="quarantine" class="quarantine" role="alert">
+    <b>กักยาไว้ก่อน ห้ามฉีดจนกว่าสัตวแพทย์ตรวจ</b>
+    <p>ตู้หลุดช่วงไกล ตั้งแต่ <span id="qSince">--</span> (ผ่านมา <span id="qAge">0</span> นาที)</p>
+    <button id="cleared">สัตวแพทย์ตรวจแล้ว ปลดป้าย</button>
+  </div>
+
+  <section class="sheet">
+    <h2>ตอนนี้</h2>
+    <div class="now">
+      <div><b id="temp">--</b><span>อุณหภูมิในตู้ C</span></div>
+      <div><b id="state">--</b><span>สถานะ</span></div>
+      <div><b id="out">--</b><span>หลุดช่วงรวม (นาที:วินาที)</span></div>
+      <div><b id="exc">--</b><span>หลุดช่วงกี่ครั้ง</span></div>
+    </div>
+    <p class="muted">ชนิดยา: <span id="crop">--</span>  ความชื้น <span id="rh">--</span> %  ช่วงที่ยอมได้ <span id="band">20-30</span> C (ค่าสาธิต วัคซีนจริง 2-8 C ตามฉลาก)</p>
+  </section>
+
+  <section class="sheet">
+    <h2>กราฟอุณหภูมิกับแถบช่วงที่ยอมได้</h2>
+    <svg id="chart" viewBox="0 0 600 220" aria-label="กราฟอุณหภูมิตู้ยา">
+      <rect x="40" y="10" width="550" height="180" fill="#f7fbfb" stroke="#c9dadd"/>
+      <rect id="okBand" x="40" width="550" fill="#d5f0e5"/>
+      <g id="yTicks" fill="#52707a" font-size="11"></g>
+      <polyline id="line" fill="none" stroke="#0f7c8c" stroke-width="2.5"/>
+      <g id="dots"></g>
+    </svg>
+  </section>
+
+  <section class="sheet">
+    <h2>สั่งบอร์ด</h2>
+    <div class="row">
+      <button id="ack" class="main">รับทราบ (ack)</button>
+      <label class="muted">ขอบบนใหม่ <input id="thi" type="number" min="21" max="45" value="30" style="width:80px"> C</label>
+      <button id="set">ส่ง set t_hi</button>
+    </div>
+    <p id="cmdMsg" class="muted"></p>
+  </section>
+
+  <section class="sheet">
+    <h2>ใบบันทึก</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>เวลา</th><th>C</th><th>สถานะ</th><th>หมายเหตุ</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="csv">ดาวน์โหลด CSV</button>
+      <span id="other" class="muted"></span>
+    </div>
+  </section>
+
+  <footer>
+    <p>ต่อยอดหน้านี้เองได้ (แก้ด้วยตัวเองหรือ vibe coding โดยวาง s2/app/MQTT_CONTRACT_th.md ให้ AI ก่อน)</p>
+    <p>หน้านี้เป็นจุดเริ่มต้นเท่านั้น ห้ามส่งตามนี้ ทีมต้องต่อยอดเองอย่างน้อย 3 อย่าง (ดู PROJECT_BRIEF_lite_th.md)</p>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.0/dist/mqtt.min.js"
+        integrity="sha384-9WWboT9UtuPFRlOLq4FygQkcJxzYcpz8SXGkNyCEXM+44n14xzjNlrRKYZwuF/A6" crossorigin="anonymous"></script>
+<script>
+const BROKER_URL = "wss://broker.hivemq.com:8884/mqtt";
+const ROOT = "bento-aiot";
+const Y_LO = 10, Y_HI = 40;                     // แกนกราฟ เท่ากับแถบบนบอร์ด
+const KNOWN = ["id", "crop", "level", "alert", "temp_c", "rh", "sun_c", "out_s", "exc_n"];
+const CROP_TH = { vaccine: "วัคซีนสัตว์", injection: "ยาฉีดสัตว์", tablet: "ยาเม็ดสัตว์" };
+const BANDS = { vaccine: [20, 30], injection: [20, 30], tablet: [18, 32] };   // ตรงกับ CROPS บนบอร์ด
+const STATE = ["ในช่วง", "ใกล้หลุด", "หลุดไกล"];
+const $ = (id) => document.getElementById(id);
+let client = null, team = new URLSearchParams(location.search).get("team") || "";
+let band = [20, 30], quarantineSince = 0;
+const rows = [], pts = [];
+$("team").value = team;
+
+function num(v) { return typeof v === "number" && Number.isFinite(v) ? v : null; }
+function hhmm(d) { return d.toTimeString().slice(0, 8); }
+function mmss(s) { return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
+function setStatus(msg, ok) { $("conn").textContent = msg; $("conn").className = ok ? "chip on" : "chip"; }
+function yOf(t) { return 190 - (Math.max(Y_LO, Math.min(Y_HI, t)) - Y_LO) / (Y_HI - Y_LO) * 180; }
+
+function drawAxis() {
+  const g = $("yTicks");
+  for (let t = Y_LO; t <= Y_HI; t += 5) {
+    const tx = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    tx.setAttribute("x", "4"); tx.setAttribute("y", String(yOf(t) + 4)); tx.textContent = String(t);
+    g.appendChild(tx);
+  }
+}
+
+function drawChart() {
+  $("okBand").setAttribute("y", yOf(band[1])); $("okBand").setAttribute("height", yOf(band[0]) - yOf(band[1]));
+  $("band").textContent = band[0] + "-" + band[1];
+  const step = pts.length > 1 ? 550 / (pts.length - 1) : 0;
+  $("line").setAttribute("points", pts.map((p, i) => (40 + i * step).toFixed(1) + "," + yOf(p.t).toFixed(1)).join(" "));
+  const g = $("dots"); g.textContent = "";
+  pts.forEach((p, i) => {
+    const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    c.setAttribute("cx", (40 + i * step).toFixed(1)); c.setAttribute("cy", yOf(p.t).toFixed(1)); c.setAttribute("r", "4");
+    c.setAttribute("fill", ["#0e9f6e", "#c77700", "#d12e3a"][p.level] || "#52707a");
+    g.appendChild(c);
+  });
+}
+
+// กฎฝั่งแอป: level 2 = กักยา  ป้ายไม่หายเองแม้ตู้กลับเข้าช่วง ต้องมีคนกดยืนยันว่าตรวจแล้ว
+function tickQuarantine() {
+  $("quarantine").className = quarantineSince ? "quarantine show" : "quarantine";
+  if (quarantineSince) $("qAge").textContent = String(Math.floor((Date.now() - quarantineSince) / 60000));
+}
+setInterval(tickQuarantine, 5000);
+
+function addRow(now, t, level, note) {
+  const tr = document.createElement("tr");
+  for (const [text, cls] of [[hhmm(now), ""], [t === null ? "--" : t.toFixed(1), ""], [level === null ? "?" : STATE[level], level === null ? "" : "lv" + level], [note, ""]]) {
+    const td = document.createElement("td");
+    td.textContent = text;
+    if (cls) td.className = cls;
+    tr.appendChild(td);
+  }
+  $("rows").prepend(tr);
+  while ($("rows").children.length > 100) $("rows").lastChild.remove();
+}
+
+function onEvent(d) {
+  const level = Number.isInteger(d.level) && d.level >= 0 && d.level <= 2 ? d.level : null;
+  const t = num(d.temp_c), rh = num(d.rh), sun = num(d.sun_c), out = num(d.out_s), exc = num(d.exc_n);
+  const now = new Date();
+  if (typeof d.crop === "string") {
+    $("crop").textContent = CROP_TH[d.crop] || d.crop.slice(0, 20);
+    if (BANDS[d.crop] && band[0] !== BANDS[d.crop][0]) band = BANDS[d.crop].slice();
+  }
+  if (t !== null) $("temp").textContent = t.toFixed(1);
+  if (rh !== null) $("rh").textContent = rh.toFixed(0);
+  if (out !== null && out >= 0) $("out").textContent = mmss(Math.floor(out));
+  if (exc !== null) $("exc").textContent = String(exc);
+  if (level !== null) {
+    $("state").textContent = STATE[level];
+    $("state").className = "lv" + level;
+    if (level === 2 && !quarantineSince) { quarantineSince = Date.now(); $("qSince").textContent = hhmm(now); }
+    tickQuarantine();
+  }
+  if (t !== null && level !== null) { pts.push({ t, level }); if (pts.length > 40) pts.shift(); drawChart(); }
+  const extra = Object.keys(d).filter((k) => !KNOWN.includes(k));
+  $("other").textContent = extra.length ? "คีย์ที่หน้านี้ยังไม่รู้จัก: " + extra.slice(0, 6).join(", ") : "";
+  const note = typeof d.alert === "string" && level ? d.alert.slice(0, 30) : "";
+  rows.push([now.toISOString(), level, t, rh, sun, out, exc, typeof d.alert === "string" ? d.alert : "", ""]);
+  addRow(now, t, level, note);
+}
+
+function send(obj, label) {
+  if (!client || !client.connected) { $("cmdMsg").textContent = "ยังไม่ได้ต่อ broker คำสั่งยังไม่ถึงบอร์ด"; return false; }
+  client.publish(ROOT + "/" + team + "/cmd", JSON.stringify(obj));
+  $("cmdMsg").textContent = "ส่งแล้ว: " + label + " " + hhmm(new Date());
+  return true;
+}
+
+function csvCell(v) { const s = v === null || v === undefined ? "" : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function downloadCsv() {
+  const head = ["time", "level", "temp_c", "rh", "sun_c", "out_s", "exc_n", "alert", "note"];
+  const lines = [head.join(",")].concat(rows.map((r) => r.map(csvCell).join(",")));
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });   // BOM ให้ Excel อ่านไทยได้
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "vet_fridge_log_" + team + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function connect() {
+  team = $("team").value.trim();
+  if (!/^team[0-9a-z_]{2,20}$/.test(team) || team === "team00") { setStatus("ใส่เลขทีม เช่น team05", false); return; }
+  if (typeof mqtt === "undefined") { setStatus("โหลดไลบรารี MQTT ไม่ได้ ตรวจเน็ต", false); return; }
+  if (client) client.end(true);
+  setStatus("กำลังต่อ " + team, false);
+  client = mqtt.connect(BROKER_URL, { clientId: "vetfridge-web-" + Math.random().toString(16).slice(2, 10), connectTimeout: 20000 });
+  client.on("connect", () => { setStatus("ต่อแล้ว " + team, true); client.subscribe(ROOT + "/" + team + "/#"); });
+  client.on("close", () => setStatus("หลุด กำลังต่อใหม่", false));
+  client.on("message", (topic, payload) => {
+    if (!topic.endsWith("/event")) return;
+    let d = null;
+    try { d = JSON.parse(payload.toString()); } catch (e) { return; }
+    if (d && typeof d === "object" && !Array.isArray(d)) onEvent(d);
+  });
+}
+
+$("go").onclick = connect;
+$("ack").onclick = () => { send({ cmd: "ack" }, "รับทราบ"); };
+$("cleared").onclick = () => {
+  const now = new Date();
+  rows.push([now.toISOString(), null, null, null, null, null, null, "", "vet cleared"]);
+  addRow(now, null, null, "สัตวแพทย์ตรวจแล้ว ปลดป้ายกักยา");
+  quarantineSince = 0; tickQuarantine();
+};
+$("set").onclick = () => {
+  const v = Number($("thi").value);
+  if (!Number.isInteger(v) || v <= band[0] || v > 45) { $("cmdMsg").textContent = "ขอบบนต้องเป็นจำนวนเต็ม มากกว่า " + band[0] + " ไม่เกิน 45"; return; }
+  if (send({ cmd: "set", t_hi: v }, "t_hi " + v)) { band[1] = v; drawChart(); }
+};
+$("csv").onclick = downloadCsv;
+drawAxis();
+drawChart();
+if (team) connect(); else setStatus("ใส่เลขทีมแล้วกดเชื่อมต่อ", false);
+</script>
+</body>
+</html>
