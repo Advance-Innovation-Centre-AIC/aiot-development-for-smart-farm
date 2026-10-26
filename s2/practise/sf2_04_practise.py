@@ -308,6 +308,9 @@ def main():
         down = buttons.pressed(1)
         if down and not was_down:
             ack = True
+            if s.acked:  # ไม่มีเหตุเตือน: บอกว่าปุ่มทำงาน
+                show_ack(w, s, "ยังไม่มีเหตุเตือน", COL_DIM)
+                beep("tap")
         was_down = down
         if ack and not s.acked:
             s.acked = True

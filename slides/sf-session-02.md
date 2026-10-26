@@ -1777,6 +1777,9 @@ def on_command(w, s, raw):
         down = buttons.pressed(1)      # SW5 (ปุ่มล่าง) = คนหน้าฟาร์มกดรับทราบเอง ไม่ต้องพึ่งเน็ต
         if down and not was_down:      # นับตอนเพิ่งกดลง กดค้างไม่นับซ้ำ
             ack = True
+            if s.acked:  # ไม่มีเหตุเตือน: บอกว่าปุ่มทำงาน
+                show_ack(w, s, "ยังไม่มีเหตุเตือน", COL_DIM)
+                beep("tap")
         was_down = down
         if ack and not s.acked:        # มีคนรับทราบ: หยุดร้อง ปิดกล่องเตือน จอไฟ RGB ขึ้น ACK
             s.acked = True
