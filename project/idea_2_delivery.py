@@ -320,6 +320,9 @@ def main():
         down = buttons.pressed(1)  # SW5 = ลูกค้ากดรับของที่รถ ไม่พึ่งเน็ต
         if down and not was_down:  # นับตอนเพิ่งกดลง
             ack, by = True, "sw5"
+            if s.done:  # รับของไปแล้ว: บอกว่าปุ่มทำงาน
+                show_ack(w, s, "รับของไปแล้ว", COL_DIM)
+                beep("tap")
         was_down = down
         if ack and not s.done:  # ลูกค้ารับของ: ครั้งเดียวต่อเที่ยว หยุดร้อง ปิดกล่องเตือน
             s.done = s.acked = True

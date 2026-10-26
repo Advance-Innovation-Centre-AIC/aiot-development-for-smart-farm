@@ -331,6 +331,9 @@ def main():
         down = buttons.pressed(1)      # SW5 = รับทราบหน้าตู้ ไม่ต้องพึ่งเน็ต
         if down and not was_down:      # กดค้างไม่นับซ้ำ
             ack = True
+            if s.acked:  # ไม่มีเหตุเตือน: บอกว่าปุ่มทำงาน
+                show_ack(w, s, "ยังไม่มีเหตุเตือน", COL_DIM)
+                beep("tap")
         was_down = down
         reset = buttons.pressed(0)     # SW6 = ล้างต่ำสุด/สูงสุด (ไม่ส่งเน็ต)
         if reset and not was_reset:

@@ -344,6 +344,9 @@ def main():
         down = buttons.pressed(1)  # SW5 = คนขับรับทราบ ไม่พึ่งเน็ต
         if down and not was_down:  # นับตอนเพิ่งกดลง
             ack = True
+            if s.acked:  # ไม่มีเหตุเตือน: บอกว่าปุ่มทำงาน
+                show_ack(w, s, "ยังไม่มีเหตุเตือน", COL_DIM)
+                beep("tap")
         was_down = down
         if ack and not s.acked:  # รับทราบ: หยุดร้อง ปิดกล่อง RGB ขึ้น ACK
             s.acked = True
