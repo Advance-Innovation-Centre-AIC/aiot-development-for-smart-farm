@@ -123,7 +123,6 @@ enum {
     NOTE_Y = 278,
     HELP_Y = 352,
     FONT_TEXT = 20,
-    FONT_SMALL = 16,
     FONT_TITLE = 24,
     SETTLE_MS = 200, /* let the cleared screen settle */
     TEXT_BYTES = 64  /* "ดิน %d %%  เกณฑ์ %d %%" with any int32_t */
@@ -523,6 +522,7 @@ static bento_status_t add_button(bento_ui_t *ui, const char *text,
     args.text = text;
     args.text_len = (uint32_t)strlen(text);
     args.color = color;
+    args.font_px = FONT_TEXT;
     return bento_ui_button_create(ui, &args, out);
 }
 
@@ -595,7 +595,7 @@ static bento_status_t add_auto_and_slider(router_screen_t *screen)
                                     &screen->routed[ROUTED_AUTO]);
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "อัตโนมัติ", caption_at, COL_DIM,
-                           FONT_SMALL, &unused);
+                           FONT_TEXT, &unused);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", soil_at, COL_TEXT,
@@ -627,7 +627,7 @@ static bento_status_t add_lines(router_screen_t *screen)
     if (status == BENTO_OK) {
         status =
             add_label(screen->ui, "แตะ = ถาม  กดค้าง = เปิด  หยุด = ปิด",
-                      help_at, COL_DIM, FONT_SMALL, &screen->help);
+                      help_at, COL_DIM, FONT_TEXT, &screen->help);
     }
     return status;
 }
