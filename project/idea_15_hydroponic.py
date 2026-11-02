@@ -187,7 +187,7 @@ def build_screen():
     w["mood"] = ui.Label("...", x=366, y=226, color=COL_WARN, value=20)
     w["stress"] = ui.Label("เครียดสะสม 00:00", x=366, y=252, color=COL_TEXT, value=20)
     w["ack"] = ui.Label("-", x=366, y=278, color=COL_DIM, value=20)
-    ui.Label("VR3 = แดดบนหลังคา  เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=352, y=318, color=COL_DIM, value=20)
+    ui.Label("VR3 = แดดบนหลังคา  เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=352, y=312, color=COL_DIM, value=20)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=356, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=10, w=16, h=16, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=20)
