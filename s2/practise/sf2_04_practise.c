@@ -171,9 +171,10 @@ enum {
 enum {
     TEXT_BYTES = 128,
     NAME_BYTES = 64,
+    CLIENT_PREFIX_BYTES = 24, /* MQTT's 23-byte client id and a NUL */
     WHY_BYTES = 48,
     KEY_BYTES = 16,
-    PAYLOAD_BYTES = 192
+    PAYLOAD_BYTES = 256 /* every number at full length */
 };
 
 /* Cards on the screen: a panel and its title. */
@@ -1000,7 +1001,7 @@ static bool self_test(void)
 /* ---- 4) เครือข่าย ---- */
 
 typedef struct {
-    char client_id[NAME_BYTES]; /* without the clock number */
+    char client_id[CLIENT_PREFIX_BYTES]; /* no clock number yet */
     char topic_event[NAME_BYTES];
     char topic_cmd[NAME_BYTES];
 } names_t;
