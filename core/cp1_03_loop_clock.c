@@ -50,19 +50,26 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    IMU_MS = 50, /* read the IMU every 50 ms = 20 times a second */
+    IMU_MS = 50,       /* read the IMU every 50 ms = 20 a second */
     CLIMATE_MS = 1000, /* read the SHT40 every 1000 ms */
     SCREEN_MS = 500,   /* refresh the table every 500 ms */
-    LATE_MS = 10, /* started later than this past the target = late */
+    LATE_MS = 10       /* started this much past the target = late */
+};
+/* The board warms itself: compare with a room thermometer and put the
+ * difference here, such as -9.5. */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+enum {
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-
-/* TEMP_OFFSET, the SHT40 offset a student sets, lives in read_temp(),
- * its one reader, as temp_offset. */
+/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
+ * button = pressed(0). */
+static const char *const BUTTON_NAMES[2] = {"SW5",
+                                            "SW6"}; /* .py: BTN_NAMES */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -137,9 +144,6 @@ enum {
     TUNE_HIT = 6,
     TUNE_KINDS = 7
 };
-
-/* The button names on the panel (SW5 = lower = pressed(1), SW6 =
- * upper = pressed(0)) live in add_help(), their one reader. */
 
 typedef struct {
     int32_t x;
@@ -238,9 +242,6 @@ static void read_accel(readings_t *readings)
  * waits 50 ms, which makes the IMU start late (the "late" column). */
 static bento_status_t read_temp(readings_t *readings)
 {
-    /* The board warms itself: compare with a room thermometer and put
-     * the difference here, such as -9.5. */
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
     bento_status_t status = BENTO_OK;
     uint32_t tries = 0U;
 
@@ -251,7 +252,7 @@ static bento_status_t read_temp(readings_t *readings)
         float humidity = 0.0F;
 
         if (bento_sensors_sht40_read(&celsius, &humidity) == BENTO_OK) {
-            readings->temp = celsius + temp_offset;
+            readings->temp = celsius + TEMP_OFFSET;
             readings->temp_known = true;
         } else {
             status = pause_ms((uint32_t)RETRY_MS);
@@ -474,13 +475,12 @@ static void poll_screen(bento_ui_t *ui)
 
 static bento_status_t add_help(screen_t *screen)
 {
-    static const char *const button_names[2] = {"SW5", "SW6"};
     const label_spec_t help = {MARGIN_X, HELP_Y, FONT_TEXT, COL_DIM};
     char text[TEXT_BYTES];
 
     (void)snprintf(text, sizeof(text),
                    "ช้า = ช้ากว่าเป้าเกิน %ld ms   %s (ล่าง) = สลับโหมด",
-                   (long)LATE_MS, button_names[0]);
+                   (long)LATE_MS, BUTTON_NAMES[0]);
     return add_label(screen->ui, text, &help, &screen->help);
 }
 
