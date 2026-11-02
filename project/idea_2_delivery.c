@@ -172,9 +172,9 @@ enum {
 
 /* Where the emulator's note goes: free space on this screen. */
 enum {
-    GAP_X = 352,
+    GAP_X = 340,
     GAP_Y = 330,
-    GAP_W = 360, /* wraps the note onto two lines */
+    GAP_W = 350, /* wraps the note onto two lines */
     GAP_PX = 20
 };
 
