@@ -40,6 +40,9 @@
  *   - get_message() keeps one message, the newest; the C client
  *     queues up to four, so each round takes them all and keeps the
  *     newest.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet:
+ *     the program says so and ends, through the original's own
+ *     "broker does not answer" stop.
  *   - The lesson's Stop exception travels as BENTO_E_CANCELLED, which
  *     main() turns into 0 as it does the IDE's Stop button.
  */
@@ -1290,7 +1293,10 @@ static bento_status_t try_broker(const names_t *names, uint32_t *broker,
         (void)bento_mqtt_close(*broker); /* frees it, whatever state */
         *broker = 0U;
     }
-    return (status == BENTO_E_CANCELLED) ? status : BENTO_OK;
+    return ((status == BENTO_E_CANCELLED) ||
+            (status == BENTO_E_UNSUPPORTED))
+               ? status
+               : BENTO_OK;
 }
 
 /* mqtt.get_message(): the newest message waiting, if any. */
@@ -1572,6 +1578,31 @@ static bool team_is_set(void)
            is_digit((uint8_t)TEAM[TEAM_PREFIX + 1]);
 }
 
+/* The BENTO Emulator has no MQTT from C yet: every bento_mqtt_* call
+ * answers BENTO_E_UNSUPPORTED there. Say so on the screen and the
+ * console, then go on as if the broker did not answer, as the
+ * original does. Any other status passes through. */
+static bento_status_t emulator_gap(bento_ui_t *ui,
+                                   bento_status_t status)
+{
+    static const char gap[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    static const box_t place = {466,        204, 310, 80,
+                                COLOR_WARN, 0,   0,   20};
+    bento_ui_id_t label;
+    bento_status_t result = status;
+
+    if (status == BENTO_E_UNSUPPORTED) {
+        result = add_box(ui, UI_WIDGET_LABEL, &place, gap, &label);
+        refresh(ui);
+        (void)printf(
+            "%s / MQTT from C is not in the BENTO Emulator yet: "
+            "run it on a Dev Kit or Eva Kit.\n",
+            gap);
+    }
+    return result;
+}
+
 /* Three tries, each with a new client id: a public broker sometimes
  * does not answer for a while. */
 static bento_status_t connect_broker(farm_t *farm, bool *linked)
@@ -1608,6 +1639,7 @@ static bento_status_t connect_farm(farm_t *farm, const char **problem)
     *problem = "ต่อ WiFi ไม่ได้";
     if ((status == BENTO_OK) && passed) {
         status = connect_broker(farm, &passed);
+        status = emulator_gap(farm->screen.ui, status);
         *problem = "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่";
     }
     if ((status == BENTO_OK) && passed) {
