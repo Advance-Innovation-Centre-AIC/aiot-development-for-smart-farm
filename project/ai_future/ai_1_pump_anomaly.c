@@ -463,12 +463,18 @@ static bento_status_t find_model(model_t *model, bool *no_link)
     const uint32_t keys =
         (uint32_t)(sizeof(MODEL_KEYS) / sizeof(MODEL_KEYS[0]));
     const bento_status_t link = bento_edgeai_init();
+    bool has_link = false;
     int32_t count = 0;
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
-    /* the BENTO Emulator's C runtime answers this, for now */
-    *no_link = link == BENTO_E_UNSUPPORTED;
+    /* a reTerminal answers init the same way but says "no link" to
+     * the query; only the BENTO Emulator's C runtime refuses both */
+    *no_link = false;
+    if (link == BENTO_E_UNSUPPORTED) {
+        *no_link =
+            bento_edgeai_supported(&has_link) == BENTO_E_UNSUPPORTED;
+    }
     if ((link != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0;
