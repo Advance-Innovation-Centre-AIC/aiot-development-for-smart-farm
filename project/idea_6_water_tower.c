@@ -1089,9 +1089,9 @@ static bento_status_t add_tower(screen_t *screen)
         {UI_WIDGET_PANEL, SLOT_NONE, NULL, 30, MIN_LINE_Y, 100, 3,
          COL_LOW, 0, 0, 0},
         {UI_WIDGET_LABEL, SLOT_NONE, "เต็ม", 146, BAR_Y - 6, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NONE, "ครึ่งถัง", 146, HALF_LINE_Y - 10,
-         AUTO, AUTO, COL_HALF, 0, 0, 14},
+         AUTO, AUTO, COL_HALF, 0, 0, 20},
     };
     char low_text[TEXT_BYTES];
     bento_status_t status =
@@ -1110,7 +1110,7 @@ static bento_status_t add_tower(screen_t *screen)
                                         COL_LOW,
                                         0,
                                         0,
-                                        14};
+                                        20};
 
         status = add_widget(screen, &low_mark);
     }
@@ -1124,17 +1124,17 @@ static bento_status_t add_pump_card(screen_t *screen)
         {UI_WIDGET_LABEL, SLOT_TANK, "-- %", 244, 72, AUTO, AUTO,
          COL_TEXT, 0, 0, 28},
         {UI_WIDGET_LABEL, SLOT_TANK_LOW, "ต่ำสุดรอบนี้ -- %", 244, 112,
-         AUTO, AUTO, COL_DIM, 0, 0, 16},
+         AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_REFUSED, "ปฏิเสธ 0 ครั้ง", 244, 170, AUTO,
          AUTO, COL_GO, 0, 0, 28},
         {UI_WIDGET_LABEL, SLOT_NONE, "ปั๊มไม่ยอมเปิดเพราะน้ำต่ำ", 244, 208,
-         AUTO, AUTO, COL_DIM, 0, 0, 14},
+         AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_SOIL, "แปลงปลายท่อ (VR1) -- %", 244, 262,
-         AUTO, AUTO, COL_TEXT, 0, 0, 16},
+         AUTO, AUTO, COL_TEXT, 0, 0, 20},
         {UI_WIDGET_PANEL, SLOT_NONE, NULL, 500, 62, 280, 222, COL_CARD,
          COL_WATER, 12, 1},
         {UI_WIDGET_LABEL, SLOT_TITLE, "ปั๊มจากหอถัง (คำสั่ง 0)", 512, 68,
-         AUTO, AUTO, COL_WATER, 0, 0, 16},
+         AUTO, AUTO, COL_WATER, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LED, NULL, 516, 102, 40, 40, COL_WATER, 0,
          0, 0},
         {UI_WIDGET_LABEL, SLOT_PUMP, "ปิด", 568, 108, AUTO, AUTO,
@@ -1150,14 +1150,14 @@ static bento_status_t add_pump_card(screen_t *screen)
 static bento_status_t add_footer(screen_t *screen)
 {
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LABEL, SLOT_NONE, "SW5 = ปิดปั๊มทันที", 244, 300, AUTO,
-         AUTO, COL_HALF, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_NONE, "SW5 = ปิดปั๊มทันที", 256, 300, AUTO,
+         AUTO, COL_HALF, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NOTE, "ยังไม่มีคำสั่ง", 12, 352, AUTO, AUTO,
-         COL_DIM, 0, 0, 0},
-        {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 606, 12, 18, 18, COL_GO, 0,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 596, 12, 18, 18, COL_GO, 0,
          0, 0},
-        {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+        {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 622, 10, AUTO,
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_widgets(screen, specs, sizeof(specs) / sizeof(specs[0]));
