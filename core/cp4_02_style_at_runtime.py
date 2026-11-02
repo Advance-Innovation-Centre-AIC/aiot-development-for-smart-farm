@@ -99,7 +99,7 @@ def build_screen():
     # การ์ดดิน - Panel: color = พื้น, min = สีขอบ, max = มุมโค้ง, value = ความหนาขอบ (ตั้งได้ตอนสร้าง)
     w["card"] = ui.Panel(x=12, y=64, w=470, h=274, color=COL_CARD, min=COL_INFO,
                          max=CARD_RADIUS, value=CARD_BORDER_W)
-    ui.Label("ความชื้นดิน", x=28, y=74, color=COL_INFO, value=16)
+    ui.Label("ความชื้นดิน", x=28, y=74, color=COL_INFO, value=20)
     gauge = ui.Scale(x=28, y=104, w=160, h=160, color=COL_TEXT, min=0, max=100)
     gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)
     gauge.ticks(TICKS_TOTAL, TICKS_MAJOR)     # ticks(ทั้งหมด, มีเลขทุกกี่ขีด)
@@ -108,19 +108,19 @@ def build_screen():
     w["bar"] = ui.Bar(x=210, y=156, w=256, h=22, min=0, max=100, value=0)
     w["zone"] = ui.Label(" ", x=210, y=192, color=COL_TEXT, value=20)
     w["led"] = ui.Led(x=210, y=236, w=LED_SMALL, h=LED_SMALL, color=COL_BAD, value=1)   # ไฟเต้นด้วย size()
-    ui.Label("ปรับไม่ได้: ฟอนต์ ความโปร่งใส ไล่สี", x=28, y=308, color=COL_DIM, value=14)
+    ui.Label("ปรับไม่ได้: ฟอนต์ ความโปร่งใส ไล่สี", x=28, y=308, color=COL_DIM, value=20)
     # แถบเตือน: สร้างไว้ก่อนแล้วซ่อน โผล่ด้วย show() ตอนดินแห้ง
     banner = ui.Panel(x=494, y=64, w=286, h=56, color=COL_BAD, min=COL_BAD, max=8, value=1)
     btxt = ui.Label("ดินแห้ง! รดน้ำ", x=510, y=76, color=COL_TEXT, value=24)
     banner.hide()
     btxt.hide()
     w["banner"] = (banner, btxt)
-    w["tank"] = ui.Label(" ", x=494, y=140, color=COL_INFO, value=16)      # น้ำในถัง (VR2)
+    w["tank"] = ui.Label(" ", x=494, y=140, color=COL_INFO, value=20)      # น้ำในถัง (VR2)
     w["tank_bar"] = ui.Bar(x=494, y=172, w=286, h=18, min=0, max=100, value=0)
     w["btn"] = ui.Button("เปิดปั๊ม", x=494, y=236, w=286, h=56, color=COL_INFO)
-    w["note"] = ui.Label(" ", x=494, y=302, color=COL_DIM, value=16)
+    w["note"] = ui.Label(" ", x=494, y=302, color=COL_DIM, value=20)
     w["help"] = ui.Label("VR1 = ดิน  VR2 = ถัง  แตะปุ่มได้", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
