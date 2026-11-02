@@ -130,8 +130,10 @@ enum {
 enum {
     TEXT_BYTES = 128,
     NAME_BYTES = 64,
+    CLIENT_PREFIX_BYTES = 24, /* MQTT's 23-byte client id and a NUL */
     SAY_BYTES = 24,
     KEY_BYTES = 16,
+    VALUE_TEXT_BYTES = 80, /* after a lead, a 126-byte note is full */
     PAYLOAD_BYTES = 128
 };
 
@@ -1118,7 +1120,7 @@ static void decide_text(const command_t *command, field_t field,
                         decision_t *decision, const char *lead,
                         uint32_t keep)
 {
-    char text[TEXT_BYTES];
+    char text[VALUE_TEXT_BYTES];
 
     value_text(command, field, text, sizeof(text));
     if (keep != 0U) {
@@ -1203,7 +1205,7 @@ static void handle_command(const uint8_t *raw, uint32_t len,
 /* ---- 4) เครือข่าย ---- */
 
 typedef struct {
-    char client_id[NAME_BYTES]; /* without the clock number */
+    char client_id[CLIENT_PREFIX_BYTES]; /* no clock number yet */
     char topic_cmd[NAME_BYTES];
     char topic[NAME_BYTES];
 } names_t;
