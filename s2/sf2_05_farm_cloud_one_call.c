@@ -41,6 +41,9 @@
  *     nothing. An SSID or password the radio cannot take counts as a
  *     failed join, as it does there. A failed sensor read gives the
  *     same None as the original's except.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet:
+ *     the program says so and ends (its status line carries the
+ *     message).
  *   - The lesson's Stop exception travels as BENTO_E_CANCELLED, which
  *     main() turns into 0 as it does the IDE's Stop button.
  */
@@ -847,6 +850,28 @@ static bento_status_t send_all(const cloud_screen_t *screen,
     return status;
 }
 
+/* The BENTO Emulator has no TESAIoT link from C yet: every
+ * bento_tesaiot_* call answers BENTO_E_UNSUPPORTED there, starting
+ * with the settings store. Say so on the status line and the console,
+ * then end normally. Any other status passes through. */
+static bento_status_t emulator_gap(const cloud_screen_t *screen,
+                                   bento_status_t status)
+{
+    static const char gap[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_status_t result = status;
+
+    if (status == BENTO_E_UNSUPPORTED) {
+        show_status(screen, gap, COLOR_WARN);
+        (void)printf(
+            "%s / MQTT from C is not in the BENTO Emulator yet: "
+            "run it on a Dev Kit or Eva Kit.\n",
+            gap);
+        result = BENTO_E_CANCELLED; /* main() answers 0 */
+    }
+    return result;
+}
+
 /* 1) The store is read: no network needed. */
 static bento_status_t read_store(const cloud_screen_t *screen)
 {
@@ -854,7 +879,7 @@ static bento_status_t read_store(const cloud_screen_t *screen)
     uint32_t keys = 0U;
     uint32_t color = COLOR_WARN;
     bool ready = false;
-    bento_status_t status = show_config(screen);
+    bento_status_t status = emulator_gap(screen, show_config(screen));
 
     if (status == BENTO_OK) {
         status = bento_tesaiot_config_key_count(&keys);
