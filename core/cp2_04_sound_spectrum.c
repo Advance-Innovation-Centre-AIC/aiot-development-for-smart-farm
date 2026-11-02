@@ -35,7 +35,9 @@
  *   - the RGB matrix's OSError is ignored, as the .py ignores it; a
  *     board without the matrix refuses each call the same way, where
  *     MicroPython's import rgbmatrix would raise;
- *   - N and FS are FFT_N and FS_HZ (names say what they are);
+ *   - the settings sit in one block at the top (deviation CT02); N
+ *     and FS are FFT_N and FS_HZ (names say what they are), NOTES is
+ *     NOTE_SW5 and NOTE_SW6;
  *   - lists of bins and bars are fixed arrays; None (no hold yet,
  *     nothing drawn yet) is a bool beside the array;
  *   - hasattr(ui, "volume") is not asked: the volume call is always
@@ -60,13 +62,15 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    FFT_N = 256,     /* samples per FFT (a power of 2, 8-512) */
-    FS_HZ = 16000,   /* the microphone's sample rate, Hz */
+    FFT_N = 256,     /* .py: N; samples per FFT (a power of 2, 8-512) */
+    FS_HZ = 16000,   /* .py: FS; the microphone's sample rate, Hz */
     FLOOR_DB = 24,   /* quieter than this = the matrix stays dark */
     DB_ROW = 6,      /* one more matrix row = this many dB louder */
     SENS = 3,        /* microphone sensitivity 1-5 (no C setting) */
+    NOTE_SW5 = 69,   /* .py: NOTES[0]; MIDI 69 = A 440 Hz */
+    NOTE_SW6 = 81,   /* .py: NOTES[1]; MIDI 81 = A 880 Hz */
     NOTE_MS = 1000,  /* how long a reference note plays */
     POINTS = 32,     /* points on the spectrum chart (4 bins each) */
     SAMPLE_MS = 20,  /* pause between two listens */
@@ -75,11 +79,11 @@ enum {
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-/* The notes of SW5 and SW6 (MIDI: 69 = A 440 Hz, 81 = A 880 Hz). */
-enum {
-    NOTE_SW5 = 69,
-    NOTE_SW6 = 81
-};
+/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
+ * button = pressed(0). */
+static const char *const BUTTON_NAMES[] = {"SW5",
+                                           "SW6"}; /* .py: BTN_NAMES */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -724,10 +728,6 @@ static void show(const screen_t *screen, const float spectrum[BINS],
 static bento_status_t check_buttons(const screen_t *screen,
                                     listen_t *state)
 {
-    /* names on the panel: SW5 = lower button = pressed(1), SW6 =
-     * upper button = pressed(0) */
-    static const char *const button_names[BUTTON_COUNT] = {"SW5",
-                                                           "SW6"};
     static const int32_t notes[BUTTON_COUNT] = {NOTE_SW5, NOTE_SW6};
     bento_status_t status = BENTO_OK;
     uint32_t i;
@@ -745,7 +745,7 @@ static bento_status_t check_buttons(const screen_t *screen,
                                     (uint8_t)BENTO_UI_WAVE_SINE,
                                     (uint8_t)VOLUME, (uint16_t)NOTE_MS);
             (void)snprintf(text, sizeof(text), "%s เล่น %ld Hz",
-                           button_names[i], (long)note_hz(notes[i]));
+                           BUTTON_NAMES[i], (long)note_hz(notes[i]));
             set_text(screen->ui, screen->note, text);
         }
         state->down[i] = down;
