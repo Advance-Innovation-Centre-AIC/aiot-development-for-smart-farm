@@ -72,16 +72,11 @@
 #include "bento_wifi.h"
 
 /* ---- 1) ตั้งค่า: แก้สามบรรทัดแรกก่อนรัน ---- */
-/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
-static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_SSID and WIFI_PASS are wifi_ssid and wifi_pass in join_wifi();
+ * BROKER and the client id prefix are in open_broker(), the topic root
+ * in main(): one function reads each (MISRA 8.9). */
 static const char TEAM[] = "teamXX";
 
-static const char BROKER[] = "broker.hivemq.com";
-/* + a number from the board's clock on every connect: never an old id */
-static const char CLIENT_PREFIX[] = "bento-farm-";
-static const char TOPIC_ROOT[] = "bento-aiot";
 static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
 
 /* The fan, the thresholds and the times. */
@@ -304,7 +299,8 @@ typedef enum {
     DO_OFF,
     DO_ON,
     DO_BEEP,
-    DO_SAY
+    DO_SAY,
+    DO_KINDS /* how many actions there are */
 } action_t;
 
 /* What one command asks for, before anything real is touched. */
@@ -336,13 +332,13 @@ static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     /* MIDI notes of each sound: the team edits them here */
     static const tune_notes_t tunes[TUNE_COUNT] = {
-        [TUNE_TAP] = {{76U}, 1U},
+        [TUNE_TAP] = {{76U, 0U, 0U}, 1U},
         [TUNE_START] = {{67U, 74U, 79U}, 3U},
-        [TUNE_STOP] = {{79U, 67U}, 2U},
+        [TUNE_STOP] = {{79U, 67U, 0U}, 2U},
         [TUNE_GOOD] = {{72U, 79U, 84U}, 3U},
-        [TUNE_BAD] = {{84U, 76U}, 2U},
+        [TUNE_BAD] = {{84U, 76U, 0U}, 2U},
         [TUNE_EMPTY] = {{84U, 76U, 69U}, 3U},
-        [TUNE_HIT] = {{88U}, 1U}};
+        [TUNE_HIT] = {{88U, 0U, 0U}, 1U}};
     const tune_notes_t *sound = &tunes[tune];
     bento_status_t status = BENTO_OK;
     uint32_t i;
@@ -579,12 +575,26 @@ static bool skip_number(json_reader_t *reader)
     return ok;
 }
 
+/* The bytes at text are the letters of word (MISRA 21.16: no memcmp
+ * between bytes and characters). */
+static bool bytes_are(const uint8_t *text, const char *word,
+                      uint32_t length)
+{
+    bool same = true;
+    uint32_t i;
+
+    for (i = 0U; same && (i < length); i++) {
+        same = text[i] == (uint8_t)word[i];
+    }
+    return same;
+}
+
 static bool skip_word(json_reader_t *reader, const char *word)
 {
     const uint32_t length = (uint32_t)strlen(word);
     const bool same =
         ((reader->len - reader->at) >= length) &&
-        (memcmp(&reader->text[reader->at], word, length) == 0);
+        bytes_are(&reader->text[reader->at], word, length);
 
     if (same) {
         reader->at += length;
@@ -667,8 +677,8 @@ static uint32_t field_of(const json_reader_t *reader,
 
     for (i = 0U; (field == FIELD_COUNT) && (i < FIELD_COUNT); i++) {
         if ((strlen(names[i]) == length) &&
-            (memcmp(&reader->text[key->start + 1U], names[i], length) ==
-             0)) {
+            bytes_are(&reader->text[key->start + 1U], names[i],
+                      length)) {
             field = i;
         }
     }
@@ -904,17 +914,19 @@ static bool number_is_zero(const command_t *command,
                            const json_value_t *value)
 {
     bool zero = true;
+    bool in_exponent = false;
     uint32_t i;
 
     for (i = value->start; i < value->end; i++) {
         const uint8_t byte = command->payload[i];
 
         if ((byte == (uint8_t)'e') || (byte == (uint8_t)'E')) {
-            i = value->end; /* the exponent does not matter */
-        } else if (is_digit(byte) && (byte != (uint8_t)'0')) {
+            in_exponent = true; /* the exponent does not matter */
+        } else if (!in_exponent && is_digit(byte) &&
+                   (byte != (uint8_t)'0')) {
             zero = false;
         } else {
-            /* a sign, a dot or a zero */
+            /* a sign, a dot, a zero or the exponent */
         }
     }
     return zero;
@@ -1235,9 +1247,12 @@ static bento_status_t add_thermometer(farm_t *farm)
     const spec_t thermo = {34, THERMO_Y, 40,      THERMO_H,
                            0U, 0,        PERCENT, 0};
     const spec_t top = {82, 74, -1, -1, COL_DIM, 0, 0, 14};
-    const int16_t mark_y =
-        px((THERMO_Y + (((PERCENT - SOIL_DRY) * THERMO_H) / PERCENT)) -
-           MARK_LIFT_PX);
+    /* the dry mark's height, in one signed type (MISRA 10.4) */
+    const int32_t wet_share = (int32_t)PERCENT - (int32_t)SOIL_DRY;
+    const int32_t dry_y =
+        (int32_t)THERMO_Y +
+        ((wet_share * (int32_t)THERMO_H) / (int32_t)PERCENT);
+    const int16_t mark_y = px(dry_y - (int32_t)MARK_LIFT_PX);
     const spec_t mark = {82, mark_y, -1, -1, COL_HOT, 0, 0, 14};
     const spec_t heat = {88, 200, -1, -1, COL_TEXT, 0, 0, 28};
     const spec_t heat_note = {88, 244, -1, -1, COL_HOT, 0, 0, 16};
@@ -1458,14 +1473,18 @@ static void show_heat(const farm_t *farm, const knobs_t *knobs)
  * timed-out join is False; any other failure ends the program. */
 static bento_status_t join_wifi(bool *joined)
 {
+    /* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
+    /* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -1512,16 +1531,20 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
+    static const char broker_name[] = "broker.hivemq.com";
+    /* + a number from the board's clock on every connect: never an
+     * old id */
+    static const char client_prefix[] = "bento-farm-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, CLIENT_PREFIX,
+        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
         TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_name;
+    config.host_len = (uint32_t)strlen(broker_name);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1677,10 +1700,10 @@ static bento_status_t stop_here(farm_t *farm, const char *text,
 static bento_status_t act_on(farm_t *farm, const outcome_t *outcome,
                              uint32_t now_ms)
 {
-    static const tune_t tunes[] = {[DO_DENY] = TUNE_BAD,
-                                   [DO_OFF] = TUNE_STOP,
-                                   [DO_ON] = TUNE_START,
-                                   [DO_SAY] = TUNE_TAP};
+    static const tune_t tunes[DO_KINDS] = {[DO_DENY] = TUNE_BAD,
+                                           [DO_OFF] = TUNE_STOP,
+                                           [DO_ON] = TUNE_START,
+                                           [DO_SAY] = TUNE_TAP};
     bento_status_t status = BENTO_OK;
 
     if (outcome->action == DO_OFF) {
@@ -1799,7 +1822,7 @@ static bento_status_t show_countdown(farm_t *farm, uint32_t now_ms)
     /* rounded up: 0.2 s left still shows 1 */
     const int32_t sec_left =
         (farm->pump_ms != 0)
-            ? ((pump_left_ms(farm, now_ms) + MS_PER_S) - 1) / MS_PER_S
+            ? (((pump_left_ms(farm, now_ms) + MS_PER_S) - 1) / MS_PER_S)
             : 0;
     bento_status_t status = set_pump_led(farm, farm->pump_ms != 0);
 
@@ -1930,6 +1953,7 @@ static bento_status_t run_farm(farm_t *farm)
 
 int main(void)
 {
+    static const char topic_root[] = "bento-aiot";
     farm_t farm = {0};
     bento_status_t status;
 
@@ -1938,9 +1962,9 @@ int main(void)
     farm.has_matrix = bento_rgbmatrix_available();
     farm.shown = -1;
     (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
-                   TOPIC_ROOT, TEAM);
+                   topic_root, TEAM);
     (void)snprintf(farm.topic, sizeof(farm.topic), "%s/%s/telemetry",
-                   TOPIC_ROOT, TEAM);
+                   topic_root, TEAM);
     status = run_farm(&farm);
     if (farm.has_broker) {
         (void)bento_mqtt_close(

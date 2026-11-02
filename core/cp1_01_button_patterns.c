@@ -127,10 +127,6 @@ enum {
     TUNE_KINDS = 7
 };
 
-/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
- * button = pressed(0). */
-static const char *const BUTTON_NAMES[BUTTON_COUNT] = {"SW5", "SW6"};
-
 typedef struct {
     int32_t x;
     int32_t y;
@@ -200,8 +196,9 @@ static bento_status_t is_down(uint32_t i, bool *down)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -373,11 +370,15 @@ static bento_status_t add_card_labels(bento_ui_t *ui, int32_t x,
 static bento_status_t build_button_card(bento_ui_t *ui, uint32_t i,
                                         int32_t x, button_card_t *card)
 {
+    /* Names on the panel: SW5 = lower button = pressed(1), SW6 =
+     * upper button = pressed(0). */
+    static const char *const button_names[BUTTON_COUNT] = {"SW5",
+                                                           "SW6"};
     const rect_t box = {x, CARD_Y, CARD_W, CARD_H};
     char title[TEXT_BYTES];
     bento_status_t status;
 
-    (void)snprintf(title, sizeof(title), "%s%s", BUTTON_NAMES[i],
+    (void)snprintf(title, sizeof(title), "%s%s", button_names[i],
                    (i == 0U) ? " (ปุ่มล่าง)" : " (ปุ่มบน)");
     status = add_card(ui, &box, title);
     if (status == BENTO_OK) {
