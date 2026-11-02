@@ -192,7 +192,7 @@ def send_report(n, soil, tank, running, open_s, low_min):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=8, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_RICE, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_RICE, value=20)
 
 
 def show_link(w, ok):
@@ -210,26 +210,27 @@ def build_screen():
     w["canal"] = ui.Bar(x=32, y=80, w=60, h=200, min=0, max=100, value=0)
     w["gate"] = ui.Panel(x=104, y=150, w=20, h=130, color=COL_MUD, min=COL_DIM, max=4, value=1)
     w["paddy"] = ui.Bar(x=136, y=150, w=64, h=130, min=0, max=100, value=0)
-    w["canal_t"] = ui.Label("คลอง -- %", x=24, y=290, color=COL_WATER, value=16)
-    w["paddy_t"] = ui.Label("นา -- %", x=132, y=290, color=COL_RICE, value=16)
+    w["canal_t"] = ui.Label("คลอง -- %", x=24, y=290, color=COL_WATER, value=20)
+    w["paddy_t"] = ui.Label("นา -- %", x=140, y=290, color=COL_RICE, value=20)
     w["gate_t"] = ui.Label("ประตูปิด", x=230, y=84, color=COL_DIM, value=28)
     w["left"] = ui.Bar(x=230, y=132, w=282, h=16, min=0, max=PUMP_MAX_S, value=0)
-    w["warn"] = ui.Label("", x=230, y=162, color=COL_WARN, value=16)
-    ui.Label("คลองต่ำกว่า %d%% ไม่เปิด" % TANK_MIN, x=230, y=230, color=COL_DIM, value=14)
-    ui.Label("เปิดได้นานสุด %d วิ" % PUMP_MAX_S, x=230, y=252, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = ปิดประตูฉุกเฉิน ไม่พึ่งเน็ต", x=230, y=290, color=COL_WARN, value=14)
+    w["warn"] = ui.Label("", x=230, y=162, color=COL_WARN, value=20)
+    ui.Label("คลองต่ำกว่า %d%% ไม่เปิด" % TANK_MIN, x=230, y=224, color=COL_DIM, value=20)
+    ui.Label("เปิดได้นานสุด %d วิ" % PUMP_MAX_S, x=230, y=254, color=COL_DIM, value=20)
+    ui.Label(BTN_NAMES[0] + " = ปิดประตูฉุกเฉิน ไม่พึ่งเน็ต", x=230, y=290, color=COL_WARN, value=20)
     # มุมขวาล่างสุดเว้นไว้ให้ปุ่ม Console
     card(544, 44, 236, 174, "น้ำในแปลงย้อนหลัง")
-    w["chart"] = ui.Chart(x=556, y=72, w=212, h=110, color=COL_RICE, min=0, max=100)
+    w["chart"] = ui.Chart(x=556, y=78, w=212, h=80, color=COL_RICE, min=0, max=100)
     w["chart"].prop(ui.PROP_CHART_POINTS, 240)  # จุด >= ความกว้าง ไม่วาดจุดกลม · 4 นาที
     w["s_dry"] = w["chart"].add_series(COL_WARN)
-    ui.Label("เขียว = น้ำในนา  เหลือง = เกณฑ์", x=556, y=192, color=COL_DIM, value=14)
+    ui.Label("เขียว = น้ำในนา", x=556, y=162, color=COL_DIM, value=20)   # 20 px ไม่พอบรรทัดเดียว
+    ui.Label("เหลือง = เกณฑ์", x=556, y=188, color=COL_DIM, value=20)
     card(544, 228, 236, 102, "ตั้งแต่เริ่ม")
-    w["open"] = ui.Label("ประตูเปิดรวม 0 วิ", x=556, y=256, color=COL_TEXT, value=16)
-    w["low"] = ui.Label("น้ำต่ำสุด -- %", x=556, y=284, color=COL_TEXT, value=16)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM)
+    w["open"] = ui.Label("ประตูเปิดรวม 0 วิ", x=556, y=256, color=COL_TEXT, value=20)
+    w["low"] = ui.Label("น้ำต่ำสุด -- %", x=556, y=284, color=COL_TEXT, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=626, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=626, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

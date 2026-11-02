@@ -1213,7 +1213,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  8,        1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_RICE, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_RICE, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1232,8 +1232,8 @@ static bento_status_t add_cut(farm_t *farm)
     const spec_t canal = {32, 80, 60, 200, 0U, 0, PERCENT, 0};
     const spec_t gate = {104, 150, 20, 130, COL_MUD, COL_DIM, 4, 1};
     const spec_t paddy = {136, 150, 64, 130, 0U, 0, PERCENT, 0};
-    const spec_t canal_text = {24, 290, -1, -1, COL_WATER, 0, 0, 16};
-    const spec_t paddy_text = {132, 290, -1, -1, COL_RICE, 0, 0, 16};
+    const spec_t canal_text = {24, 290, -1, -1, COL_WATER, 0, 0, 20};
+    const spec_t paddy_text = {140, 290, -1, -1, COL_RICE, 0, 0, 20};
     bento_status_t status =
         add_card(farm->ui, &card, "ประตูน้ำ = ไฟสีฟ้า (คำสั่ง 0)",
                  &farm->screen.title);
@@ -1270,9 +1270,9 @@ static bento_status_t add_gate_rules(farm_t *farm)
         RULE_COUNT = 3
     };
     const spec_t rule_spots[RULE_COUNT] = {
-        {230, 230, -1, -1, COL_DIM, 0, 0, 14},
-        {230, 252, -1, -1, COL_DIM, 0, 0, 14},
-        {230, 290, -1, -1, COL_WARN, 0, 0, 14}};
+        {230, 224, -1, -1, COL_DIM, 0, 0, 20},
+        {230, 254, -1, -1, COL_DIM, 0, 0, 20},
+        {230, 290, -1, -1, COL_WARN, 0, 0, 20}};
     char rules[RULE_COUNT][TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status = BENTO_OK;
@@ -1296,7 +1296,7 @@ static bento_status_t add_gate(farm_t *farm)
 {
     const spec_t gate_text = {230, 84, -1, -1, COL_DIM, 0, 0, 28};
     const spec_t left = {230, 132, 282, 16, 0U, 0, PUMP_MAX_S, 0};
-    const spec_t warn = {230, 162, -1, -1, COL_WARN, 0, 0, 16};
+    const spec_t warn = {230, 162, -1, -1, COL_WARN, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &gate_text,
                    "ประตูปิด", &farm->screen.gate_text);
@@ -1323,8 +1323,10 @@ static bento_status_t add_history(farm_t *farm)
         CHART_POINTS = 240
     }; /* 4 minutes; >= the width: no dots */
     const rect_t card = {544, 44, 236, 174};
-    const spec_t chart = {556, 72, 212, 110, COL_RICE, 0, PERCENT, 0};
-    const spec_t legend = {556, 192, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t chart = {556, 78, 212, 80, COL_RICE, 0, PERCENT, 0};
+    /* 20 px does not fit the legend on one line: two labels */
+    const spec_t legend = {556, 162, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t legend_end = {556, 188, -1, -1, COL_DIM, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "น้ำในแปลงย้อนหลัง", &label);
@@ -1343,7 +1345,11 @@ static bento_status_t add_history(farm_t *farm)
     }
     if (status == BENTO_OK) {
         status = add_widget(farm->ui, bento_ui_label_create, &legend,
-                            "เขียว = น้ำในนา  เหลือง = เกณฑ์", &label);
+                            "เขียว = น้ำในนา", &label);
+    }
+    if (status == BENTO_OK) {
+        status = add_widget(farm->ui, bento_ui_label_create,
+                            &legend_end, "เหลือง = เกณฑ์", &label);
     }
     return status;
 }
@@ -1351,8 +1357,8 @@ static bento_status_t add_history(farm_t *farm)
 static bento_status_t add_totals(farm_t *farm)
 {
     const rect_t card = {544, 228, 236, 102};
-    const spec_t open = {556, 256, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t low = {556, 284, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t open = {556, 256, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t low = {556, 284, -1, -1, COL_TEXT, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "ตั้งแต่เริ่ม", &label);
@@ -1370,9 +1376,9 @@ static bento_status_t add_totals(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 0};
+    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t lamp = {600, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {626, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t link = {626, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
