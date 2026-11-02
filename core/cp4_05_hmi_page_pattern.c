@@ -49,7 +49,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     TANK_MIN = 20,   /* below this %: alarm, pump stops, no start */
     TANK_HYST = 5,   /* the alarm clears only at TANK_MIN + 5 */
@@ -61,6 +61,8 @@ enum {
     SPEAKER = 40,    /* speaker volume, 0-100 % */
     VOLUME = 25      /* tone velocity, 0-127 (about 20 %) */
 };
+/* .py: BTN_NAMES = ("SW5", "SW6"): this file uses the touch screen instead */
+/* ---- end of settings ---- */
 
 /* Knob and log. */
 enum {
