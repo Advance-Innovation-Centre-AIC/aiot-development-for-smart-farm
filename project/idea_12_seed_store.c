@@ -157,7 +157,7 @@ enum { /* layout, in px */
     CARD_BORDER = 2,
     CARD_TITLE_DX = 10,
     CARD_TITLE_DY = 6,
-    TITLE_PX = 16
+    TITLE_PX = 20
 };
 enum {                      /* buffers, in bytes */
     TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
@@ -1102,22 +1102,22 @@ static const widget_spec_t *top_widgets(size_t *count)
          RH_FULL, 0},
         {KIND_SEG7, SLOT_SEG, "--", 512, 282, 100, 44, COL_SEED, 0, 0,
          0},
-        {KIND_LABEL, SLOT_TEMP, "-- C", 632, 280, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 16},
-        {KIND_LABEL, SLOT_LIMIT, "-", 632, 304, AUTO_PX, AUTO_PX,
-         COL_BAD, 0, 0, 14},
+        {KIND_LABEL, SLOT_TEMP, "-- C", 624, 280, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
+        {KIND_LABEL, SLOT_LIMIT, "-", 624, 306, AUTO_PX, AUTO_PX,
+         COL_BAD, 0, 0, 20},
         {KIND_CARD, SLOT_NONE, "ล็อตเมล็ดในโกดัง", 12, 40, 468, 160,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
         {KIND_LABEL, SLOT_CROP, "-", 24, 68, AUTO_PX, AUTO_PX, COL_TEXT,
-         0, 0, 16},
+         0, 0, 20},
         {KIND_BAR, SLOT_GERM, NULL, 24, 100, 330, 24, 0U, 0, GERM_FULL,
          GERM_FULL},
         {KIND_LABEL, SLOT_GERM_TEXT, "100", 366, 100, AUTO_PX, AUTO_PX,
          COL_OK, 0, 0, 24},
         {KIND_LABEL, SLOT_NONE, "คะแนนความงอก (ค่าสาธิต)", 24, 130,
-         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_WET, "ชื้นเกินสะสม 00:00", 24, 160, AUTO_PX,
-         AUTO_PX, COL_TEXT, 0, 0, 16},
+         AUTO_PX, COL_TEXT, 0, 0, 20},
         {KIND_CARD, SLOT_NONE, "แจ้งเจ้าของโกดัง", 12, 210, 300, 110,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER}};
 
@@ -1131,27 +1131,27 @@ static const widget_spec_t *bottom_widgets(size_t *count)
     static const widget_spec_t widgets[] = {
         {KIND_LED, SLOT_LED_OK, NULL, 24, 240, 16, 16, COL_OK, 0, 0, 0},
         {KIND_LABEL, SLOT_NONE, "ปลอดภัย", 46, 238, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_LED_WARN, NULL, 24, 264, 16, 16, COL_WARN, 0, 0,
          0},
         {KIND_LABEL, SLOT_NONE, "เริ่มเสี่ยง", 46, 262, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_LED_BAD, NULL, 24, 288, 16, 16, COL_BAD, 0, 0,
          0},
         {KIND_LABEL, SLOT_NONE, "อันตราย", 46, 286, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_REPLY, "-", 140, 240, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 16},
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_MOOD, "...", 12, 328, AUTO_PX, AUTO_PX,
-         COL_WARN, 0, 0, 16},
+         COL_WARN, 0, 0, 20},
         {KIND_LABEL, SLOT_NONE,
-         "เป่าลม = ชื้นขึ้น\nVR3 = แดดบนหลังคา\nSW5 = รับทราบ", 324, 214,
-         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+         "เป่าลม = ชื้นขึ้น\nVR3 = แดดบนหลังคา\nSW5 = รับทราบ", 316, 214,
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 356, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 0},
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_MQ, NULL, 600, 10, 16, 16, COL_OK, 0, 0, 0},
         {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 8, AUTO_PX,
-         AUTO_PX, COL_DIM, 0, 0, 16}};
+         AUTO_PX, COL_DIM, 0, 0, 20}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;
