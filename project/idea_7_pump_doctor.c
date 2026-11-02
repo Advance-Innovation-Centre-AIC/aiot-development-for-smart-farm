@@ -191,7 +191,12 @@ enum {
     VALUE_BYTES = 256, /* a decoded value: never longer than its text */
     WORD_BYTES = 8,    /* the longest command word, and its NUL */
     SAY_BYTES = 24,
-    CLOCK_BYTES = 40, /* three int32_t of digits */
+    NUMBER_SHOW_BYTES = 25,  /* 6 letters x 4 bytes + NUL */
+    UNKNOWN_SHOW_BYTES = 49, /* 12 letters x 4 bytes + NUL */
+    CLOCK_BYTES = 40,        /* three int32_t of digits */
+    /* three numbers of BENTO_FMT_BUF_SIZE and their Thai words; the
+     * label shows the first 126 bytes, as in MicroPython */
+    DETAIL_BYTES = 176,
     /* the telemetry with every number at its widest */
     REPORT_BYTES = 320
 };
@@ -964,8 +969,10 @@ static void value_text(const command_t *command,
     }
 }
 
-/* text[:keep], counted in whole UTF-8 characters. */
-static void cut_text(char *text, uint32_t keep)
+/* text[:keep], counted in whole UTF-8 characters, copied into out
+ * (cap holds keep characters of 4 bytes each and the NUL). */
+static void cut_text(const char *text, uint32_t keep, char *out,
+                     uint32_t cap)
 {
     const uint8_t follow_mask = 0xC0U;
     const uint8_t follow = 0x80U;
@@ -973,16 +980,17 @@ static void cut_text(char *text, uint32_t keep)
     uint32_t i = 0U;
     bool cut = false;
 
-    while (!cut && (text[i] != '\0')) {
+    while (!cut && (text[i] != '\0') && ((i + 1U) < cap)) {
         if (((uint8_t)text[i] & follow_mask) != follow) {
             count++;
         }
         cut = count > keep;
-        if (cut) {
-            text[i] = '\0';
+        if (!cut) {
+            out[i] = text[i];
+            i++;
         }
-        i++;
     }
+    out[i] = '\0';
 }
 
 static bool number_is_zero(const command_t *command,
@@ -1167,12 +1175,13 @@ static void set_outcome(outcome_t *outcome, action_t action,
 static void pump_command(const command_t *command, act_t act,
                          int32_t tank, bool bad, outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char value[VALUE_BYTES];
+    char shown[NUMBER_SHOW_BYTES];
 
     if ((act == ACT_LED) && !pump_number_is_zero(command)) {
-        value_text(command, &command->fields[FIELD_N], shown,
-                   sizeof(shown));
-        cut_text(shown, NUMBER_SHOW_MAX);
+        value_text(command, &command->fields[FIELD_N], value,
+                   sizeof(value));
+        cut_text(value, NUMBER_SHOW_MAX, shown, sizeof(shown));
         set_outcome(outcome, DO_DENY, "", COL_WARN);
         (void)snprintf(outcome->note, sizeof(outcome->note),
                        "ไม่มีปั๊มเครื่องที่ %s", shown);
@@ -1195,7 +1204,8 @@ static void pump_command(const command_t *command, act_t act,
 static void other_command(const command_t *command, act_t act,
                           outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char value[VALUE_BYTES];
+    char shown[UNKNOWN_SHOW_BYTES];
 
     if (act == ACT_BEEP) {
         set_outcome(outcome, DO_BEEP, "เจ้าของฟาร์มเรียกที่โรงสูบ!",
@@ -1210,9 +1220,9 @@ static void other_command(const command_t *command, act_t act,
         set_outcome(outcome, DO_NOTHING, "ไม่มีแจ้งเตือน (sf2_04)",
                     COL_INFO);
     } else if (act == ACT_OTHER) {
-        value_text(command, &command->fields[FIELD_CMD], shown,
-                   sizeof(shown));
-        cut_text(shown, UNKNOWN_SHOW_MAX);
+        value_text(command, &command->fields[FIELD_CMD], value,
+                   sizeof(value));
+        cut_text(value, UNKNOWN_SHOW_MAX, shown, sizeof(shown));
         set_outcome(outcome, DO_DENY, "", COL_WARN);
         (void)snprintf(outcome->note, sizeof(outcome->note), "ไม่รู้จัก %s",
                        shown);
@@ -1751,7 +1761,7 @@ static void show_numbers(const farm_t *farm)
     char spread[BENTO_FMT_BUF_SIZE];
     char base[BENTO_FMT_BUF_SIZE];
     char line[BENTO_FMT_BUF_SIZE];
-    char text[TEXT_BYTES];
+    char text[DETAIL_BYTES];
 
     fixed_text(vib->vib, spread, sizeof(spread));
     fixed_text(vib->base, base, sizeof(base));
