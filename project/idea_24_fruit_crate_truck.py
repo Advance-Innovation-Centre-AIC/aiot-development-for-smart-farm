@@ -264,7 +264,7 @@ def send(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def show_link(w, ok):
@@ -280,24 +280,24 @@ def build_screen():
     card(12, 44, 768, 150, "ช้ำตรงไหนของทาง (สูง = แรง / VR1 = ระยะทาง)")
     w["segs"] = []
     for i in range(SEGS):
-        w["segs"].append(ui.Bar(x=48 + i * 92, y=74, w=40, h=66, min=0, max=3, value=0))
-    ui.Label("สวน", x=28, y=150, color=COL_DIM, value=16)
+        w["segs"].append(ui.Bar(x=48 + i * 92, y=80, w=40, h=66, min=0, max=3, value=0))
+    ui.Label("สวน", x=28, y=150, color=COL_DIM, value=20)
     w["where"] = ui.Bar(x=88, y=158, w=600, h=10, min=0, max=100, value=0)
-    ui.Label("ตลาด", x=706, y=150, color=COL_DIM, value=16)
+    ui.Label("ตลาด", x=706, y=150, color=COL_DIM, value=20)
     card(12, 204, 300, 140, "เวลาเดินทาง")
-    w["trip"] = ui.Seg7(text="00:00", x=28, y=232, w=200, h=56, color=COL_INFO)
-    w["bumps"] = ui.Label("กระแทก 0 ครั้ง", x=28, y=292, color=COL_TEXT, value=16)
-    ui.Label(BTN_NAMES[1] + " = เริ่มเที่ยวใหม่", x=28, y=318, color=COL_DIM, value=14)
+    w["trip"] = ui.Seg7(text="00:00", x=28, y=236, w=200, h=52, color=COL_INFO)
+    w["bumps"] = ui.Label("กระแทก 0 ครั้ง", x=28, y=292, color=COL_TEXT, value=20)
+    ui.Label(BTN_NAMES[1] + " = เริ่มเที่ยวใหม่", x=28, y=318, color=COL_DIM, value=20)
     card(322, 204, 250, 140, "เกรดผลไม้ถึงตลาด")
     w["grade"] = ui.Label("A ราคาเต็ม", x=336, y=236, color=COL_OK, value=28)
-    w["worst"] = ui.Label("ยังไม่ช้ำ", x=336, y=284, color=COL_DIM, value=16)
+    w["worst"] = ui.Label("ยังไม่ช้ำ", x=336, y=284, color=COL_DIM, value=20)
     w["title"] = card(582, 204, 198, 140, "ไฟขับ (คำสั่ง 0)")
     w["led"] = ui.Led(x=596, y=238, w=32, h=32, color=COL_INFO)
     w["pump"] = ui.Label("ดับ", x=638, y=240, color=COL_DIM, value=20)
-    w["tank"] = ui.Label("แบต -- %", x=596, y=286, color=COL_TEXT, value=16)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["tank"] = ui.Label("แบต -- %", x=596, y=286, color=COL_TEXT, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=596, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=622, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

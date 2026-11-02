@@ -1560,7 +1560,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1577,9 +1577,9 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
 static bento_status_t add_road(farm_t *farm)
 {
     const rect_t card = {12, 44, 768, 150};
-    const spec_t orchard = {28, 150, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t orchard = {28, 150, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t where = {88, 158, 600, 10, 0U, 0, PERCENT, 0};
-    const spec_t market = {706, 150, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t market = {706, 150, -1, -1, COL_DIM, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card,
@@ -1588,7 +1588,7 @@ static bento_status_t add_road(farm_t *farm)
 
     for (i = 0; (status == BENTO_OK) && (i < SEGS); i++) {
         const spec_t bar = {px(SEG_BAR_X + (i * SEG_BAR_STEP)),
-                            74,
+                            80,
                             40,
                             66,
                             0U,
@@ -1619,9 +1619,9 @@ static bento_status_t add_trip(farm_t *farm)
 {
     static const char trip_button_name[] = "SW6"; /* BTN_NAMES[1] */
     const rect_t card = {12, 204, 300, 140};
-    const spec_t trip = {28, 232, 200, 56, COL_INFO, 0, 0, 0};
-    const spec_t bumps = {28, 292, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t hint = {28, 318, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t trip = {28, 236, 200, 52, COL_INFO, 0, 0, 0};
+    const spec_t bumps = {28, 292, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t hint = {28, 318, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1649,7 +1649,7 @@ static bento_status_t add_grade(farm_t *farm)
 {
     const rect_t card = {322, 204, 250, 140};
     const spec_t grade = {336, 236, -1, -1, COL_OK, 0, 0, 28};
-    const spec_t worst = {336, 284, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t worst = {336, 284, -1, -1, COL_DIM, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "เกรดผลไม้ถึงตลาด", &label);
@@ -1671,7 +1671,7 @@ static bento_status_t add_light(farm_t *farm)
     const rect_t card = {582, 204, 198, 140};
     const spec_t lamp = {596, 238, 32, 32, COL_INFO, 0, 0, 0};
     const spec_t pump = {638, 240, -1, -1, COL_DIM, 0, 0, 20};
-    const spec_t tank = {596, 286, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t tank = {596, 286, -1, -1, COL_TEXT, 0, 0, 20};
     bento_status_t status =
         add_card(farm->ui, &card, "ไฟขับ (คำสั่ง 0)", &farm->screen.title);
 
@@ -1692,9 +1692,9 @@ static bento_status_t add_light(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {596, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {622, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
