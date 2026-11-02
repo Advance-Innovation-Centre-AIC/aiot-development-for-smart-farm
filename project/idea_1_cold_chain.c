@@ -76,11 +76,21 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) Settings: edit these before running ---- */
-/* WIFI_SSID and WIFI_PASS: edit them at the top of join_wifi(). */
-/* CROP: edit it at the top of run(). */
-/* TEMP_OFFSET: edit it at the top of read_climate(). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const char WIFI_SSID[] =
+    "<ชื่อ Hotspot ของกลุ่ม>"; /* short, English or digits */
+static const char WIFI_PASS[] =
+    "<รหัส Hotspot ของกลุ่ม>"; /* 8 or more; share no real one */
 static const char TEAM[] = "teamXX";
+static const char CROP[] = "มะม่วง"; /* one of CROPS */
+/* the board reads above the room: an offset such as -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+static const char BROKER[] = "broker.hivemq.com";
+static const char ROOT[] = "bento-aiot";
+/* CLIENT_ID = bento-farm-TEAM + a suffix, built in try_broker() */
+/* TOPIC_EVENT = ROOT/TEAM/event, built in main() */
+/* TOPIC_CMD = ROOT/TEAM/cmd, built in main() */
+/* ---- end of settings ---- */
 
 /* Thai name, English code, temperature and humidity limits and
  * the heat budget. A 27 C room is normal; VR3 half way (+5) warms. */
@@ -412,14 +422,12 @@ static bento_status_t read_sun(int32_t *sun_c)
 /* Any failed read is "no reading": the next round tries again. */
 static bool read_climate(reading_t *reading)
 {
-    /* the board reads above the room: an offset such as -7.0 */
-    const bento_real_t temp_offset = (bento_real_t)0.0;
     float temp_c = 0.0F;
     float rh = 0.0F;
     bool read = bento_sensors_sht40_temperature(&temp_c) == BENTO_OK;
 
     read = read && (bento_sensors_sht40_humidity(&rh) == BENTO_OK);
-    reading->temp_c = (bento_real_t)temp_c + temp_offset;
+    reading->temp_c = (bento_real_t)temp_c + TEMP_OFFSET;
     reading->rh = (bento_real_t)rh;
     return read;
 }
@@ -543,19 +551,15 @@ static void format_tenths(char *text, bento_real_t value)
 /* wifi.connect(): any refusal is "not joined", Stop is Stop. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* edit these two: short, English or digits; 8 or more, share no
-     * real one */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -598,20 +602,17 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * the broker never clashes with it. */
 static bento_status_t try_broker(watch_t *watch, bool *linked)
 {
-    static const char broker[] = "broker.hivemq.com";
-    static const char client_base[] =
-        "bento-farm-"; /* + TEAM + a suffix */
     char client_id[CLIENT_BYTES];
     bento_mqtt_config_t config;
     const uint32_t suffix =
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK;
     bento_status_t status;
 
-    (void)snprintf(client_id, sizeof(client_id), "%s%s-%04" PRIx32,
-                   client_base, TEAM, suffix);
+    (void)snprintf(client_id, sizeof(client_id),
+                   "bento-farm-%s-%04" PRIx32, TEAM, suffix);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1662,8 +1663,7 @@ static int32_t find_crop(const char *name)
 /* From the settings check to the end of the watch. */
 static bento_status_t run(screen_t *screen, watch_t *watch)
 {
-    static const char crop_name[] = "มะม่วง"; /* CROP: one of CROPS */
-    const int32_t crop = find_crop(crop_name);
+    const int32_t crop = find_crop(CROP);
     const char *problem = NULL;
     bento_status_t status = BENTO_OK;
 
@@ -1693,7 +1693,6 @@ static bento_status_t run(screen_t *screen, watch_t *watch)
 
 int main(void)
 {
-    static const char root[] = "bento-aiot";
     screen_t screen;
     watch_t watch;
     bento_status_t status;
@@ -1702,9 +1701,9 @@ int main(void)
     (void)memset(&watch, 0, sizeof(watch));
     screen.ui = bento_runtime_get_ui();
     (void)snprintf(watch.topic_event, sizeof(watch.topic_event),
-                   "%s/%s/event", root, TEAM);
+                   "%s/%s/event", ROOT, TEAM);
     (void)snprintf(watch.topic_cmd, sizeof(watch.topic_cmd),
-                   "%s/%s/cmd", root, TEAM);
+                   "%s/%s/cmd", ROOT, TEAM);
     /* a build without sound refuses it, as hasattr() skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
     status = build_screen(&screen);
