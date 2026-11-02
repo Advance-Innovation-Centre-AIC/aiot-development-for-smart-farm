@@ -198,7 +198,7 @@ def send_report(n, soil, tank, running):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def show_link(w, ok):
@@ -217,15 +217,15 @@ def build_screen():
     w["arc"] = ui.Arc(x=290, y=76, w=150, h=150, max=PUMP_MAX_S)
     w["arc"].color(COL_OK)
     w["soil"] = ui.Label("ดิน (VR1) -- %", x=28, y=150, color=COL_TEXT)
-    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=14)
-    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=16)
+    ui.Label("วงแหวน = วิที่เหลือ", x=290, y=234, color=COL_DIM, value=20)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน ไม่พึ่งเน็ต", x=28, y=270, color=COL_WARN, value=20)
     card(462, 44, 318, 150, "น้ำในถัง (VR4)")
     w["tank_bar"] = ui.Bar(x=476, y=86, w=200, h=24)
     w["tank"] = ui.Label("-- %", x=690, y=82, color=COL_TEXT)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=14)
+    ui.Label("ต่ำกว่า %d%% ไม่เปิด / เปิดสูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=476, y=130, color=COL_DIM, value=20)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq"] = ui.Led(x=586, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=612, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
