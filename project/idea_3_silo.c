@@ -169,7 +169,7 @@ enum {
 enum {
     GAP_X = 330,
     GAP_Y = 200,
-    GAP_W = 360, /* wraps the note onto two lines */
+    GAP_W = 360, /* the note itself breaks into two lines */
     GAP_PX = 20
 };
 
@@ -1505,16 +1505,16 @@ static bento_status_t watch_silo(screen_t *screen, watch_t *watch)
  * in the console; the caller then takes the .py's broker-down path. */
 static bento_status_t show_emulator_gap(bento_ui_t *ui)
 {
-    static const char gap[] =
-        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน "
-        "Dev Kit หรือ Eva Kit";
+    /* the Emulator does not wrap a label: the break is in the text */
+    static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator\n"
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
     bento_ui_widget_args_t args;
     bento_ui_id_t label;
 
     (void)printf(
-        "%s / MQTT from C is not in the BENTO Emulator yet: run it "
-        "on a Dev Kit or Eva Kit.\n",
-        gap);
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit "
+        "หรือ Eva Kit / MQTT from C is not in the BENTO Emulator "
+        "yet: run it on a Dev Kit or Eva Kit.\n");
     bento_ui_widget_args_init(&args);
     args.text = gap;
     args.text_len = (uint32_t)strlen(gap);
