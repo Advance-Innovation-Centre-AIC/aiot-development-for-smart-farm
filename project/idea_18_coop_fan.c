@@ -53,6 +53,8 @@
  *     finally's mqtt.disconnect() is the close at the end of main.
  *   - wifi.* and mqtt.* print console lines of their own in
  *     MicroPython; the C library prints none.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and ends.
  *   - Stop ends the program quietly at the next sleep, where
  *     MicroPython raises KeyboardInterrupt.
  */
@@ -1566,7 +1568,10 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
         (void)bento_mqtt_close(farm->broker); /* the next try opens */
         farm->has_broker = false;
     }
-    if (status != BENTO_E_CANCELLED) {
+    /* a refused or silent broker is the next try; the Emulator's
+     * BENTO_E_UNSUPPORTED is not (show_emulator_gap) */
+    if ((status != BENTO_E_CANCELLED) &&
+        (status != BENTO_E_UNSUPPORTED)) {
         status = BENTO_OK;
     }
     return status;
@@ -1924,6 +1929,22 @@ static bool team_is_set(const char *team)
     return set;
 }
 
+/* The BENTO Emulator has no MQTT from C yet: say so on the note
+ * line, and end. */
+static bento_status_t show_emulator_gap(farm_t *farm)
+{
+    static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+
+    show_note(farm, gap, COL_WARM);
+    drain_events(farm->ui);
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\n",
+                 gap);
+    farm->stopped = true;
+    return BENTO_OK;
+}
+
 static bento_status_t run_farm(farm_t *farm)
 {
     const char *problem = NULL;
@@ -1944,6 +1965,9 @@ static bento_status_t run_farm(farm_t *farm)
     }
     if (going_on(status, farm)) {
         status = connect_farm(farm, &problem);
+    }
+    if (status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_gap(farm);
     }
     if (going_on(status, farm) && (problem != NULL)) {
         status = stop_here(farm, problem, COL_BAD);
