@@ -86,14 +86,14 @@ def self_test():
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("Modbus TCP 12 ไบต์", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("แบบฝึก: โหมดดูกรอบ ไม่ส่งไปไหน", x=12, y=38, color=COL_WARN, value=16)
+    ui.Label("แบบฝึก: โหมดดูกรอบ ไม่ส่งไปไหน", x=12, y=38, color=COL_WARN, value=20)
     card(12, 62, 768, 112, "ฟ้า = MBAP  เขียว = PDU")
     w = {"b": []}
     for i in range(12):                                   # ไบต์ที่ i อยู่ที่ x = 28 + i * 62
@@ -103,7 +103,7 @@ def build_screen():
         ui.Label(name, x=28 + i * 62, y=136, color=COL_DIM, value=14)
     card(12, 186, 768, 152, "กรอบนี้ขออะไร")
     w["stat"] = ui.Label(" ", x=28, y=224, color=COL_TEXT)          # ไม่ใส่ value = ตัวอักษร 20
-    w["note"] = ui.Label("SW5 = FC03 อ่าน  SW6 = FC06 เขียน", x=12, y=352, color=COL_DIM, value=16)
+    w["note"] = ui.Label("SW5 = FC03 อ่าน  SW6 = FC06 เขียน", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 

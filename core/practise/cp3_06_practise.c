@@ -118,7 +118,7 @@ enum { /* screen */
     ASKED_Y = 224,
     HELP_Y = 352,
     FONT_TITLE = 24,
-    FONT_TEXT = 16,
+    FONT_TEXT = 20, /* Thai text is 20 px or larger on the board */
     FONT_FIELD = 14,
     FONT_BYTE = 28,
     FONT_DEFAULT = 0, /* no value= : the board's 20 px font */
