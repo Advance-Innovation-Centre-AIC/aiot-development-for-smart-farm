@@ -93,17 +93,17 @@ def moved(raw, shown, band):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_knob_card(k, x, y):
     card(x, y, 378, 134, k[0] + " (" + k[1] + ")")
-    c = {"val": ui.Label("--", x=x + 12, y=y + 30, color=COL_TEXT, value=28)}
-    c["raw"] = ui.Label("raw --", x=x + 170, y=y + 30, color=COL_WARN, value=16)
-    ui.Label("1 ขั้น = %.4f " % step_size(k) + k[1], x=x + 170, y=y + 52, color=COL_DIM, value=14)
-    c["bar"] = ui.Bar(x=x + 12, y=y + 76, w=354, h=14, min=k[2], max=k[3], value=k[2])
+    c = {"val": ui.Label("--", x=x + 12, y=y + 32, color=COL_TEXT, value=28)}
+    c["raw"] = ui.Label("raw --", x=x + 170, y=y + 32, color=COL_WARN, value=20)
+    ui.Label("1 ขั้น = %.4f " % step_size(k) + k[1], x=x + 170, y=y + 58, color=COL_DIM, value=20)
+    c["bar"] = ui.Bar(x=x + 12, y=y + 84, w=354, h=14, min=k[2], max=k[3], value=k[2])
     c["bar"].color(COL_INFO)        # สีตอนสร้างใช้ไม่ได้กับ Bar ต้องตั้งหลังสร้าง
-    ruler = ui.Scale(x=x + 12, y=y + 94, w=354, h=32, color=COL_DIM, min=k[2], max=k[3])
+    ruler = ui.Scale(x=x + 12, y=y + 100, w=354, h=32, color=COL_DIM, min=k[2], max=k[3])
     ruler.ticks(k[5], 2)            # ไม้บรรทัดใต้แถบ ขีดใหญ่ทุก 2 ขีด (Scale ไม่มีเข็ม)
     c["txt"] = ""
     return c
@@ -113,11 +113,11 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ลูกบิด: เลขดิบ -> ค่าที่มีหน่วย", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("ค่า = ต่ำสุด + (raw - RAW_LO) x ช่วง / (RAW_HI - RAW_LO) แล้ว clamp", x=12, y=38,
-             color=COL_DIM, value=16)
+    ui.Label("ค่า = ต่ำสุด + (raw - RAW_LO) x ช่วง / (RAW_HI - RAW_LO) แล้ว clamp", x=12, y=36,
+             color=COL_DIM, value=20)
     w = {"cards": [build_knob_card(KNOBS[0], 12, 62), build_knob_card(KNOBS[1], 402, 62),
                    build_knob_card(KNOBS[2], 12, 204), build_knob_card(KNOBS[3], 402, 204)]}
-    w["help"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=16)
+    w["help"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
