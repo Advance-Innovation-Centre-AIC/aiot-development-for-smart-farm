@@ -55,27 +55,30 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 /* Set these three before running. TEAM is the group number the
  * teacher hands out, e.g. team05, and no two groups share it. */
-/* WIFI_SSID lives in connect_wifi() */
-/* WIFI_PASS lives in connect_wifi() */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-
-/* The spare broker is test.mosquitto.org, if the teacher says so. */
-/* BROKER lives in try_broker() */
-static const char UNIT[] = "%";
-
-/* Settings a student may change. */
 enum {
     DEADBAND = 3,     /* send when the value moved more than this */
     HEARTBEAT_S = 30, /* nothing changed: "still here" this often */
     SAMPLE_MS = 1000, /* measure this often */
     RUN_MS = 300000,  /* the program ends after five minutes */
     SPEAKER = 40,     /* speaker volume, 0-100 % */
-    VOLUME = 25,      /* tone velocity, 0-127 */
-    CHART_LO = 0,     /* the chart's range */
-    CHART_HI = 100
+    VOLUME = 25       /* tone velocity, 0-127 */
 };
+/* The spare broker is test.mosquitto.org, if the teacher says so. */
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-core-TEAM (+ the clock), built in main() */
+/* TOPIC = bento-aiot/TEAM/core/report, built in main() */
+static const char UNIT[] = "%";
+enum {
+    CHART_LO = 0,  /* .py: LO, the chart's range */
+    CHART_HI = 100 /* .py: HI */
+};
+/* ---- end of settings ---- */
 
 /* The network. */
 enum {
@@ -554,16 +557,14 @@ static bool has_address(void)
  * too. */
 static bento_status_t connect_wifi(bool *joined)
 {
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS;
     (void)printf("[WiFi] Connecting...\n");
     status = bento_wifi_connect_start(&params);
@@ -597,7 +598,6 @@ static bento_status_t wait_broker(uint32_t broker)
  * so it never clashes with an old one. Only Stop is an error. */
 static bento_status_t try_broker(link_t *link, bool *linked)
 {
-    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     bento_status_t status;
 
@@ -605,13 +605,13 @@ static bento_status_t try_broker(link_t *link, bool *linked)
                    "%s-%04" PRIx32, link->client_base,
                    bento_time_ticks_ms() & (uint32_t)CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = link->client_id;
     config.client_id_len = (uint32_t)strlen(link->client_id);
-    (void)printf("[MQTT] Connecting to %s:%d ...\n", broker, PORT);
+    (void)printf("[MQTT] Connecting to %s:%d ...\n", BROKER, PORT);
     status = bento_mqtt_open_start(&config, &link->broker);
     if (status == BENTO_OK) {
         status = wait_broker(link->broker);
@@ -619,7 +619,7 @@ static bento_status_t try_broker(link_t *link, bool *linked)
     *linked = status == BENTO_OK;
     link->no_mqtt = status == BENTO_E_UNSUPPORTED;
     if (*linked) {
-        (void)printf("[MQTT] Connected to %s:%d as '%s'\n", broker,
+        (void)printf("[MQTT] Connected to %s:%d as '%s'\n", BROKER,
                      PORT, link->client_id);
     } else if ((status != BENTO_E_CANCELLED) && (link->broker != 0U)) {
         (void)bento_mqtt_close(link->broker); /* frees it, any state */
