@@ -11,8 +11,7 @@
  * และเพิ่มคีย์ dips กับ do_min) เครื่องหมุนได้นานสุด 30 วินาทีต่อคำสั่ง
  * น้ำในบ่อต่ำกว่า 10% ไม่เปิด กด SW5 หยุดเครื่องทันทีโดยไม่พึ่งเน็ต
  * บอร์ดส่งรายงานทุก 5 วินาที และเฝ้านาน 30 นาที
- * ก่อนรันแก้ TEAM (เลขกลุ่ม) ที่หัวไฟล์ และชื่อกับรหัส Hotspot
- * (WIFI_SSID, WIFI_PASS ของ .py) ใน join_wifi()
+ * ก่อนรันแก้ WIFI_SSID, WIFI_PASS และ TEAM (เลขกลุ่ม) ในบล็อกตั้งค่าที่หัวไฟล์
  * เกณฑ์เป็นค่าสาธิตในห้องเรียน
  *
  * The fish pond aerator. Oxygen drops at night; a phone switches the
@@ -24,9 +23,9 @@
  * times how long the latest one lasts. VR4 is the water in the pond
  * (below 10 % the aerator stays off). One command runs it for at most
  * 30 s; SW5 stops it at once without the network. A report goes out
- * every 5 s and the board watches for 30 minutes. Edit TEAM at the
- * top, and the hotspot name and password (the .py's WIFI_SSID,
- * WIFI_PASS) in join_wifi(), before running.
+ * every 5 s and the board watches for 30 minutes. Edit WIFI_SSID,
+ * WIFI_PASS and TEAM in the settings block at the top before
+ * running.
  *
  * Twin of idea_17_pond_aerator.py (aiot-development-for-smart-farm/project/idea_17_pond_aerator.py). Style: CLEAN_C.md.
  * Where C differs:
@@ -61,6 +60,9 @@
  *     finally's mqtt.disconnect() is the close at the end of main.
  *   - wifi.* and mqtt.* print console lines of their own in
  *     MicroPython; the C library prints none.
+ *   - CLIENT_ID and the topics are built in code from ROOT and TEAM
+ *     with snprintf, where the .py adds the texts together; ROOT is
+ *     the "bento-aiot" the .py writes inside its topics.
  *   - Stop ends the program quietly at the next sleep, where
  *     MicroPython raises KeyboardInterrupt.
  *   - In the BENTO Emulator, MQTT from C is not available yet: the
@@ -82,11 +84,21 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า ---- */
-/* WIFI_SSID, WIFI_PASS ของ .py = wifi_ssid, wifi_pass ใน join_wifi()
- * BROKER = broker_host ใน open_broker() · หัวข้อ MQTT = topic_root ใน
- * main() (MISRA 8.9: ค่าที่ฟังก์ชันเดียวอ่านอยู่ในฟังก์ชันนั้น) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
+
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = "bento-farm-" + TEAM, built in open_broker() */
+static const char ROOT[] = "bento-aiot"; /* the topics start with it */
+/* TOPIC_CMD = ROOT/TEAM/cmd, built in make_topics() */
+/* TOPIC = ROOT/TEAM/telemetry, built in make_topics() */
+/* ---- end of settings ---- */
+
+/* ---- 1) ตั้งค่า ---- */
 static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
 
 /* The aerator, the thresholds and the times. */
@@ -1531,18 +1543,14 @@ static void show_dip(const farm_t *farm, uint32_t now_ms)
  * timed-out join is False; any other failure ends the program. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    /* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -1589,19 +1597,17 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
-    static const char broker_host[] = "broker.hivemq.com";
-    /* + a number from the board's clock: never an old id */
-    static const char client_prefix[] = "bento-farm-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
+    /* CLIENT_ID + a number from the board's clock: never an old id */
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "bento-farm-%s-%04" PRIx32, TEAM,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -2088,9 +2094,18 @@ static bento_status_t run_farm(farm_t *farm)
     return status;
 }
 
+/* TOPIC_CMD and TOPIC of the .py: ROOT/TEAM/cmd and
+ * ROOT/TEAM/telemetry. */
+static void make_topics(farm_t *farm)
+{
+    (void)snprintf(farm->topic_cmd, sizeof(farm->topic_cmd),
+                   "%s/%s/cmd", ROOT, TEAM);
+    (void)snprintf(farm->topic, sizeof(farm->topic), "%s/%s/telemetry",
+                   ROOT, TEAM);
+}
+
 int main(void)
 {
-    static const char topic_root[] = "bento-aiot";
     farm_t farm = {0};
     bento_status_t status;
 
@@ -2100,10 +2115,7 @@ int main(void)
     farm.shown = -1;
     farm.step_shown = -1;
     farm.do_min = DO_FULL;
-    (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
-                   topic_root, TEAM);
-    (void)snprintf(farm.topic, sizeof(farm.topic), "%s/%s/telemetry",
-                   topic_root, TEAM);
+    make_topics(&farm);
     status = run_farm(&farm);
     if (farm.has_broker) {
         (void)bento_mqtt_close(
