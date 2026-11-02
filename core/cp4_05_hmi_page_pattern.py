@@ -119,8 +119,8 @@ def build():
     w["lvl"] = ui.Bar(x=0, y=0, w=70, h=200, min=0, max=100, value=0, parent=tab)
     w["big"] = ui.Label(" ", x=100, y=80, color=COL_TEXT, value=28, parent=tab)
     tab = tabs.add_tab("สั่งงาน")
-    w["open"] = ui.Button("เปิดปั๊ม", x=0, y=0, w=220, h=80, color=COL_INFO, parent=tab)
-    w["stop"] = ui.Button("หยุด", x=0, y=100, w=220, h=80, color=COL_BAD, parent=tab)
+    w["open"] = ui.Button("เปิดปั๊ม", x=0, y=0, w=220, h=80, color=COL_INFO, value=20, parent=tab)
+    w["stop"] = ui.Button("หยุด", x=0, y=100, w=220, h=80, color=COL_BAD, value=20, parent=tab)
     tab = tabs.add_tab("บันทึก")
     log = ui.Table(cols=2, rows=LOG_ROWS + 1, x=0, y=0, w=600, h=230, parent=tab)
     log.col_width(1, 470)                       # คอลัมน์ 0 (เวลา) ใช้ความกว้างตั้งต้น 130 พิกเซล
@@ -130,8 +130,8 @@ def build():
     # ซ่อนไว้ก่อน update() โชว์เมื่อ s["ask"] เป็น True  ข้อความ: บรรทัดแรก = หัวกล่อง ที่เหลือ = เนื้อความ
     # บอกสิ่งที่จะเกิด ไม่ใช่ถามลอย ๆ ว่า "แน่ใจไหม" (ระดับน้ำดูได้จากแถบสถานะที่เห็นตลอด)
     box = ui.MsgBox("เปิดปั๊ม?\nปั๊มจะเดินทันที", x=300, y=100, w=440, h=210)
-    yes = ui.Button("ยืนยัน", x=320, y=226, w=190, h=64, color=COL_OK)
-    no = ui.Button("ยกเลิก", x=530, y=226, w=190, h=64, color=COL_DIM)
+    yes = ui.Button("ยืนยัน", x=320, y=226, w=190, h=64, color=COL_OK, value=20)
+    no = ui.Button("ยกเลิก", x=530, y=226, w=190, h=64, color=COL_DIM, value=20)
     box.hide()
     yes.hide()
     no.hide()
