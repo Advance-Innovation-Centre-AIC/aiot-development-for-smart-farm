@@ -65,13 +65,23 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า ---- */
-/* WIFI_SSID, WIFI_PASS: ตั้งใน join_wifi() (set them in join_wifi()) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-/* CROP and the table CROPS: ตั้งใน find_crop() (set them there) */
-/* TEMP_OFFSET (บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0): ตั้งใน read_climate() */
+/* ชื่อไทยตรงกับตาราง CROPS ใน find_crop() */
+static const char CROP[] = "มะเขือเทศ";
+/* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 
-/* BROKER: ตั้งใน try_broker(); ROOT, CLIENT_ID: ตั้งใน main() */
+static const char BROKER[] = "broker.hivemq.com";
+static const char ROOT[] = "bento-aiot";
+/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
+static const char CLIENT_ID[] = "bento-farm-";
+/* ---- end of settings ---- */
+
 static const char *const BUTTON_NAMES[] = {"SW6", "SW5"};
 
 /* The crops: Thai name, English code and their limits. */
@@ -234,14 +244,13 @@ static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 /* false when either sht40 value cannot be read. */
 static bool read_climate(bento_real_t *t, bento_real_t *h)
 {
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
     float t_raw = 0.0F;
     float humidity = 0.0F;
     const bool read =
         (bento_sensors_sht40_temperature(&t_raw) == BENTO_OK) &&
         (bento_sensors_sht40_humidity(&humidity) == BENTO_OK);
 
-    *t = (bento_real_t)t_raw + temp_offset;
+    *t = (bento_real_t)t_raw + TEMP_OFFSET;
     *h = (bento_real_t)humidity;
     return read;
 }
@@ -967,19 +976,15 @@ static bool has_ip(void)
  * run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char wifi_pass[] =
-        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
-    static const char wifi_ssid[] =
-        "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
@@ -1006,7 +1011,6 @@ static bento_status_t join_wifi(bool *joined)
 static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                                  bool *linked)
 {
-    static const char broker_host[] = "broker.hivemq.com";
     char client_id[NAME_BYTES];
     bento_mqtt_config_t config;
     bool waiting;
@@ -1016,8 +1020,8 @@ static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                    names->client_id,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1665,7 +1669,6 @@ static bento_status_t watch_once(farm_t *farm)
  * (Thai name, English code, C low, C high, %RH low, %RH high) */
 static const crop_t *find_crop(void)
 {
-    static const char crop_name[] = "มะเขือเทศ"; /* CROP */
     static const crop_t crops[] = {
         {"มะเขือเทศ", "tomato", {20, 30, 60, 80}},
         {"ผักสลัด", "lettuce", {15, 25, 50, 70}},
@@ -1677,7 +1680,7 @@ static const crop_t *find_crop(void)
     for (i = 0U; (i < (uint32_t)(sizeof(crops) / sizeof(crops[0]))) &&
                  (found == NULL);
          i++) {
-        if (strcmp(crops[i].thai, crop_name) == 0) {
+        if (strcmp(crops[i].thai, CROP) == 0) {
             found = &crops[i];
         }
     }
@@ -1736,9 +1739,6 @@ static bento_status_t run_watch(farm_t *farm)
 
 int main(void)
 {
-    static const char client_prefix[] =
-        "bento-farm-"; /* + TEAM + a clock number */
-    static const char root[] = "bento-aiot";
     farm_t farm;
     bento_status_t status;
 
@@ -1748,12 +1748,12 @@ int main(void)
     farm.watch.level = LEVEL_NONE;
     farm.watch.acked = true;
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", client_prefix, TEAM);
+                   "%s%s", CLIENT_ID, TEAM);
     (void)snprintf(farm.names.topic_event,
-                   sizeof(farm.names.topic_event), "%s/%s/event", root,
+                   sizeof(farm.names.topic_event), "%s/%s/event", ROOT,
                    TEAM);
     (void)snprintf(farm.names.topic_cmd, sizeof(farm.names.topic_cmd),
-                   "%s/%s/cmd", root, TEAM);
+                   "%s/%s/cmd", ROOT, TEAM);
     status = start_farm(&farm);
     if (status == BENTO_OK) {
         status = run_watch(&farm);
