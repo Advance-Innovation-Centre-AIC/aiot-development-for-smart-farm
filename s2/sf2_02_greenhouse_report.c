@@ -135,7 +135,8 @@ enum {
 enum {
     TEXT_BYTES = 128,
     NAME_BYTES = 64,
-    PAYLOAD_BYTES = 256
+    CLIENT_PREFIX_BYTES = 24, /* MQTT's 23-byte client id and a NUL */
+    PAYLOAD_BYTES = 320       /* every number at full length */
 };
 
 /* ---- sound, Stop and waiting ---- */
@@ -474,7 +475,7 @@ static void build_payload(const readings_t *now, int32_t n, bool manual,
 /* ---- 4) เครือข่าย ---- */
 
 typedef struct {
-    char client_id[NAME_BYTES]; /* without the clock number */
+    char client_id[CLIENT_PREFIX_BYTES]; /* no clock number yet */
     char topic[NAME_BYTES];
     char topic_event[NAME_BYTES];
 } names_t;
