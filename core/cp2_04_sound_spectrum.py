@@ -138,7 +138,7 @@ def rows(m):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, points=400):
@@ -153,19 +153,19 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("เสียง -> ความถี่ (FFT)", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("N = %d -> %d ช่อง ช่องละ %s Hz" % (N, N // 2, FS / N), x=12, y=38,
-             color=COL_DIM, value=16)
+             color=COL_DIM, value=20)
     card(12, 64, 380, 124, "ความถี่เด่น (Hz)")
-    w = {"hz": ui.Seg7(text="0", x=24, y=92, w=170, h=56, color=COL_INFO)}
-    w["bin"] = ui.Label(" ", x=24, y=158, color=COL_TEXT, value=16)
+    w = {"hz": ui.Seg7(text="0", x=24, y=98, w=170, h=56, color=COL_INFO)}
+    w["bin"] = ui.Label(" ", x=24, y=160, color=COL_TEXT, value=20)
     card(402, 64, 378, 124, "จอไฟ RGB 16 แท่ง")
-    ui.Label("แท่งละ 500 Hz", x=414, y=94, color=COL_TEXT, value=16)
-    ui.Label("1 แถว = +6 dB", x=414, y=122, color=COL_TEXT, value=16)
-    w["heard"] = ui.Label(" ", x=414, y=154, color=COL_DIM, value=14)
+    ui.Label("แท่งละ 500 Hz", x=414, y=100, color=COL_TEXT, value=20)
+    ui.Label("1 แถว = +6 dB", x=414, y=128, color=COL_TEXT, value=20)
+    w["heard"] = ui.Label(" ", x=414, y=156, color=COL_DIM, value=20)
     ui.Label("dB   0 Hz -> 8 kHz", x=12, y=196, color=COL_DIM, value=14)
     w["chart"] = line_chart(12, 218, 400, 120, 0, 90, COL_INFO, POINTS)
-    ui.Label("SW5 / SW6 = โน้ตอ้างอิง", x=434, y=226, color=COL_INFO, value=16)
+    ui.Label("SW5 / SW6 = โน้ตอ้างอิง", x=434, y=226, color=COL_INFO, value=20)
     w["note"] = ui.Label(" ", x=434, y=256, color=COL_WARN, value=20)
-    w["help"] = ui.Label("ผิวปาก ฮัม ตบมือ", x=12, y=352, color=COL_DIM, value=16)
+    w["help"] = ui.Label("ผิวปาก ฮัม ตบมือ", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
