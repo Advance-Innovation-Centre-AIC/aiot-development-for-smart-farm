@@ -72,16 +72,11 @@
 #include "bento_wifi.h"
 
 /* ---- 1) ตั้งค่า: แก้ก่อนรัน ---- */
-static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* Set here: TEAM. Each other setting lives in the one function that
+ * reads it: wifi_ssid, wifi_pass in join_wifi(); crop_name in
+ * find_crop(); temp_offset in read_climate(); broker, client_prefix
+ * in open_broker(); root in main(). */
 static const char TEAM[] = "teamXX";
-static const char CROP[] = "วัคซีนสัตว์";
-/* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
-
-static const char BROKER[] = "broker.hivemq.com";
-static const char ROOT[] = "bento-aiot";
-static const char CLIENT_ID[] = "bento-farm-"; /* + TEAM + a number */
 
 enum { /* timing, in ms */
     READ_MS = 1000,
@@ -418,13 +413,15 @@ static bento_real_t round_tenths(bento_real_t value)
 /* false when the sensor cannot be read, as the except does. */
 static bool read_climate(reading_t *reading)
 {
+    /* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
+    const bento_real_t temp_offset = (bento_real_t)0.0;
     float temp_c = 0.0F;
     float rh = 0.0F;
     bool ok = bento_sensors_sht40_temperature(&temp_c) == BENTO_OK;
 
     ok = ok && (bento_sensors_sht40_humidity(&rh) == BENTO_OK);
     if (ok) {
-        reading->temp_c = (bento_real_t)temp_c + TEMP_OFFSET;
+        reading->temp_c = (bento_real_t)temp_c + temp_offset;
         reading->rh = (bento_real_t)rh;
     }
     return ok;
@@ -454,6 +451,7 @@ static bool valid_team(void)
  * วัคซีนจริง 2-8 C. NULL when CROP is none of them. */
 static const crop_t *find_crop(void)
 {
+    static const char crop_name[] = "วัคซีนสัตว์";
     static const crop_t crops[] = {
         {"วัคซีนสัตว์", "vaccine", {20, 30, 20, 95}},
         {"ยาฉีดสัตว์", "injection", {20, 30, 20, 95}},
@@ -464,7 +462,7 @@ static const crop_t *find_crop(void)
     for (i = 0U;
          (found == NULL) && (i < (sizeof(crops) / sizeof(crops[0])));
          i++) {
-        if (strcmp(crops[i].thai, CROP) == 0) {
+        if (strcmp(crops[i].thai, crop_name) == 0) {
             found = &crops[i];
         }
     }
@@ -633,11 +631,23 @@ static bool skip_nested(json_reader_t *reader, json_value_t *value)
     return ok;
 }
 
+/* The len bytes at text are exactly word (text needs no NUL). */
+static bool bytes_are(const uint8_t *text, uint32_t len,
+                      const char *word)
+{
+    bool same = len == (uint32_t)strlen(word);
+    uint32_t i;
+
+    for (i = 0U; same && (i < len); i++) {
+        same = text[i] == (uint8_t)word[i];
+    }
+    return same;
+}
+
 static bool is_word(const json_reader_t *reader,
                     const json_value_t *value, const char *word)
 {
-    return (value->len == (uint32_t)strlen(word)) &&
-           (memcmp(&reader->text[value->start], word, value->len) == 0);
+    return bytes_are(&reader->text[value->start], value->len, word);
 }
 
 /* Moves past digits; false when there is none. */
@@ -745,8 +755,7 @@ static bool read_command(const message_t *message, command_t *command)
     bool ok = take_byte(&reader, (uint8_t)'{');
     bool closed = ok && take_byte(&reader, (uint8_t)'}');
 
-    command->has_cmd = false;
-    command->has_t_hi = false;
+    (void)memset(command, 0, sizeof(*command));
     while (ok && !closed) {
         ok = read_member(&reader, command);
         closed = ok && take_byte(&reader, (uint8_t)'}');
@@ -796,8 +805,7 @@ static bool cmd_is(const message_t *message, const command_t *command,
     const json_value_t *cmd = &command->cmd;
 
     return command->has_cmd && (cmd->kind == VALUE_STRING) &&
-           (cmd->len == (uint32_t)strlen(word)) &&
-           (memcmp(&message->payload[cmd->start], word, cmd->len) == 0);
+           bytes_are(&message->payload[cmd->start], cmd->len, word);
 }
 
 /* ---- 4) เครือข่าย ---- */
@@ -807,14 +815,16 @@ static bool cmd_is(const message_t *message, const command_t *command,
  * the binding's OSError does. */
 static bento_status_t join_wifi(bool *joined)
 {
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     (void)printf("[WiFi] Connecting...\r\n");
     status = bento_wifi_connect_start(&params);
@@ -858,21 +868,23 @@ static bool has_address(void)
  * False. A client that did not link is closed, as the binding does. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
+    static const char broker[] = "broker.hivemq.com";
+    static const char client_prefix[] = "bento-farm-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, CLIENT_ID,
+        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
         TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
     config.client_id_len = (uint32_t)strlen(client_id);
-    (void)printf("[MQTT] Connecting to %s:%d ...\r\n", BROKER,
+    (void)printf("[MQTT] Connecting to %s:%d ...\r\n", broker,
                  BROKER_PORT);
     status = bento_mqtt_open_start(&config, &farm->broker);
     if (status == BENTO_OK) {
@@ -886,7 +898,7 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
     }
     *linked = status == BENTO_OK;
     if (*linked) {
-        (void)printf("[MQTT] Connected to %s:%d as '%s'\r\n", BROKER,
+        (void)printf("[MQTT] Connected to %s:%d as '%s'\r\n", broker,
                      BROKER_PORT, client_id);
     } else if (farm->broker != 0U) {
         (void)bento_mqtt_close(farm->broker); /* freed either way */
@@ -1081,58 +1093,75 @@ add_widget(bento_ui_t *ui, const widget_spec_t *spec, bento_ui_id_t *id)
 
 /* The screen, widget by widget in the .py's order; card() is one
  * KIND_CARD row. The band Bar is coloured right after it is made. */
-static const widget_spec_t WIDGETS[] = {
-    {KIND_PANEL, SLOT_NONE, NULL, 4, 0, 784, 342, COL_PAGE, COL_EDGE,
-     PAGE_RADIUS, 0},
-    {KIND_LABEL, SLOT_NONE, "ตู้ยาและวัคซีนสัตว์  ใบบันทึกอุณหภูมิ", 18, 8,
-     AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 24},
-    {KIND_CARD, SLOT_NONE, "อุณหภูมิในตู้ตอนนี้", 16, 44, 400, 250, COL_CARD,
-     COL_EDGE, CARD_RADIUS, CARD_BORDER},
-    {KIND_SEG7, SLOT_SEG, "--.-", 30, 72, 150, 64, COL_TEAL, 0, 0, 0},
-    {KIND_LABEL, SLOT_NONE, "C", 114, 96, AUTO_PX, AUTO_PX, COL_DIM, 0,
-     0, 24},
-    {KIND_LABEL, SLOT_MOOD, "...", 226, 78, AUTO_PX, AUTO_PX, COL_WARN,
-     0, 0, 16},
-    {KIND_LABEL, SLOT_RH, "ชื้น -- %", 226, 126, AUTO_PX, AUTO_PX,
-     COL_DIM, 0, 0, 14},
-    {KIND_BAR, SLOT_BAND, NULL, 30, 158, 372, 26, COL_EDGE, BAND_LO,
-     BAND_HI, BAND_LO},
-    {KIND_SCALE, SLOT_NONE, NULL, 30, 188, 372, 34, COL_DIM, BAND_LO,
-     BAND_HI, 0},
-    {KIND_LABEL, SLOT_RANGE, "-", 30, 232, AUTO_PX, AUTO_PX, COL_TEXT,
-     0, 0, 16},
-    {KIND_LABEL, SLOT_CROP, "-", 30, 258, AUTO_PX, AUTO_PX, COL_DIM, 0,
-     0, 14},
-    {KIND_CARD, SLOT_NONE, "ต่ำสุด / สูงสุด ตั้งแต่ล้าง", 426, 44, 352, 120,
-     COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
-    {KIND_LABEL, SLOT_LOWEST, "ต่ำสุด --", 438, 72, AUTO_PX, AUTO_PX,
-     COL_TEAL, 0, 0, 24},
-    {KIND_LABEL, SLOT_HIGHEST, "สูงสุด --", 608, 72, AUTO_PX, AUTO_PX,
-     COL_BAD, 0, 0, 24},
-    {KIND_LABEL, SLOT_NONE, "SW6 = ล้างค่า (ทำทุกเช้า)", 438, 120, AUTO_PX,
-     AUTO_PX, COL_DIM, 0, 0, 14},
-    {KIND_CARD, SLOT_NONE, "หลุดช่วง", 426, 172, 352, 122, COL_CARD,
-     COL_EDGE, CARD_RADIUS, CARD_BORDER},
-    {KIND_LABEL, SLOT_OUT, "หลุดช่วงรวม 00:00  (0 ครั้ง)", 438, 198,
-     AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 16},
-    {KIND_LED, SLOT_NONE, NULL, 438, 228, 16, 16, COL_OK, 0, 0, 0},
-    {KIND_LABEL, SLOT_NONE, "ในช่วง", 458, 226, AUTO_PX, AUTO_PX,
-     COL_DIM, 0, 0, 14},
-    {KIND_LED, SLOT_NONE, NULL, 530, 228, 16, 16, COL_WARN, 0, 0, 0},
-    {KIND_LABEL, SLOT_NONE, "ใกล้หลุด", 550, 226, AUTO_PX, AUTO_PX,
-     COL_DIM, 0, 0, 14},
-    {KIND_LED, SLOT_NONE, NULL, 622, 228, 16, 16, COL_BAD, 0, 0, 0},
-    {KIND_LABEL, SLOT_NONE, "หลุดไกล", 642, 226, AUTO_PX, AUTO_PX,
-     COL_DIM, 0, 0, 14},
-    {KIND_LABEL, SLOT_REPLY, "-", 438, 254, AUTO_PX, AUTO_PX, COL_DIM,
-     0, 0, 14},
-    {KIND_LABEL, SLOT_NONE, "VR3 = ร้อนจากนอกตู้  SW5 = รับทราบ", 18, 298,
-     AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
-    {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 18, 316, AUTO_PX, AUTO_PX,
-     COL_DIM, 0, 0, 16},
-    {KIND_LED, SLOT_MQ, NULL, 600, 14, 16, 16, COL_OK, 0, 0, 0},
-    {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 12, AUTO_PX,
-     AUTO_PX, COL_DIM, 0, 0, 16}};
+static const widget_spec_t *top_widgets(size_t *count)
+{
+    static const widget_spec_t widgets[] = {
+        {KIND_PANEL, SLOT_NONE, NULL, 4, 0, 784, 342, COL_PAGE,
+         COL_EDGE, PAGE_RADIUS, 0},
+        {KIND_LABEL, SLOT_NONE, "ตู้ยาและวัคซีนสัตว์  ใบบันทึกอุณหภูมิ", 18, 8,
+         AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 24},
+        {KIND_CARD, SLOT_NONE, "อุณหภูมิในตู้ตอนนี้", 16, 44, 400, 250,
+         COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
+        {KIND_SEG7, SLOT_SEG, "--.-", 30, 72, 150, 64, COL_TEAL, 0, 0,
+         0},
+        {KIND_LABEL, SLOT_NONE, "C", 114, 96, AUTO_PX, AUTO_PX, COL_DIM,
+         0, 0, 24},
+        {KIND_LABEL, SLOT_MOOD, "...", 226, 78, AUTO_PX, AUTO_PX,
+         COL_WARN, 0, 0, 16},
+        {KIND_LABEL, SLOT_RH, "ชื้น -- %", 226, 126, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 14},
+        {KIND_BAR, SLOT_BAND, NULL, 30, 158, 372, 26, COL_EDGE, BAND_LO,
+         BAND_HI, BAND_LO},
+        {KIND_SCALE, SLOT_NONE, NULL, 30, 188, 372, 34, COL_DIM,
+         BAND_LO, BAND_HI, 0},
+        {KIND_LABEL, SLOT_RANGE, "-", 30, 232, AUTO_PX, AUTO_PX,
+         COL_TEXT, 0, 0, 16},
+        {KIND_LABEL, SLOT_CROP, "-", 30, 258, AUTO_PX, AUTO_PX, COL_DIM,
+         0, 0, 14},
+        {KIND_CARD, SLOT_NONE, "ต่ำสุด / สูงสุด ตั้งแต่ล้าง", 426, 44, 352, 120,
+         COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
+        {KIND_LABEL, SLOT_LOWEST, "ต่ำสุด --", 438, 72, AUTO_PX, AUTO_PX,
+         COL_TEAL, 0, 0, 24},
+        {KIND_LABEL, SLOT_HIGHEST, "สูงสุด --", 608, 72, AUTO_PX, AUTO_PX,
+         COL_BAD, 0, 0, 24}};
+
+    *count = sizeof(widgets) / sizeof(widgets[0]);
+    return widgets;
+}
+
+/* The rest of the screen, in the same order. */
+static const widget_spec_t *bottom_widgets(size_t *count)
+{
+    static const widget_spec_t widgets[] = {
+        {KIND_LABEL, SLOT_NONE, "SW6 = ล้างค่า (ทำทุกเช้า)", 438, 120,
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+        {KIND_CARD, SLOT_NONE, "หลุดช่วง", 426, 172, 352, 122, COL_CARD,
+         COL_EDGE, CARD_RADIUS, CARD_BORDER},
+        {KIND_LABEL, SLOT_OUT, "หลุดช่วงรวม 00:00  (0 ครั้ง)", 438, 198,
+         AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 16},
+        {KIND_LED, SLOT_NONE, NULL, 438, 228, 16, 16, COL_OK, 0, 0, 0},
+        {KIND_LABEL, SLOT_NONE, "ในช่วง", 458, 226, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 14},
+        {KIND_LED, SLOT_NONE, NULL, 530, 228, 16, 16, COL_WARN, 0, 0,
+         0},
+        {KIND_LABEL, SLOT_NONE, "ใกล้หลุด", 550, 226, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 14},
+        {KIND_LED, SLOT_NONE, NULL, 622, 228, 16, 16, COL_BAD, 0, 0, 0},
+        {KIND_LABEL, SLOT_NONE, "หลุดไกล", 642, 226, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_REPLY, "-", 438, 254, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_NONE, "VR3 = ร้อนจากนอกตู้  SW5 = รับทราบ", 18,
+         298, AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 18, 316, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 16},
+        {KIND_LED, SLOT_MQ, NULL, 600, 14, 16, 16, COL_OK, 0, 0, 0},
+        {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 12, AUTO_PX,
+         AUTO_PX, COL_DIM, 0, 0, 16}};
+
+    *count = sizeof(widgets) / sizeof(widgets[0]);
+    return widgets;
+}
 
 /* The ruler under the band: 7 ticks, every one major. */
 static void setup_ruler(const screen_t *screen, bento_ui_id_t ruler)
@@ -1142,27 +1171,43 @@ static void setup_ruler(const screen_t *screen, bento_ui_id_t ruler)
                              RULER_MAJOR_EVERY);
 }
 
-static bento_status_t build_screen(screen_t *screen)
+/* Makes the rows of a table, keeping the ids of the kept ones. */
+static bento_status_t
+add_table(screen_t *screen, const widget_spec_t *table, size_t count)
 {
     bento_ui_id_t unkept = 0U;
     size_t i;
+    bento_status_t status = BENTO_OK;
+
+    for (i = 0U; (status == BENTO_OK) && (i < count); i++) {
+        const uint8_t slot = table[i].slot;
+
+        status = add_widget(screen->ui, &table[i],
+                            (slot == (uint8_t)SLOT_NONE)
+                                ? &unkept
+                                : &screen->ids[slot]);
+        if ((status == BENTO_OK) && (table[i].kind == KIND_SCALE)) {
+            setup_ruler(screen, unkept);
+        }
+    }
+    return status;
+}
+
+static bento_status_t build_screen(screen_t *screen)
+{
+    size_t count = 0U;
+    const widget_spec_t *table = top_widgets(&count);
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
     if (status == BENTO_OK) {
         status = wait_ms(SETTLE_MS);
     }
-    for (i = 0U; (status == BENTO_OK) &&
-                 (i < (sizeof(WIDGETS) / sizeof(WIDGETS[0])));
-         i++) {
-        const uint8_t slot = WIDGETS[i].slot;
-
-        status = add_widget(screen->ui, &WIDGETS[i],
-                            (slot == (uint8_t)SLOT_NONE)
-                                ? &unkept
-                                : &screen->ids[slot]);
-        if ((status == BENTO_OK) && (WIDGETS[i].kind == KIND_SCALE)) {
-            setup_ruler(screen, unkept);
-        }
+    if (status == BENTO_OK) {
+        status = add_table(screen, table, count);
+    }
+    if (status == BENTO_OK) {
+        table = bottom_widgets(&count);
+        status = add_table(screen, table, count);
     }
     if (status == BENTO_OK) {
         drain_events(screen);
@@ -1681,15 +1726,16 @@ static bento_status_t run_farm(farm_t *farm)
 
 int main(void)
 {
+    static const char root[] = "bento-aiot";
     farm_t farm;
     bento_status_t status;
 
     (void)memset(&farm, 0, sizeof(farm));
     farm.screen.ui = bento_runtime_get_ui();
     (void)snprintf(farm.topic_event, sizeof(farm.topic_event),
-                   "%s/%s/event", ROOT, TEAM);
+                   "%s/%s/event", root, TEAM);
     (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
-                   ROOT, TEAM);
+                   root, TEAM);
     /* sent and forgotten; E_UNSUPPORTED is the hasattr() that fails */
     (void)bento_ui_sfx_volume_set(farm.screen.ui, SPEAKER);
     status = build_screen(&farm.screen);
