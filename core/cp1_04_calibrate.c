@@ -29,6 +29,8 @@
  *     MicroPython's float % is; round() rounds a half to even, as
  *     MicroPython's round() of a float does;
  *   - the TUNES dict is a table indexed by an enum;
+ *   - the .py's BTN_NAMES setting is never read there, so it is left
+ *     out: C refuses a constant nobody reads;
  *   - hasattr(ui, "volume") is not asked: the volume call is always
  *     made, and a firmware without it refuses it, which is ignored;
  *   - ui.tone() is fire-and-forget in MicroPython, so its status is
@@ -50,20 +52,20 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* The board warms itself: compare with a room thermometer and put the
+ * difference here, such as -9.5. */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 enum {
-    MIN_SPAN = 100, /* dry and wet must be more than this apart */
-    CLIMATE_MS =
-        2000,        /* read the SHT40 every 2 s (it changes slowly) */
-    SAMPLE_MS = 20,  /* read the buttons this often (debounce) */
-    TICK_MS = 500,   /* refresh the screen this often */
-    RUN_MS = 180000, /* play for three minutes, then end */
-    SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
-    VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
+    MIN_SPAN = 100,    /* dry and wet must be more than this apart */
+    CLIMATE_MS = 2000, /* read the SHT40 every 2 s (changes slowly) */
+    SAMPLE_MS = 20,    /* read the buttons this often (debounce) */
+    TICK_MS = 500,     /* refresh the screen this often */
+    RUN_MS = 180000,   /* play for three minutes, then end */
+    SPEAKER = 40,      /* speaker level 0-100 % (firmware 2.4.2+) */
+    VOLUME = 25        /* tone loudness 0-127 (about 20 %) */
 };
-
-/* TEMP_OFFSET, the SHT40 offset a student sets, lives in show_temp(),
- * its one reader, as temp_offset. */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -702,9 +704,6 @@ static bento_status_t check_buttons(app_t *app)
 /* 1) The offset, every CLIMATE_MS. */
 static bento_status_t show_temp(const app_t *app)
 {
-    /* The board warms itself: compare with a room thermometer and put
-     * the difference here, such as -9.5. */
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
     char raw_text[BENTO_FMT_BUF_SIZE];
     char offset_text[BENTO_FMT_BUF_SIZE];
     char fixed_text[BENTO_FMT_BUF_SIZE];
@@ -715,8 +714,8 @@ static bento_status_t show_temp(const app_t *app)
 
     if ((status == BENTO_OK) && known) {
         format_real(raw_text, celsius);
-        format_real(offset_text, temp_offset);
-        format_real(fixed_text, celsius + temp_offset);
+        format_real(offset_text, TEMP_OFFSET);
+        format_real(fixed_text, celsius + TEMP_OFFSET);
         (void)snprintf(text, sizeof(text), "%s %s%s = %s", raw_text,
                        (offset_text[0] == '-') ? "" : "+", offset_text,
                        fixed_text);
