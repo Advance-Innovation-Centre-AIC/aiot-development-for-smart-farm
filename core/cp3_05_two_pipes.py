@@ -103,7 +103,7 @@ def connect_plain(w):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen(rows):
@@ -112,19 +112,19 @@ def build_screen(rows):
     ui.Label("ค่าเดียวกัน สองท่อ", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
     led = ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0)
-    link = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)
+    link = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=20)
     card(12, 44, 380, 294, "ท่อ 1: mqtt พอร์ต 1883")
-    ui.Label("ไม่เข้ารหัส: ใครก็อ่านได้", x=28, y=76, color=COL_BAD)
-    ui.Label("ใบที่วิ่งในสาย (ตัวอักษรตรง ๆ):", x=28, y=116, color=COL_DIM, value=16)
-    w = {"led": led, "link": link, "p1": ui.Label(" ", x=28, y=144, color=COL_TEXT, value=16)}
-    w["s1"] = ui.Label(" ", x=28, y=290, color=COL_DIM, value=16)
+    ui.Label("ไม่เข้ารหัส: ใครก็อ่านได้", x=28, y=76, color=COL_BAD, value=20)
+    ui.Label("ใบที่วิ่งในสาย (ตัวอักษรตรง ๆ):", x=28, y=116, color=COL_DIM, value=20)
+    w = {"led": led, "link": link, "p1": ui.Label(" ", x=28, y=148, color=COL_TEXT, value=16)}
+    w["s1"] = ui.Label(" ", x=28, y=290, color=COL_DIM, value=20)
     card(402, 44, 378, 294, "ท่อ 2: tesaiot (TLS)")
-    ui.Label("เข้ารหัส + ตรวจบัตร broker", x=418, y=76, color=COL_OK)
+    ui.Label("เข้ารหัส + ตรวจบัตร broker", x=418, y=76, color=COL_OK, value=20)
     for i in range(3):                            # ค่าจาก tesaiot.config() อ่านจากแฟลช ไม่ต่อเน็ต
         ui.Label(("tls_mode", "broker", "port")[i], x=418, y=116 + i * 50, color=COL_DIM, value=14)
         ui.Label(str(rows[i]), x=418, y=134 + i * 50, color=COL_TEXT, value=14)   # ชื่อโหมด mTLS ยาว 47 ตัว
-    ui.Label("ไฟล์นี้อ่านค่าตั้งอย่างเดียว ไม่ต่อ", x=418, y=290, color=COL_DIM, value=16)
-    w["note"] = ui.Label("หมุน VR1 = ค่าที่ส่ง", x=12, y=352, color=COL_DIM, value=16)
+    ui.Label("ไฟล์นี้อ่านค่าตั้งอย่างเดียว ไม่ต่อ", x=418, y=290, color=COL_DIM, value=20)
+    w["note"] = ui.Label("หมุน VR1 = ค่าที่ส่ง", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
