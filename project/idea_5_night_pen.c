@@ -42,8 +42,6 @@
  *     missing); here those are not JSON. Inside a nested list or
  *     object only strings and brackets are checked. A string is
  *     compared as written: an escaped letter is not decoded.
- *   - THRESH_DB is THRESH_DB_TENTHS (4.0 dB = 40): an enum holds no
- *     real number.
  *   - try/except around the radar and the RGB matrix: the status is
  *     checked and the same fallback is taken; any radar failure
  *     skips the round, as the .py's OSError does.
@@ -76,6 +74,7 @@
 #include <string.h>
 
 #include "bento_buttons.h"
+#include "bento_fmt.h"
 #include "bento_mqtt.h"
 #include "bento_pots.h"
 #include "bento_rgbmatrix.h"
@@ -84,23 +83,33 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) Settings (edit these) ---- */
-/* WIFI_SSID and WIFI_PASS: edit them at the top of join_wifi(). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const char WIFI_SSID[] =
+    "<ชื่อ Hotspot ของกลุ่ม>"; /* short, English or digits */
+static const char WIFI_PASS[] =
+    "<รหัส Hotspot ของกลุ่ม>"; /* 8 or more; share no real one */
 static const char TEAM[] = "teamXX";
-
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-farm-TEAM + a suffix, built in try_broker() */
+/* TOPIC_EVENT = bento-aiot/TEAM/event, built in main() */
+/* TOPIC_CMD = bento-aiot/TEAM/cmd, built in main() */
 enum {
     BEEP_MS = 5000, /* the siren again this often until answered */
     MIN_CM = 50,    /* VR3 sets the fence at 50-250 cm */
     SPAN_CM = 200,
-    CONFIRM_N = 3,         /* rounds in a row before we believe (1+) */
-    THRESH_DB_TENTHS = 40, /* a target 4.0 dB above the still scene */
-    MAX_CM = 300,          /* the far end of the chart */
+    CONFIRM_N = 3 /* rounds in a row before we believe (1+) */
+};
+/* a target this many dB above the still scene (0.1-60) */
+static const bento_real_t THRESH_DB = (bento_real_t)4.0;
+enum {
+    MAX_CM = 300, /* the far end of the chart */
     VOLUME = 25,
     SPEAKER = 40,
     RUN_MS = 600000, /* one round: 10 minutes */
     SAMPLE_MS = 250, /* read the radar this often */
     TICK_MS = 500    /* redraw this often */
 };
+/* ---- end of settings ---- */
 
 /* Hardware and timing. */
 enum {
@@ -109,7 +118,6 @@ enum {
     ZONE_POT = 2,  /* VR3 */
     POT_FULL = 4095,
     CM_PER_M = 100,
-    TENTHS_PER_DB = 10,
     NOTE_MS = 120,
     SIREN_TONE_MS = 140,
     SIREN_STEP_MS = 150,
@@ -367,8 +375,7 @@ static bool read_radar(radar_reading_t *reading)
  * not answer. */
 static bento_status_t calibrate_radar(bool *learned)
 {
-    const float threshold_db =
-        (float)THRESH_DB_TENTHS / (float)TENTHS_PER_DB;
+    const float threshold_db = (float)THRESH_DB;
     bento_status_t status = BENTO_OK;
 
     *learned = bento_sensors_radar_config(0.0F) == BENTO_OK;
@@ -793,19 +800,15 @@ static bool asks_to_stop_siren(const uint8_t *payload, uint32_t length)
 /* wifi.connect(): any refusal is "not joined", Stop is Stop. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* edit these two: short, English or digits; 8 or more, share no
-     * real one */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -848,20 +851,17 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * the broker never clashes with it. */
 static bento_status_t try_broker(guard_t *guard, bool *linked)
 {
-    static const char broker[] = "broker.hivemq.com";
-    static const char client_base[] =
-        "bento-farm-"; /* + TEAM + a suffix */
     char client_id[CLIENT_BYTES];
     bento_mqtt_config_t config;
     const uint32_t suffix =
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK;
     bento_status_t status;
 
-    (void)snprintf(client_id, sizeof(client_id), "%s%s-%04" PRIx32,
-                   client_base, TEAM, suffix);
+    (void)snprintf(client_id, sizeof(client_id),
+                   "bento-farm-%s-%04" PRIx32, TEAM, suffix);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1651,7 +1651,6 @@ static bento_status_t run(const screen_t *screen, guard_t *guard)
 
 int main(void)
 {
-    static const char root[] = "bento-aiot";
     screen_t screen;
     guard_t guard;
     bento_status_t status;
@@ -1667,9 +1666,9 @@ int main(void)
     guard.start_ms = bento_time_ticks_ms();
     guard.quiet_ms = guard.start_ms;
     (void)snprintf(guard.topic_event, sizeof(guard.topic_event),
-                   "%s/%s/event", root, TEAM);
+                   "bento-aiot/%s/event", TEAM);
     (void)snprintf(guard.topic_cmd, sizeof(guard.topic_cmd),
-                   "%s/%s/cmd", root, TEAM);
+                   "bento-aiot/%s/cmd", TEAM);
     /* a build without sound refuses it, as hasattr() skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
     status = build_screen(&screen);
