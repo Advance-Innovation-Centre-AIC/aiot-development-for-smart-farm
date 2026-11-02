@@ -39,7 +39,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     LONG_MS = 800,   /* held this long or longer = a long press */
     DOUBLE_MS = 400, /* second release within this = a double */
@@ -49,6 +49,11 @@ enum {
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
+/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
+ * button = pressed(0). */
+static const char *const BUTTON_NAMES[] = {"SW5",
+                                           "SW6"}; /* .py: BTN_NAMES */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -370,15 +375,11 @@ static bento_status_t add_card_labels(bento_ui_t *ui, int32_t x,
 static bento_status_t build_button_card(bento_ui_t *ui, uint32_t i,
                                         int32_t x, button_card_t *card)
 {
-    /* Names on the panel: SW5 = lower button = pressed(1), SW6 =
-     * upper button = pressed(0). */
-    static const char *const button_names[BUTTON_COUNT] = {"SW5",
-                                                           "SW6"};
     const rect_t box = {x, CARD_Y, CARD_W, CARD_H};
     char title[TEXT_BYTES];
     bento_status_t status;
 
-    (void)snprintf(title, sizeof(title), "%s%s", button_names[i],
+    (void)snprintf(title, sizeof(title), "%s%s", BUTTON_NAMES[i],
                    (i == 0U) ? " (ปุ่มล่าง)" : " (ปุ่มบน)");
     status = add_card(ui, &box, title);
     if (status == BENTO_OK) {
