@@ -135,7 +135,7 @@ enum {
     CARD_RADIUS = 12,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    CARD_TITLE_PX = 16,
+    CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
 };
 
@@ -1143,7 +1143,7 @@ static bento_status_t add_soil_card(screen_t *screen)
         12,       44,       470, 252, "ความชื้นดิน (VR1) ย้อนหลัง 2 นาที",
         COL_SOIL, SLOT_NONE};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_CHART, SLOT_CHART, NULL, 24, 74, 446, 150, COL_SOIL,
+        {UI_WIDGET_CHART, SLOT_CHART, NULL, 24, 80, 446, 150, COL_SOIL,
          0, PERCENT, 0},
         {UI_WIDGET_LABEL, SLOT_SOIL, "ดิน -- %", 24, 234, AUTO, AUTO,
          COL_TEXT, 0, 0, 28},
@@ -1184,7 +1184,7 @@ static bento_status_t add_valve_card(screen_t *screen)
         {UI_WIDGET_ARC, SLOT_ARC, NULL, 576, 134, 120, 120, 0U, 0,
          PUMP_MAX_S, 0},
         {UI_WIDGET_LABEL, SLOT_NONE, "SW5 = ปิดวาล์วทันที", 508, 266, AUTO,
-         AUTO, COL_DRY, 0, 0, 14},
+         AUTO, COL_DRY, 0, 0, 20},
     };
     char key_text[TEXT_BYTES];
     bento_status_t status;
@@ -1194,7 +1194,7 @@ static bento_status_t add_valve_card(screen_t *screen)
     {
         const widget_spec_t key = {
             UI_WIDGET_LABEL, SLOT_NONE, key_text, 220, 244, AUTO, AUTO,
-            COL_BAD,         0,         0,        16};
+            COL_BAD,         0,         0,        20};
 
         status = add_widget(screen, &key);
     }
@@ -1213,19 +1213,19 @@ static bento_status_t add_footer(screen_t *screen)
 {
     static const widget_spec_t specs[] = {
         {UI_WIDGET_LABEL, SLOT_NONE, "ถังพัก (VR4)", 12, 306, AUTO, AUTO,
-         COL_DIM, 0, 0, 16},
-        {UI_WIDGET_BAR, SLOT_TANK_BAR, NULL, 112, 310, 170, 16, 0U, 0,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_BAR, SLOT_TANK_BAR, NULL, 120, 312, 162, 16, 0U, 0,
          0, 0},
         {UI_WIDGET_LABEL, SLOT_TANK, "-- %", 292, 304, AUTO, AUTO,
          COL_TEXT, 0, 0, 16},
         {UI_WIDGET_LABEL, SLOT_STATS, "ดินแห้งสะสม 0 นาที  รดไป 0 วิ", 370,
-         304, AUTO, AUTO, COL_LEAF, 0, 0, 16},
+         304, AUTO, AUTO, COL_LEAF, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NOTE, "ยังไม่มีคำสั่ง", 12, 352, AUTO, AUTO,
-         COL_DIM, 0, 0, 0},
-        {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 606, 12, 18, 18, COL_LEAF,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 596, 12, 18, 18, COL_LEAF,
          0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+        {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 622, 10, AUTO,
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_widgets(screen, specs, sizeof(specs) / sizeof(specs[0]));

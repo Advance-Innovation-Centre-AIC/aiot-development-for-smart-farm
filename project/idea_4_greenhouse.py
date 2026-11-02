@@ -192,7 +192,7 @@ def send_report(n, soil, tank, running, dry_min, water_s):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title, col):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=col, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=col, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=col, value=20)
 
 
 def show_link(w, ok):
@@ -206,24 +206,24 @@ def build_screen():
     ui.Label("โรงเรือน: ดินแห้งตรงไหน รดจากมือถือ", x=12, y=6, color=COL_LEAF, value=24)
     w = {}
     card(12, 44, 470, 252, "ความชื้นดิน (VR1) ย้อนหลัง 2 นาที", COL_SOIL)
-    w["chart"] = ui.Chart(x=24, y=74, w=446, h=150, color=COL_SOIL, min=0, max=100)
+    w["chart"] = ui.Chart(x=24, y=80, w=446, h=150, color=COL_SOIL, min=0, max=100)
     w["chart"].prop(ui.PROP_CHART_POINTS, CHART_PTS)
     w["s_dry"] = w["chart"].add_series(COL_BAD)
     w["soil"] = ui.Label("ดิน -- %", x=24, y=234, color=COL_TEXT, value=28)
-    w["soil_t"] = ui.Label("เส้นแดง = แห้งที่ %d %%" % SOIL_DRY, x=220, y=244, color=COL_BAD, value=16)
+    w["soil_t"] = ui.Label("เส้นแดง = แห้งที่ %d %%" % SOIL_DRY, x=220, y=244, color=COL_BAD, value=20)
     w["title"] = card(494, 44, 286, 252, "วาล์วแปลง 0 (คำสั่ง 0)", COL_RAIN)
     w["led"] = ui.Led(x=510, y=82, w=40, h=40, color=COL_RAIN)
     w["pump"] = ui.Label("ปิด", x=562, y=88, color=COL_DIM, value=24)
     w["arc"] = ui.Arc(x=576, y=134, w=120, h=120, max=PUMP_MAX_S)
     w["arc"].color(COL_RAIN)
-    ui.Label(BTN_NAMES[0] + " = ปิดวาล์วทันที", x=508, y=266, color=COL_DRY, value=14)
-    ui.Label("ถังพัก (VR4)", x=12, y=306, color=COL_DIM, value=16)
-    w["tank_bar"] = ui.Bar(x=112, y=310, w=170, h=16)
+    ui.Label(BTN_NAMES[0] + " = ปิดวาล์วทันที", x=508, y=266, color=COL_DRY, value=20)
+    ui.Label("ถังพัก (VR4)", x=12, y=306, color=COL_DIM, value=20)
+    w["tank_bar"] = ui.Bar(x=120, y=312, w=162, h=16)
     w["tank"] = ui.Label("-- %", x=292, y=304, color=COL_TEXT, value=16)
-    w["stats"] = ui.Label("ดินแห้งสะสม 0 นาที  รดไป 0 วิ", x=370, y=304, color=COL_LEAF, value=16)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_LEAF, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["stats"] = ui.Label("ดินแห้งสะสม 0 นาที  รดไป 0 วิ", x=370, y=304, color=COL_LEAF, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=596, y=12, w=18, h=18, color=COL_LEAF, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=622, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
