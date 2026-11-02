@@ -108,7 +108,7 @@ enum { /* screen */
     LED_Y = 100,
     LED_PX = 44,
     STATE_Y = 114,
-    FLIPS_Y = 160,
+    FLIPS_Y = 156,
     SEG_Y = 186,
     SEG_W = 150,
     SEG_H = 56,
@@ -116,7 +116,7 @@ enum { /* screen */
     VALUE_Y = 38,
     HELP_Y = 352,
     FONT_TITLE = 24,
-    FONT_TEXT = 16,
+    FONT_TEXT = 20, /* Thai text is 20 px or larger on the board */
     TEXT_CHARS = 96
 };
 
