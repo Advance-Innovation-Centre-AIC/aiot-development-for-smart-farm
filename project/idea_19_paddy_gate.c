@@ -140,7 +140,12 @@ enum {
     SAY_MAX = 20,          /* letters the matrix gets */
     NUMBER_SHOW_MAX = 8,   /* letters of a wrong "n" */
     UNKNOWN_SHOW_MAX = 12, /* letters of an unknown command */
-    TEAM_LEN = 6,          /* "team" and two digits */
+    UTF8_BYTES_MAX = 4,    /* one letter takes at most 4 bytes */
+    /* the cut texts with their NUL: whole letters fit, so cutting
+     * them gives the same text as cutting the whole value */
+    NUMBER_SHOW_BYTES = (NUMBER_SHOW_MAX * UTF8_BYTES_MAX) + 1,
+    UNKNOWN_SHOW_BYTES = (UNKNOWN_SHOW_MAX * UTF8_BYTES_MAX) + 1,
+    TEAM_LEN = 6, /* "team" and two digits */
     TEAM_PREFIX_LEN = 4
 };
 
@@ -1089,7 +1094,7 @@ static void set_outcome(outcome_t *outcome, action_t action,
 static void pump_command(const command_t *command, act_t act,
                          int32_t tank, outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char shown[NUMBER_SHOW_BYTES];
 
     if ((act == ACT_LED) && !pump_number_is_zero(command)) {
         value_text(command, &command->fields[FIELD_N], shown,
@@ -1115,7 +1120,7 @@ static void pump_command(const command_t *command, act_t act,
 static void other_command(const command_t *command, act_t act,
                           outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char shown[UNKNOWN_SHOW_BYTES];
 
     if (act == ACT_BEEP) {
         set_outcome(outcome, DO_BEEP, "เจ้าของนาเรียก!", COL_WATER);
