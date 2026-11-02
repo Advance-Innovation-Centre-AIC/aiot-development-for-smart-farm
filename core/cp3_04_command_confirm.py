@@ -104,7 +104,7 @@ def send_cmd(on):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
@@ -113,13 +113,13 @@ def build_screen():
     ui.Label("สั่ง -> ยืนยัน -> ปลอดภัย", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
     w = {"led": ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0)}
-    w["link"] = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)
+    w["link"] = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=20)
     card(12, 64, 440, 274, "ขั้น")
     w["steps"] = [ui.Label(STEPS[i], x=28, y=98 + i * 44, color=COL_DIM) for i in range(4)]
     w["res"] = ui.Label(" ", x=28, y=282, color=COL_TEXT)
     card(462, 64, 318, 274, "PLC บอกว่า")
     w["pump"] = ui.Label("--", x=478, y=104, color=COL_DIM, value=24)
-    w["note"] = ui.Label("SW5 ขอเปิด %d วิ  SW6 ขอปิด" % PUMP_SEC, x=12, y=352, color=COL_DIM, value=16)
+    w["note"] = ui.Label("SW5 ขอเปิด %d วิ  SW6 ขอปิด" % PUMP_SEC, x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
