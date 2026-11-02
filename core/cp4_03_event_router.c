@@ -447,6 +447,7 @@ static bento_status_t add_button(bento_ui_t *ui, const char *text,
     args.text = text;
     args.text_len = (uint32_t)strlen(text);
     args.color = color;
+    args.font_px = FONT_TEXT; /* Thai: 20 px, not the default */
     return bento_ui_button_create(ui, &args, out);
 }
 

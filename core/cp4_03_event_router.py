@@ -125,8 +125,8 @@ def build_screen():
     w = {}
     # long_pressed ต้องขอก่อน (listen คืนตัว widget เอง จึงต่อท้ายได้) เรียก listen ซ้ำ = แทนชุดเดิม
     w["pump"] = ui.Button("เปิดปั๊ม (กดค้าง)", x=12, y=56, w=250, h=80,
-                          color=COL_INFO).listen("long_pressed")
-    w["stop"] = ui.Button("หยุด", x=274, y=56, w=150, h=80, color=COL_BAD)
+                          color=COL_INFO, value=20).listen("long_pressed")
+    w["stop"] = ui.Button("หยุด", x=274, y=56, w=150, h=80, color=COL_BAD, value=20)
     # Roller = วิธีรดน้ำ: ตัวเลือกคั่นด้วย \n ส่งไปทีเดียวตอนสร้าง (หรือเติมทีละตัวด้วย add_option)
     w["mode"] = ui.Roller("\n".join(MODES), x=440, y=56, w=160, h=130, color=COL_TEXT)
     w["led"] = ui.Led(x=620, y=60, w=56, h=56, color=COL_INFO, value=0)       # ไฟปั๊มบนจอ
