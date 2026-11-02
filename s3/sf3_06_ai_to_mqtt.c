@@ -62,21 +62,24 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* Edit these before running. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 static const char WIFI_SSID[] =
     "<ชื่อ Hotspot ของกลุ่ม>"; /* short, no spaces */
-/* WIFI_PASS is wifi_pass in join_wifi() and BROKER is broker in
- * open_broker(): each is read there only. */
+/* 8+ characters; share no file that holds it */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX"; /* e.g. team05, as in the app */
-
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-ai-TEAM + the board's clock, built in
+ * open_broker() at every connect */
+/* TOPIC = bento-aiot/TEAM/ai, built in make_topic() */
 /* Tried in order: the Store model first, then the built-in one. */
 static const char *const MODEL_KEYS[] = {"AnomalousVibration",
                                          "Motion"};
-
-/* DANGER, the labels that count as danger, is danger_labels in
- * is_danger(). */
-
-/* Settings: change them and run again. */
+/* Labels that count as danger (red LED and a beep); as sf3_04,
+ * without the radar's Push. */
+static const char *const DANGER[] = {
+    "anomaly",  "shaking",  "sirens",         "cough",
+    "baby_cry", "chainsaw", "crackling_fire", "alarm"};
 enum {
     HEARTBEAT_MS = 2000, /* sent again this often, label or not */
     GAP_MS = 200,        /* never more often (a shared broker) */
@@ -88,6 +91,7 @@ enum {
     VOLUME = 25,          /* 0-127 (about 20 %) */
     SPEAKER = 40          /* speaker 0-100 % (2.4.2+) */
 };
+/* ---- end of settings ---- */
 
 /* Network, the AI core and timing. */
 enum {
@@ -504,20 +508,16 @@ static bento_status_t pick_model(const link_screen_t *screen,
     return status;
 }
 
-/* Labels that count as danger (red LED and a beep); as sf3_04,
- * without the radar's Push. */
+/* Is the label one of DANGER? */
 static bool is_danger(const char *label)
 {
-    static const char *const danger_labels[] = {
-        "anomaly",  "shaking",  "sirens",         "cough",
-        "baby_cry", "chainsaw", "crackling_fire", "alarm"};
     const uint32_t count =
-        (uint32_t)(sizeof(danger_labels) / sizeof(danger_labels[0]));
+        (uint32_t)(sizeof(DANGER) / sizeof(DANGER[0]));
     bool danger = false;
     uint32_t i;
 
     for (i = 0U; (i < count) && !danger; i++) {
-        danger = strcmp(label, danger_labels[i]) == 0;
+        danger = strcmp(label, DANGER[i]) == 0;
     }
     return danger;
 }
@@ -592,15 +592,13 @@ static bento_status_t wait_wifi(void)
 
 static bento_status_t join_wifi(void)
 {
-    /* 8+ characters; share no file that holds it */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
 
     bento_wifi_connect_params_init(&params);
     params.ssid = WIFI_SSID;
     params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     return (bento_wifi_connect_start(&params) == BENTO_OK)
                ? wait_wifi()
@@ -640,7 +638,6 @@ static void disconnect(link_t *link)
  * so an old session with the same id is not in the way. */
 static bento_status_t open_broker(link_t *link)
 {
-    static const char broker[] = "broker.hivemq.com";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
@@ -652,8 +649,8 @@ static bento_status_t open_broker(link_t *link)
                    "bento-ai-%s-%04" PRIx32, TEAM,
                    bento_time_ticks_ms() & (uint32_t)ID_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)MQTT_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
