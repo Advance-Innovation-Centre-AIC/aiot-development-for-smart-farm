@@ -172,16 +172,16 @@ def build_screen():
     w = {"model": label("หาโมเดล...", 12, 44, COL_INFO, 20)}
     w["arc"] = ui.Arc(x=12, y=84, w=180, h=180, min=0, max=100, value=0)
     w["conf"] = label("0 %", 70, 162, COL_TEXT, 24)
-    label("AI เห็นว่า", 220, 90)
+    label("AI เห็นว่า", 220, 90, COL_DIM, 20)
     w["label"] = label("-", 220, 116, COL_TEXT, 28)
     w["led"] = ui.Led(x=220, y=170, w=36, h=36, color=COL_BAD, value=0)
-    label("ไฟแดง = ป้ายอันตราย", 268, 178)
+    label("ไฟแดง = ป้ายอันตราย", 268, 178, COL_DIM, 20)
     label("MQTT", 560, 90)
     w["mqtt"] = ui.Led(x=560, y=116, w=36, h=36, color=COL_OK, value=0)
-    w["mqtt_txt"] = label("ยังไม่ได้ต่อ", 606, 124, COL_DIM)
-    w["sent"] = label("ยังไม่ได้ส่ง", 220, 230)
+    w["mqtt_txt"] = label("ยังไม่ได้ต่อ", 606, 124, COL_DIM, 20)
+    w["sent"] = label("ยังไม่ได้ส่ง", 220, 230, COL_DIM, 20)
     w["json"] = label(" ", 12, 300, COL_TEXT, 14)
-    w["note"] = label(" ", 12, 352, COL_WARN, 16)
+    w["note"] = label(" ", 12, 352, COL_WARN, 20)
     ui.poll()
     return w
 

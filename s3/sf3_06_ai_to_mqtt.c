@@ -121,7 +121,8 @@ enum {
     MODEL_Y = 44,
     MODEL_PX = 20,
     BIG_PX = 28,
-    TEXT_PX = 16,
+    THAI_PX = 20, /* Thai is 20 px or larger on the board */
+    TEXT_PX = 16, /* Latin only */
     SMALL_PX = 14,
     ARC_X = 12,
     ARC_Y = 84,
@@ -879,7 +880,7 @@ static bento_status_t build_answer(link_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_text(screen->ui, "AI เห็นว่า", SEES_X, SEES_Y,
-                          COLOR_DIM, TEXT_PX);
+                          COLOR_DIM, THAI_PX);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "-", &label, COLOR_TEXT, BIG_PX,
@@ -891,7 +892,7 @@ static bento_status_t build_answer(link_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_text(screen->ui, "ไฟแดง = ป้ายอันตราย", LED_NOTE_X,
-                          LED_NOTE_Y, COLOR_DIM, TEXT_PX);
+                          LED_NOTE_Y, COLOR_DIM, THAI_PX);
     }
     return status;
 }
@@ -912,11 +913,11 @@ static bento_status_t build_link(link_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "ยังไม่ได้ต่อ", &mqtt_text,
-                           COLOR_DIM, TEXT_PX, &screen->mqtt_text);
+                           COLOR_DIM, THAI_PX, &screen->mqtt_text);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "ยังไม่ได้ส่ง", &sent, COLOR_DIM,
-                           TEXT_PX, &screen->sent);
+                           THAI_PX, &screen->sent);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", &json, COLOR_TEXT, SMALL_PX,
@@ -924,7 +925,7 @@ static bento_status_t build_link(link_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", &note_place, COLOR_WARN,
-                           TEXT_PX, &screen->note);
+                           THAI_PX, &screen->note);
     }
     return status;
 }
