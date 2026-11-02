@@ -175,7 +175,7 @@ enum {
 /* Buffer sizes, in bytes. */
 enum {
     TEXT_BYTES = 128, /* a label text: 126 at most */
-    LOG_BYTES = 40,   /* "hh:mm น. cm", any int32_t */
+    LOG_BYTES = 56,   /* clock, " น. ", int32_t, " cm" */
     CLOCK_BYTES = 32, /* "hh:mm" or "m:ss" of any int32_t */
     TOPIC_BYTES = 48,
     CLIENT_BYTES = 32,
