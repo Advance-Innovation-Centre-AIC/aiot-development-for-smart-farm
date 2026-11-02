@@ -113,7 +113,8 @@ enum { /* screen */
     HELP_Y = 352,
     FONT_TITLE = 24,
     FONT_TEXT = 20, /* Thai text is 20 px or larger on the board */
-    TEXT_CHARS = 96
+    TEXT_CHARS = 96,
+    HELP_CHARS = 128 /* the Thai help line is 105 bytes in UTF-8 */
 };
 
 /* ---- 2) Hardware ---- */
@@ -468,7 +469,7 @@ static bento_status_t build_screen(ladder_screen_t *screen)
 {
     bento_ui_widget_args_t args;
     bento_ui_id_t title;
-    char help[TEXT_CHARS];
+    char help[HELP_CHARS];
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
     if (status == BENTO_OK) {
