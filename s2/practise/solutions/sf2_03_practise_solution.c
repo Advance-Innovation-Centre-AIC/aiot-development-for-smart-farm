@@ -1427,7 +1427,7 @@ static bento_status_t build_pump_card(pump_screen_t *screen)
     static const box_t led = {28, 80, 48, 48, COLOR_INFO, 0, 0, 0};
     static const spot_t pump = {90, 90, COLOR_DIM, 24};
     static const box_t arc = {290, 76, 150, 150, 0U, 0, PUMP_MAX_S, 0};
-    static const spot_t soil = {28, 150, COLOR_TEXT, 0};
+    static const spot_t soil = {28, 150, COLOR_TEXT, 20};
     bento_status_t status = add_card(
         screen->ui, &card, "ปั๊มน้ำ = ไฟสีฟ้า (คำสั่ง 0)", &screen->title);
 
@@ -1497,7 +1497,7 @@ static bento_status_t build_tank_card(pump_screen_t *screen)
 /* The note line and the MQTT lamp, the same in every s2 program. */
 static bento_status_t build_status(pump_screen_t *screen)
 {
-    static const spot_t note = {12, 352, COLOR_DIM, 0};
+    static const spot_t note = {12, 352, COLOR_DIM, 20};
     static const box_t link_led = {586, 12, 18, 18, COLOR_OK, 0, 0, 0};
     static const spot_t link_text = {612, 10, COLOR_DIM, 20};
     bento_status_t status =
