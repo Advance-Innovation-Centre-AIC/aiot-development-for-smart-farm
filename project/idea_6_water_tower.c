@@ -57,6 +57,9 @@
  *     import them there) the pots read 0, SW5 is never down and the
  *     matrix is skipped; any other failure of them ends the program.
  *   - The wifi and mqtt modules' own console lines are not printed.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and ends on the
+ *     .py's broker-down screen.
  *   - Stop ends the program quietly, where MicroPython raises
  *     KeyboardInterrupt; the client is closed in both.
  */
@@ -134,6 +137,14 @@ enum {
     MIN_LINE_Y = (BAR_Y + BAR_H) - ((TANK_MIN * BAR_H) / PERCENT),
     HALF_LINE_Y = (BAR_Y + BAR_H) - ((TANK_HALF * BAR_H) / PERCENT),
     AUTO = -1 /* the factory's own size */
+};
+
+/* Where the emulator's note goes: free space on this screen. */
+enum {
+    GAP_X = 316,
+    GAP_Y = 334,
+    GAP_W = 360, /* wraps the note onto two lines */
+    GAP_PX = 20
 };
 
 /* Buffer sizes, in bytes. */
@@ -222,6 +233,7 @@ typedef struct {
     bool stop_down; /* SW5 as last sampled */
     bool stop_clicked;
     bool stopped; /* the .py's raise Stop */
+    bool no_mqtt; /* the BENTO Emulator has no MQTT from C */
     char topic_cmd[TOPIC_BYTES];
     char topic[TOPIC_BYTES];
 } valve_t;
@@ -990,6 +1002,7 @@ static bento_status_t try_broker(valve_t *valve, bool *linked)
     config.client_id = client_id;
     config.client_id_len = (uint32_t)strlen(client_id);
     status = bento_mqtt_open_start(&config, &valve->broker);
+    valve->no_mqtt = status == BENTO_E_UNSUPPORTED;
     if (status == BENTO_OK) {
         status = wait_for_broker(valve->broker);
     }
@@ -1533,6 +1546,31 @@ static bento_status_t listen(const screen_t *screen, valve_t *valve)
     return status;
 }
 
+/* The BENTO Emulator has no MQTT from C yet: say so on the screen and
+ * in the console; the caller then takes the .py's broker-down path. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน "
+        "Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run it "
+        "on a Dev Kit or Eva Kit.\n",
+        gap);
+    bento_ui_widget_args_init(&args);
+    args.text = gap;
+    args.text_len = (uint32_t)strlen(gap);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W;
+    args.color = COL_HALF;
+    args.font_px = GAP_PX;
+    return bento_ui_label_create(ui, &args, &label);
+}
+
 /* The public broker is down now and then: 3 tries. */
 static bento_status_t connect_broker(const screen_t *screen,
                                      valve_t *valve, bool *linked)
@@ -1543,7 +1581,8 @@ static bento_status_t connect_broker(const screen_t *screen,
 
     *linked = false;
     for (attempt = 1;
-         (attempt <= BROKER_TRIES) && (status == BENTO_OK) && !*linked;
+         (attempt <= BROKER_TRIES) && (status == BENTO_OK) &&
+         !*linked && !valve->no_mqtt;
          attempt++) {
         if (attempt > 1) {
             (void)snprintf(line, sizeof(line),
@@ -1575,6 +1614,9 @@ static bento_status_t connect_farm(const screen_t *screen,
     }
     if ((status == BENTO_OK) && joined) {
         status = connect_broker(screen, valve, &linked);
+    }
+    if ((status == BENTO_OK) && valve->no_mqtt) {
+        status = show_emulator_gap(screen->ui);
     }
     /* subscribe always after connect */
     if ((status == BENTO_OK) && linked) {
