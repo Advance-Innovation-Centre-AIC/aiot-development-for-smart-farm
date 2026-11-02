@@ -77,23 +77,22 @@ enum {
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
     INSET_X = 14,
-    LED_Y = 100,
+    LED_Y = 104,
     LED_SIZE = 40,
     LEVEL_DX = 66,
-    LEVEL_Y = 108,
+    LEVEL_Y = 112,
     EDGE_CAPTION_Y = 154,
-    SEG_Y = 178,
+    SEG_Y = 186,
     SEG_W = 150,
     SEG_H = 56,
-    COUNTS_Y = 246,
-    LAST_Y = 280
+    COUNTS_Y = 250,
+    LAST_Y = 284
 };
 
 /* Font sizes, in pixels. */
 enum {
     FONT_TITLE = 24,
-    FONT_TEXT = 16,
-    FONT_LEVEL = 20,
+    FONT_TEXT = 20, /* Thai on the board is 20 px or more */
     FONT_LAST = 28
 };
 
@@ -344,7 +343,7 @@ static bento_status_t add_card_labels(bento_ui_t *ui, int32_t x,
                                       button_card_t *card)
 {
     const int32_t inner_x = x + INSET_X;
-    const label_spec_t level = {x + LEVEL_DX, LEVEL_Y, FONT_LEVEL,
+    const label_spec_t level = {x + LEVEL_DX, LEVEL_Y, FONT_TEXT,
                                 COL_TEXT};
     const label_spec_t caption = {inner_x, EDGE_CAPTION_Y, FONT_TEXT,
                                   COL_DIM};

@@ -87,17 +87,17 @@ SOUNDS = {"click": "tap", "double": "start", "long": "good"}   # ชื่อเ
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_button_card(i, x):
     card(x, 66, 378, 272, BTN_NAMES[i] + (" (ปุ่มล่าง)" if i == 0 else " (ปุ่มบน)"))
-    c = {"led": ui.Led(x=x + 14, y=100, w=40, h=40, color=COL_OK, value=0)}
-    c["lvl"] = ui.Label("ระดับ: ปล่อย", x=x + 66, y=108, color=COL_TEXT, value=20)
-    ui.Label("ขอบกดลง", x=x + 14, y=154, color=COL_DIM, value=16)
-    c["seg"] = ui.Seg7(text="0", x=x + 14, y=178, w=150, h=56, color=COL_INFO)
-    c["cnt"] = ui.Label("คลิก 0  ค้าง 0  ดับเบิล 0", x=x + 14, y=246, color=COL_TEXT, value=16)
-    c["last"] = ui.Label(" ", x=x + 14, y=280, color=COL_WARN, value=28)
+    c = {"led": ui.Led(x=x + 14, y=104, w=40, h=40, color=COL_OK, value=0)}
+    c["lvl"] = ui.Label("ระดับ: ปล่อย", x=x + 66, y=112, color=COL_TEXT, value=20)
+    ui.Label("ขอบกดลง", x=x + 14, y=154, color=COL_DIM, value=20)
+    c["seg"] = ui.Seg7(text="0", x=x + 14, y=186, w=150, h=56, color=COL_INFO)
+    c["cnt"] = ui.Label("คลิก 0  ค้าง 0  ดับเบิล 0", x=x + 14, y=250, color=COL_TEXT, value=20)
+    c["last"] = ui.Label(" ", x=x + 14, y=284, color=COL_WARN, value=28)
     return c
 
 
@@ -106,10 +106,10 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("ปุ่มเดียว อ่านได้ 3 แบบ", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("ระดับ -> ขอบ -> รูปแบบ  (กรองสั่น 50 ms ในเฟิร์มแวร์)", x=12, y=38,
-             color=COL_DIM, value=16)
+             color=COL_DIM, value=20)
     w = {"cards": [build_button_card(0, 12), build_button_card(1, 402)]}
     w["help"] = ui.Label("สั้น = คลิก  ค้าง 0.8 วิ = ค้าง  2 ครั้งเร็ว = ดับเบิล", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
