@@ -195,7 +195,7 @@ def send(f, topic, obj):
 
 
 # ---- 5) หน้าจอ ----
-def label(text, x, y, col=COL_DIM, size=16):
+def label(text, x, y, col=COL_DIM, size=20):
     return ui.Label(text, x=x, y=y, color=col, value=size)
 
 
@@ -222,7 +222,7 @@ def build_screen():
     w["arc"] = ui.Arc(x=284, y=76, w=112, h=112)
     w["soil"] = label("--", 406, 112, COL_TEXT, 28)
     w["pump"] = led(286, 204, COL_INFO)
-    label("ปั๊ม <%d%% เปิด >%d%% ปิด" % (PUMP_ON, PUMP_OFF), 332, 212, COL_DIM, 14)
+    label("ปั๊ม <%d%% เปิด >%d%% ปิด" % (PUMP_ON, PUMP_OFF), 284, 242, COL_DIM, 20)
     card(532, 44, 248, 226, "คอกสัตว์")
     w["cm"] = label("--", 546, 80, COL_TEXT, 28)
     w["guard"] = label(" ", 546, 124)
@@ -231,7 +231,7 @@ def build_screen():
     card(12, 278, 668, 62, None)  # เว้นมุมขวาให้ปุ่ม Console
     w["note"] = label(" ", 24, 286)
     w["cmd"] = label("แอป: -", 24, 312, COL_INFO)
-    w["send"] = ui.Button("ส่งรายงานเลย", x=520, y=286, w=150, h=46).id()
+    w["send"] = ui.Button("ส่งรายงานเลย", x=520, y=286, w=150, h=46, value=20).id()
     w["json"] = label(" ", 12, 352, COL_TEXT, 14)
     ui.poll()
     return w

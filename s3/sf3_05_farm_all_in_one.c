@@ -153,7 +153,7 @@ enum {
     TITLE_Y = 6,
     TITLE_PX = 24,
     BIG_PX = 28,
-    TEXT_PX = 16,
+    TEXT_PX = 20, /* Thai is 20 px or larger on the board */
     SMALL_PX = 14,
     CARD_Y = 44,
     CARD_H = 226,
@@ -178,8 +178,8 @@ enum {
     SOIL_Y = 112,
     PUMP_X = 286,
     PUMP_Y = 204,
-    PUMP_NOTE_X = 332,
-    PUMP_NOTE_Y = 212,
+    PUMP_NOTE_X = 284,
+    PUMP_NOTE_Y = 242,
     PEN_X = 532,
     PEN_W = 248,
     PEN_VALUE_X = 546,
@@ -371,7 +371,7 @@ static bento_status_t add_label(bento_ui_t *ui, const char *text,
     return bento_ui_label_create(ui, &args, out_id);
 }
 
-/* label(): grey 16 px unless told otherwise. */
+/* label(): grey 20 px unless told otherwise. */
 static bento_status_t add_line(bento_ui_t *ui, const char *text,
                                int32_t x, int32_t y,
                                bento_ui_id_t *out_id)
@@ -1335,7 +1335,7 @@ static bento_status_t build_plot(farm_screen_t *screen)
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "ปั๊ม <%d%% เปิด >%d%% ปิด",
                        PUMP_ON, PUMP_OFF);
-        status = add_label(screen->ui, text, &note, COLOR_DIM, SMALL_PX,
+        status = add_label(screen->ui, text, &note, COLOR_DIM, TEXT_PX,
                            &unused);
     }
     return status;
@@ -1392,6 +1392,7 @@ static bento_status_t build_box(farm_screen_t *screen)
         args.y = SEND_Y;
         args.w = SEND_W;
         args.h = SEND_H;
+        args.font_px = TEXT_PX;
         status =
             bento_ui_button_create(screen->ui, &args, &screen->send);
     }
