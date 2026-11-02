@@ -132,7 +132,8 @@ enum {
     TONE_MS = 90,      /* each note of a tune */
     NOTE_GAP_MS = 100, /* one note to the next */
     TUNE_NOTES = 3,    /* the longest tune */
-    TEXT_BYTES = 128   /* a SET_TEXT carries at most 126 bytes */
+    TEXT_BYTES = 128,  /* a SET_TEXT carries at most 126 bytes */
+    NAME_BYTES = 42    /* "EMA a=" and a 35-char number, or "Median" */
 };
 
 /* The tunes every course file shares. */
@@ -583,7 +584,7 @@ static void ema_name(int32_t step, char *name, uint32_t cap)
 /* Each line's next point on the chart and its row on the right. */
 static void show(const app_t *app, const float *outs)
 {
-    char name[TEXT_BYTES];
+    char name[NAME_BYTES];
     char text[TEXT_BYTES];
     uint32_t i;
 
