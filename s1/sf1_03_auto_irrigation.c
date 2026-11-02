@@ -56,7 +56,8 @@ enum {
     CHART_EVERY = 1
 };
 
-static const bento_real_t FLOW_L_PER_S = (bento_real_t)0.5;
+/* The flow (ปั๊มไหลกี่ลิตรต่อวินาที, 0.5) lives in count_water():
+ * one function reads it (MISRA 8.9). */
 static const bool AUTO_AT_START = true;
 
 /* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
@@ -133,12 +134,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -150,9 +145,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -303,8 +304,9 @@ static void put_pixel(uint8_t frame[], int32_t x, int32_t y,
     const uint32_t old = frame[i];
 
     if ((x % 2) == 1) {
-        frame[i] = (uint8_t)((old & (uint32_t)LOW_NIBBLE) |
-                             ((uint32_t)color << NIBBLE_BITS));
+        frame[i] =
+            (uint8_t)((old & (uint32_t)LOW_NIBBLE) |
+                      ((uint32_t)color << (uint32_t)NIBBLE_BITS));
     } else {
         frame[i] =
             (uint8_t)((old & (uint32_t)HIGH_NIBBLE) | (uint32_t)color);
@@ -378,9 +380,12 @@ static void matrix_update(const farm_reading_t *reading, bool running,
     farm_frame_t want;
 
     want.known = true;
-    want.soil_rows = (reading->soil * MATRIX_ROWS) / PERCENT;
-    want.threshold_rows = (reading->threshold * MATRIX_ROWS) / PERCENT;
-    want.tank_rows = (reading->tank * MATRIX_ROWS) / PERCENT;
+    want.soil_rows =
+        (reading->soil * (int32_t)MATRIX_ROWS) / (int32_t)PERCENT;
+    want.threshold_rows =
+        (reading->threshold * (int32_t)MATRIX_ROWS) / (int32_t)PERCENT;
+    want.tank_rows =
+        (reading->tank * (int32_t)MATRIX_ROWS) / (int32_t)PERCENT;
     want.dry = reading->soil < reading->threshold;
     want.tank_ok = reading->tank >= TANK_MIN;
     want.running = running;
@@ -864,7 +869,7 @@ static void update_manual(irrigation_t *farm)
     }
     if (farm->manual &&
         (bento_time_ticks_diff(bento_time_ticks_ms(), farm->manual_ms) >
-         (MANUAL_S * MS_PER_S))) {
+         ((int32_t)MANUAL_S * (int32_t)MS_PER_S))) {
         farm->manual = false;
     }
 }
@@ -894,6 +899,8 @@ static bento_status_t switch_pump(const farm_screen_t *screen,
 static bento_status_t count_water(const farm_screen_t *screen,
                                   irrigation_t *farm)
 {
+    /* ปั๊มไหลกี่ลิตรต่อวินาที (แก้ได้) */
+    const bento_real_t flow_l_per_s = (bento_real_t)0.5;
     bento_status_t status = BENTO_OK;
 
     if (pressed_now(&farm->sw6)) {
@@ -902,7 +909,7 @@ static bento_status_t count_water(const farm_screen_t *screen,
         status = beep(screen->ui, TUNE_TAP);
     }
     if (farm->running) {
-        bento_real_t litres = FLOW_L_PER_S * (bento_real_t)TICK_MS;
+        bento_real_t litres = flow_l_per_s * (bento_real_t)TICK_MS;
 
         litres = litres / (bento_real_t)MS_PER_S;
         farm->water_l = farm->water_l + litres;
