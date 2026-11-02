@@ -86,7 +86,8 @@ enum {
     TITLE_Y = 6,
     TITLE_PX = 24,
     BIG_PX = 28,
-    TEXT_PX = 16,
+    TEXT_PX = 20,  /* Thai is 20 px or larger on the board */
+    LATIN_PX = 16, /* "cm" only */
     SMALL_PX = 14,
     CARD_RADIUS = 12,
     CARD_BORDER = 1,
@@ -97,7 +98,7 @@ enum {
     GATE_W = 470,
     GATE_H = 196,
     STATE_X = 24,
-    STATE_Y = 72,
+    STATE_Y = 76,
     DISTANCE_Y = 112,
     DISTANCE_W = 150,
     DISTANCE_H = 56,
@@ -117,9 +118,9 @@ enum {
     COUNTER_X = 492,
     COUNTER_W = 288,
     COUNT_X = 504,
-    COUNT_Y = 72,
+    COUNT_Y = 78,
     COUNT_W = 150,
-    COUNT_H = 60,
+    COUNT_H = 56,
     SWITCH_Y = 146,
     SWITCH_W = 64,
     SWITCH_H = 32,
@@ -129,16 +130,16 @@ enum {
     LEGEND_X = 12,
     LEGEND_Y = 244,
     CHART_X = 12,
-    CHART_Y = 264,
+    CHART_Y = 272,
     CHART_W = 400,
-    CHART_H = 74,
+    CHART_H = 66,
     LOG_X = 422,
     LOG_Y = 250,
     LOG_W = 358,
     LOG_H = 88,
     LAST_X = 434,
-    LAST_Y = 280,
-    ENERGY_Y = 308,
+    LAST_Y = 284,
+    ENERGY_Y = 312,
     STATUS_X = 12,
     STATUS_Y = 352
 };
@@ -623,7 +624,7 @@ static bento_status_t build_gate(guard_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status =
-            add_text(screen->ui, "cm", CM_X, CM_Y, COLOR_DIM, TEXT_PX);
+            add_text(screen->ui, "cm", CM_X, CM_Y, COLOR_DIM, LATIN_PX);
     }
     if (status == BENTO_OK) {
         widget_args(&led, COLOR_WARN, 0, &args);
@@ -708,7 +709,7 @@ static bento_status_t build_log(guard_screen_t *screen)
     bento_ui_id_t unused;
     bento_status_t status =
         add_text(screen->ui, "ฟ้า = ระยะเป้า   แดง = เขตเตือน", LEGEND_X,
-                 LEGEND_Y, COLOR_DIM, SMALL_PX);
+                 LEGEND_Y, COLOR_DIM, TEXT_PX);
 
     if (status == BENTO_OK) {
         status = add_line_chart(screen->ui, &chart, MAX_CM, COLOR_INFO,

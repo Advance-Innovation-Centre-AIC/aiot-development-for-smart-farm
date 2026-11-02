@@ -147,7 +147,7 @@ def confirm(inside, streak, near):
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     box = ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
     return box
 
 
@@ -160,11 +160,11 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
 
 def build_gate(w):
     w["gate"] = card(12, 44, 470, 196, "ประตูคอก (เรดาร์)")
-    w["state"] = ui.Label("ปลอดภัย", x=24, y=72, color=COL_OK, value=28)
+    w["state"] = ui.Label("ปลอดภัย", x=24, y=76, color=COL_OK, value=28)
     w["cm"] = ui.Seg7(text="---", x=24, y=112, w=150, h=56, color=COL_INFO)
     ui.Label("cm", x=182, y=140, color=COL_DIM, value=16)
     w["led"] = ui.Led(x=300, y=116, w=28, h=28, color=COL_WARN, value=0)
-    ui.Label("การเคลื่อนไหว", x=338, y=118, color=COL_DIM, value=16)
+    ui.Label("การเคลื่อนไหว", x=338, y=118, color=COL_DIM, value=20)
     w["bar"] = ui.Bar(x=24, y=176, w=446, h=20, min=0, max=MAX_CM, value=0)
     ruler = ui.Scale(x=24, y=198, w=446, h=34, color=COL_DIM, min=0, max=MAX_CM)
     ruler.ticks(13, 2)  # ขีดทุก 25 cm เลขทุก 50 cm
@@ -172,20 +172,20 @@ def build_gate(w):
 
 def build_counter(w):
     card(492, 44, 288, 196, "ผู้บุกรุก (ครั้ง)")
-    w["n"] = ui.Seg7(text="0", x=504, y=72, w=150, h=60, color=COL_BAD)
+    w["n"] = ui.Seg7(text="0", x=504, y=78, w=150, h=56, color=COL_BAD)
     w["sw"] = ui.Switch(x=504, y=146, w=64, h=32, value=1)
-    w["arm"] = ui.Label(" ", x=578, y=150, color=COL_OK, value=16)
-    w["zone"] = ui.Label("เขตเตือน - cm (VR3)", x=504, y=196, color=COL_INFO, value=16)
+    w["arm"] = ui.Label(" ", x=578, y=150, color=COL_OK, value=20)
+    w["zone"] = ui.Label("เขตเตือน - cm (VR3)", x=504, y=196, color=COL_INFO, value=20)
     show_arm(w, True)
 
 
 def build_log(w):
-    ui.Label("ฟ้า = ระยะเป้า   แดง = เขตเตือน", x=12, y=244, color=COL_DIM, value=14)
-    w["chart"] = line_chart(12, 264, 400, 74, 0, MAX_CM, COL_INFO)
+    ui.Label("ฟ้า = ระยะเป้า   แดง = เขตเตือน", x=12, y=244, color=COL_DIM, value=20)
+    w["chart"] = line_chart(12, 272, 400, 66, 0, MAX_CM, COL_INFO)
     w["s_zone"] = w["chart"].add_series(COL_BAD)
     card(422, 250, 358, 88, "บันทึกเรดาร์")
-    w["last"] = ui.Label("ยังไม่มี", x=434, y=280, color=COL_TEXT, value=16)
-    w["energy"] = ui.Label("energy: -", x=434, y=308, color=COL_DIM, value=14)
+    w["last"] = ui.Label("ยังไม่มี", x=434, y=284, color=COL_TEXT, value=20)
+    w["energy"] = ui.Label("energy: -", x=434, y=312, color=COL_DIM, value=14)
 
 
 def build_screen():
@@ -196,7 +196,7 @@ def build_screen():
     build_gate(w)
     build_counter(w)
     build_log(w)
-    w["status"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=16)
+    w["status"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=20)
     ui.poll()
     return w
 
