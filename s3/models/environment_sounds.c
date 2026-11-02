@@ -60,8 +60,8 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "Environment Sounds"; /* exact name */
-static const bool BUILTIN = false; /* false = deployed from the Store */
-static const char SAW_LABEL[] = "chainsaw"; /* the latched sound */
+/* BUILTIN (false = deployed from the Store): in source_matches() */
+/* SAW_LABEL "chainsaw", the latched sound: in prepare_sounds() */
 
 enum {
     VOTE_NEED = 3,        /* an event = 3 of ... */
@@ -109,7 +109,6 @@ enum {
     SILENT_MS = 3000, /* result() failing this long = Stop */
     MS_PER_S = 1000,
     MAX_CLASSES = BENTO_EDGEAI_MAX_CLASSES,
-    TILES = 8,
     TILES_PER_ROW = 4,
     TEXT_CHARS = 128, /* a SET_TEXT carries at most 126 bytes */
     CLOCK_CHARS = 36, /* "HH:MM:SS" of any three int32_t */
@@ -134,6 +133,7 @@ enum {
 
 /* Every widget the program changes later has a slot. */
 enum {
+    TILES = 8,
     SLOT_HEARTBEAT = 0,
     SLOT_TILES = 1, /* TILES slots */
     SLOT_WIN = SLOT_TILES + TILES,
@@ -332,9 +332,10 @@ static int32_t compiled_count(void)
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin = false; /* BUILTIN */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -612,6 +613,13 @@ static void episode_acknowledge(episode_t *episode)
 }
 
 /* ---- 3) Screen helpers ---- */
+
+/* Compares an event's kind through a uint8_t, so both sides have one
+ * type (CLEAN_C.md C5). */
+static bool is_kind(const bento_ui_event_t *event, uint8_t kind)
+{
+    return event->type == kind;
+}
 
 /* The widget setters ignore a refusal in MicroPython (modui.c), so
  * they do here too. */
@@ -1045,7 +1053,8 @@ static void take_result(app_t *app, run_t *run,
 
         vote_add(&sound->vote, percent);
         if (episode_step(
-                &sound->episode, percent >= thresholds->enter[klass],
+                &sound->episode,
+                percent >= (int32_t)thresholds->enter[klass],
                 vote_hits(&sound->vote, thresholds->confirm[klass]),
                 vote_clear(&sound->vote, thresholds->exit[klass]),
                 now_ms)) {
@@ -1162,7 +1171,8 @@ static bool read_taps(app_t *app, run_t *run)
         count = 0U;
     }
     for (i = 0U; i < count; i++) {
-        const bool clicked = events[i].type == BENTO_UI_EVENT_CLICKED;
+        const bool clicked =
+            is_kind(&events[i], BENTO_UI_EVENT_CLICKED);
         const int32_t klass =
             clicked ? tile_class(app, events[i].id) : -1;
 
@@ -1244,12 +1254,13 @@ static bento_status_t run_once(app_t *app, run_t *run)
 /* Which class is the chainsaw (the only latched episode). */
 static void prepare_sounds(app_t *app)
 {
+    static const char saw_label[] = "chainsaw"; /* SAW_LABEL */
     uint32_t klass;
 
     app->saw = -1;
     for (klass = 0U; klass < app->label_count; klass++) {
         if ((app->saw < 0) &&
-            (strcmp(app->labels[klass], SAW_LABEL) == 0)) {
+            (strcmp(app->labels[klass], saw_label) == 0)) {
             app->saw = (int32_t)klass;
         }
     }

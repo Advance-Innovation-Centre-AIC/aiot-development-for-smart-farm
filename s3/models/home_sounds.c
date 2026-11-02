@@ -59,8 +59,8 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "HomeSounds"; /* exact name */
-static const bool BUILTIN = false; /* false = deployed from the Store */
-static const char TAP_LABEL[] = "water_tap"; /* the latched sound */
+/* BUILTIN (false = deployed from the Store): in source_matches() */
+/* TAP_LABEL "water_tap", the latched sound: in prepare_sounds() */
 
 enum {
     VOTE_NEED = 3,        /* an event = 3 of ... */
@@ -109,8 +109,7 @@ enum {
     HEALTH_MS = 2000,
     MS_PER_S = 1000,
     MAX_CLASSES = BENTO_EDGEAI_MAX_CLASSES,
-    SOUNDS_MAX = 4, /* class 0 (background) and three sounds */
-    TILES = 3,
+    SOUNDS_MAX = 4,   /* class 0 (background) and three sounds */
     TEXT_CHARS = 128, /* a SET_TEXT carries at most 126 bytes */
     CLOCK_CHARS = 36, /* "HH:MM:SS" of any three int32_t */
     PAUSE_BUTTON = 1, /* SW5, the lower button */
@@ -130,6 +129,7 @@ enum {
 
 /* Every widget the program changes later has a slot. */
 enum {
+    TILES = 3,
     SLOT_HEARTBEAT = 0,
     SLOT_TILES = 1, /* TILES slots each */
     SLOT_DISCS = SLOT_TILES + TILES,
@@ -329,9 +329,10 @@ static int32_t compiled_count(void)
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin = false; /* BUILTIN */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -610,6 +611,13 @@ static void episode_acknowledge(episode_t *episode)
 
 /* ---- 3) Screen helpers ---- */
 
+/* Compares an event's kind through a uint8_t, so both sides have one
+ * type (CLEAN_C.md C5). */
+static bool is_kind(const bento_ui_event_t *event, uint8_t kind)
+{
+    return event->type == kind;
+}
+
 /* The widget setters ignore a refusal in MicroPython (modui.c), so
  * they do here too. */
 static void set_text(const app_t *app, uint32_t slot, const char *text)
@@ -822,20 +830,29 @@ static bento_status_t build_screen(app_t *app)
     return status;
 }
 
-/* The label in capitals (ASCII). */
-static void upper_text(const char *label, char *text, size_t cap)
+/* An ASCII letter a-z in capitals; any other byte as it is. */
+static char upper_of(char letter)
 {
     static const char lower[] = "abcdefghijklmnopqrstuvwxyz";
     static const char upper[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char result = letter;
+    size_t i;
+
+    for (i = 0U; lower[i] != '\0'; i++) {
+        if (letter == lower[i]) {
+            result = upper[i];
+        }
+    }
+    return result;
+}
+
+/* The label in capitals (ASCII). */
+static void upper_text(const char *label, char *text, size_t cap)
+{
     size_t i;
 
     for (i = 0U; (label[i] != '\0') && (i < (cap - 1U)); i++) {
-        const char *letter = strchr(lower, label[i]);
-
-        text[i] = label[i];
-        if (letter != NULL) {
-            text[i] = upper[letter - lower];
-        }
+        text[i] = upper_of(label[i]);
     }
     text[i] = '\0';
 }
@@ -1035,7 +1052,7 @@ static bool track_tap(run_t *run, bool *hit, bool clear,
     }
     *hit = run->tap_running &&
            (bento_time_ticks_diff(now_ms, run->tap_on_ms) >=
-            (TAP_S * MS_PER_S));
+            ((int32_t)TAP_S * MS_PER_S));
     return run->tap_running;
 }
 
@@ -1059,8 +1076,9 @@ static void take_sound(app_t *app, run_t *run,
     }
     if (!sound->muted &&
         episode_step(&sound->episode,
-                     (percent >= thresholds->enter[klass]) || on, hit,
-                     clear, now_ms)) {
+                     (percent >= (int32_t)thresholds->enter[klass]) ||
+                         on,
+                     hit, clear, now_ms)) {
         char text[TEXT_CHARS];
 
         clock_text(sound->last, sizeof(sound->last));
@@ -1193,7 +1211,8 @@ static bool read_taps(app_t *app, run_t *run)
         count = 0U;
     }
     for (i = 0U; i < count; i++) {
-        const bool clicked = events[i].type == BENTO_UI_EVENT_CLICKED;
+        const bool clicked =
+            is_kind(&events[i], BENTO_UI_EVENT_CLICKED);
 
         if (clicked && (events[i].id == app->ids[SLOT_ACKNOWLEDGE])) {
             tapped = true;
@@ -1267,6 +1286,7 @@ static bento_status_t run_once(app_t *app, run_t *run)
  * (the only latched episode). */
 static void prepare_sounds(app_t *app)
 {
+    static const char tap_label[] = "water_tap"; /* TAP_LABEL */
     uint32_t klass;
 
     app->sound_count = (app->label_count < (uint32_t)SOUNDS_MAX)
@@ -1275,7 +1295,7 @@ static void prepare_sounds(app_t *app)
     app->tap = -1;
     for (klass = 0U; klass < app->sound_count; klass++) {
         if ((app->tap < 0) &&
-            (strcmp(app->labels[klass], TAP_LABEL) == 0)) {
+            (strcmp(app->labels[klass], tap_label) == 0)) {
             app->tap = (int32_t)klass;
         }
     }
