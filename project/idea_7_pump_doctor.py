@@ -277,8 +277,8 @@ def build_screen():
     w["soil"] = ui.Label("ดิน -- %", x=416, y=274, color=COL_TEXT, value=20)
     ui.Label("ต่ำกว่า %d%% ไม่เปิด  " % TANK_MIN + BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=416, y=304, color=COL_DIM, value=20)
     w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=596, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=622, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

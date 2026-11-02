@@ -1618,8 +1618,8 @@ static bento_status_t add_water(farm_t *farm)
 static bento_status_t add_status_line(farm_t *farm)
 {
     const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {596, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {622, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
