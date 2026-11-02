@@ -201,7 +201,7 @@ class Record:
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def set_needle(scale, value):
@@ -217,28 +217,28 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
 
 def build_tilt_card(w):
     card(12, 64, 380, 272, "มุมเอียง (องศา)")
-    gauge = ui.Scale(x=24, y=92, w=160, h=160, color=COL_TEXT, min=0, max=GAUGE_MAX)
+    gauge = ui.Scale(x=24, y=100, w=160, h=160, color=COL_TEXT, min=0, max=GAUGE_MAX)
     gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)
     gauge.ticks(13, 2)
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
     w["gauge"] = gauge
-    w["angles"] = ui.Label("หน้า-หลัง 0\nซ้าย-ขวา 0", x=200, y=110, color=COL_OK, value=20)
+    w["angles"] = ui.Label("หน้า-หลัง 0\nซ้าย-ขวา 0", x=200, y=116, color=COL_OK, value=20)
     w["verdict"] = ui.Label("...", x=24, y=262, color=COL_WARN, value=28)
-    w["max"] = ui.Label("", x=24, y=306, color=COL_DIM, value=16)
+    w["max"] = ui.Label("", x=24, y=306, color=COL_DIM, value=20)
 
 
 def build_bump_card(w):
     card(402, 64, 378, 164, "แรงกระแทก (เต็มแถบ = 3 g)")
-    w["seg_bump"] = ui.Seg7(text="0", x=414, y=94, w=90, h=40, color=COL_WARN)
-    ui.Label("ครั้ง", x=512, y=104, color=COL_DIM, value=16)
-    w["lbl_g"] = ui.Label("แรงรวม 1.00 g", x=414, y=144, color=COL_TEXT, value=16)
-    w["bar_g"] = ui.Bar(x=414, y=174, w=354, h=18, min=0, max=300, value=0)
+    w["seg_bump"] = ui.Seg7(text="0", x=414, y=100, w=90, h=40, color=COL_WARN)
+    ui.Label("ครั้ง", x=512, y=110, color=COL_DIM, value=20)
+    w["lbl_g"] = ui.Label("แรงรวม 1.00 g", x=414, y=148, color=COL_TEXT, value=20)
+    w["bar_g"] = ui.Bar(x=414, y=184, w=354, h=18, min=0, max=300, value=0)
 
 
 def build_chart(w):
-    ui.Label("เส้นฟ้า = มุมเอียง   เส้นแดง = มุมปลอดภัย", x=402, y=236,
-             color=COL_DIM, value=14)
-    w["chart"] = line_chart(402, 256, 378, 80, 0, GAUGE_MAX, COL_INFO)
+    ui.Label("เส้นฟ้า = มุมเอียง   เส้นแดง = มุมปลอดภัย", x=402, y=232,
+             color=COL_DIM, value=20)
+    w["chart"] = line_chart(402, 262, 378, 74, 0, GAUGE_MAX, COL_INFO)
     w["s_tilt"] = 0
     w["s_safe"] = w["chart"].add_series(COL_BAD)
 
@@ -246,15 +246,15 @@ def build_chart(w):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("แท็งก์น้ำ/รถไถ เอียงเกินไหม", x=12, y=6, color=COL_TEXT, value=24)
+    ui.Label("แท็งก์น้ำ/รถไถ เอียงเกินไหม", x=12, y=4, color=COL_TEXT, value=24)
     ui.Label("มุมปลอดภัยไม่เกิน " + str(SAFE_DEG) + " องศา - ลองเอียงบอร์ดดู",
-             x=12, y=38, color=COL_DIM, value=16)
+             x=12, y=34, color=COL_DIM, value=20)
     w = {}
     build_tilt_card(w)
     build_bump_card(w)
     build_chart(w)
     w["help"] = ui.Label("วางบอร์ดนิ่ง ๆ ตอนเริ่ม = ศูนย์ (กำลังวัด...)", x=12, y=352,
-                         color=COL_WARN, value=16)
+                         color=COL_WARN, value=20)
     ui.poll()
     return w
 
