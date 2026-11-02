@@ -149,7 +149,7 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ลูปเดียว สามจังหวะ", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"mode": ui.Label(" ", x=12, y=38, color=COL_OK, value=16), "cells": {}}
+    w = {"mode": ui.Label(" ", x=12, y=38, color=COL_OK, value=20), "cells": {}}
     w["vals"] = ui.Label(" ", x=500, y=38, color=COL_INFO, value=16)
     table = ui.Table(x=12, y=64, w=768, h=272, cols=6, rows=4)
     for col, width in enumerate((150, 100, 120, 150, 90, 158)):
@@ -161,7 +161,7 @@ def build_screen():
         table.cell(r, 0, ROWS[r - 1])
         table.cell(r, 1, str((IMU_MS, CLIMATE_MS, SCREEN_MS)[r - 1]))
     w["help"] = ui.Label("ช้า = ช้ากว่าเป้าเกิน %d ms   %s (ล่าง) = สลับโหมด" %
-                         (LATE_MS, BTN_NAMES[0]), x=12, y=352, color=COL_DIM, value=16)
+                         (LATE_MS, BTN_NAMES[0]), x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
