@@ -1115,9 +1115,9 @@ static bento_status_t add_ruler(door_app_t *app)
 static bento_status_t add_distance(door_app_t *app)
 {
     const spec_t card = {194, 44, 338, 190, COL_CARD, COL_STEEL, 4, 1};
-    const spec_t title = {206, 50, -1, -1, COL_HAZ, 0, 0, 16};
-    const spec_t zones = {206, 154, -1, -1, COL_INFO, 0, 0, 14};
-    const spec_t state = {206, 184, -1, -1, COL_DIM, 0, 0, 24};
+    const spec_t title = {206, 50, -1, -1, COL_HAZ, 0, 0, 20};
+    const spec_t zones = {206, 154, -1, -1, COL_INFO, 0, 0, 20};
+    const spec_t state = {206, 188, -1, -1, COL_DIM, 0, 0, 24};
     bento_ui_id_t panel = 0U;
     bento_status_t status =
         add_widget(app->ui, bento_ui_panel_create, &card, NULL, &panel);
@@ -1145,10 +1145,10 @@ static bento_status_t add_distance(door_app_t *app)
 static bento_status_t add_big(door_app_t *app)
 {
     const spec_t card = {544, 44, 236, 190, COL_CARD, COL_STEEL, 4, 1};
-    const spec_t big_title = {556, 50, -1, -1, COL_HAZ, 0, 0, 16};
+    const spec_t big_title = {556, 50, -1, -1, COL_HAZ, 0, 0, 20};
     const spec_t big = {556, 80, 150, 64, COL_HAZ, 0, 0, 0};
     const spec_t toggle = {556, 166, 64, 32, 0U, 0, 0, 1};
-    const spec_t arm = {630, 172, -1, -1, COL_OK, 0, 0, 14};
+    const spec_t arm = {630, 172, -1, -1, COL_OK, 0, 0, 20};
     bento_ui_id_t panel = 0U;
     bento_status_t status =
         add_widget(app->ui, bento_ui_panel_create, &card, NULL, &panel);
@@ -1176,9 +1176,9 @@ static bento_status_t add_big(door_app_t *app)
 static bento_status_t add_log(door_app_t *app)
 {
     const spec_t card = {194, 244, 490, 90, COL_CARD, COL_STEEL, 4, 1};
-    const spec_t count = {206, 256, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t last = {206, 290, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t status_line = {12, 352, -1, -1, COL_HAZ, 0, 0, 16};
+    const spec_t count = {206, 256, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t last = {206, 290, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t status_line = {12, 352, -1, -1, COL_HAZ, 0, 0, 20};
     bento_ui_id_t panel = 0U;
     bento_status_t status =
         add_widget(app->ui, bento_ui_panel_create, &card, NULL, &panel);
@@ -1202,7 +1202,7 @@ static bento_status_t add_log(door_app_t *app)
 static bento_status_t build_screen(door_app_t *app)
 {
     const spec_t title = {12, 6, -1, -1, COL_HAZ, 0, 0, 24};
-    const spec_t link = {500, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t link = {500, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         bento_ui_screen(app->ui, BENTO_RUNTIME_SCREEN_WIDTH_PX,
                         BENTO_RUNTIME_SCREEN_HEIGHT_PX);
