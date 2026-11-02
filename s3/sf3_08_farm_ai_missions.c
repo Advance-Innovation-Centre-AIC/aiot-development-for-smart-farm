@@ -84,6 +84,16 @@ static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>
 static const char TEAM[] = "teamXX";
 /* The hotspot's password is in wifi_up(), the broker in
  * open_broker(). */
+/* Where the other .py settings live:
+ * SENSOR_MIC: now BENTO_EDGEAI_SENSOR_MIC in ai_select().
+ * K_VIB: now K_VIB_TENTHS (3.0 = 30) below, read by judge_vib().
+ * MOVE_VIB: now MOVE_VIB_TENTHS (0.3 = 3) below, read by read_imu().
+ * ACK_REARM_MS: now ACKED_REARM_MS below, read by alarm_update().
+ * LOOK_TEXT: now the text "LOOK" in wanted_picture().
+ * CHECK_TEXT: now the text "OK? SW6" in wanted_picture().
+ * MIC_SENS: not used in C because mic.* has no C API (header).
+ * QUIET_GAP_MS: not used in C because only the mic's loud rule
+ * reads it, and mic.* has no C API (header). */
 
 /* The AI side (counted as sf3_04). */
 enum {
