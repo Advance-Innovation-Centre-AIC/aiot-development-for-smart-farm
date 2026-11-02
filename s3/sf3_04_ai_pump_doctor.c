@@ -37,6 +37,10 @@
  *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
  *     yet: the program says so (a line under the title, and on the
  *     console), then takes the .py's own "no model" path.
+ *   - The .py's colours and tables stay with the code that reads
+ *     them: COL_TEXT, COL_DIM, COL_CARD, COL_OK, COL_WARN, COL_BAD and
+ *     COL_INFO are the COLOR_* below the settings, MEANING is in
+ *     meaning_of().
  */
 #include <inttypes.h>
 #include <math.h>
@@ -52,20 +56,18 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* ---- 1) Settings (edit) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    VOLUME = 25, /* tone loudness 0-127 (about 20 %) */
+    SPEAKER = 40 /* speaker volume 0-100 % (firmware 2.4.2 up) */
+};
 /* Tried in order: the Store's model first, else the built-in one.
  * Try the course's sound models (the second one built in):
  * ("HomeSounds", "Cough") ("SirenDetection", "Siren Detection")
  * ("Environment Sounds", "Alarm"), or the radar ("Push"). */
 static const char *const MODEL_KEYS[] = {"AnomalousVibration",
                                          "Motion"};
-/* The danger classes are in is_danger(), the farm words in
- * meaning_of(). */
-/* SENSOR_MIC: now BENTO_EDGEAI_SENSOR_MIC in uses_mic(). */
-
 enum {
-    VOLUME = 25,      /* tone loudness 0-127 (about 20 %) */
-    SPEAKER = 40,     /* speaker volume 0-100 % (firmware 2.4.2 up) */
     CONF_MIN = 60,    /* below this many % a result is no event */
     CONFIRM_N = 3,    /* a danger class must win this many times ... */
     WINDOW_N = 5,     /* ... in this many latest results */
@@ -74,9 +76,11 @@ enum {
     MATRIX_MS = 3000, /* send the matrix picture again this often */
     ROWS = 4,         /* score rows: the 4 top classes */
     MAX_CLASSES = 8,  /* the AI core reports at most 8 classes */
+    SENSOR_MIC = 2,   /* the "sensor" of a model that hears the mic */
     RUN_MS = 120000,
     TICK_MS = 500
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -378,7 +382,7 @@ static bool uses_mic(uint32_t index)
 
     bento_edgeai_model_info_init(&info);
     return (bento_edgeai_model_info(index, &info) == BENTO_OK) &&
-           (info.sensor == BENTO_EDGEAI_SENSOR_MIC);
+           (info.sensor == (uint8_t)SENSOR_MIC);
 }
 
 /* edge_ai.stop(): an OSError is ignored there. */
