@@ -204,7 +204,7 @@ def is_ack(raw):
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     box = ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=10, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_MOON, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_MOON, value=20)
     return box
 
 
@@ -212,29 +212,29 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("เวรยามคอกสัตว์กลางคืน", x=12, y=6, color=COL_MOON, value=24)
-    w = {"mq_t": ui.Label("MQTT: ออฟไลน์", x=500, y=10, color=COL_DIM, value=16)}
+    w = {"mq_t": ui.Label("MQTT: ออฟไลน์", x=500, y=10, color=COL_DIM, value=20)}
     w["pen"] = card(12, 44, 520, 190, "รั้วคอก (เรดาร์)")
-    w["state"] = ui.Label("สัตว์ปลอดภัย", x=24, y=70, color=COL_SAFE, value=28)
-    w["cm"] = ui.Label("ระยะ --- cm", x=330, y=78, color=COL_TEXT, value=16)
+    w["state"] = ui.Label("สัตว์ปลอดภัย", x=24, y=80, color=COL_SAFE, value=28)
+    w["cm"] = ui.Label("ระยะ --- cm", x=330, y=84, color=COL_TEXT, value=20)
     # Chart กว้างไม่เกิน 400 จุด >= ความกว้าง บอร์ดจึงไม่วาดจุดกลม (แบบ s3/sf3_01)
-    w["chart"] = ui.Chart(x=24, y=112, w=400, h=112, color=COL_MOON, min=0, max=MAX_CM)
+    w["chart"] = ui.Chart(x=24, y=120, w=390, h=104, color=COL_MOON, min=0, max=MAX_CM)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_zone"] = w["chart"].add_series(COL_BAD)
-    ui.Label("เหลือง = ระยะ\nแดง = รั้ว", x=432, y=114, color=COL_DIM, value=14)
+    ui.Label("เหลือง = ระยะ\nแดง = รั้ว", x=420, y=122, color=COL_DIM, value=20)
     w["led"] = ui.Led(x=434, y=184, w=22, h=22, color=COL_WARN, value=0)
-    ui.Label("ขยับ", x=464, y=186, color=COL_DIM, value=14)
+    ui.Label("ขยับ", x=464, y=184, color=COL_DIM, value=20)
     card(544, 44, 236, 190, "เฝ้ามาแล้ว (ชม:นาที)")
-    w["shift"] = ui.Seg7(text="00:00", x=560, y=76, w=200, h=60, color=COL_MOON)
-    w["quiet"] = ui.Label("สงบมา 0:00", x=560, y=150, color=COL_SAFE, value=16)
-    w["n"] = ui.Label("คืนนี้ 0 ครั้ง", x=560, y=182, color=COL_TEXT, value=16)
+    w["shift"] = ui.Seg7(text="00:00", x=560, y=80, w=200, h=60, color=COL_MOON)
+    w["quiet"] = ui.Label("สงบมา 0:00", x=560, y=150, color=COL_SAFE, value=20)
+    w["n"] = ui.Label("คืนนี้ 0 ครั้ง", x=560, y=182, color=COL_TEXT, value=20)
     # มุมขวาล่างสุดเว้นไว้ให้ปุ่ม Console
-    card(12, 244, 400, 96, "บันทึกคืนนี้ (3 ครั้งล่าสุด)")
-    w["log"] = ui.Label("ยังเงียบ", x=24, y=272, color=COL_TEXT, value=16)
-    card(424, 244, 260, 96, "ระบบเฝ้า")
-    w["sw"] = ui.Switch(x=436, y=276, w=64, h=32, value=1)
-    w["arm"] = ui.Label(" ", x=510, y=272, color=COL_SAFE, value=14)
-    w["zone"] = ui.Label("รั้ว - cm (VR3)", x=510, y=300, color=COL_DIM, value=14)
-    w["status"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=16)
+    card(12, 244, 462, 96, "บันทึกคืนนี้ (3 ครั้งล่าสุด)")
+    w["log"] = ui.Label("ยังเงียบ", x=22, y=282, color=COL_TEXT, value=20)
+    card(482, 244, 250, 96, "ระบบเฝ้า")
+    w["sw"] = ui.Switch(x=494, y=276, w=64, h=32, value=1)
+    w["arm"] = ui.Label(" ", x=568, y=272, color=COL_SAFE, value=20)
+    w["zone"] = ui.Label("รั้ว - cm (VR3)", x=568, y=302, color=COL_DIM, value=20)
+    w["status"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=20)
     show_arm(w, True)
     ui.poll()
     return w

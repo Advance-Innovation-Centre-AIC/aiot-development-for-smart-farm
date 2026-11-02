@@ -149,7 +149,7 @@ enum {
     CARD_RADIUS = 10,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    CARD_TITLE_PX = 16,
+    CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
 };
 
@@ -1050,17 +1050,17 @@ static bento_status_t add_pen_card(screen_t *screen)
         {UI_WIDGET_LABEL, SLOT_NONE, "เวรยามคอกสัตว์กลางคืน", 12, 6, AUTO,
          AUTO, COL_MOON, 0, 0, 24},
         {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 500, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+         AUTO, COL_DIM, 0, 0, 20},
     };
     static const card_t card = {12,      44, 520, 190, "รั้วคอก (เรดาร์)",
                                 SLOT_PEN};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LABEL, SLOT_STATE, "สัตว์ปลอดภัย", 24, 70, AUTO, AUTO,
+        {UI_WIDGET_LABEL, SLOT_STATE, "สัตว์ปลอดภัย", 24, 80, AUTO, AUTO,
          COL_SAFE, 0, 0, 28},
-        {UI_WIDGET_LABEL, SLOT_CM, "ระยะ --- cm", 330, 78, AUTO, AUTO,
-         COL_TEXT, 0, 0, 16},
-        /* 400 points for 400 px: the board draws no round dots */
-        {UI_WIDGET_CHART, SLOT_CHART, NULL, 24, 112, 400, 112, COL_MOON,
+        {UI_WIDGET_LABEL, SLOT_CM, "ระยะ --- cm", 330, 84, AUTO, AUTO,
+         COL_TEXT, 0, 0, 20},
+        /* 400 points for 390 px: the board draws no round dots */
+        {UI_WIDGET_CHART, SLOT_CHART, NULL, 24, 120, 390, 104, COL_MOON,
          0, MAX_CM, 0},
     };
     bento_status_t status =
@@ -1089,22 +1089,22 @@ static bento_status_t add_pen_card(screen_t *screen)
 static bento_status_t add_shift_card(screen_t *screen)
 {
     static const widget_spec_t lamp[] = {
-        {UI_WIDGET_LABEL, SLOT_NONE, "เหลือง = ระยะ\nแดง = รั้ว", 432, 114,
-         AUTO, AUTO, COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_NONE, "เหลือง = ระยะ\nแดง = รั้ว", 420, 122,
+         AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LED, NULL, 434, 184, 22, 22, COL_WARN, 0,
          0, 0},
-        {UI_WIDGET_LABEL, SLOT_NONE, "ขยับ", 464, 186, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_NONE, "ขยับ", 464, 184, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
     };
     static const card_t card = {
         544, 44, 236, 190, "เฝ้ามาแล้ว (ชม:นาที)", SLOT_NONE};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_SEG7, SLOT_SHIFT, "00:00", 560, 76, 200, 60,
+        {UI_WIDGET_SEG7, SLOT_SHIFT, "00:00", 560, 80, 200, 60,
          COL_MOON, 0, 0, 0},
         {UI_WIDGET_LABEL, SLOT_QUIET, "สงบมา 0:00", 560, 150, AUTO,
-         AUTO, COL_SAFE, 0, 0, 16},
+         AUTO, COL_SAFE, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_COUNT_TEXT, "คืนนี้ 0 ครั้ง", 560, 182, AUTO,
-         AUTO, COL_TEXT, 0, 0, 16},
+         AUTO, COL_TEXT, 0, 0, 20},
     };
     bento_status_t status =
         add_widgets(screen, lamp, sizeof(lamp) / sizeof(lamp[0]));
@@ -1124,21 +1124,21 @@ static bento_status_t add_shift_card(screen_t *screen)
 static bento_status_t add_log_and_arm(screen_t *screen)
 {
     static const card_t log_card = {
-        12, 244, 400, 96, "บันทึกคืนนี้ (3 ครั้งล่าสุด)", SLOT_NONE};
+        12, 244, 462, 96, "บันทึกคืนนี้ (3 ครั้งล่าสุด)", SLOT_NONE};
     static const widget_spec_t log_line = {
-        UI_WIDGET_LABEL, SLOT_LOG, "ยังเงียบ", 24, 272, AUTO, AUTO,
-        COL_TEXT,        0,        0,        16};
-    static const card_t arm_card = {424, 244,       260,
+        UI_WIDGET_LABEL, SLOT_LOG, "ยังเงียบ", 22, 282, AUTO, AUTO,
+        COL_TEXT,        0,        0,        20};
+    static const card_t arm_card = {482, 244,       250,
                                     96,  "ระบบเฝ้า", SLOT_NONE};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_SWITCH, SLOT_SWITCH, NULL, 436, 276, 64, 32, 0U, 0,
+        {UI_WIDGET_SWITCH, SLOT_SWITCH, NULL, 494, 276, 64, 32, 0U, 0,
          0, 1},
-        {UI_WIDGET_LABEL, SLOT_ARM, " ", 510, 272, AUTO, AUTO, COL_SAFE,
-         0, 0, 14},
-        {UI_WIDGET_LABEL, SLOT_ZONE, "รั้ว - cm (VR3)", 510, 300, AUTO,
-         AUTO, COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_ARM, " ", 568, 272, AUTO, AUTO, COL_SAFE,
+         0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_ZONE, "รั้ว - cm (VR3)", 568, 302, AUTO,
+         AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_STATUS, " ", 12, 352, AUTO, AUTO,
-         COL_WARN, 0, 0, 16},
+         COL_WARN, 0, 0, 20},
     };
     bento_status_t status = add_card(screen, &log_card);
 
