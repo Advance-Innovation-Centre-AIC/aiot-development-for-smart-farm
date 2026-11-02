@@ -31,9 +31,10 @@
  *     A failed select prints the C status number, not the OSError
  *     text. The program also closes the module's Edge AI link
  *     (bento_edgeai_deinit) after the final stop.
- *   - A board without the model link (reTerminal) answers
- *     BENTO_E_UNSUPPORTED to bento_edgeai_init(): the same "no model"
- *     path as an empty edge_ai.models().
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
+ *     yet: the program says so and ends. bento_edgeai_init() answers
+ *     BENTO_E_UNSUPPORTED there (and on a board without the model
+ *     link, such as the reTerminal).
  */
 #include <inttypes.h>
 #include <math.h>
@@ -340,19 +341,22 @@ static void find_key(doctor_t *doctor, const char *key, int32_t count)
 }
 
 /* By name, in MODEL_KEYS order: the order on each board differs
- * (and can change after a reboot). No answer = none found. */
-static void find_models(doctor_t *doctor)
+ * (and can change after a reboot). No answer = none found. *linked
+ * is false when there is no Edge AI from C at all (the Emulator). */
+static void find_models(doctor_t *doctor, bool *linked)
 {
     const uint32_t keys =
         (uint32_t)(sizeof(MODEL_KEYS) / sizeof(MODEL_KEYS[0]));
+    const bento_status_t status = bento_edgeai_init();
     int32_t count = 0;
     uint32_t i;
 
-    if ((bento_edgeai_init() != BENTO_OK) ||
+    *linked = status != BENTO_E_UNSUPPORTED;
+    if ((status != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0;
     }
-    for (i = 0U; i < keys; i++) {
+    for (i = 0U; *linked && (i < keys); i++) {
         find_key(doctor, MODEL_KEYS[i], count);
     }
 }
@@ -1141,6 +1145,21 @@ static void report_none(const doctor_t *doctor)
     (void)printf("%s - ใช้ sf3_03 แทน\n", text);
 }
 
+/* No Edge AI from C here (the BENTO Emulator): the status line says
+ * so, and the program ends normally. */
+static void show_emulator_gap(const doctor_t *doctor)
+{
+    static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+
+    say(doctor, gap, COLOR_BAD);
+    poll_display(doctor->ui);
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap);
+}
+
 static bento_status_t run_doctor(doctor_t *doctor)
 {
     bool watched = false;
@@ -1175,8 +1194,12 @@ int main(void)
         status = build_screen(doctor);
     }
     if (status == BENTO_OK) {
-        find_models(doctor);
-        if (doctor->found_count == 0U) {
+        bool linked = true;
+
+        find_models(doctor, &linked);
+        if (!linked) {
+            show_emulator_gap(doctor);
+        } else if (doctor->found_count == 0U) {
             report_none(doctor);
         } else {
             status = run_doctor(doctor);
