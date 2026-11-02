@@ -187,8 +187,10 @@ enum { /* layout, in px */
     CARD_TITLE_DY = 6,
     TITLE_PX = 20
 };
-enum {                      /* buffers, in bytes */
-    TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
+enum {                /* buffers, in bytes */
+    TEXT_BYTES = 128, /* a SET_TEXT carries at most 126 */
+    CLOCK_BYTES =
+        24, /* "mm:ss" of any two int32_t, the colon, the NUL */
     WHY_THAI_BYTES = 64,    /* two Thai problems and " + " */
     WHY_ENGLISH_BYTES = 16, /* "cold+dry" */
     TOPIC_BYTES = 40,
@@ -1470,7 +1472,7 @@ static void show_stress(const screen_t *screen, const watch_t *watch,
 {
     static const char *const moods[LEVEL_COUNT] = {
         "ผักสบาย โตดี", "เริ่มเครียด: ", "ผักเครียดหนัก: "};
-    char clock[TEXT_BYTES];
+    char clock[CLOCK_BYTES];
     char line[TEXT_BYTES];
 
     set_color(screen, SLOT_MOOD, color);
