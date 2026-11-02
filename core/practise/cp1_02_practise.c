@@ -86,7 +86,7 @@ enum {
 enum {
     MARGIN_X = 12,
     TITLE_Y = 6,
-    SUBTITLE_Y = 38,
+    SUBTITLE_Y = 36,
     HELP_Y = 352,
     CARD_LEFT_X = 12,
     CARD_RIGHT_X = 402,
@@ -99,22 +99,21 @@ enum {
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
     VALUE_DX = 12,
-    VALUE_DY = 30,
+    VALUE_DY = 32,
     RAW_DX = 170,
-    RAW_DY = 30,
-    STEP_DY = 52,
-    BAR_DY = 76,
+    RAW_DY = 32,
+    STEP_DY = 58,
+    BAR_DY = 84,
     BAR_W = 354,
     BAR_H = 14,
-    RULER_DY = 94,
+    RULER_DY = 100,
     RULER_H = 32
 };
 
 /* Font sizes, in pixels. */
 enum {
     FONT_TITLE = 24,
-    FONT_TEXT = 16,
-    FONT_STEP = 14,
+    FONT_TEXT = 20, /* Thai text is 20 px or larger on the board */
     FONT_VALUE = 28
 };
 
@@ -590,7 +589,7 @@ static bento_status_t add_knob_labels(bento_ui_t *ui,
     const label_spec_t raw = {box->x + RAW_DX, box->y + RAW_DY,
                               FONT_TEXT, COL_WARN};
     const label_spec_t step = {box->x + RAW_DX, box->y + STEP_DY,
-                               FONT_STEP, COL_DIM};
+                               FONT_TEXT, COL_DIM};
     char number[BENTO_FMT_BUF_SIZE];
     char text[TEXT_BYTES];
     bento_ui_id_t unused;
