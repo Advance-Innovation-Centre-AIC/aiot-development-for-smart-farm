@@ -63,6 +63,9 @@
  *     MicroPython; the C library prints none.
  *   - Stop ends the program quietly at the next sleep, where
  *     MicroPython raises KeyboardInterrupt.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and ends (after the .py's own "broker ไม่ตอบ"
+ *     note, as if the broker did not answer).
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -205,6 +208,7 @@ typedef struct {
     bool has_pump_led;
     bool has_matrix;
     bool stopped; /* the original's raise Stop */
+    bool no_mqtt; /* the BENTO Emulator: no MQTT from C yet */
     int32_t got;  /* commands received */
     int32_t sent; /* reports sent, the "n" key */
     int32_t pump_ms;
@@ -1613,13 +1617,36 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
         (void)bento_mqtt_close(farm->broker); /* the next try opens */
         farm->has_broker = false;
     }
+    if (status == BENTO_E_UNSUPPORTED) {
+        farm->no_mqtt = true; /* the Emulator: no try will answer */
+    }
     if (status != BENTO_E_CANCELLED) {
         status = BENTO_OK;
     }
     return status;
 }
 
-/* Three tries, a new client id every time. */
+/* The BENTO Emulator answers every MQTT call with E_UNSUPPORTED: one
+ * label says so in the empty strip between the cards and the note,
+ * then the program goes on as if the broker did not answer. */
+static bento_status_t show_emulator_gap(const farm_t *farm)
+{
+    static const char gap_text[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    /* one line from x 12 (593 px), y 306-337 */
+    const spec_t gap = {12, 306, -1, -1, COL_WATCH, 0, 0, 20};
+    bento_ui_id_t label = 0U;
+
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run "
+        "it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    return add_widget(farm->ui, bento_ui_label_create, &gap, gap_text,
+                      &label);
+}
+
+/* Three tries, a new client id every time; none more once the
+ * Emulator has said it has no MQTT. */
 static bento_status_t connect_broker(farm_t *farm, bool *linked)
 {
     char text[TEXT_BYTES];
@@ -1627,8 +1654,8 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
     int32_t attempt;
 
     *linked = false;
-    for (attempt = 1;
-         (status == BENTO_OK) && !*linked && (attempt <= BROKER_TRIES);
+    for (attempt = 1; (status == BENTO_OK) && !*linked &&
+                      !farm->no_mqtt && (attempt <= BROKER_TRIES);
          attempt++) {
         if (attempt > 1) {
             (void)snprintf(text, sizeof(text),
@@ -1638,6 +1665,9 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
             drain_events(farm->ui);
         }
         status = open_broker(farm, linked);
+    }
+    if ((status == BENTO_OK) && farm->no_mqtt) {
+        status = show_emulator_gap(farm);
     }
     return status;
 }
