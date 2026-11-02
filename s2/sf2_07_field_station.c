@@ -70,10 +70,10 @@ static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>
 static const char TEAM[] = "teamXX";
 
 static const char BROKER[] = "broker.hivemq.com";
-/* T_BASE = ROOT/TEAM/ */
 static const char ROOT[] = "bento-aiot";
-/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
-static const char CLIENT_ID[] = "bento-field-";
+/* CLIENT_ID = "bento-field-" + TEAM, + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ:
+ * ไม่ชน id เก่า, built in main() */
+/* T_BASE = ROOT/TEAM/, built in main() */
 
 enum {
     PLC_MAX_S = 30, /* กฎความปลอดภัยของ PLC */
@@ -1752,7 +1752,7 @@ int main(void)
     farm.plc.why = "start";
     farm.shown = -1;
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "bento-field-%s", TEAM);
     (void)snprintf(farm.names.base, sizeof(farm.names.base), "%s/%s/",
                    ROOT, TEAM);
     (void)snprintf(farm.names.topic_cmd, sizeof(farm.names.topic_cmd),
