@@ -116,7 +116,7 @@ def to_chart(v, src, base):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -131,17 +131,17 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("หน้าต่างเลื่อน -> z", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"scale": ui.Label(" ", x=12, y=38, color=COL_DIM, value=16)}
+    w = {"scale": ui.Label(" ", x=12, y=38, color=COL_DIM, value=20)}
     ch = line_chart(12, 66, 400, 272, 0, 100, COL_INFO)
     w["ch"], w["hi"], w["lo"] = ch, ch.add_series(COL_WARN), ch.add_series(COL_WARN)
     card(424, 66, 356, 272, "เทียบ %d ค่าก่อนหน้า  ไฟ = |z| เกิน %.1f" % (WIN, Z_MAX))
     w["led"] = ui.Led(x=436, y=100, w=48, h=48, color=COL_BAD, value=0)
     w["z"] = ui.Label(" ", x=500, y=108, color=COL_TEXT, value=28)
     w["now"] = ui.Label(" ", x=436, y=170, color=COL_INFO, value=20)
-    w["ms"] = ui.Label(" ", x=436, y=214, color=COL_WARN, value=16)
-    w["mm"] = ui.Label(" ", x=436, y=248, color=COL_TEXT, value=16)
+    w["ms"] = ui.Label(" ", x=436, y=214, color=COL_WARN, value=20)
+    w["mm"] = ui.Label(" ", x=436, y=248, color=COL_TEXT, value=20)
     w["help"] = ui.Label(BTN_NAMES[0] + " = สลับ VR1/SHT40   เป่าลม -> z พุ่ง", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
