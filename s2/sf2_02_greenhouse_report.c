@@ -847,6 +847,9 @@ static bento_status_t emulator_gap(bento_ui_t *ui,
 {
     static const char gap[] =
         "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    /* the Emulator does not wrap a label: the breaks are written in */
+    static const char note[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator\nให้รันบน Dev Kit หรือ Eva Kit";
     /* bottom right, ending before the firmware's Console button */
     static const box_t place = {316,        340, 370, 52,
                                 COLOR_WARN, 0,   0,   20};
@@ -854,7 +857,7 @@ static bento_status_t emulator_gap(bento_ui_t *ui,
     bento_status_t result = status;
 
     if (status == BENTO_E_UNSUPPORTED) {
-        result = add_box(ui, UI_WIDGET_LABEL, &place, gap, &label);
+        result = add_box(ui, UI_WIDGET_LABEL, &place, note, &label);
         refresh(ui);
         (void)printf(
             "%s / MQTT from C is not in the BENTO Emulator yet: "
