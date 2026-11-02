@@ -45,7 +45,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     REPEAT_S = 10,   /* "danger" repeats no more often than this */
     HYST = 3,        /* % kept around a band edge against flutter */
@@ -53,7 +53,13 @@ enum {
     TICK_MS = 1000,  /* refresh the countdown this often */
     RUN_MS = 180000, /* the program ends after three minutes */
     SPEAKER = 40,    /* speaker volume, 0-100 % */
-    VOLUME = 25,     /* tone velocity, 0-127 (about 20 %) */
+    VOLUME = 25      /* tone velocity, 0-127 (about 20 %) */
+};
+/* BTN_NAMES: not used in C because the .py never reads it */
+/* ---- end of settings ---- */
+
+/* The status bands, the board and the light matrix. */
+enum {
     MS_PER_S = 1000,
     STATE_BAND = 25, /* VR1 % per status */
     STATE_COUNT = 4,
@@ -316,10 +322,12 @@ static void show_matrix(int32_t state)
  * (widened by HYST) the status stays. */
 static int32_t pick_state(int32_t percent, int32_t now)
 {
-    int32_t state = percent / STATE_BAND;
+    const int32_t band = (int32_t)STATE_BAND;
+    const int32_t margin = (int32_t)HYST;
+    int32_t state = percent / band;
 
-    if ((((now * STATE_BAND) - HYST) <= percent) &&
-        (percent < (((now + 1) * STATE_BAND) + HYST))) {
+    if ((((now * band) - margin) <= percent) &&
+        (percent < (((now + 1) * band) + margin))) {
         state = now;
     } else if (state > STATE_DANGER) {
         state = STATE_DANGER;
@@ -583,7 +591,7 @@ static bento_status_t repeat_alarm(alarm_t *alarm, uint32_t now)
 
     if (danger_unacked(alarm) &&
         (bento_time_ticks_diff(now, alarm->repeat_ms) >=
-         (REPEAT_S * MS_PER_S))) {
+         ((int32_t)REPEAT_S * (int32_t)MS_PER_S))) {
         alarm->repeat_ms = now;
         status = beep(alarm->screen.ui, TUNE_BAD);
     }
