@@ -171,10 +171,10 @@ enum { /* layout, in px */
     CELL_BORDER = 1,
     COLUMN_NAME_X = 96,
     COLUMN_NAME_Y = 292,
-    GRID_NAME_PX = 14,
+    GRID_NAME_PX = 20,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    TITLE_PX = 16
+    TITLE_PX = 20
 };
 enum {                      /* buffers, in bytes */
     TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
@@ -1162,36 +1162,36 @@ static const widget_spec_t *top_widgets(size_t *count)
 static const widget_spec_t *bottom_widgets(size_t *count)
 {
     static const widget_spec_t widgets[] = {
-        {KIND_LABEL, SLOT_NONE, "แถว = อุณหภูมิ  คอลัมน์ = ความชื้น", 24, 314,
-         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_NONE, "แถว = อุณหภูมิ  คอลัมน์ = ความชื้น", 24, 316,
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_CARD, SLOT_NONE, "อากาศในโรงเรือน", 352, 40, 428, 150,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
         {KIND_LABEL, SLOT_CLIMATE, "-- C  -- %", 366, 70, AUTO_PX,
          AUTO_PX, COL_TEXT, 0, 0, 24},
         {KIND_LABEL, SLOT_VPD, "VPD -.-- kPa", 366, 104, AUTO_PX,
-         AUTO_PX, COL_WATER, 0, 0, 16},
+         AUTO_PX, COL_WATER, 0, 0, 20},
         {KIND_LABEL, SLOT_VPD_TEXT, "-", 366, 128, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_CROP, "-", 366, 156, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_ARC, SLOT_ARC, NULL, 650, 62, 116, 116, COL_WATER, 0,
          ARC_MAX, 0},
         {KIND_CARD, SLOT_NONE, "ผักเครียดไหม", 352, 200, 428, 110,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
         {KIND_LABEL, SLOT_MOOD, "...", 366, 226, AUTO_PX, AUTO_PX,
-         COL_WARN, 0, 0, 16},
+         COL_WARN, 0, 0, 20},
         {KIND_LABEL, SLOT_STRESS, "เครียดสะสม 00:00", 366, 252, AUTO_PX,
-         AUTO_PX, COL_TEXT, 0, 0, 16},
+         AUTO_PX, COL_TEXT, 0, 0, 20},
         {KIND_LABEL, SLOT_REPLY, "-", 366, 278, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_NONE,
          "VR3 = แดดบนหลังคา  เป่าลม = ชื้นขึ้น  SW5 = รับทราบ", 352, 318,
-         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
-        {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 358, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 0},
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
+        {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 356, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_MQ, NULL, 600, 10, 16, 16, COL_OK, 0, 0, 0},
         {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 8, AUTO_PX,
-         AUTO_PX, COL_DIM, 0, 0, 16}};
+         AUTO_PX, COL_DIM, 0, 0, 20}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;

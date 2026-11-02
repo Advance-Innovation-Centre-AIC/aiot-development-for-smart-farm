@@ -154,7 +154,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=14, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_LEAF, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_LEAF, value=20)
 
 
 def show_link(w, ok):
@@ -169,28 +169,28 @@ def build_screen():
     w = {"box": None, "cells": [], "cell": -1}
     card(12, 40, 330, 300, "ผักอยู่ช่องไหน")
     for r in range(3):
-        ui.Label(("ร้อน", "พอดี", "หนาว")[r], x=22, y=96 + r * 72, color=COL_DIM, value=14)
+        ui.Label(("ร้อน", "พอดี", "หนาว")[r], x=22, y=96 + r * 72, color=COL_DIM, value=20)
         for c in range(3):
             w["cells"].append(ui.Panel(x=72 + c * 88, y=72 + r * 72, w=82, h=66,
                                        color=COL_CELL, min=COL_EDGE, max=10, value=1))
     for c in range(3):
-        ui.Label(("แห้ง", "พอดี", "ชื้น")[c], x=96 + c * 88, y=292, color=COL_DIM, value=14)
-    ui.Label("แถว = อุณหภูมิ  คอลัมน์ = ความชื้น", x=24, y=314, color=COL_DIM, value=14)
+        ui.Label(("แห้ง", "พอดี", "ชื้น")[c], x=96 + c * 88, y=292, color=COL_DIM, value=20)
+    ui.Label("แถว = อุณหภูมิ  คอลัมน์ = ความชื้น", x=24, y=316, color=COL_DIM, value=20)
     card(352, 40, 428, 150, "อากาศในโรงเรือน")
     w["th"] = ui.Label("-- C  -- %", x=366, y=70, color=COL_TEXT, value=24)
-    w["vpd"] = ui.Label("VPD -.-- kPa", x=366, y=104, color=COL_WATER, value=16)
-    w["vpd_t"] = ui.Label("-", x=366, y=128, color=COL_DIM, value=14)
-    w["crop"] = ui.Label("-", x=366, y=156, color=COL_DIM, value=14)
+    w["vpd"] = ui.Label("VPD -.-- kPa", x=366, y=104, color=COL_WATER, value=20)
+    w["vpd_t"] = ui.Label("-", x=366, y=128, color=COL_DIM, value=20)
+    w["crop"] = ui.Label("-", x=366, y=156, color=COL_DIM, value=20)
     w["arc"] = ui.Arc(x=650, y=62, w=116, h=116, min=0, max=300, value=0)
     w["arc"].color(COL_WATER)
     card(352, 200, 428, 110, "ผักเครียดไหม")
-    w["mood"] = ui.Label("...", x=366, y=226, color=COL_WARN, value=16)
-    w["stress"] = ui.Label("เครียดสะสม 00:00", x=366, y=252, color=COL_TEXT, value=16)
-    w["ack"] = ui.Label("-", x=366, y=278, color=COL_DIM, value=14)
-    ui.Label("VR3 = แดดบนหลังคา  เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=352, y=318, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=356, color=COL_DIM)
+    w["mood"] = ui.Label("...", x=366, y=226, color=COL_WARN, value=20)
+    w["stress"] = ui.Label("เครียดสะสม 00:00", x=366, y=252, color=COL_TEXT, value=20)
+    w["ack"] = ui.Label("-", x=366, y=278, color=COL_DIM, value=20)
+    ui.Label("VR3 = แดดบนหลังคา  เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=352, y=318, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=356, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=10, w=16, h=16, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=20)
     ui.poll()
     return w
 
