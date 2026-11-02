@@ -61,15 +61,22 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
-/* WIFI_SSID, WIFI_PASS: ตั้งใน join_wifi() (set them in join_wifi()) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 /* เลขกลุ่มที่เป็น Gateway (ต้องตรงกันทั้งสองบอร์ด) */
 static const char TEAM[] = "teamXX";
 
-/* BROKER: in try_broker(); ROOT and CLIENT_ID: in main() */
+static const char BROKER[] = "broker.hivemq.com";
+/* T_BASE = ROOT/TEAM/ */
+static const char ROOT[] = "bento-aiot";
+/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
+static const char CLIENT_ID[] = "bento-field-";
 
 enum {
-    PLC_MAX_S = 30, /* the PLC's own safety rules */
+    PLC_MAX_S = 30, /* กฎความปลอดภัยของ PLC */
     PLC_TANK_MIN = 10,
     PLC_DEFAULT_S = 10,
     SEND_MS = 5000,
@@ -77,10 +84,14 @@ enum {
     RUN_MS = 1800000
 };
 
+/* .py: BTN_NAMES */
+static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+
 enum {
-    SPEAKER = 40, /* the speaker, 0-100 % */
-    VOLUME = 25   /* each tone, 0-127 */
+    SPEAKER = 40, /* ลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป) */
+    VOLUME = 25   /* ความดังเสียง 0-127 */
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -999,19 +1010,15 @@ static bool has_ip(void)
  * run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char wifi_pass[] =
-        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
-    static const char wifi_ssid[] =
-        "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
@@ -1038,7 +1045,6 @@ static bento_status_t join_wifi(bool *joined)
 static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                                  bool *linked)
 {
-    static const char broker_host[] = "broker.hivemq.com";
     char client_id[NAME_BYTES];
     bento_mqtt_config_t config;
     bool waiting;
@@ -1048,8 +1054,8 @@ static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                    names->client_id,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1213,7 +1219,6 @@ static bento_status_t build_plc_card(field_screen_t *screen)
 
 static bento_status_t build_rules_card(field_screen_t *screen)
 {
-    static const char *const button_names[] = {"SW5", "SW6"};
     static const spot_t button = {28, 302, COLOR_WARN, 20};
     static const box_t card = {402, 44, 378, 290, 0U, 0, 0, 0};
     static const spot_t rules = {414, 86, COLOR_TEXT, 20};
@@ -1224,7 +1229,7 @@ static bento_status_t build_rules_card(field_screen_t *screen)
 
     (void)bento_ui_set_color(screen->ui, screen->arc, COLOR_OK);
     (void)snprintf(text, sizeof(text), "%s = หยุดฉุกเฉิน",
-                   button_names[0]);
+                   BUTTON_NAMES[0]);
     status = add_label(screen->ui, &button, text, &unused);
     if (status == BENTO_OK) {
         status = add_card(screen->ui, &card,
@@ -1735,9 +1740,6 @@ static bento_status_t run_field(farm_t *farm)
 
 int main(void)
 {
-    static const char client_prefix[] =
-        "bento-field-"; /* + TEAM + a clock number */
-    static const char root[] = "bento-aiot";
     farm_t farm;
     bento_status_t status;
 
@@ -1748,9 +1750,9 @@ int main(void)
     farm.plc.why = "start";
     farm.shown = -1;
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", client_prefix, TEAM);
+                   "%s%s", CLIENT_ID, TEAM);
     (void)snprintf(farm.names.base, sizeof(farm.names.base), "%s/%s/",
-                   root, TEAM);
+                   ROOT, TEAM);
     (void)snprintf(farm.names.topic_cmd, sizeof(farm.names.topic_cmd),
                    "%splc/cmd", farm.names.base);
     status = start_station(&farm);
