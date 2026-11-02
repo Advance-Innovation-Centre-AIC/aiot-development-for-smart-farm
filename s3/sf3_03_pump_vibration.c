@@ -19,9 +19,6 @@
  * (aiot-development-for-smart-farm/s3/sf3_03_pump_vibration.py).
  * Style: CLEAN_C.md.
  * Differs from the original:
- *   - MIN_BASE is a const inside learn(), the one function that reads
- *     it; K_WARN and K_BAD stay at the top (several functions read
- *     them).
  *   - hasattr(ui, "volume"): the volume is always set, and a build
  *     without sound refuses it, which is ignored.
  *   - try/except OSError around the IMU and the RGB matrix: the
@@ -45,23 +42,29 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings: change them and run again. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    VOLUME = 25,      /* warning tone 0-127 */
-    SPEAKER = 40,     /* speaker 0-100 % (fw 2.4.2+) */
-    LEARN_MS = 5000,  /* learning time */
-    SAMPLE_MS = 50,   /* read the IMU this often */
-    WIN = 20,         /* vibration from the last 20 samples */
+    VOLUME = 25,     /* warning tone 0-127 */
+    SPEAKER = 40,    /* speaker 0-100 % (fw 2.4.2+) */
+    LEARN_MS = 5000, /* learning time */
+    SAMPLE_MS = 50,  /* read the IMU this often */
+    WIN = 20         /* vibration from the last 20 samples */
+};
+/* times normal = watch / abnormal */
+static const bento_real_t K_WARN = (bento_real_t)3.0;
+static const bento_real_t K_BAD = (bento_real_t)6.0;
+static const bento_real_t MIN_BASE = (bento_real_t)0.05; /* m/s^2 */
+enum {
     CONFIRM_N = 10,   /* samples a new level must hold */
     RUN_MS = 120000,  /* playing time */
     TICK_MS = 500,    /* redraw this often */
     MATRIX_MS = 3000, /* send the RGB matrix again */
     CHART_MAX = 300   /* chart ceiling (vibration x100) */
 };
-
-/* Times normal = watch / abnormal. */
-static const bento_real_t K_WARN = (bento_real_t)3.0;
-static const bento_real_t K_BAD = (bento_real_t)6.0;
+/* lower, upper */
+static const char *const BUTTON_NAMES[] = {"SW5",
+                                           "SW6"}; /* .py: BTN_NAMES */
+/* ---- end of settings ---- */
 
 /* The three levels. */
 enum {
@@ -511,7 +514,6 @@ static bool push(watch_t *watch, bento_real_t size, uint32_t now_ms)
 /* After LEARN_MS the normal is known (true once). */
 static bool learn(watch_t *watch, uint32_t now_ms)
 {
-    const bento_real_t min_base = (bento_real_t)0.05; /* m/s^2 */
     bool done;
 
     watch->total += watch->vibration;
@@ -522,7 +524,7 @@ static bool learn(watch_t *watch, uint32_t now_ms)
         const bento_real_t mean =
             watch->total / (bento_real_t)watch->learned;
 
-        watch->base = (mean > min_base) ? mean : min_base;
+        watch->base = (mean > MIN_BASE) ? mean : MIN_BASE;
         watch->has_base = true;
     }
     return done;
@@ -681,6 +683,7 @@ static bento_status_t build_screen(pump_screen_t *screen)
 {
     const rect_t status_line = {TITLE_X, STATUS_Y, 0, 0};
     const rect_t help = {HELP_X, HELP_Y, 0, 0};
+    char text[TEXT_BYTES];
     bento_status_t status =
         bento_ui_screen(screen->ui, BENTO_RUNTIME_SCREEN_WIDTH_PX,
                         BENTO_RUNTIME_SCREEN_HEIGHT_PX);
@@ -706,8 +709,10 @@ static bento_status_t build_screen(pump_screen_t *screen)
         status = build_chart(screen);
     }
     if (status == BENTO_OK) {
-        status = add_label(screen->ui, "SW5 (ปุ่มล่าง) = เรียนรู้ค่าปกติใหม่",
-                           &help, COLOR_DIM, TEXT_PX, &screen->help);
+        (void)snprintf(text, sizeof(text), "%s (ปุ่มล่าง) = เรียนรู้ค่าปกติใหม่",
+                       BUTTON_NAMES[0]);
+        status = add_label(screen->ui, text, &help, COLOR_DIM, TEXT_PX,
+                           &screen->help);
     }
     if (status == BENTO_OK) {
         drain_events(screen->ui);
