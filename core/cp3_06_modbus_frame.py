@@ -106,7 +106,7 @@ def connect_farm(w):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
@@ -114,10 +114,10 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("Modbus TCP 12 ไบต์", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
-    ui.Label("บอร์ดไม่มี Modbus/socket: MQTT -> gateway -> PLC", x=12, y=38, color=COL_WARN, value=16)
+    ui.Label("บอร์ดไม่มี Modbus/socket: MQTT -> gateway -> PLC", x=12, y=38, color=COL_WARN, value=20)
     card(12, 62, 768, 112, "ฟ้า = MBAP  เขียว = PDU")
     w = {"b": [], "led": ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0),
-         "link": ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)}
+         "link": ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=20)}
     for i in range(12):                                   # ไบต์ที่ i อยู่ที่ x = 28 + i * 62
         w["b"].append(ui.Label("--", x=28 + i * 62, y=96, color=COL_INFO if i < 7 else COL_OK, value=28))
     # ชื่อช่องใต้ไบต์แรกของแต่ละช่อง: tid 2 ไบต์ proto 2 len 2 unit 1 | fc 1 addr 2 qty/value 2
@@ -126,7 +126,7 @@ def build_screen():
     card(12, 186, 768, 152, "HR0 ปั๊ม  HR1 ดิน  HR2 ถัง")
     w["stat"] = ui.Label(" ", x=28, y=224, color=COL_DIM)          # ไม่ใส่ value = ตัวอักษร 20
     w["rhex"] = ui.Label(" ", x=28, y=270, color=COL_DIM, value=16)
-    w["note"] = ui.Label("SW5 อ่าน  SW6 สลับปั๊ม", x=12, y=352, color=COL_DIM, value=16)
+    w["note"] = ui.Label("SW5 อ่าน  SW6 สลับปั๊ม", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
