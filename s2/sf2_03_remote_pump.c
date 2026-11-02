@@ -69,10 +69,10 @@ static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>
 static const char TEAM[] = "teamXX";
 
 static const char BROKER[] = "broker.hivemq.com";
-/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
-static const char CLIENT_ID[] = "bento-farm-";
-/* TOPIC_CMD = ROOT/TEAM/cmd, TOPIC = ROOT/TEAM/telemetry */
-static const char ROOT[] = "bento-aiot";
+/* CLIENT_ID = "bento-farm-" + TEAM, + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ:
+ * ไม่ชน id เก่า, built in main() */
+/* TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd", built in main() */
+/* TOPIC = "bento-aiot/" + TEAM + "/telemetry", built in main() */
 /* ---- end of settings ---- */
 
 static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
@@ -1899,11 +1899,11 @@ int main(void)
     farm.shown = -1;
     farm.stop_button.index = 1U; /* SW5 */
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "bento-farm-%s", TEAM);
     (void)snprintf(farm.names.topic_cmd, sizeof(farm.names.topic_cmd),
-                   "%s/%s/cmd", ROOT, TEAM);
+                   "bento-aiot/%s/cmd", TEAM);
     (void)snprintf(farm.names.topic, sizeof(farm.names.topic),
-                   "%s/%s/telemetry", ROOT, TEAM);
+                   "bento-aiot/%s/telemetry", TEAM);
     status = start_farm(&farm);
     if (status == BENTO_OK) {
         status = listen(&farm);
