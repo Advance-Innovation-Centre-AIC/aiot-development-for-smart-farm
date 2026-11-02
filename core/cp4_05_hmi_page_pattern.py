@@ -136,7 +136,7 @@ def build():
     yes.hide()
     no.hide()
     w["box"], w["yes"], w["no"] = box, yes, no
-    w["help"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=16)   # บรรทัดล่าง: ใช้บอก "จบรอบ"
+    w["help"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=20)   # บรรทัดล่าง: ใช้บอก "จบรอบ"
     ui.poll()
     return w
 
