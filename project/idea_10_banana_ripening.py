@@ -138,7 +138,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=14, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_BANANA, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_BANANA, value=20)
 
 
 def show_link(w, ok):
@@ -154,27 +154,27 @@ def build_screen():
     card(12, 44, 768, 150, "สีเปลือก (ขั้นการบ่ม)")
     for i in range(5):
         px = 24 + i * 150
-        ui.Panel(x=px, y=72, w=140, h=30, color=PEEL[i][0], min=COL_EDGE, max=15, value=0)
-        ui.Label(PEEL[i][1], x=px + 6, y=106, color=COL_DIM, value=14)
-    w["here"] = ui.Label("^ ตอนนี้", x=24, y=124, color=COL_BANANA, value=14)
-    w["ripe"] = ui.Bar(x=24, y=150, w=560, h=18, min=0, max=100, value=0)
-    w["ripe_t"] = ui.Label("บ่มไปแล้ว 0 %", x=600, y=148, color=COL_TEXT, value=16)
+        ui.Panel(x=px, y=76, w=140, h=26, color=PEEL[i][0], min=COL_EDGE, max=15, value=0)
+        ui.Label(PEEL[i][1], x=px + 6, y=104, color=COL_DIM, value=20)
+    w["here"] = ui.Label("^ ตอนนี้", x=24, y=128, color=COL_BANANA, value=20)
+    w["ripe"] = ui.Bar(x=24, y=160, w=560, h=18, min=0, max=100, value=0)
+    w["ripe_t"] = ui.Label("บ่มไปแล้ว 0 %", x=600, y=155, color=COL_TEXT, value=20)
     card(12, 204, 380, 140, "อุณหภูมิห้องบ่ม")
     w["seg"] = ui.Seg7(text="--.-", x=24, y=234, w=150, h=56, color=COL_BANANA)
-    w["rh"] = ui.Label("C  RH -- %", x=184, y=256, color=COL_DIM, value=16)
+    w["rh"] = ui.Label("C  RH -- %", x=184, y=256, color=COL_DIM, value=20)
     for i in range(3):
         lx = 24 + i * 120
         w["leds"].append(ui.Led(x=lx, y=306, w=16, h=16, color=(COL_COLD, COL_OK, COL_BAD)[i]))
-        ui.Label(("เย็นไป", "พอดี", "ร้อนไป")[i], x=lx + 22, y=304, color=COL_DIM, value=14)
+        ui.Label(("เย็นไป", "พอดี", "ร้อนไป")[i], x=lx + 22, y=304, color=COL_DIM, value=20)
     card(402, 204, 300, 140, "แจ้งคนบ่ม")
-    w["mood"] = ui.Label("...", x=414, y=232, color=COL_WARN, value=16)
-    w["left"] = ui.Label("-", x=414, y=258, color=COL_TEXT, value=16)
-    w["out"] = ui.Label("หลุดช่วง 0 วิ", x=414, y=284, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=414, y=306, color=COL_DIM, value=14)
-    ui.Label("VR3 = ความร้อนจากหลังคา  " + BTN_NAMES[1] + " = รับทราบ", x=430, y=50, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    w["mood"] = ui.Label("...", x=414, y=232, color=COL_WARN, value=20)
+    w["left"] = ui.Label("-", x=414, y=258, color=COL_TEXT, value=20)
+    w["out"] = ui.Label("หลุดช่วง 0 วิ", x=414, y=284, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=414, y=310, color=COL_DIM, value=20)
+    ui.Label("VR3 = ความร้อนจากหลังคา  " + BTN_NAMES[1] + " = รับทราบ", x=430, y=50, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
@@ -208,7 +208,7 @@ def show_reading(w, s, t, h, sun, level, why_th):
     pct = ripe_pct(s)
     w["ripe"].value(pct)
     w["ripe_t"].text("บ่มไปแล้ว %d %%" % pct)
-    w["here"].pos(24 + min(4, pct // 20) * 150, 124)
+    w["here"].pos(24 + min(4, pct // 20) * 150, 128)
     w["mood"].color(LEVEL_COLORS[level])
     w["mood"].text(("บ่มอยู่ พอดี", "เริ่มหลุด: ", "หลุดมาก!: ")[level] + ("" if level == 0 else why_th))
     left = s.need_s - s.ok_s
