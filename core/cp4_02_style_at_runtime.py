@@ -117,7 +117,7 @@ def build_screen():
     w["banner"] = (banner, btxt)
     w["tank"] = ui.Label(" ", x=494, y=140, color=COL_INFO, value=20)      # น้ำในถัง (VR2)
     w["tank_bar"] = ui.Bar(x=494, y=172, w=286, h=18, min=0, max=100, value=0)
-    w["btn"] = ui.Button("เปิดปั๊ม", x=494, y=236, w=286, h=56, color=COL_INFO)
+    w["btn"] = ui.Button("เปิดปั๊ม", x=494, y=236, w=286, h=56, color=COL_INFO, value=20)
     w["note"] = ui.Label(" ", x=494, y=302, color=COL_DIM, value=20)
     w["help"] = ui.Label("VR1 = ดิน  VR2 = ถัง  แตะปุ่มได้", x=12, y=352,
                          color=COL_DIM, value=20)

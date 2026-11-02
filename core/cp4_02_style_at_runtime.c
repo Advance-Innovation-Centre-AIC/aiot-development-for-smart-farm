@@ -459,6 +459,7 @@ static bento_status_t add_pump_button(style_screen_t *screen)
     args.text = text;
     args.text_len = (uint32_t)strlen(text);
     args.color = COL_INFO;
+    args.font_px = FONT_TEXT; /* Thai: 20 px, not the default */
     return bento_ui_button_create(screen->ui, &args, &screen->button);
 }
 
