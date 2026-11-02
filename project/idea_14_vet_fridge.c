@@ -73,12 +73,21 @@
 #include "bento_ui_core.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า: แก้ก่อนรัน ---- */
-/* Set here: TEAM. Each other setting lives in the one function that
- * reads it: wifi_ssid, wifi_pass in join_wifi(); crop_name in
- * find_crop(); temp_offset in read_climate(); broker, client_prefix
- * in open_broker(); root in main(). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
+static const char CROP[] = "วัคซีนสัตว์";
+/* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+
+static const char BROKER[] = "broker.hivemq.com";
+static const char ROOT[] = "bento-aiot";
+/* CLIENT_ID = "bento-farm-" + TEAM, + a number at each connect,
+ * built in open_broker() */
+/* TOPIC_EVENT = ROOT/TEAM/event, built in main() */
+/* TOPIC_CMD = ROOT/TEAM/cmd, built in main() */
+/* ---- end of settings ---- */
 
 enum { /* timing, in ms */
     READ_MS = 1000,
@@ -423,15 +432,13 @@ static bento_real_t round_tenths(bento_real_t value)
 /* false when the sensor cannot be read, as the except does. */
 static bool read_climate(reading_t *reading)
 {
-    /* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
-    const bento_real_t temp_offset = (bento_real_t)0.0;
     float temp_c = 0.0F;
     float rh = 0.0F;
     bool ok = bento_sensors_sht40_temperature(&temp_c) == BENTO_OK;
 
     ok = ok && (bento_sensors_sht40_humidity(&rh) == BENTO_OK);
     if (ok) {
-        reading->temp_c = (bento_real_t)temp_c + temp_offset;
+        reading->temp_c = (bento_real_t)temp_c + TEMP_OFFSET;
         reading->rh = (bento_real_t)rh;
     }
     return ok;
@@ -461,7 +468,6 @@ static bool valid_team(void)
  * วัคซีนจริง 2-8 C. NULL when CROP is none of them. */
 static const crop_t *find_crop(void)
 {
-    static const char crop_name[] = "วัคซีนสัตว์";
     static const crop_t crops[] = {
         {"วัคซีนสัตว์", "vaccine", {20, 30, 20, 95}},
         {"ยาฉีดสัตว์", "injection", {20, 30, 20, 95}},
@@ -472,7 +478,7 @@ static const crop_t *find_crop(void)
     for (i = 0U;
          (found == NULL) && (i < (sizeof(crops) / sizeof(crops[0])));
          i++) {
-        if (strcmp(crops[i].thai, crop_name) == 0) {
+        if (strcmp(crops[i].thai, CROP) == 0) {
             found = &crops[i];
         }
     }
@@ -825,16 +831,14 @@ static bool cmd_is(const message_t *message, const command_t *command,
  * the binding's OSError does. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     (void)printf("[WiFi] Connecting...\r\n");
     status = bento_wifi_connect_start(&params);
@@ -878,23 +882,21 @@ static bool has_address(void)
  * False. A client that did not link is closed, as the binding does. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
-    static const char broker[] = "broker.hivemq.com";
-    static const char client_prefix[] = "bento-farm-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "bento-farm-%s-%04" PRIx32, TEAM,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
     config.client_id_len = (uint32_t)strlen(client_id);
-    (void)printf("[MQTT] Connecting to %s:%d ...\r\n", broker,
+    (void)printf("[MQTT] Connecting to %s:%d ...\r\n", BROKER,
                  BROKER_PORT);
     status = bento_mqtt_open_start(&config, &farm->broker);
     farm->emulator_gap = status == BENTO_E_UNSUPPORTED;
@@ -909,7 +911,7 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
     }
     *linked = status == BENTO_OK;
     if (*linked) {
-        (void)printf("[MQTT] Connected to %s:%d as '%s'\r\n", broker,
+        (void)printf("[MQTT] Connected to %s:%d as '%s'\r\n", BROKER,
                      BROKER_PORT, client_id);
     } else if (farm->broker != 0U) {
         (void)bento_mqtt_close(farm->broker); /* freed either way */
@@ -1772,16 +1774,15 @@ static bento_status_t run_farm(farm_t *farm)
 
 int main(void)
 {
-    static const char root[] = "bento-aiot";
     farm_t farm;
     bento_status_t status;
 
     (void)memset(&farm, 0, sizeof(farm));
     farm.screen.ui = bento_runtime_get_ui();
     (void)snprintf(farm.topic_event, sizeof(farm.topic_event),
-                   "%s/%s/event", root, TEAM);
+                   "%s/%s/event", ROOT, TEAM);
     (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
-                   root, TEAM);
+                   ROOT, TEAM);
     /* sent and forgotten; E_UNSUPPORTED is the hasattr() that fails */
     (void)bento_ui_sfx_volume_set(farm.screen.ui, SPEAKER);
     status = build_screen(&farm.screen);
