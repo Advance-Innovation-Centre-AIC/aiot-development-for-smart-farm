@@ -139,14 +139,15 @@ enum {
 
 /* The spectrum and the RGB matrix. */
 enum {
-    BINS = FFT_N / 2,    /* the FFT's frequency bins */
-    SAMPLE_BYTES = 2,    /* one 16-bit sample */
-    BANDS = 16,          /* bars on the RGB matrix */
-    MATRIX_ROWS = 8,     /* rows of the RGB matrix */
-    FRAME_BYTES = 64,    /* one matrix picture, 4 bits a pixel */
-    FRAME_ROW_BYTES = 8, /* 16 pixels of 4 bits */
-    GREEN_ROWS = 4,      /* the lowest rows are green */
-    YELLOW_ROWS = 6,     /* then yellow, then red */
+    BINS = FFT_N / 2,      /* the FFT's frequency bins */
+    SAMPLE_BYTES = 2,      /* one 16-bit sample */
+    FFT_BYTES = FFT_N * 2, /* one window of 16-bit samples */
+    BANDS = 16,            /* bars on the RGB matrix */
+    MATRIX_ROWS = 8,       /* rows of the RGB matrix */
+    FRAME_BYTES = 64,      /* one matrix picture, 4 bits a pixel */
+    FRAME_ROW_BYTES = 8,   /* 16 pixels of 4 bits */
+    GREEN_ROWS = 4,        /* the lowest rows are green */
+    YELLOW_ROWS = 6,       /* then yellow, then red */
     NIBBLE_BITS = 4,
     LOW_NIBBLE = 0x0F,
     HIGH_NIBBLE = 0xF0,
@@ -178,10 +179,6 @@ enum {
     TUNE_KINDS = 7
 };
 
-/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
- * button = pressed(0). */
-static const char *const BUTTON_NAMES[BUTTON_COUNT] = {"SW5", "SW6"};
-
 typedef struct {
     int32_t x;
     int32_t y;
@@ -199,7 +196,7 @@ typedef struct {
 /* The sound buffers: the raw bytes, the samples, the FFT's work area,
  * the newest spectrum and the loudest of each bin this half second. */
 typedef struct {
-    uint8_t bytes[FFT_N * SAMPLE_BYTES];
+    uint8_t bytes[FFT_BYTES];
     int16_t samples[FFT_N];
     float scratch[FFT_N * 2];
     float spectrum[BINS];
@@ -304,8 +301,9 @@ static bento_status_t listen(uint32_t handle, sound_t *sound)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -447,7 +445,9 @@ static int32_t note_hz(int32_t note)
     const float octaves =
         (float)(note - A4_NOTE) / (float)NOTES_PER_OCTAVE;
 
-    return (int32_t)((float)A4_HZ * powf(octave_ratio, octaves));
+    const float hz = (float)A4_HZ * powf(octave_ratio, octaves);
+
+    return (int32_t)hz;
 }
 
 /* Loudness as a bar height of 0-8 rows: lit from FLOOR_DB, one more
@@ -695,6 +695,7 @@ static void show(const screen_t *screen, const float spectrum[BINS],
     const bool loud = db >= FLOOR_DB;
     float points[POINTS];
     char text[TEXT_BYTES];
+    int32_t heard_ms;
     int32_t i;
 
     (void)snprintf(text, sizeof(text), "%ld",
@@ -703,8 +704,9 @@ static void show(const screen_t *screen, const float spectrum[BINS],
     (void)snprintf(text, sizeof(text), "ช่อง %ld  %ld dB", (long)peak,
                    (long)db);
     set_text(screen->ui, screen->bin, loud ? text : "เงียบ");
+    heard_ms = (heard * FFT_N * (int32_t)MS_PER_S) / FS_HZ;
     (void)snprintf(text, sizeof(text), "ฟัง %ld ms ต่อ %d ms",
-                   (long)((heard * FFT_N * MS_PER_S) / FS_HZ), TICK_MS);
+                   (long)heard_ms, TICK_MS);
     set_text(screen->ui, screen->heard, text);
     /* the screen's queue drops chart commands when nearly full, and a
      * lost point shifts the whole line, so only POINTS points go */
@@ -722,6 +724,10 @@ static void show(const screen_t *screen, const float spectrum[BINS],
 static bento_status_t check_buttons(const screen_t *screen,
                                     listen_t *state)
 {
+    /* names on the panel: SW5 = lower button = pressed(1), SW6 =
+     * upper button = pressed(0) */
+    static const char *const button_names[BUTTON_COUNT] = {"SW5",
+                                                           "SW6"};
     static const int32_t notes[BUTTON_COUNT] = {NOTE_SW5, NOTE_SW6};
     bento_status_t status = BENTO_OK;
     uint32_t i;
@@ -739,7 +745,7 @@ static bento_status_t check_buttons(const screen_t *screen,
                                     (uint8_t)BENTO_UI_WAVE_SINE,
                                     (uint8_t)VOLUME, (uint16_t)NOTE_MS);
             (void)snprintf(text, sizeof(text), "%s เล่น %ld Hz",
-                           BUTTON_NAMES[i], (long)note_hz(notes[i]));
+                           button_names[i], (long)note_hz(notes[i]));
             set_text(screen->ui, screen->note, text);
         }
         state->down[i] = down;

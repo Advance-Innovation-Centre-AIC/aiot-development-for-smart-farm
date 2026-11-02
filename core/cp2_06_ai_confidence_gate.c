@@ -35,6 +35,8 @@
  *     the stop's failure is ignored, as the .py's except does;
  *   - a result that fails to arrive skips the round (the .py's
  *     OSError); a C program also closes the module's link at the end;
+ *   - the settings MODEL_KEY and CONF_* live in the function that reads
+ *     them (MISRA 8.9); a comment at the top says where;
  *   - round() rounds half to even, as Python's does;
  *   - hasattr(ui, "volume") is not asked: the volume call is always
  *     made, and a firmware without it refuses it, which is ignored;
@@ -54,9 +56,9 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* The name (or part of it) of the built-in model: try "Cough",
- * "Alarm", "Siren". */
-static const char MODEL_KEY[] = "Motion";
+/* MODEL_KEY (the model's name, or part of it) is model_key in main(),
+ * and CONF_MIN, CONF_LO and CONF_HI (the threshold) are in conf_min():
+ * each lives in the one function that reads it (MISRA 8.9). */
 
 /* Settings a student may change. */
 enum {
@@ -68,12 +70,6 @@ enum {
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-/* 0 = set the threshold live with VR1; a number such as 0.95 fixes
- * it (VR1 then does nothing). */
-static const float CONF_MIN = 0.0F;
-/* The range VR1 turns the threshold through. */
-static const float CONF_LO = 0.50F;
-static const float CONF_HI = 0.99F;
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -257,12 +253,19 @@ static float score_of(uint8_t percent)
     return (float)percent / (float)PERCENT;
 }
 
+/* A capital letter's small one, by table (no arithmetic on
+ * characters). */
 static char lower_ascii(char letter)
 {
+    static const char capitals[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char smalls[] = "abcdefghijklmnopqrstuvwxyz";
     char lower = letter;
+    size_t i;
 
-    if ((letter >= 'A') && (letter <= 'Z')) {
-        lower = (char)((letter - 'A') + 'a');
+    for (i = 0U; i < (sizeof(capitals) - 1U); i++) {
+        if (capitals[i] == letter) {
+            lower = smalls[i];
+        }
     }
     return lower;
 }
@@ -334,14 +337,20 @@ static void find_model(const char *key, model_t *model)
  * CONF_LO..CONF_HI. */
 static bento_status_t conf_min(float *threshold)
 {
+    /* CONF_MIN: 0 = set the threshold live with VR1; a number such as
+     * 0.95 fixes it (VR1 then does nothing) */
+    static const float conf_fixed = 0.0F;
+    /* CONF_LO, CONF_HI: the range VR1 turns the threshold through */
+    static const float conf_lo = 0.50F;
+    static const float conf_hi = 0.99F;
     uint16_t raw = 0U;
     bento_status_t status = BENTO_OK;
 
-    if (CONF_MIN != 0.0F) {
-        *threshold = CONF_MIN;
+    if (conf_fixed != 0.0F) {
+        *threshold = conf_fixed;
     } else {
         status = bento_pots_read(0U, &raw);
-        *threshold = CONF_LO + (((float)raw * (CONF_HI - CONF_LO)) /
+        *threshold = conf_lo + (((float)raw * (conf_hi - conf_lo)) /
                                 (float)POT_FULL);
     }
     return status;
@@ -351,8 +360,9 @@ static bento_status_t conf_min(float *threshold)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -898,6 +908,9 @@ int main(void)
 {
     screen_t screen;
     model_t model;
+    /* MODEL_KEY: the name (or part of it) of the built-in model; try
+     * "Cough", "Alarm", "Siren" */
+    static const char model_key[] = "Motion";
     char text[TEXT_BYTES];
     bento_status_t status;
 
@@ -911,14 +924,14 @@ int main(void)
         status = build_screen(&screen);
     }
     if (status == BENTO_OK) {
-        find_model(MODEL_KEY, &model);
+        find_model(model_key, &model);
         if (model.found) {
             status = run_found(&screen, &model);
         } else {
             /* no built-in model of this name: end calmly */
             (void)bento_ui_set_color(screen.ui, screen.model, COL_BAD);
             (void)snprintf(text, sizeof(text), "ไม่พบโมเดล %s",
-                           MODEL_KEY);
+                           model_key);
             set_text(screen.ui, screen.model, text);
             poll_screen(screen.ui);
         }
