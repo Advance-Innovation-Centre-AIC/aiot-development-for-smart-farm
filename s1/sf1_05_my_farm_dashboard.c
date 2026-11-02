@@ -49,8 +49,9 @@
 #include "bento_time.h"
 
 /* ---- 1) ตั้งค่า (แก้ได้) ---- */
-static const char FARM_NAME[] = "ฟาร์มกลุ่มที่ ?"; /* TODO: ตั้งชื่อฟาร์ม */
-static const char CROP[] = "มะเขือเทศ";        /* TODO: พืชหรือสัตว์ที่ดูแล */
+/* TODO: ชื่อฟาร์ม (farm_name) และพืชหรือสัตว์ที่ดูแล (crop) อยู่ใน
+ * build_screen(); TEMP_OFFSET และ HUM_FIX (temp_offset, hum_fix) อยู่ใน
+ * read_climate(): อ่านที่เดียว จึงอยู่ในฟังก์ชันนั้น (MISRA 8.9) */
 enum {
     SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
     VOLUME = 25,  /* ความดังเสียง 0-127 */
@@ -66,12 +67,8 @@ enum {
     TAB_BAR_H = 44,
     ALERT_GAP_MS = 3000
 };
-/* TODO: ค่าชดเชยเดียวกับที่กลุ่มหาได้ใน sf1_01 เช่น -9.5 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
-/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-static const bool HUM_FIX = true;
-/* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
-static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+/* The button names (SW5 = ปุ่มล่าง, SW6 = ปุ่มบน) live in
+ * build_overview_tab(), the one function that reads them. */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -107,9 +104,8 @@ enum { /* zones, sound, sensors, buttons and the screen */
     TEXT_CHARS = 128
 };
 
-static const uint32_t ZONE_COLORS[ZONES] = {COL_OK, COL_WARN, COL_BAD};
-static const int32_t MATRIX_COLORS[ZONES] = {
-    BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_YELLOW, BENTO_RGBMATRIX_RED};
+/* The zone colours live in show() (screen) and matrix_show() (RGB
+ * matrix), each the one function that reads them. */
 
 /* ---- 2) ฮาร์ดแวร์ ---- */
 typedef enum {
@@ -127,12 +123,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -144,9 +134,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -195,6 +191,10 @@ typedef struct {
  * 3 misses there is no reading this round. */
 static bento_status_t read_climate(climate_t *climate)
 {
+    /* TODO: ค่าชดเชยเดียวกับที่กลุ่มหาได้ใน sf1_01 เช่น -9.5 */
+    const bento_real_t temp_offset = (bento_real_t)0.0;
+    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+    const bool hum_fix = true;
     float t_raw = 0.0F;
     float h = 0.0F;
     uint32_t tries = 0U;
@@ -214,9 +214,9 @@ static bento_status_t read_climate(climate_t *climate)
         }
     }
     if (climate->known) {
-        climate->t = (bento_real_t)t_raw + TEMP_OFFSET;
+        climate->t = (bento_real_t)t_raw + temp_offset;
         climate->h = (bento_real_t)h;
-        if ((TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
+        if ((temp_offset != (bento_real_t)0) && hum_fix) {
             climate->h = room_humidity(climate->h, (bento_real_t)t_raw,
                                        climate->t);
         }
@@ -322,14 +322,18 @@ static bento_status_t matrix_show(bool show_temp,
                                   int32_t score, int32_t zone,
                                   matrix_shown_t *shown)
 {
+    static const int32_t matrix_colors[ZONES] = {BENTO_RGBMATRIX_GREEN,
+                                                 BENTO_RGBMATRIX_YELLOW,
+                                                 BENTO_RGBMATRIX_RED};
     int32_t value = score;
-    int32_t color = MATRIX_COLORS[zone];
+    int32_t color = matrix_colors[zone];
     bento_status_t status = BENTO_OK;
 
     if (show_temp && climate->known) {
         const bento_real_t half = (bento_real_t)0.5;
+        const bento_real_t rounded = climate->t + half;
 
-        value = (int32_t)(climate->t + half);
+        value = (int32_t)rounded;
         color = BENTO_RGBMATRIX_CYAN;
     }
     if (!shown->known || (value != shown->value) ||
@@ -527,6 +531,8 @@ static void refresh(bento_ui_t *ui)
 static bento_status_t build_overview_tab(farm_screen_t *screen,
                                          bento_ui_id_t tab)
 {
+    /* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+    static const char *const button_names[] = {"SW5", "SW6"};
     static const widget_spec_t specs[] = {
         {bento_ui_arc_create, NULL, 0, 0, 150, 150, 0, 0, 100, 0},
         {bento_ui_label_create, "0", 50, 54, 0, 0, COL_TEXT, 0, 0, 28},
@@ -561,7 +567,7 @@ static bento_status_t build_overview_tab(farm_screen_t *screen,
     }
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "%s (บน) = สลับจอไฟ RGB",
-                       BUTTON_NAMES[1]);
+                       button_names[1]);
         status =
             add_child(screen->ui, &event, text, tab, &screen->event);
     }
@@ -651,6 +657,10 @@ static bento_status_t build_tabs(farm_screen_t *screen)
 
 static bento_status_t build_screen(farm_screen_t *screen)
 {
+    /* TODO: ตั้งชื่อฟาร์ม */
+    static const char farm_name[] = "ฟาร์มกลุ่มที่ ?";
+    /* TODO: พืชหรือสัตว์ที่ดูแล */
+    static const char crop[] = "มะเขือเทศ";
     static const widget_spec_t title = {
         bento_ui_label_create, NULL, 12, 6, 0, 0, COL_TEXT, 0, 0, 24};
     static const widget_spec_t advice = {
@@ -663,7 +673,7 @@ static bento_status_t build_screen(farm_screen_t *screen)
         status = sleep_ms(SETTLE_MS);
     }
     if (status == BENTO_OK) {
-        (void)snprintf(text, sizeof(text), "%s - %s", FARM_NAME, CROP);
+        (void)snprintf(text, sizeof(text), "%s - %s", farm_name, crop);
         status = add_child(screen->ui, &title, text, 0U, &widget);
     }
     if (status == BENTO_OK) {
@@ -773,11 +783,13 @@ static void show_trend_and_advice(const farm_screen_t *screen,
 
 static void show(const farm_screen_t *screen, const farm_view_t *view)
 {
+    static const uint32_t zone_colors[ZONES] = {COL_OK, COL_WARN,
+                                                COL_BAD};
     char text[TEXT_CHARS];
 
     (void)bento_ui_set_value(screen->ui, screen->arc, view->score);
     (void)bento_ui_set_color(screen->ui, screen->arc,
-                             ZONE_COLORS[view->zone]);
+                             zone_colors[view->zone]);
     (void)snprintf(text, sizeof(text), "%" PRId32, view->score);
     set_text(screen->ui, screen->score, text);
     show_air_and_soil(screen, view);
@@ -815,7 +827,7 @@ static void update_manual(farm_t *farm)
     }
     if (farm->manual &&
         (bento_time_ticks_diff(bento_time_ticks_ms(), farm->manual_ms) >
-         (MANUAL_S * MS_PER_S))) {
+         ((int32_t)MANUAL_S * (int32_t)MS_PER_S))) {
         farm->manual = false;
     }
 }

@@ -61,15 +61,11 @@ enum {
 
 /* แรงรวมเกินกี่ g = กระแทก */
 static const bento_real_t BUMP_G = (bento_real_t)1.8;
-static const bento_real_t G = (bento_real_t)9.81;
-/* เอียงเท่านี้ จุดบนจอไฟ RGB ชนขอบ */
-static const bento_real_t RANGE_DEG =
-    (bento_real_t)SAFE_DEG * (bento_real_t)1.5;
-static const bento_real_t DEGREES_PER_RADIAN =
-    (bento_real_t)57.29577951308232;
-
-/* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
-static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+/* Read by one function each, so they live there (MISRA 8.9): the
+ * gravity 9.81 in g_force(), range_deg (เอียงเท่านี้ จุดบนจอไฟ RGB
+ * ชนขอบ, SAFE_DEG x 1.5) in bubble_cell(), degrees_per_radian in
+ * tilt_angles(), the button names SW5 / SW6 in run_tank(), and the
+ * level colours in show_tilt() and matrix_update(). */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -87,11 +83,6 @@ enum {
     LEVEL_DANGER,
     LEVELS
 };
-
-static const uint32_t LEVEL_COLORS[LEVELS] = {COL_OK, COL_WARN,
-                                              COL_BAD};
-static const int32_t MATRIX_COLORS[LEVELS] = {
-    BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_YELLOW, BENTO_RGBMATRIX_RED};
 
 enum { /* hardware and units */
     SW5_INDEX = 1,
@@ -150,12 +141,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -167,9 +152,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -312,8 +303,9 @@ static void put_pixel(uint8_t frame[], int32_t x, int32_t y,
     const uint32_t old = frame[i];
 
     if ((x % 2) == 1) {
-        frame[i] = (uint8_t)((old & (uint32_t)LOW_NIBBLE) |
-                             ((uint32_t)color << NIBBLE_BITS));
+        frame[i] =
+            (uint8_t)((old & (uint32_t)LOW_NIBBLE) |
+                      ((uint32_t)color << (uint32_t)NIBBLE_BITS));
     } else {
         frame[i] =
             (uint8_t)((old & (uint32_t)HIGH_NIBBLE) | (uint32_t)color);
@@ -361,6 +353,8 @@ typedef struct {
  * lets the board lie face up or face down. */
 static angles_t tilt_angles(const motion_t *motion)
 {
+    const bento_real_t degrees_per_radian =
+        (bento_real_t)57.29577951308232;
     angles_t angles;
     const float side =
         (motion->ay * motion->ay) + (motion->az * motion->az);
@@ -369,18 +363,19 @@ static angles_t tilt_angles(const motion_t *motion)
     const bento_real_t pitch_rad = (bento_real_t)atan2(
         -(double)motion->ax, (double)(float)sqrt((double)side));
 
-    angles.roll = roll_rad * DEGREES_PER_RADIAN;
-    angles.pitch = pitch_rad * DEGREES_PER_RADIAN;
+    angles.roll = roll_rad * degrees_per_radian;
+    angles.pitch = pitch_rad * degrees_per_radian;
     return angles;
 }
 
 static bento_real_t g_force(const motion_t *motion)
 {
+    const bento_real_t gravity = (bento_real_t)9.81;
     float sum = motion->ax * motion->ax;
 
     sum = sum + (motion->ay * motion->ay);
     sum = sum + (motion->az * motion->az);
-    return (bento_real_t)(float)sqrt((double)sum) / G;
+    return (bento_real_t)(float)sqrt((double)sum) / gravity;
 }
 
 /* 0 = safe, 1 = careful (past 70 % of SAFE_DEG), 2 = danger. */
@@ -414,14 +409,17 @@ static bento_real_t clamp_unit(bento_real_t value)
 }
 
 /* The cell of the bubble's corner: pitch moves it across, roll up
- * and down, both a full side at RANGE_DEG. */
+ * and down, both a full side at range_deg. */
 static bubble_t bubble_cell(const angles_t *angles, int32_t color)
 {
+    /* เอียงเท่านี้ จุดบนจอไฟ RGB ชนขอบ */
+    const bento_real_t range_deg =
+        (bento_real_t)SAFE_DEG * (bento_real_t)1.5;
     bubble_t bubble;
     const bento_real_t across =
-        clamp_unit(angles->pitch / RANGE_DEG) * (bento_real_t)TARGET_X;
+        clamp_unit(angles->pitch / range_deg) * (bento_real_t)TARGET_X;
     const bento_real_t down =
-        clamp_unit(angles->roll / RANGE_DEG) * (bento_real_t)TARGET_Y;
+        clamp_unit(angles->roll / range_deg) * (bento_real_t)TARGET_Y;
 
     bubble.known = true;
     bubble.x =
@@ -435,7 +433,10 @@ static bubble_t bubble_cell(const angles_t *angles, int32_t color)
 static void matrix_update(const angles_t *angles, int32_t level,
                           bubble_t *drawn)
 {
-    const bubble_t want = bubble_cell(angles, MATRIX_COLORS[level]);
+    static const int32_t matrix_colors[LEVELS] = {
+        BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_YELLOW,
+        BENTO_RGBMATRIX_RED};
+    const bubble_t want = bubble_cell(angles, matrix_colors[level]);
 
     if (!drawn->known || (want.x != drawn->x) || (want.y != drawn->y) ||
         (want.color != drawn->color)) {
@@ -598,8 +599,9 @@ static void refresh(bento_ui_t *ui)
 static void set_needle(bento_ui_t *ui, bento_ui_id_t scale,
                        int32_t value)
 {
-    const uint32_t packed = ((uint32_t)NEEDLE_LEN << NEEDLE_SHIFT) |
-                            ((uint32_t)value & (uint32_t)NEEDLE_MASK);
+    const uint32_t packed =
+        ((uint32_t)NEEDLE_LEN << (uint32_t)NEEDLE_SHIFT) |
+        ((uint32_t)value & (uint32_t)NEEDLE_MASK);
 
     (void)bento_ui_set_prop(ui, scale, BENTO_UI_PROP_SCALE_NEEDLE,
                             (int32_t)packed);
@@ -804,7 +806,9 @@ static void show_tilt(const tilt_screen_t *screen,
                       const angles_t *angles, int32_t tilt,
                       int32_t level, const record_t *record)
 {
-    const uint32_t color = LEVEL_COLORS[level];
+    static const uint32_t level_colors[LEVELS] = {COL_OK, COL_WARN,
+                                                  COL_BAD};
+    const uint32_t color = level_colors[level];
     char text[TEXT_CHARS];
 
     set_needle(screen->ui, screen->gauge,
@@ -1015,6 +1019,8 @@ static bento_status_t finish(const tilt_screen_t *screen,
 static bento_status_t run_tank(const tilt_screen_t *screen,
                                tank_t *tank)
 {
+    /* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+    static const char *const button_names[] = {"SW5", "SW6"};
     char text[TEXT_CHARS];
     uint32_t start_ms;
     bento_status_t status = measure_zero(screen, &tank->zero);
@@ -1023,7 +1029,7 @@ static bento_status_t run_tank(const tilt_screen_t *screen,
         set_color(screen->ui, screen->help, COL_DIM);
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = ตั้งศูนย์ใหม่   %s (บน) = ล้างตัวนับ",
-                       BUTTON_NAMES[0], BUTTON_NAMES[1]);
+                       button_names[0], button_names[1]);
         set_text(screen->ui, screen->help, text);
     }
     tank->last_ms = bento_time_ticks_ms();
