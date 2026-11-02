@@ -44,21 +44,24 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
     VOLUME = 25,  /* ความดังเสียง 0-127 */
     RUN_MS = 120000,
-    TICK_MS = 500,
+    TICK_MS = 500
+};
+/* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+static const bool HUM_FIX = true;
+enum {
     T_WARM = 30, /* อุ่นกว่านี้ = เหลือง */
     T_HOT = 35,  /* ร้อนกว่านี้ = แดง */
     T_GAUGE_MAX = 50,
     NEEDLE_LEN = 32
 };
-
-/* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
-/* HUM_FIX (แปลงความชื้นเป็นของห้อง) อยู่ใน read_climate() ชื่อ hum_fix */
+/* ---- end of settings ---- */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -302,8 +305,6 @@ static bento_status_t read_sht40(climate_t *climate)
 
 static bento_status_t read_climate(climate_t *climate)
 {
-    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-    static const bool hum_fix = true;
     float pressure = 0.0F;
     bento_status_t status;
 
@@ -318,7 +319,7 @@ static bento_status_t read_climate(climate_t *climate)
         climate->t.value = climate->t_raw.value + TEMP_OFFSET;
     }
     if (climate->h.known && climate->t.known &&
-        (TEMP_OFFSET != (bento_real_t)0) && hum_fix) {
+        (TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
         climate->h.value = room_humidity(
             climate->h.value, climate->t_raw.value, climate->t.value);
     }
