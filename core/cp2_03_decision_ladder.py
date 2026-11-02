@@ -101,26 +101,26 @@ STATE_COL = {"OK": COL_OK, "WATCH": COL_WARN, "ALARM": COL_BAD, "COOLDOWN": COL_
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("บันไดตัดสิน: ค่าเดียว 4 วิธี", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"v": ui.Label(" ", x=12, y=38, color=COL_WARN, value=16), "led": [], "st": [], "seg": []}
+    w = {"v": ui.Label(" ", x=12, y=38, color=COL_WARN, value=20), "led": [], "st": [], "seg": []}
     rules = ("> %d" % LIMIT, "> %d ดับ < %d" % (LIMIT + HYST, LIMIT - HYST),
              "ต่อเนื่อง %d วิ" % HOLD_S, "ค้างจนกด " + BTN_NAMES[0])
     for i in range(4):                                  # 4 การ์ดเรียงกัน กว้าง 186 ห่างกัน 194
         x = 12 + 194 * i
         card(x, 66, 186, 272, TITLES[i])
         w["led"].append(ui.Led(x=x + 14, y=100, w=44, h=44, color=COL_BAD, value=0))
-        w["st"].append(ui.Label("ดับ", x=x + 64, y=114, color=COL_TEXT, value=16))
-        ui.Label("สลับ (ครั้ง)", x=x + 14, y=160, color=COL_DIM, value=16)
+        w["st"].append(ui.Label("ดับ", x=x + 64, y=114, color=COL_TEXT, value=20))
+        ui.Label("สลับ (ครั้ง)", x=x + 14, y=156, color=COL_DIM, value=20)
         w["seg"].append(ui.Seg7(text="0", x=x + 14, y=186, w=150, h=56, color=COL_INFO))
-        ui.Label(rules[i], x=x + 14, y=262, color=COL_DIM, value=16)
+        ui.Label(rules[i], x=x + 14, y=262, color=COL_DIM, value=20)
     w["help"] = ui.Label("หมุน VR1 ค้างแถวเส้น ดูตัวนับ   " + BTN_NAMES[0] + " = รับทราบ",
-                         x=12, y=352, color=COL_DIM, value=16)
+                         x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
