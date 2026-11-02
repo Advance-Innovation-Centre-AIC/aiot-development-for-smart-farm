@@ -62,6 +62,9 @@
  *     down and the matrix is skipped; any other failure of VR3 or
  *     the buttons ends the program.
  *   - The wifi and mqtt modules' own console lines are not printed.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and runs offline, as the .py does; the note
+ *     sits over the top of the distance chart (no free spot is left).
  *   - Stop ends the program quietly, where MicroPython raises
  *     KeyboardInterrupt and its finally still draws the end screen;
  *     the client is closed in both.
@@ -151,6 +154,14 @@ enum {
     CARD_TITLE_DY = 6,
     CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
+};
+
+/* Where the emulator's note goes: the top of the distance chart. */
+enum {
+    GAP_X = 24,
+    GAP_Y = 120,
+    GAP_W = 390, /* wraps the note onto two lines */
+    GAP_PX = 20
 };
 
 /* Buffer sizes, in bytes. */
@@ -247,6 +258,7 @@ typedef struct {
     bool radar_ok;
     bool acknowledged;
     bool online;
+    bool no_mqtt; /* the BENTO Emulator has no MQTT from C */
     uint32_t beep_ms;
     bool has_shown; /* the matrix picture last sent */
     bool shown_armed;
@@ -855,6 +867,7 @@ static bento_status_t try_broker(guard_t *guard, bool *linked)
     config.client_id = client_id;
     config.client_id_len = (uint32_t)strlen(client_id);
     status = bento_mqtt_open_start(&config, &guard->broker);
+    guard->no_mqtt = status == BENTO_E_UNSUPPORTED;
     if (status == BENTO_OK) {
         status = wait_for_broker(guard->broker);
     }
@@ -869,6 +882,31 @@ static bento_status_t try_broker(guard_t *guard, bool *linked)
     return status;
 }
 
+/* The BENTO Emulator has no MQTT from C yet: say so on the screen and
+ * in the console; the caller then takes the .py's broker-down path. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน "
+        "Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run it "
+        "on a Dev Kit or Eva Kit.\n",
+        gap);
+    bento_ui_widget_args_init(&args);
+    args.text = gap;
+    args.text_len = (uint32_t)strlen(gap);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W;
+    args.color = COL_WARN;
+    args.font_px = GAP_PX;
+    return bento_ui_label_create(ui, &args, &label);
+}
+
 /* The public broker is down now and then: 3 tries. */
 static bento_status_t connect_broker(guard_t *guard, bool *linked)
 {
@@ -877,7 +915,8 @@ static bento_status_t connect_broker(guard_t *guard, bool *linked)
 
     *linked = false;
     for (attempt = 1;
-         (attempt <= BROKER_TRIES) && (status == BENTO_OK) && !*linked;
+         (attempt <= BROKER_TRIES) && (status == BENTO_OK) &&
+         !*linked && !guard->no_mqtt;
          attempt++) {
         status = try_broker(guard, linked);
     }
@@ -944,6 +983,9 @@ static bento_status_t go_online(const screen_t *screen, guard_t *guard,
     }
     if ((status == BENTO_OK) && joined) {
         status = connect_broker(guard, &linked);
+        if ((status == BENTO_OK) && guard->no_mqtt) {
+            status = show_emulator_gap(screen->ui);
+        }
         *why = "broker ไม่ตอบ";
     }
     if ((status == BENTO_OK) && linked) {
