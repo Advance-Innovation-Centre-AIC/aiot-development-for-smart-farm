@@ -142,7 +142,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=10, value=1)
-    ui.Label(title, x=x + 10, y=y + 6, color=COL_GOLD, value=16)
+    ui.Label(title, x=x + 10, y=y + 6, color=COL_GOLD, value=20)
 
 
 def show_link(w, ok):
@@ -156,37 +156,37 @@ def build_screen():
     ui.Label("โรงอบลำไย  เฝ้าเตาแทนคนทั้งคืน", x=12, y=4, color=COL_GOLD, value=24)
     w = {"box": None, "leds": []}
     # แถบบน: เตาตอนนี้ (เลขใหญ่ + ไฟ 3 ดวง + รับทราบ)
-    card(12, 40, 568, 118, "เตาตอนนี้")
+    card(12, 40, 568, 154, "เตาตอนนี้")
     w["seg"] = ui.Seg7(text="--.-", x=24, y=66, w=150, h=64, color=COL_GOLD)
     ui.Label("C", x=128, y=84, color=COL_DIM, value=24)
-    w["mood"] = ui.Label("...", x=222, y=64, color=COL_WARN, value=16)
-    w["rh"] = ui.Label("ชื้น -- %", x=222, y=92, color=COL_DIM, value=16)
-    w["fire"] = ui.Label("ไฟเตา +0", x=340, y=92, color=COL_DIM, value=16)
+    w["mood"] = ui.Label("...", x=222, y=64, color=COL_WARN, value=20)
+    w["rh"] = ui.Label("ชื้น -- %", x=222, y=92, color=COL_DIM, value=20)
+    w["fire"] = ui.Label("ไฟเตา +0", x=340, y=92, color=COL_DIM, value=20)
     for i in range(3):
         x = 222 + i * 76
         w["leds"].append(ui.Led(x=x, y=126, w=18, h=18, color=LEVEL_COLORS[i]))
-        ui.Label(("พอดี", "ระวัง", "อันตราย")[i], x=x + 22, y=126, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=456, y=116, color=COL_DIM, value=14)
+        ui.Label(("พอดี", "ระวัง", "อันตราย")[i], x=x + 22, y=126, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=24, y=136, color=COL_DIM, value=20)
     # แถบล่าง: บันทึกเตาทั้งคืน (กราฟกว้าง) + ตัวเลขที่บอร์ดคิดเอง
-    card(12, 166, 568, 174, "บันทึกเตาทั้งคืน")
-    w["chart"] = ui.Chart(x=24, y=192, w=544, h=100, color=COL_WARN, min=THERMO_LO, max=THERMO_HI)
+    card(12, 202, 568, 160, "บันทึกเตาทั้งคืน")
+    w["chart"] = ui.Chart(x=24, y=228, w=544, h=72, color=COL_WARN, min=THERMO_LO, max=THERMO_HI)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
-    w["bake"] = ui.Label("อบพอดีสะสม 00:00", x=24, y=298, color=COL_TEXT, value=16)
-    w["peak"] = ui.Label("ร้อนสุด -- C", x=220, y=298, color=COL_TEXT, value=16)
-    ui.Label("ส้ม = ห้องอบ  แดง = เกณฑ์ไหม้", x=376, y=300, color=COL_DIM, value=14)
-    ui.Label("VR3 = ไฟจากเตา  " + BTN_NAMES[1] + " = รับทราบ", x=24, y=320, color=COL_DIM, value=14)
+    w["bake"] = ui.Label("อบพอดีสะสม 00:00", x=24, y=304, color=COL_TEXT, value=20)
+    w["peak"] = ui.Label("ร้อนสุด -- C", x=190, y=304, color=COL_TEXT, value=20)
+    ui.Label("ส้ม = ห้องอบ  แดง = เกณฑ์ไหม้", x=320, y=306, color=COL_DIM, value=20)
+    ui.Label("VR3 = ไฟจากเตา  " + BTN_NAMES[1] + " = รับทราบ", x=24, y=330, color=COL_DIM, value=20)
     # เสาขวา: ปรอทห้องอบ ตั้งสูงข้างเตา
     card(590, 40, 190, 300, "ปรอทห้องอบ")
     w["thermo"] = ui.Bar(x=610, y=70, w=40, h=210, min=THERMO_LO, max=THERMO_HI, value=THERMO_LO)
     pass  # Bar.color() ตั้งสีส่วนที่เติมบนบอร์ดจริง ใช้สีเดิมของ Bar ให้เห็นชัด
     for i in range(4):                 # ขีดบอกค่าข้างแท่ง 50 40 30 20
         ui.Label("%d C" % (THERMO_HI - i * 10), x=662, y=62 + i * 70, color=COL_DIM, value=14)
-    w["limit"] = ui.Label("-", x=602, y=290, color=COL_BAD, value=14)
-    w["crop"] = ui.Label("-", x=602, y=312, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=356, color=COL_DIM)
+    w["limit"] = ui.Label("-", x=602, y=290, color=COL_BAD, value=20)
+    w["crop"] = ui.Label("-", x=602, y=312, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=366, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=10, w=16, h=16, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=20)
     ui.poll()
     return w
 
