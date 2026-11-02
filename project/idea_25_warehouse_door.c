@@ -1410,6 +1410,11 @@ static bento_status_t show_emulator_gap(const door_app_t *app)
 {
     static const char gap_text[] =
         "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    /* the BENTO Emulator does not wrap a label to its width, so the
+     * label breaks its lines itself (a new line for a space); the
+     * door panel is 154 px wide inside, so five lines */
+    static const char lines[] = "MQTT จาก C\nยังไม่มีใน BENTO\nEmulator\n"
+                                "ให้รันบน Dev Kit\nหรือ Eva Kit";
     /* five lines of 26 px inside the door panel (x 12-182), between
      * its word (ink to y 108) and the cm line (y 290): the strip
      * under the cards ends in the firmware's Console button */
@@ -1419,7 +1424,7 @@ static bento_status_t show_emulator_gap(const door_app_t *app)
         "%s / MQTT from C is not in the BENTO Emulator yet: run "
         "it on a Dev Kit or Eva Kit.\n",
         gap_text);
-    return add_label(app->ui, &gap, gap_text);
+    return add_label(app->ui, &gap, lines);
 }
 
 /* Three tries, a new client id every time; none more once the
