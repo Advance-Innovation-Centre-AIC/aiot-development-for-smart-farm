@@ -1274,9 +1274,9 @@ static bento_status_t add_ladder(farm_t *farm)
 /* The lower half of the oxygen card: the dip lines and the rule. */
 static bento_status_t add_dip_lines(farm_t *farm)
 {
-    const spec_t dip = {26, 180, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t stats = {26, 212, -1, -1, COL_O2, 0, 0, 16};
-    const spec_t rule = {26, 258, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t dip = {26, 180, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t stats = {26, 212, -1, -1, COL_O2, 0, 0, 20};
+    const spec_t rule = {26, 258, -1, -1, COL_DIM, 0, 0, 20};
     char low[DO_BYTES];
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
@@ -1301,7 +1301,7 @@ static bento_status_t add_dip_lines(farm_t *farm)
 static bento_status_t add_oxygen(farm_t *farm)
 {
     const spec_t panel = {12, 44, 400, 250, COL_CARD, COL_NIGHT, 16, 1};
-    const spec_t title = {26, 52, -1, -1, COL_NIGHT, 0, 0, 16};
+    const spec_t title = {26, 52, -1, -1, COL_NIGHT, 0, 0, 20};
     const spec_t oxygen = {26, 88, -1, -1, COL_TEXT, 0, 0, 28};
     const spec_t unit = {190, 96, -1, -1, COL_DIM, 0, 0, 16};
     const spec_t step = {26, 132, -1, -1, COL_DIM, 0, 0, 24};
@@ -1337,9 +1337,9 @@ static bento_status_t add_oxygen(farm_t *farm)
 /* The lower half of the aerator card: the pond water and SW5. */
 static bento_status_t add_pond_water(farm_t *farm)
 {
-    const spec_t tank = {438, 150, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t bar = {440, 180, 160, 14, 0U, 0, 0, 0};
-    const spec_t hint = {438, 262, -1, -1, COL_WATCH, 0, 0, 14};
+    const spec_t tank = {438, 150, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t bar = {440, 184, 160, 14, 0U, 0, 0, 0};
+    const spec_t hint = {438, 262, -1, -1, COL_WATCH, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1363,7 +1363,7 @@ static bento_status_t add_pond_water(farm_t *farm)
 static bento_status_t add_aerator(farm_t *farm)
 {
     const spec_t panel = {424, 44, 356, 250, COL_CARD, COL_O2, 16, 1};
-    const spec_t title = {438, 52, -1, -1, COL_O2, 0, 0, 16};
+    const spec_t title = {438, 52, -1, -1, COL_O2, 0, 0, 20};
     const spec_t lamp = {440, 86, 40, 40, COL_O2, 0, 0, 0};
     const spec_t pump = {494, 92, -1, -1, COL_DIM, 0, 0, 24};
     const spec_t ring = {620, 130, 120, 120, 0U, 0, PUMP_MAX_S, 0};
@@ -1396,9 +1396,9 @@ static bento_status_t add_aerator(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_CALM, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {596, 12, 18, 18, COL_CALM, 0, 0, 0};
+    const spec_t link = {622, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
