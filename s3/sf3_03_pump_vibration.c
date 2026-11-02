@@ -95,10 +95,8 @@ enum {
     TITLE_Y = 6,
     TITLE_PX = 24,
     BIG_PX = 28,
-    MID_PX = 20,
-    TEXT_PX = 16,
-    SMALL_PX = 14,
-    STATUS_Y = 38,
+    TEXT_PX = 20, /* Thai is 20 px or larger on the board */
+    STATUS_Y = 36,
     CARD_Y = 64,
     CARD_H = 190,
     CARD_RADIUS = 12,
@@ -108,37 +106,38 @@ enum {
     SCORE_CARD_X = 12,
     SCORE_CARD_W = 380,
     ARC_X = 24,
-    ARC_Y = 92,
+    ARC_Y = 98,
     ARC_SIZE = 140,
     SCORE_X = 180,
-    SCORE_Y = 94,
-    VERDICT_Y = 134,
+    LEVEL_X = 172,
+    SCORE_Y = 100,
+    VERDICT_Y = 140,
     LEVEL_LED_Y = 196,
     LEVEL_LED_SIZE = 20,
-    LEVEL_STEP = 66,
-    LEVEL_NAME_DX = 26,
+    LEVEL_STEP = 64,
+    LEVEL_NAME_DX = 24,
     LEVEL_NAME_Y = 198,
     VIB_CARD_X = 402,
     VIB_CARD_W = 378,
     VIB_X = 414,
-    VIB_Y = 92,
-    BASE_Y = 120,
-    LEARN_Y = 146,
+    VIB_Y = 98,
+    BASE_Y = 126,
+    LEARN_Y = 158,
     LEARN_W = 354,
     LEARN_H = 12,
-    BAD_TITLE_Y = 166,
+    BAD_TITLE_Y = 182,
     SEG7_Y = 186,
     SEG7_W = 110,
     SEG7_H = 58,
     TIME_X = 540,
-    TIME_Y = 204,
+    TIME_Y = 214,
     CHART_X = 12,
     CHART_Y = 262,
     CHART_W = 400,
     CHART_H = 76,
     LEGEND_X = 424,
-    LEGEND_Y = 266,
-    LEGEND_STEP = 24,
+    LEGEND_Y = 262,
+    LEGEND_STEP = 26,
     HELP_X = 12,
     HELP_Y = 352
 };
@@ -579,7 +578,7 @@ static bento_status_t build_score_card(pump_screen_t *screen)
                            BIG_PX, &screen->verdict);
     }
     for (i = 0; (i < LEVEL_COUNT) && (status == BENTO_OK); i++) {
-        const int32_t x = SCORE_X + (i * LEVEL_STEP);
+        const int32_t x = LEVEL_X + (i * LEVEL_STEP);
         const rect_t led = {px(x), LEVEL_LED_Y, LEVEL_LED_SIZE,
                             LEVEL_LED_SIZE};
 
@@ -589,7 +588,7 @@ static bento_status_t build_score_card(pump_screen_t *screen)
         if (status == BENTO_OK) {
             status =
                 add_text(screen->ui, level_names[i], x + LEVEL_NAME_DX,
-                         LEVEL_NAME_Y, COLOR_DIM, SMALL_PX);
+                         LEVEL_NAME_Y, COLOR_DIM, TEXT_PX);
         }
     }
     return status;
@@ -610,7 +609,7 @@ static bento_status_t build_vib_card(pump_screen_t *screen)
 
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "ตอนนี้ -", &vibration, COLOR_TEXT,
-                           MID_PX, &screen->vibration);
+                           TEXT_PX, &screen->vibration);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "ปกติที่เรียนมา -", &base,
@@ -622,8 +621,8 @@ static bento_status_t build_vib_card(pump_screen_t *screen)
     }
     if (status == BENTO_OK) {
         (void)bento_ui_set_color(screen->ui, screen->learn, COLOR_WARN);
-        status = add_text(screen->ui, "ผิดปกติ (ครั้ง)", VIB_X, BAD_TITLE_Y,
-                          COLOR_DIM, SMALL_PX);
+        status = add_text(screen->ui, "ผิดปกติ (ครั้ง)", TIME_X,
+                          BAD_TITLE_Y, COLOR_DIM, TEXT_PX);
     }
     if (status == BENTO_OK) {
         widget_args(&count, COLOR_BAD, 0, &args);
@@ -634,7 +633,7 @@ static bento_status_t build_vib_card(pump_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "รวม 0.0 วิ", &bad_time,
-                           COLOR_DIM, MID_PX, &screen->bad_time);
+                           COLOR_DIM, TEXT_PX, &screen->bad_time);
     }
     return status;
 }
@@ -664,16 +663,16 @@ static bento_status_t build_chart(pump_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_text(screen->ui, "ฟ้า = ค่าสั่น x100", LEGEND_X,
-                          LEGEND_Y, COLOR_INFO, SMALL_PX);
+                          LEGEND_Y, COLOR_INFO, TEXT_PX);
     }
     if (status == BENTO_OK) {
         status = add_text(screen->ui, "ส้ม = เส้นเฝ้าระวัง", LEGEND_X,
-                          LEGEND_Y + LEGEND_STEP, COLOR_WARN, SMALL_PX);
+                          LEGEND_Y + LEGEND_STEP, COLOR_WARN, TEXT_PX);
     }
     if (status == BENTO_OK) {
         status =
             add_text(screen->ui, "แดง = เส้นผิดปกติ", LEGEND_X,
-                     LEGEND_Y + (LEGEND_STEP * 2), COLOR_BAD, SMALL_PX);
+                     LEGEND_Y + (LEGEND_STEP * 2), COLOR_BAD, TEXT_PX);
     }
     return status;
 }

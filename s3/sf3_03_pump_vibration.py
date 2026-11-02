@@ -153,7 +153,7 @@ class Watch:
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -165,47 +165,47 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
 
 def build_score_card(w):
     card(12, 64, 380, 190, "คะแนนการสั่น (0-100)")
-    w["arc"] = ui.Arc(x=24, y=92, w=140, h=140, min=0, max=100, value=0)
+    w["arc"] = ui.Arc(x=24, y=98, w=140, h=140, min=0, max=100, value=0)
     w["arc"].color(COL_OK)
-    w["score"] = ui.Label("0", x=180, y=94, color=COL_TEXT, value=28)
-    w["verdict"] = ui.Label("...", x=180, y=134, color=COL_DIM, value=28)
+    w["score"] = ui.Label("0", x=180, y=100, color=COL_TEXT, value=28)
+    w["verdict"] = ui.Label("...", x=180, y=140, color=COL_DIM, value=28)
     w["leds"] = []
     for i in range(3):
-        x = 180 + i * 66
+        x = 172 + i * 64
         w["leds"].append(ui.Led(x=x, y=196, w=20, h=20, color=COLORS[i], value=0))
-        ui.Label(("ปกติ", "ระวัง", "ผิดปกติ")[i], x=x + 26, y=198, color=COL_DIM, value=14)
+        ui.Label(("ปกติ", "ระวัง", "ผิดปกติ")[i], x=x + 24, y=198, color=COL_DIM, value=20)
 
 
 def build_vib_card(w):
     card(402, 64, 378, 190, "ค่าสั่น (m/s^2)")
-    w["vib"] = ui.Label("ตอนนี้ -", x=414, y=92, color=COL_TEXT, value=20)
-    w["base"] = ui.Label("ปกติที่เรียนมา -", x=414, y=120, color=COL_INFO, value=16)
-    w["learn"] = ui.Bar(x=414, y=146, w=354, h=12, min=0, max=100, value=0)
+    w["vib"] = ui.Label("ตอนนี้ -", x=414, y=98, color=COL_TEXT, value=20)
+    w["base"] = ui.Label("ปกติที่เรียนมา -", x=414, y=126, color=COL_INFO, value=20)
+    w["learn"] = ui.Bar(x=414, y=158, w=354, h=12, min=0, max=100, value=0)
     w["learn"].color(COL_WARN)
-    ui.Label("ผิดปกติ (ครั้ง)", x=414, y=166, color=COL_DIM, value=14)
+    ui.Label("ผิดปกติ (ครั้ง)", x=540, y=182, color=COL_DIM, value=20)
     w["seg"] = ui.Seg7(text="0", x=414, y=186, w=110, h=58, color=COL_BAD)
-    w["time"] = ui.Label("รวม 0.0 วิ", x=540, y=204, color=COL_DIM, value=20)
+    w["time"] = ui.Label("รวม 0.0 วิ", x=540, y=214, color=COL_DIM, value=20)
 
 
 def build_chart(w):
     w["chart"] = line_chart(12, 262, 400, 76, 0, CHART_MAX, COL_INFO)
     w["s_warn"] = w["chart"].add_series(COL_WARN)
     w["s_bad"] = w["chart"].add_series(COL_BAD)
-    ui.Label("ฟ้า = ค่าสั่น x100", x=424, y=266, color=COL_INFO, value=14)
-    ui.Label("ส้ม = เส้นเฝ้าระวัง", x=424, y=290, color=COL_WARN, value=14)
-    ui.Label("แดง = เส้นผิดปกติ", x=424, y=314, color=COL_BAD, value=14)
+    ui.Label("ฟ้า = ค่าสั่น x100", x=424, y=262, color=COL_INFO, value=20)
+    ui.Label("ส้ม = เส้นเฝ้าระวัง", x=424, y=288, color=COL_WARN, value=20)
+    ui.Label("แดง = เส้นผิดปกติ", x=424, y=314, color=COL_BAD, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("หมอฟังปั๊มน้ำ", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"status": ui.Label(" ", x=12, y=38, color=COL_WARN, value=16)}
+    w = {"status": ui.Label(" ", x=12, y=36, color=COL_WARN, value=20)}
     build_score_card(w)
     build_vib_card(w)
     build_chart(w)
     w["help"] = ui.Label(BTN_NAMES[0] + " (ปุ่มล่าง) = เรียนรู้ค่าปกติใหม่", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
