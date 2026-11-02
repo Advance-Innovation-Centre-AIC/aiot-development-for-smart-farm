@@ -167,16 +167,6 @@ typedef struct {
     tune_t tune;
 } log_entry_t;
 
-/* One row per entry_t; ENTRY_NONE logs nothing. */
-static const log_entry_t ENTRIES[] = {{"", TUNE_TAP},
-                                      {"น้ำพอ", TUNE_GOOD},
-                                      {"ถังต่ำ ปั๊มหยุด", TUNE_EMPTY},
-                                      {"หยุดปั๊ม", TUNE_STOP},
-                                      {"ถังต่ำ ห้ามเปิด", TUNE_BAD},
-                                      {"ถามยืนยัน", TUNE_TAP},
-                                      {"เปิดปั๊ม", TUNE_START},
-                                      {"ยกเลิก", TUNE_TAP}};
-
 /* The widgets the router knows, by their place in screen.routed. */
 typedef enum {
     ROUTED_OPEN = 0,
@@ -192,14 +182,6 @@ typedef struct {
     uint8_t type;
     command_t command;
 } route_t;
-
-/* (widget, event type) -> the command the decision knows. */
-static const route_t ROUTES[] = {
-    {ROUTED_OPEN, BENTO_UI_EVENT_CLICKED, COMMAND_OPEN},
-    {ROUTED_YES, BENTO_UI_EVENT_CLICKED, COMMAND_YES},
-    {ROUTED_NO, BENTO_UI_EVENT_CLICKED, COMMAND_NO},
-    {ROUTED_STOP, BENTO_UI_EVENT_CLICKED, COMMAND_STOP},
-    {ROUTED_TABS, BENTO_UI_EVENT_VALUE_CHANGED, COMMAND_TAB}};
 
 typedef struct {
     int16_t x;
@@ -301,8 +283,8 @@ static bool event_is(const bento_ui_event_t *event, uint8_t kind,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {76U},           {72U, 79U}, {79U, 72U},
-        {72U, 79U, 84U}, {84U, 76U}, {84U, 76U, 69U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U}};
     static const uint32_t note_count[] = {1U, 2U, 2U, 3U, 2U, 3U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -755,12 +737,21 @@ static void update(hmi_t *hmi)
  * the oldest row is overwritten cell by cell. */
 static bento_status_t write_log(hmi_t *hmi, entry_t entry)
 {
+    /* One row per entry_t; ENTRY_NONE logs nothing. */
+    static const log_entry_t entries[] = {{"", TUNE_TAP},
+                                          {"น้ำพอ", TUNE_GOOD},
+                                          {"ถังต่ำ ปั๊มหยุด", TUNE_EMPTY},
+                                          {"หยุดปั๊ม", TUNE_STOP},
+                                          {"ถังต่ำ ห้ามเปิด", TUNE_BAD},
+                                          {"ถามยืนยัน", TUNE_TAP},
+                                          {"เปิดปั๊ม", TUNE_START},
+                                          {"ยกเลิก", TUNE_TAP}};
     char when[TEXT_BYTES];
     hmi_state_t *state = &hmi->state;
     bento_status_t status = BENTO_OK;
 
     if (entry != ENTRY_NONE) {
-        const char *text = ENTRIES[entry].text;
+        const char *text = entries[entry].text;
         const int32_t elapsed_s =
             bento_time_ticks_diff(bento_time_ticks_ms(),
                                   state->start_ms) /
@@ -770,8 +761,9 @@ static bento_status_t write_log(hmi_t *hmi, entry_t entry)
         if (state->logged < LOG_ROWS) {
             add_log_row(&hmi->screen, when, text);
         } else {
-            const uint8_t row =
-                (uint8_t)(1 + (state->logged % LOG_ROWS));
+            const int32_t oldest =
+                1 + (state->logged % (int32_t)LOG_ROWS);
+            const uint8_t row = (uint8_t)oldest;
 
             /* cell() sends and waits for no answer (modui.c) */
             (void)bento_ui_set_cell(hmi->screen.ui, hmi->screen.log,
@@ -782,7 +774,7 @@ static bento_status_t write_log(hmi_t *hmi, entry_t entry)
                                     (uint32_t)strlen(text));
         }
         state->logged++;
-        status = beep(hmi->screen.ui, ENTRIES[entry].tune);
+        status = beep(hmi->screen.ui, entries[entry].tune);
     }
     return status;
 }
@@ -792,13 +784,20 @@ static bento_status_t write_log(hmi_t *hmi, entry_t entry)
 static command_t route(const hmi_screen_t *screen,
                        const bento_ui_event_t *event)
 {
+    /* (widget, event type) -> the command the decision knows. */
+    static const route_t routes[] = {
+        {ROUTED_OPEN, BENTO_UI_EVENT_CLICKED, COMMAND_OPEN},
+        {ROUTED_YES, BENTO_UI_EVENT_CLICKED, COMMAND_YES},
+        {ROUTED_NO, BENTO_UI_EVENT_CLICKED, COMMAND_NO},
+        {ROUTED_STOP, BENTO_UI_EVENT_CLICKED, COMMAND_STOP},
+        {ROUTED_TABS, BENTO_UI_EVENT_VALUE_CHANGED, COMMAND_TAB}};
     command_t command = COMMAND_NONE;
     uint32_t i;
 
-    for (i = 0U; i < (sizeof(ROUTES) / sizeof(ROUTES[0])); i++) {
-        if (event_is(event, ROUTES[i].type,
-                     screen->routed[ROUTES[i].widget])) {
-            command = ROUTES[i].command;
+    for (i = 0U; i < (sizeof(routes) / sizeof(routes[0])); i++) {
+        if (event_is(event, routes[i].type,
+                     screen->routed[routes[i].widget])) {
+            command = routes[i].command;
         }
     }
     return command;

@@ -70,10 +70,10 @@
 /* Set these before running. Left as "<...>", the program only shows
  * frames. TEAM must match the team in modbus_plc.html. */
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_PASS lives in connect_wifi() */
 static const char TEAM[] = "teamXX";
 /* the broker chosen in modbus_plc.html */
-static const char BROKER[] = "broker.hivemq.com";
+/* BROKER lives in open_broker() */
 
 /* Settings a student may change. */
 enum {
@@ -209,9 +209,6 @@ typedef enum {
     FIELD_COUNT
 } field_t;
 
-static const char *const FIELD_NAMES[FIELD_COUNT] = {"n", "ok",  "hex",
-                                                     "v", "exc", "err"};
-
 typedef struct {
     int16_t x;
     int16_t y;
@@ -336,7 +333,7 @@ static void show(bento_ui_t *ui, bento_ui_id_t widget, const char *text,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {76U}, {72U, 79U}, {72U, 79U, 84U}, {84U, 76U}};
+        {76U, 0U, 0U}, {72U, 79U, 0U}, {72U, 79U, 84U}, {84U, 76U, 0U}};
     static const uint32_t note_count[] = {1U, 2U, 3U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -440,13 +437,27 @@ static bool skip_nested(json_reader_t *reader)
     return ok && (depth == 0);
 }
 
+/* The same bytes as the word: a loop, since MISRA keeps memcmp off
+ * text. */
+static bool bytes_are(const uint8_t *text, const char *word,
+                      uint32_t length)
+{
+    bool same = true;
+    uint32_t i;
+
+    for (i = 0U; same && (i < length); i++) {
+        same = text[i] == (uint8_t)word[i];
+    }
+    return same;
+}
+
 static bool skip_word(json_reader_t *reader, const char *word)
 {
     const uint32_t length = (uint32_t)strlen(word);
     bool same = (reader->len - reader->offset) >= length;
 
     if (same) {
-        same = memcmp(&reader->text[reader->offset], word, length) == 0;
+        same = bytes_are(&reader->text[reader->offset], word, length);
     }
     if (same) {
         reader->offset += length;
@@ -515,14 +526,15 @@ static bool read_value(json_reader_t *reader, json_span_t *span)
 /* Which field a key names, FIELD_COUNT for none. */
 static int32_t field_named(const uint8_t *text, const json_span_t *key)
 {
+    static const char *const field_names[FIELD_COUNT] = {
+        "n", "ok", "hex", "v", "exc", "err"};
     const uint32_t length = key->end - key->start - 2U;
     int32_t found = (int32_t)FIELD_COUNT;
     int32_t i;
 
     for (i = 0; i < (int32_t)FIELD_COUNT; i++) {
-        if ((length == (uint32_t)strlen(FIELD_NAMES[i])) &&
-            (memcmp(&text[key->start + 1U], FIELD_NAMES[i], length) ==
-             0)) {
+        if ((length == (uint32_t)strlen(field_names[i])) &&
+            bytes_are(&text[key->start + 1U], field_names[i], length)) {
             found = i;
         }
     }
@@ -736,6 +748,7 @@ static bento_status_t wait_connect(void)
  * the run, as its OSError does. */
 static bento_status_t connect_wifi(bool *joined)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
@@ -743,8 +756,8 @@ static bento_status_t connect_wifi(bool *joined)
     bento_wifi_connect_params_init(&params);
     params.ssid = WIFI_SSID;
     params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS;
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -869,13 +882,14 @@ static bool team_is_set(void)
  * an error. */
 static bento_status_t open_broker(modbus_t *app, bool *linked)
 {
+    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     bento_status_t status;
     bool started;
 
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = app->client_id;
@@ -936,7 +950,7 @@ static void put_word(uint8_t frame[FRAME_BYTES], uint32_t at,
 {
     const uint32_t word = (uint32_t)value & (uint32_t)WORD_MASK;
 
-    frame[at] = (uint8_t)(word >> BYTE_BITS);
+    frame[at] = (uint8_t)(word >> (uint32_t)BYTE_BITS);
     frame[at + 1U] = (uint8_t)(word & (uint32_t)BYTE_MASK);
 }
 
@@ -1055,8 +1069,9 @@ static bento_status_t add_bytes(modbus_screen_t *screen)
                            (i < MBAP_BYTES) ? COL_INFO : COL_OK,
                            FONT_BYTE, &screen->bytes[i]);
     }
-    for (i = 0; (i < (int32_t)(sizeof(names) / sizeof(names[0]))) &&
-                (status == BENTO_OK);
+    for (i = 0;
+         (i < ((int32_t)sizeof(names) / (int32_t)sizeof(names[0]))) &&
+         (status == BENTO_OK);
          i++) {
         const point_t at = {px(BYTE_X + (first_byte[i] * BYTE_STEP)),
                             FIELD_NAME_Y};

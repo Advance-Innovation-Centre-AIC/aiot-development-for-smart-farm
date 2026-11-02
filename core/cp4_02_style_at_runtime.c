@@ -73,8 +73,6 @@ enum {
     NEEDLE_SHIFT = 16 /* the needle length sits in the top 16 bits */
 };
 
-static const uint32_t NEEDLE_VALUE_BITS = 0xFFFFU;
-
 /* Sound. */
 enum {
     NOTE_MS = 90,
@@ -144,11 +142,6 @@ enum {
     COL_BAD = 0xE5484D,
     COL_INFO = 0x4A9EFF
 };
-
-static const uint32_t ZONE_COL[ZONE_COUNT] = {COL_OK, COL_WARN,
-                                              COL_BAD};
-static const char *const ZONE_NAMES[ZONE_COUNT] = {"ปกติ", "เริ่มแห้ง",
-                                                   "แห้ง!"};
 
 typedef struct {
     int16_t x;
@@ -251,7 +244,7 @@ static bool event_is(const bento_ui_event_t *event, uint8_t kind,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {76U}, {72U, 79U}, {84U, 76U}};
+        {76U, 0U}, {72U, 79U}, {84U, 76U}};
     static const uint32_t note_count[] = {1U, 2U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -353,8 +346,10 @@ static bento_status_t add_bar(bento_ui_t *ui, rect_t box,
  * sets the needle: its length in the top 16 bits, the value below. */
 static void set_needle(const style_screen_t *screen, int32_t value)
 {
-    const uint32_t packed = ((uint32_t)NEEDLE_LEN << NEEDLE_SHIFT) |
-                            ((uint32_t)value & NEEDLE_VALUE_BITS);
+    static const uint32_t needle_value_bits = 0xFFFFU;
+    const uint32_t packed =
+        ((uint32_t)NEEDLE_LEN << (uint32_t)NEEDLE_SHIFT) |
+        ((uint32_t)value & needle_value_bits);
 
     (void)bento_ui_set_prop(screen->ui, screen->gauge,
                             (uint8_t)BENTO_UI_PROP_SCALE_NEEDLE,
@@ -537,7 +532,11 @@ static bento_status_t build_screen(style_screen_t *screen)
 /* The card follows the zone; sent only when the zone changes. */
 static void restyle(const style_screen_t *screen, int32_t zone)
 {
-    const uint32_t color = ZONE_COL[zone];
+    static const char *const zone_names[ZONE_COUNT] = {"ปกติ", "เริ่มแห้ง",
+                                                       "แห้ง!"};
+    static const uint32_t zone_col[ZONE_COUNT] = {COL_OK, COL_WARN,
+                                                  COL_BAD};
+    const uint32_t color = zone_col[zone];
     const uint8_t visible = (zone == ZONE_DRY) ? 1U : 0U;
     bento_ui_t *ui = screen->ui;
 
@@ -548,7 +547,7 @@ static void restyle(const style_screen_t *screen, int32_t zone)
                             (uint8_t)BENTO_UI_PROP_SCALE_NEEDLE_COLOR,
                             (int32_t)color);
     (void)bento_ui_set_color(ui, screen->zone, color);
-    set_text(ui, screen->zone, ZONE_NAMES[zone]);
+    set_text(ui, screen->zone, zone_names[zone]);
     /* a Panel's color() is its fill */
     (void)bento_ui_set_color(
         ui, screen->card, (zone == ZONE_DRY) ? COL_ALARM_BG : COL_CARD);

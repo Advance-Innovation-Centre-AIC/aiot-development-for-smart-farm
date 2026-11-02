@@ -199,7 +199,7 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {{72U, 79U, 84U},
-                                                    {84U, 76U}};
+                                                    {84U, 76U, 0U}};
     static const uint32_t note_count[] = {3U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -263,7 +263,7 @@ static void make_frame(const history_t *history, uint8_t *frame)
                                    ? (uint32_t)BENTO_RGBMATRIX_RED
                                    : (uint32_t)BENTO_RGBMATRIX_GREEN;
         const uint32_t shift =
-            (uint32_t)NIBBLE_BITS * (uint32_t)(x % 2);
+            (uint32_t)NIBBLE_BITS * ((uint32_t)x % 2U);
 
         for (y = ROWS - bar_height(history->value[x]); y < ROWS; y++) {
             frame[(y * FRAME_ROW_BYTES) + (x / 2)] |=
@@ -276,8 +276,10 @@ static void make_frame(const history_t *history, uint8_t *frame)
  * the bottom, LINE_EDGE px clear of each edge. */
 static int32_t line_y(int32_t percent)
 {
-    return CH_H - LINE_EDGE -
-           ((percent * (CH_H - (LINE_EDGE * 2))) / PERCENT);
+    const int32_t span_px = (int32_t)CH_H - ((int32_t)LINE_EDGE * 2);
+
+    return ((int32_t)CH_H - (int32_t)LINE_EDGE) -
+           ((percent * span_px) / (int32_t)PERCENT);
 }
 
 static void remember(history_t *history, int32_t percent)

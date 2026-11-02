@@ -62,8 +62,6 @@ enum {
     NEEDLE_SHIFT = 16 /* the needle length sits in the top 16 bits */
 };
 
-static const uint32_t NEEDLE_VALUE_BITS = 0xFFFFU;
-
 /* Sound. */
 enum {
     NOTE_MS = 90,
@@ -142,14 +140,6 @@ enum {
     COL_BAD = 0xE5484D,
     COL_INFO = 0x4A9EFF
 };
-
-static const char *const ZONE_NAMES[ZONE_COUNT] = {"ชื้นพอ", "เริ่มแห้ง",
-                                                   "แห้ง!"};
-/* Led brightness per zone; the firmware keeps about 80 at least, so
- * the light never goes dark. */
-static const int32_t BRIGHT[ZONE_COUNT] = {80, 170, 255};
-static const uint32_t ZONE_COLS[ZONE_COUNT] = {COL_OK, COL_WARN,
-                                               COL_BAD};
 
 typedef struct {
     int16_t x;
@@ -543,8 +533,10 @@ static bento_status_t build_screen(faces_screen_t *screen)
  * bits, the value it points at below. */
 static void set_needle(const faces_screen_t *screen, int32_t value)
 {
-    const uint32_t packed = ((uint32_t)NEEDLE_LEN << NEEDLE_SHIFT) |
-                            ((uint32_t)value & NEEDLE_VALUE_BITS);
+    static const uint32_t needle_value_bits = 0xFFFFU;
+    const uint32_t packed =
+        ((uint32_t)NEEDLE_LEN << (uint32_t)NEEDLE_SHIFT) |
+        ((uint32_t)value & needle_value_bits);
 
     (void)bento_ui_set_prop(screen->ui, screen->gauge,
                             (uint8_t)BENTO_UI_PROP_SCALE_NEEDLE,
@@ -569,11 +561,19 @@ static void show_value(const faces_screen_t *screen, int32_t value)
 /* The status light: brighter means look here. */
 static void show_zone(const faces_screen_t *screen, int32_t zone)
 {
+    static const uint32_t zone_cols[ZONE_COUNT] = {COL_OK, COL_WARN,
+                                                   COL_BAD};
+    /* Led brightness per zone; the firmware keeps about 80 at least, so
+     * the light never goes dark. */
+    static const int32_t bright[ZONE_COUNT] = {80, 170, 255};
+    static const char *const zone_names[ZONE_COUNT] = {"ชื้นพอ", "เริ่มแห้ง",
+                                                       "แห้ง!"};
+
     (void)bento_ui_set_prop(screen->ui, screen->led,
                             (uint8_t)BENTO_UI_PROP_LED_BRIGHTNESS,
-                            BRIGHT[zone]);
-    set_text(screen->ui, screen->zone, ZONE_NAMES[zone]);
-    (void)bento_ui_set_color(screen->ui, screen->zone, ZONE_COLS[zone]);
+                            bright[zone]);
+    set_text(screen->ui, screen->zone, zone_names[zone]);
+    (void)bento_ui_set_color(screen->ui, screen->zone, zone_cols[zone]);
 }
 
 /* A new zone: worse sounds the alarm, better the ok tune, the first

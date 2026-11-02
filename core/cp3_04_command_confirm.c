@@ -63,11 +63,11 @@
 
 /* Set these before running. TEAM must match the team opened in
  * farm_web.html. */
-static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_SSID lives in connect_wifi() */
+/* WIFI_PASS lives in connect_wifi() */
 static const char TEAM[] = "teamXX";
 /* the same broker farm_web.html connects to (HiveMQ) */
-static const char BROKER[] = "broker.hivemq.com";
+/* BROKER lives in open_broker() as broker_host */
 
 /* Settings a student may change. */
 enum {
@@ -185,11 +185,6 @@ typedef enum {
     FIELD_COUNT
 } field_t;
 
-static const char *const FIELD_NAMES[FIELD_COUNT] = {"pump", "left_s",
-                                                     "why"};
-static const char *const STEPS[STEP_COUNT] = {
-    "1 ส่ง plc/cmd", "2 รอ plc/state", "3 เงียบ: ส่งซ้ำ", "4 ยอมแพ้: สั่งปิด"};
-
 typedef struct {
     int16_t x;
     int16_t y;
@@ -297,10 +292,10 @@ static void show(bento_ui_t *ui, bento_ui_id_t widget, const char *text,
 /* Plays a tune note by note, 100 ms apart. */
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
-    static const uint8_t notes[][TUNE_NOTES_MAX] = {{76U},
-                                                    {72U, 79U},
+    static const uint8_t notes[][TUNE_NOTES_MAX] = {{76U, 0U, 0U},
+                                                    {72U, 79U, 0U},
                                                     {72U, 79U, 84U},
-                                                    {84U, 76U},
+                                                    {84U, 76U, 0U},
                                                     {84U, 76U, 69U}};
     static const uint32_t note_count[] = {1U, 2U, 3U, 2U, 3U};
     const uint32_t count = note_count[tune];
@@ -405,13 +400,27 @@ static bool skip_nested(json_reader_t *reader)
     return ok && (depth == 0);
 }
 
+/* The same bytes as the word: a loop, since MISRA keeps memcmp off
+ * text. */
+static bool bytes_are(const uint8_t *text, const char *word,
+                      uint32_t length)
+{
+    bool same = true;
+    uint32_t i;
+
+    for (i = 0U; same && (i < length); i++) {
+        same = text[i] == (uint8_t)word[i];
+    }
+    return same;
+}
+
 static bool skip_word(json_reader_t *reader, const char *word)
 {
     const uint32_t length = (uint32_t)strlen(word);
     bool same = (reader->len - reader->offset) >= length;
 
     if (same) {
-        same = memcmp(&reader->text[reader->offset], word, length) == 0;
+        same = bytes_are(&reader->text[reader->offset], word, length);
     }
     if (same) {
         reader->offset += length;
@@ -480,14 +489,15 @@ static bool read_value(json_reader_t *reader, json_span_t *span)
 /* Which field a key names, FIELD_COUNT for none. */
 static int32_t field_named(const uint8_t *text, const json_span_t *key)
 {
+    static const char *const field_names[FIELD_COUNT] = {
+        "pump", "left_s", "why"};
     const uint32_t length = key->end - key->start - 2U;
     int32_t found = (int32_t)FIELD_COUNT;
     int32_t i;
 
     for (i = 0; i < (int32_t)FIELD_COUNT; i++) {
-        if ((length == (uint32_t)strlen(FIELD_NAMES[i])) &&
-            (memcmp(&text[key->start + 1U], FIELD_NAMES[i], length) ==
-             0)) {
+        if ((length == (uint32_t)strlen(field_names[i])) &&
+            bytes_are(&text[key->start + 1U], field_names[i], length)) {
             found = i;
         }
     }
@@ -603,7 +613,7 @@ static bool value_is(const plc_state_t *state, field_t field,
 
     return (span->kind == JSON_STRING) &&
            ((span->end - span->start - 2U) == length) &&
-           (memcmp(&state->text[span->start + 1U], word, length) == 0);
+           bytes_are(&state->text[span->start + 1U], word, length);
 }
 
 /* Copies bytes, cut to cap - 1 at a character boundary. */
@@ -683,15 +693,17 @@ static bento_status_t wait_connect(void)
  * the run, as its OSError does. */
 static bento_status_t connect_wifi(bool *joined)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS;
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -727,6 +739,7 @@ static bento_status_t wait_broker(uint32_t broker)
  * an old session never clashes. Only Stop is an error. */
 static bento_status_t open_broker(uint32_t *broker, bool *linked)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
@@ -736,8 +749,8 @@ static bento_status_t open_broker(uint32_t *broker, bool *linked)
                    "bento-cmd-%s-%04" PRIx32, TEAM,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_TAIL_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -936,6 +949,9 @@ static bento_status_t add_header(confirm_screen_t *screen)
 
 static bento_status_t add_steps(confirm_screen_t *screen)
 {
+    static const char *const steps[STEP_COUNT] = {
+        "1 ส่ง plc/cmd", "2 รอ plc/state", "3 เงียบ: ส่งซ้ำ",
+        "4 ยอมแพ้: สั่งปิด"};
     const rect_t box = {MARGIN_X, CARD_Y, STEPS_W, CARD_H};
     const point_t result_at = {STEP_X, RESULT_Y};
     bento_status_t status = add_card(screen->ui, box, "ขั้น");
@@ -944,7 +960,7 @@ static bento_status_t add_steps(confirm_screen_t *screen)
     for (i = 0; (i < STEP_COUNT) && (status == BENTO_OK); i++) {
         const point_t at = {STEP_X, px(STEP_Y + (i * STEP_GAP))};
 
-        status = add_label(screen->ui, STEPS[i], at, COL_DIM,
+        status = add_label(screen->ui, steps[i], at, COL_DIM,
                            FONT_DEFAULT, &screen->steps[i]);
     }
     if (status == BENTO_OK) {
@@ -1122,7 +1138,7 @@ static bento_status_t read_buttons(confirm_t *app, uint32_t now)
         status = bento_buttons_pressed(1U - i, &down);
         if ((status == BENTO_OK) && down && !app->down[i] &&
             (app->want == WANT_NONE)) {
-            status = start_command(app, (int32_t)(1U - i), now);
+            status = start_command(app, 1 - (int32_t)i, now);
         }
         app->down[i] = down;
     }

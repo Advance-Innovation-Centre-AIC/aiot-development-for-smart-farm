@@ -160,16 +160,6 @@ typedef struct {
     command_t command;
 } route_t;
 
-/* The table (widget, event type) -> command; an event not in it is
- * not wanted. */
-static const route_t ROUTES[] = {
-    {ROUTED_PUMP, BENTO_UI_EVENT_LONG_PRESSED, COMMAND_HOLD},
-    {ROUTED_PUMP, BENTO_UI_EVENT_CLICKED, COMMAND_TAP},
-    {ROUTED_STOP, BENTO_UI_EVENT_CLICKED, COMMAND_STOP},
-    {ROUTED_THRESHOLD, BENTO_UI_EVENT_VALUE_CHANGED, COMMAND_THRESHOLD},
-    {ROUTED_MODE, BENTO_UI_EVENT_VALUE_CHANGED, COMMAND_MODE},
-    {ROUTED_AUTO, BENTO_UI_EVENT_TOGGLED, COMMAND_AUTO}};
-
 typedef struct {
     int16_t x;
     int16_t y;
@@ -285,7 +275,7 @@ static const char *event_name(uint8_t type)
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {76U}, {72U, 79U}, {79U, 72U}};
+        {76U, 0U}, {72U, 79U}, {79U, 72U}};
     static const uint32_t note_count[] = {1U, 2U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -400,13 +390,23 @@ static const char *run_command(pump_state_t *state, command_t command,
 static command_t route(const router_screen_t *screen,
                        const bento_ui_event_t *event)
 {
+    /* The table (widget, event type) -> command; an event not in it is
+     * not wanted. */
+    static const route_t routes[] = {
+        {ROUTED_PUMP, BENTO_UI_EVENT_LONG_PRESSED, COMMAND_HOLD},
+        {ROUTED_PUMP, BENTO_UI_EVENT_CLICKED, COMMAND_TAP},
+        {ROUTED_STOP, BENTO_UI_EVENT_CLICKED, COMMAND_STOP},
+        {ROUTED_THRESHOLD, BENTO_UI_EVENT_VALUE_CHANGED,
+         COMMAND_THRESHOLD},
+        {ROUTED_MODE, BENTO_UI_EVENT_VALUE_CHANGED, COMMAND_MODE},
+        {ROUTED_AUTO, BENTO_UI_EVENT_TOGGLED, COMMAND_AUTO}};
     command_t command = COMMAND_NONE;
     uint32_t i;
 
-    for (i = 0U; i < (sizeof(ROUTES) / sizeof(ROUTES[0])); i++) {
-        if (event_is(event, ROUTES[i].type,
-                     screen->routed[ROUTES[i].widget])) {
-            command = ROUTES[i].command;
+    for (i = 0U; i < (sizeof(routes) / sizeof(routes[0])); i++) {
+        if (event_is(event, routes[i].type,
+                     screen->routed[routes[i].widget])) {
+            command = routes[i].command;
         }
     }
     return command;
