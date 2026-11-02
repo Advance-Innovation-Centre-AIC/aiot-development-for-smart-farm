@@ -141,7 +141,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=8, value=1)
-    ui.Label(title, x=x + 10, y=y + 6, color=COL_TEAL, value=16)
+    ui.Label(title, x=x + 10, y=y + 6, color=COL_TEAL, value=20)
 
 
 def show_link(w, ok):
@@ -152,35 +152,35 @@ def show_link(w, ok):
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Panel(x=4, y=0, w=784, h=342, color=COL_PAGE, min=COL_EDGE, max=12, value=0)
+    ui.Panel(x=4, y=0, w=784, h=352, color=COL_PAGE, min=COL_EDGE, max=12, value=0)
     ui.Label("ตู้ยาและวัคซีนสัตว์  ใบบันทึกอุณหภูมิ", x=18, y=8, color=COL_TEXT, value=24)
     w = {"box": None, "leds": []}
     card(16, 44, 400, 250, "อุณหภูมิในตู้ตอนนี้")
     w["seg"] = ui.Seg7(text="--.-", x=30, y=72, w=150, h=64, color=COL_TEAL)
     ui.Label("C", x=114, y=96, color=COL_DIM, value=24)
-    w["mood"] = ui.Label("...", x=226, y=78, color=COL_WARN, value=16)
-    w["rh"] = ui.Label("ชื้น -- %", x=226, y=126, color=COL_DIM, value=14)
+    w["mood"] = ui.Label("...", x=226, y=78, color=COL_WARN, value=20)
+    w["rh"] = ui.Label("ชื้น -- %", x=226, y=132, color=COL_DIM, value=20)
     w["band"] = ui.Bar(x=30, y=158, w=372, h=26, min=BAND_LO, max=BAND_HI, value=BAND_LO)
     w["band"].color(COL_EDGE)
     ruler = ui.Scale(x=30, y=188, w=372, h=34, color=COL_DIM, min=BAND_LO, max=BAND_HI)
     ruler.ticks(7, 1)
-    w["range"] = ui.Label("-", x=30, y=232, color=COL_TEXT, value=16)
-    w["crop"] = ui.Label("-", x=30, y=258, color=COL_DIM, value=14)
+    w["range"] = ui.Label("-", x=30, y=232, color=COL_TEXT, value=20)
+    w["crop"] = ui.Label("-", x=30, y=258, color=COL_DIM, value=20)
     card(426, 44, 352, 120, "ต่ำสุด / สูงสุด ตั้งแต่ล้าง")
     w["mn"] = ui.Label("ต่ำสุด --", x=438, y=72, color=COL_TEAL, value=24)
     w["mx"] = ui.Label("สูงสุด --", x=608, y=72, color=COL_BAD, value=24)
-    w["since"] = ui.Label(BTN_NAMES[0] + " = ล้างค่า (ทำทุกเช้า)", x=438, y=120, color=COL_DIM, value=14)
+    w["since"] = ui.Label(BTN_NAMES[0] + " = ล้างค่า (ทำทุกเช้า)", x=438, y=120, color=COL_DIM, value=20)
     card(426, 172, 352, 122, "หลุดช่วง")
-    w["out"] = ui.Label("หลุดช่วงรวม 00:00  (0 ครั้ง)", x=438, y=198, color=COL_TEXT, value=16)
+    w["out"] = ui.Label("หลุดช่วงรวม 00:00  (0 ครั้ง)", x=438, y=202, color=COL_TEXT, value=20)
     for i in range(3):
         x = 438 + i * 92
         w["leds"].append(ui.Led(x=x, y=228, w=16, h=16, color=LEVEL_COLORS[i]))
-        ui.Label(("ในช่วง", "ใกล้หลุด", "หลุดไกล")[i], x=x + 20, y=226, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=438, y=254, color=COL_DIM, value=14)
-    ui.Label("VR3 = ร้อนจากนอกตู้  " + BTN_NAMES[1] + " = รับทราบ", x=18, y=298, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=18, y=316, color=COL_DIM, value=16)
+        ui.Label(("ในช่วง", "ใกล้หลุด", "หลุดไกล")[i], x=x + 20, y=226, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=438, y=254, color=COL_DIM, value=20)
+    ui.Label("VR3 = ร้อนจากนอกตู้  " + BTN_NAMES[1] + " = รับทราบ", x=18, y=298, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=18, y=324, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=14, w=16, h=16, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=12, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=12, color=COL_DIM, value=20)
     ui.poll()
     return w
 
