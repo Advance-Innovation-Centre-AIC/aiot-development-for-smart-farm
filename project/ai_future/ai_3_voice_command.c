@@ -70,29 +70,24 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 /* Edit before running. Unset, the program runs offline and prints
- * every message on the console. TEAM is the number the teacher hands
- * out, such as team05; it must match the app. */
+ * every message on the console. */
+/* make it up yourself: short English letters or digits, no spaces */
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-/* WIFI_PASS is wifi_pass in wifi_up(), BROKER is broker_host in
- * open_broker(). */
+/* at least 8 characters; never send a file with the real one */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* the number the teacher hands out, such as team05 (it must match
+ * the app) */
 static const char TEAM[] = "teamXX";
-
-/* The name the board reports, not the card's name in the Store. */
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-ai-TEAM, built in open_broker() */
+/* BASE = bento-aiot/TEAM/, the topics BASE + ai and BASE + event,
+ * built in run_with_model() */
+/* the name the board reports, not the card's name in the Store */
 static const char *const MODEL_KEYS[1] = {"Voice Commands"};
-
-/* The two words that act, and what each one asks for. */
-typedef enum {
-    WORD_GO = 0,
-    WORD_STOP,
-    WORD_COUNT,
-    WORD_NONE
-} word_t;
-
+/* the two words that act */
 static const char *const WORDS[] = {"go", "stop"};
-static const char *const ASK[] = {"เปิดปั๊ม", "ปิดปั๊ม"};
-
-/* The settings. */
 enum {
     CONF_MIN = 60, /* below this many % a word is not counted */
     K = 2,         /* a word must win K of the last N results */
@@ -110,6 +105,17 @@ enum {
     VOLUME = 25,
     SPEAKER = 40
 };
+/* ---- end of settings ---- */
+
+/* The two words that act, and what each one asks for. */
+typedef enum {
+    WORD_GO = 0,
+    WORD_STOP,
+    WORD_COUNT,
+    WORD_NONE
+} word_t;
+
+static const char *const ASK[] = {"เปิดปั๊ม", "ปิดปั๊ม"};
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -511,7 +517,6 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -521,8 +526,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = wifi_pass;
-        params.pass_len = (uint32_t)strlen(wifi_pass);
+        params.pass = WIFI_PASS;
+        params.pass_len = (uint32_t)strlen(WIFI_PASS);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -555,7 +560,6 @@ static bento_status_t wait_broker(uint32_t broker)
 /* A fresh client id each time, so the broker never kicks a twin. */
 static bento_status_t open_broker(link_t *link)
 {
-    static const char broker_host[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -564,8 +568,8 @@ static bento_status_t open_broker(link_t *link)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
