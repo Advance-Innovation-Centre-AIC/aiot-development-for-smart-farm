@@ -45,7 +45,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     WARN = 60,  /* from here the colour turns yellow */
     ALARM = 85, /* from here it turns red */
@@ -56,6 +56,8 @@ enum {
     SPEAKER = 40,    /* speaker volume, 0-100 % */
     VOLUME = 25      /* tone velocity, 0-127 (about 20 %) */
 };
+/* BTN_NAMES: not used in C because the .py never reads it */
+/* ---- end of settings ---- */
 
 /* The light matrix and the board. */
 enum {
