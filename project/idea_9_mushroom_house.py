@@ -137,7 +137,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=20, value=2)
-    ui.Label(title, x=x + 14, y=y + 6, color=COL_MOSS, value=16)
+    ui.Label(title, x=x + 14, y=y + 6, color=COL_MOSS, value=20)
 
 
 def show_link(w, ok):
@@ -157,23 +157,23 @@ def build_screen():
     w["bar"].color(COL_MOSS)  # Bar: color() = สีส่วนที่เติม (แบบ sf1_03) ใน Emulator จะเห็นเป็นสีราง
     ui.Label("0", x=x, y=y + bh + 6, color=COL_DIM, value=14)
     ui.Label("100", x=x + bw - 28, y=y + bh + 6, color=COL_DIM, value=14)
-    w["mark"] = ui.Label("^ ต่ำสุด", x=x, y=y + bh + 6, color=COL_BAD, value=14)
+    w["mark"] = ui.Label("^ ต่ำสุด", x=x, y=y + bh + 6, color=COL_BAD, value=20)
     card(12, 174, 300, 170, "แห้งติดกันมา (นาที.วินาที)")
     w["dry"] = ui.Seg7(text="00.00", x=28, y=206, w=220, h=70, color=COL_MOSS)
-    w["mist"] = ui.Label("ขอพ่นหมอก 0 ครั้ง", x=28, y=296, color=COL_DIM, value=16)
-    card(322, 174, 380, 170, "ก้อนเชื้อ")
-    w["crop"] = ui.Label("-", x=336, y=200, color=COL_DIM, value=14)
-    w["mood"] = ui.Label("...", x=336, y=222, color=COL_WARN)
-    w["temp"] = ui.Label("-- C  แดด +0", x=336, y=252, color=COL_TEXT, value=16)
+    w["mist"] = ui.Label("ขอพ่นหมอก 0 ครั้ง", x=28, y=296, color=COL_DIM, value=20)
+    card(322, 174, 458, 170, "ก้อนเชื้อ")
+    w["crop"] = ui.Label("-", x=336, y=206, color=COL_DIM, value=20)
+    w["mood"] = ui.Label("...", x=336, y=232, color=COL_WARN, value=20)
+    w["temp"] = ui.Label("-- C  แดด +0", x=336, y=258, color=COL_TEXT, value=20)
     for i in range(3):
-        lx = 336 + i * 100
-        w["leds"].append(ui.Led(x=lx, y=282, w=16, h=16, color=LEVEL_COLORS[i]))
-        ui.Label(("ชื้นดี", "เริ่มแห้ง", "แห้งเกิน")[i], x=lx + 22, y=280, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=336, y=310, color=COL_DIM, value=14)
-    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = พ่นหมอกแล้ว", x=470, y=52, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+        lx = 336 + i * 120
+        w["leds"].append(ui.Led(x=lx, y=288, w=16, h=16, color=LEVEL_COLORS[i]))
+        ui.Label(("ชื้นดี", "เริ่มแห้ง", "แห้งเกิน")[i], x=lx + 22, y=284, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=336, y=312, color=COL_DIM, value=20)
+    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = พ่นหมอกแล้ว", x=470, y=52, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
