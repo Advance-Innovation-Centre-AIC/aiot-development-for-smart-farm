@@ -101,7 +101,7 @@ def connect_farm(w):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -117,16 +117,16 @@ def build_screen():
     ui.Label("ส่งเมื่อเปลี่ยน + ส่งว่ายังอยู่", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("MQTT", x=380, y=12, color=COL_DIM, value=16)
     w = {"led": ui.Led(x=430, y=12, w=20, h=20, color=COL_OK, value=0)}
-    w["link"] = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=16)
+    w["link"] = ui.Label("ออฟไลน์", x=458, y=12, color=COL_DIM, value=20)
     card(12, 44, 420, 294, "ฟ้า = วัด  เขียว = ใบที่ส่ง")
-    w["chart"] = line_chart(22, 72, 400, 256, LO, HI, COL_INFO)
+    w["chart"] = line_chart(22, 76, 400, 252, LO, HI, COL_INFO)
     w["s_sent"] = w["chart"].add_series(COL_OK)
     card(442, 44, 338, 294, "นับใบ")
     w["sent"] = ui.Label(" ", x=456, y=80, color=COL_TEXT, value=20)
     w["pct"] = ui.Label(" ", x=456, y=150, color=COL_OK, value=28)
     w["last"] = ui.Label(" ", x=456, y=250, color=COL_TEXT, value=16)
     ui.Label(TOPIC, x=456, y=300, color=COL_DIM, value=14)
-    w["note"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=16)
+    w["note"] = ui.Label(" ", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
