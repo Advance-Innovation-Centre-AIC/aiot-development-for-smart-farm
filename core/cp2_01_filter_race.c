@@ -47,21 +47,25 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     SPIKE_EVERY = 12, /* one spike every this many samples */
     SPIKE = 45,       /* spike height in %, towards the free side */
     NOISE = 3,        /* jitter of +- this many % (0 = none) */
-    SPIKE_PASS =
-        10,        /* further than this from the truth = let through */
-    MED_WIN = 5,   /* Median window (firmware: 3-15, made odd) */
-    TICK_MS = 500, /* one sample and one screen update this often */
+    SPIKE_PASS = 10,  /* further from the truth = let through */
+    MED_WIN = 5       /* Median window (firmware: 3-15, made odd) */
+};
+/* Kalman1D: how fast the truth may change (more = follows faster) */
+static const bento_real_t KAL_Q = (bento_real_t)0.1;
+/* Kalman1D: how much the sensor shakes (more = steadier line) */
+static const bento_real_t KAL_R = (bento_real_t)4.0;
+enum {
+    TICK_MS = 500,   /* one sample and one screen update this often */
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-
-/* KAL_Q and KAL_R (Kalman1D) are set inside start_filters(). */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -317,10 +321,6 @@ static bento_status_t make_ema(app_t *app, int32_t step)
 /* The Median and the Kalman filter, set up once. */
 static bento_status_t start_filters(app_t *app)
 {
-    /* Kalman1D: how fast the truth may change (more = follows faster)
-     * and how much the sensor shakes (more = trusts a new value less) */
-    static const float kal_q = 0.1F;
-    static const float kal_r = 4.0F;
     bento_dsp_median_config_t median;
     bento_dsp_kalman1d_config_t kalman;
     bento_status_t status = bento_random_init(&app->random);
@@ -336,8 +336,8 @@ static bento_status_t start_filters(app_t *app)
         status = bento_dsp_kalman1d_config_init(&kalman);
     }
     if (status == BENTO_OK) {
-        kalman.q = kal_q;
-        kalman.r = kal_r;
+        kalman.q = (float)KAL_Q;
+        kalman.r = (float)KAL_R;
         status = bento_dsp_kalman1d_state_init(&app->kalman, &kalman);
     }
     return status;
