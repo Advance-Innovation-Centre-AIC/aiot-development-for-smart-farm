@@ -99,7 +99,7 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("วาดด้วยของที่มี: เส้น กับ จุด", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("ไม่มี Canvas: ใช้ ui.Line กับ ui.DotMatrix", x=12, y=38, color=COL_DIM, value=16)
+    ui.Label("ไม่มี Canvas: ใช้ ui.Line กับ ui.DotMatrix", x=12, y=38, color=COL_DIM, value=20)
     w = {}
     ui.Panel(x=12, y=66, w=424, h=180, color=COL_CARD, min=COL_DIM, max=12, value=1)
     # เส้นเกณฑ์ (วาดครั้งเดียว 2 จุด) แล้วเส้นกราฟ (วาดใหม่ทุกครั้งที่อ่าน) value= คือความหนาเส้นตอนสร้าง
@@ -108,12 +108,12 @@ def build_screen():
     edge.add_point(0, yd)
     edge.add_point(CH_W, yd)
     w["trend"] = ui.Line(x=CH_X, y=CH_Y, w=CH_W, h=CH_H, color=COL_INFO, value=LINE_THIN)
-    ui.Label("เส้นแดง = เกณฑ์ดินแห้ง", x=24, y=254, color=COL_DIM, value=16)
+    ui.Label("เส้นแดง = เกณฑ์ดินแห้ง", x=24, y=254, color=COL_DIM, value=20)
     w["val"] = ui.Label(" ", x=24, y=284, color=COL_TEXT, value=24)
     # DotMatrix: cols/rows บอกจำนวนจุด w/h บอกขนาดรวม (เฟิร์มแวร์คิดขนาดจุดให้เอง)
     w["dots"] = ui.DotMatrix(x=466, y=76, w=304, h=152, cols=16, rows=8)
-    ui.Label("จอไฟ RGB บนบอร์ด = ภาพเดียวกัน", x=466, y=254, color=COL_DIM, value=16)
-    w["help"] = ui.Label("หมุน VR1 ช้า ๆ", x=12, y=352, color=COL_DIM, value=16)
+    ui.Label("จอไฟ RGB บนบอร์ด = ภาพเดียวกัน", x=466, y=254, color=COL_DIM, value=20)
+    w["help"] = ui.Label("หมุน VR1 ช้า ๆ", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 

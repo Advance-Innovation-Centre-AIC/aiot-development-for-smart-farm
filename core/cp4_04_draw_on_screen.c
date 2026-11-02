@@ -106,7 +106,7 @@ enum {
     DOTS_W = 304,
     DOTS_H = 152,
     HELP_Y = 352,
-    FONT_SMALL = 16,
+    FONT_TEXT = 20, /* Thai is 20 px or larger on the board */
     FONT_VALUE = 24,
     FONT_TITLE = 24,
     SETTLE_MS = 200, /* let the cleared screen settle */
@@ -387,7 +387,7 @@ static bento_status_t add_headings(bento_ui_t *ui)
 
     if (status == BENTO_OK) {
         status = add_label(ui, "ไม่มี Canvas: ใช้ ui.Line กับ ui.DotMatrix",
-                           hint_at, COL_DIM, FONT_SMALL, &unused);
+                           hint_at, COL_DIM, FONT_TEXT, &unused);
     }
     return status;
 }
@@ -408,7 +408,7 @@ static bento_status_t add_chart(draw_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "เส้นแดง = เกณฑ์ดินแห้ง", caption_at,
-                           COL_DIM, FONT_SMALL, &unused);
+                           COL_DIM, FONT_TEXT, &unused);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", value_at, COL_TEXT,
@@ -438,11 +438,11 @@ static bento_status_t build_screen(draw_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "จอไฟ RGB บนบอร์ด = ภาพเดียวกัน",
-                           matrix_at, COL_DIM, FONT_SMALL, &unused);
+                           matrix_at, COL_DIM, FONT_TEXT, &unused);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "หมุน VR1 ช้า ๆ", help_at, COL_DIM,
-                           FONT_SMALL, &screen->help);
+                           FONT_TEXT, &screen->help);
     }
     if (status == BENTO_OK) {
         (void)present(screen->ui);
