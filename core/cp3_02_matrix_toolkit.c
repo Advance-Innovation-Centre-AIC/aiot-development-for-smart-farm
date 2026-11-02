@@ -108,14 +108,14 @@ enum {
     MODE_Y = 100,
     MODE_STEP = 52,
     SEG_X = 338,
-    SEG_Y = 96,
+    SEG_Y = 100,
     SEG_W = 150,
     SEG_H = 56,
     CALL_Y = 180,
     COUNT_Y = 220,
     HELP_Y = 352,
     FONT_DEFAULT = 0, /* no value= on the .py's label */
-    FONT_SMALL = 16,
+    FONT_TEXT = 20,   /* Thai is 20 px or larger on the board */
     FONT_TITLE = 24,
     SETTLE_MS = 200, /* let the cleared screen settle */
     TEXT_BYTES = 80  /* the counts line with two int32_t */
@@ -361,8 +361,7 @@ static bento_status_t add_card(bento_ui_t *ui, rect_t box,
     args.font_px = 1;
     status = bento_ui_panel_create(ui, &args, &unused);
     if (status == BENTO_OK) {
-        status =
-            add_label(ui, title, at, COL_INFO, FONT_SMALL, &unused);
+        status = add_label(ui, title, at, COL_INFO, FONT_TEXT, &unused);
     }
     return status;
 }
@@ -408,11 +407,11 @@ static bento_status_t add_value_card(matrix_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", call_at, COL_TEXT,
-                           FONT_SMALL, &screen->call);
+                           FONT_TEXT, &screen->call);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", count_at, COL_DIM,
-                           FONT_SMALL, &screen->count);
+                           FONT_TEXT, &screen->count);
     }
     return status;
 }
@@ -435,7 +434,7 @@ static bento_status_t build_screen(matrix_screen_t *screen)
     if (status == BENTO_OK) {
         status = add_label(screen->ui,
                            "VR1 = ค่า  SW6 = เปลี่ยนแบบ  SW5 = ส่งตัววิ่งใหม่",
-                           hint_at, COL_DIM, FONT_SMALL, &unused);
+                           hint_at, COL_DIM, FONT_TEXT, &unused);
     }
     if (status == BENTO_OK) {
         status = add_modes_card(screen);
@@ -445,7 +444,7 @@ static bento_status_t build_screen(matrix_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "เขียนจอไฟเฉพาะตอนภาพเปลี่ยน",
-                           help_at, COL_DIM, FONT_SMALL, &screen->help);
+                           help_at, COL_DIM, FONT_TEXT, &screen->help);
     }
     if (status == BENTO_OK) {
         present(screen->ui);

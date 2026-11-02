@@ -96,21 +96,21 @@ def picture(mode, v, hist):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("จอไฟ 16x8 เป็นจอเล็ก 4 แบบ", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("VR1 = ค่า  SW6 = เปลี่ยนแบบ  SW5 = ส่งตัววิ่งใหม่", x=12, y=38, color=COL_DIM, value=16)
+    ui.Label("VR1 = ค่า  SW6 = เปลี่ยนแบบ  SW5 = ส่งตัววิ่งใหม่", x=12, y=38, color=COL_DIM, value=20)
     card(12, 64, 300, 274, "แบบ")
     w = {"modes": [ui.Label(MODES[i], x=28, y=100 + i * 52, color=COL_DIM) for i in range(4)]}
     card(322, 64, 458, 274, "ค่า VR1 และคำสั่งล่าสุด")
-    w["seg"] = ui.Seg7(text="--", x=338, y=96, w=150, h=56, color=COL_OK)
-    w["call"] = ui.Label(" ", x=338, y=180, color=COL_TEXT, value=16)
-    w["count"] = ui.Label(" ", x=338, y=220, color=COL_DIM, value=16)
-    w["help"] = ui.Label("เขียนจอไฟเฉพาะตอนภาพเปลี่ยน", x=12, y=352, color=COL_DIM, value=16)
+    w["seg"] = ui.Seg7(text="--", x=338, y=100, w=150, h=56, color=COL_OK)
+    w["call"] = ui.Label(" ", x=338, y=180, color=COL_TEXT, value=20)
+    w["count"] = ui.Label(" ", x=338, y=220, color=COL_DIM, value=20)
+    w["help"] = ui.Label("เขียนจอไฟเฉพาะตอนภาพเปลี่ยน", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
