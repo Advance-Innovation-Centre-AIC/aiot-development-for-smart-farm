@@ -144,7 +144,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=4, value=1)
-    ui.Label(title, x=x + 10, y=y + 6, color=COL_HAZ, value=16)
+    ui.Label(title, x=x + 10, y=y + 6, color=COL_HAZ, value=20)
 
 
 def show_link(w, ok):
@@ -157,31 +157,31 @@ def build_screen(idx):
     time.sleep_ms(200)
     ui.Label("โกดังปุ๋ย  กระสอบไหนจะจับก้อน", x=12, y=4, color=COL_HAZ, value=24)
     w = {"box": None, "sacks": [], "dots": [], "pct": []}
-    card(12, 40, 420, 250, "กระสอบ 3 ชนิด เทียบเกณฑ์ของตัวเอง")
+    card(12, 40, 510, 250, "กระสอบ 3 ชนิด เทียบเกณฑ์ของตัวเอง")
     for i in range(3):
-        x = 40 + i * 132
-        w["dots"].append(ui.Panel(x=x + 27, y=68, w=16, h=16, color=COL_OK, min=COL_OK, max=8, value=0))
+        x = 22 + i * 166
+        w["dots"].append(ui.Panel(x=x + 27, y=72, w=16, h=16, color=COL_OK, min=COL_OK, max=8, value=0))
         w["sacks"].append(ui.Bar(x=x, y=90, w=70, h=140, min=0, max=SACK_MAX, value=0))
         pass  # Bar.color() ตั้งสีส่วนที่เติมบนบอร์ดจริง ใช้สีเดิมของ Bar ให้เห็นชัด
-        ui.Label(SHORT[i], x=x, y=236, color=COL_HAZ if i == idx else COL_DIM, value=16)
-        w["pct"].append(ui.Label("--", x=x, y=260, color=COL_DIM, value=14))
-    w["chart"] = ui.Chart(x=12, y=298, w=420, h=54, color=COL_HAZ, min=0, max=100)
+        ui.Label(SHORT[i], x=x, y=236, color=COL_HAZ if i == idx else COL_DIM, value=20)
+        w["pct"].append(ui.Label("--", x=x, y=262, color=COL_DIM, value=20))
+    w["chart"] = ui.Chart(x=12, y=298, w=510, h=54, color=COL_HAZ, min=0, max=100)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
-    card(442, 40, 338, 140, "ห้องเก็บตอนนี้")
-    w["seg"] = ui.Seg7(text="--", x=456, y=70, w=100, h=50, color=COL_HAZ)
-    ui.Label("%RH", x=566, y=90, color=COL_DIM, value=16)
-    w["temp"] = ui.Label("-- C", x=640, y=72, color=COL_DIM, value=16)
-    w["sun"] = ui.Label("แดด +0", x=640, y=96, color=COL_DIM, value=14)
-    w["mood"] = ui.Label("...", x=456, y=138, color=COL_WARN, value=16)
-    card(442, 188, 338, 106, "สะสมตั้งแต่เปิดบอร์ด")
-    w["cake"] = ui.Label("แต้มจับก้อน 0.0", x=454, y=214, color=COL_TEXT, value=16)
-    w["spike"] = ui.Label("ชื้นพุ่ง (ประตูเปิด) 0 ครั้ง", x=454, y=238, color=COL_TEXT, value=16)
-    w["ack"] = ui.Label("-", x=454, y=264, color=COL_DIM, value=14)
-    ui.Label("เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=442, y=302, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=358, color=COL_DIM)
+    card(532, 40, 248, 140, "ห้องเก็บตอนนี้")
+    w["seg"] = ui.Seg7(text="--", x=544, y=70, w=100, h=50, color=COL_HAZ)
+    ui.Label("%RH", x=654, y=90, color=COL_DIM, value=16)
+    w["temp"] = ui.Label("-- C", x=700, y=72, color=COL_DIM, value=16)
+    w["sun"] = ui.Label("แดด +0", x=700, y=96, color=COL_DIM, value=20)
+    w["mood"] = ui.Label("...", x=542, y=138, color=COL_WARN, value=20)
+    card(532, 188, 248, 106, "สะสมตั้งแต่เปิดบอร์ด")
+    w["cake"] = ui.Label("แต้มจับก้อน 0.0", x=544, y=214, color=COL_TEXT, value=20)
+    w["spike"] = ui.Label("ชื้นพุ่ง (ประตูเปิด) 0 ครั้ง", x=544, y=240, color=COL_TEXT, value=20)
+    w["ack"] = ui.Label("-", x=316, y=358, color=COL_DIM, value=20)
+    ui.Label("เป่าลม = ชื้นขึ้น  " + BTN_NAMES[1] + " = รับทราบ", x=530, y=300, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=358, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=10, w=16, h=16, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=624, y=8, color=COL_DIM, value=20)
     ui.poll()
     return w
 

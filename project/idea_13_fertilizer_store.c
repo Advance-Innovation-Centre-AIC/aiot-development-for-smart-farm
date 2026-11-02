@@ -157,22 +157,22 @@ enum { /* layout, in px */
     BOX_H = 150,
     CARD_RADIUS = 4,
     CARD_BORDER = 1,
-    SACK_X = 40,
-    SACK_STEP_PX = 132,
+    SACK_X = 22,
+    SACK_STEP_PX = 166,
     DOT_DX = 27,
-    DOT_Y = 68,
+    DOT_Y = 72,
     DOT_PX = 16,
     DOT_RADIUS = 8,
     SACK_Y = 90,
     SACK_W = 70,
     SACK_H = 140,
     SACK_NAME_Y = 236,
-    SACK_NAME_PX = 16,
-    SACK_PERCENT_Y = 260,
-    SACK_PERCENT_PX = 14,
+    SACK_NAME_PX = 20,
+    SACK_PERCENT_Y = 262,
+    SACK_PERCENT_PX = 20,
     CARD_TITLE_DX = 10,
     CARD_TITLE_DY = 6,
-    TITLE_PX = 16
+    TITLE_PX = 20
 };
 enum {                      /* buffers, in bytes */
     TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
@@ -1118,7 +1118,7 @@ static const widget_spec_t *top_widgets(size_t *count)
         {KIND_LABEL, SLOT_NONE, "โกดังปุ๋ย  กระสอบไหนจะจับก้อน", 12, 4,
          AUTO_PX, AUTO_PX, COL_HAZ, 0, 0, 24},
         {KIND_CARD, SLOT_NONE, "กระสอบ 3 ชนิด เทียบเกณฑ์ของตัวเอง", 12, 40,
-         420, 250, COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER}};
+         510, 250, COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;
@@ -1128,34 +1128,34 @@ static const widget_spec_t *top_widgets(size_t *count)
 static const widget_spec_t *bottom_widgets(size_t *count)
 {
     static const widget_spec_t widgets[] = {
-        {KIND_CHART, SLOT_CHART, NULL, 12, 298, 420, 54, COL_HAZ, 0,
+        {KIND_CHART, SLOT_CHART, NULL, 12, 298, 510, 54, COL_HAZ, 0,
          RH_FULL, 0},
-        {KIND_CARD, SLOT_NONE, "ห้องเก็บตอนนี้", 442, 40, 338, 140,
+        {KIND_CARD, SLOT_NONE, "ห้องเก็บตอนนี้", 532, 40, 248, 140,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
-        {KIND_SEG7, SLOT_SEG, "--", 456, 70, 100, 50, COL_HAZ, 0, 0, 0},
-        {KIND_LABEL, SLOT_NONE, "%RH", 566, 90, AUTO_PX, AUTO_PX,
+        {KIND_SEG7, SLOT_SEG, "--", 544, 70, 100, 50, COL_HAZ, 0, 0, 0},
+        {KIND_LABEL, SLOT_NONE, "%RH", 654, 90, AUTO_PX, AUTO_PX,
          COL_DIM, 0, 0, 16},
-        {KIND_LABEL, SLOT_TEMP, "-- C", 640, 72, AUTO_PX, AUTO_PX,
+        {KIND_LABEL, SLOT_TEMP, "-- C", 700, 72, AUTO_PX, AUTO_PX,
          COL_DIM, 0, 0, 16},
-        {KIND_LABEL, SLOT_SUN, "แดด +0", 640, 96, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
-        {KIND_LABEL, SLOT_MOOD, "...", 456, 138, AUTO_PX, AUTO_PX,
-         COL_WARN, 0, 0, 16},
-        {KIND_CARD, SLOT_NONE, "สะสมตั้งแต่เปิดบอร์ด", 442, 188, 338, 106,
+        {KIND_LABEL, SLOT_SUN, "แดด +0", 700, 96, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
+        {KIND_LABEL, SLOT_MOOD, "...", 542, 138, AUTO_PX, AUTO_PX,
+         COL_WARN, 0, 0, 20},
+        {KIND_CARD, SLOT_NONE, "สะสมตั้งแต่เปิดบอร์ด", 532, 188, 248, 106,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
-        {KIND_LABEL, SLOT_CAKE, "แต้มจับก้อน 0.0", 454, 214, AUTO_PX,
-         AUTO_PX, COL_TEXT, 0, 0, 16},
-        {KIND_LABEL, SLOT_SPIKE, "ชื้นพุ่ง (ประตูเปิด) 0 ครั้ง", 454, 238,
-         AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 16},
-        {KIND_LABEL, SLOT_REPLY, "-", 454, 264, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
-        {KIND_LABEL, SLOT_NONE, "เป่าลม = ชื้นขึ้น  SW5 = รับทราบ", 442, 302,
-         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_CAKE, "แต้มจับก้อน 0.0", 544, 214, AUTO_PX,
+         AUTO_PX, COL_TEXT, 0, 0, 20},
+        {KIND_LABEL, SLOT_SPIKE, "ชื้นพุ่ง (ประตูเปิด) 0 ครั้ง", 544, 240,
+         AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 20},
+        {KIND_LABEL, SLOT_REPLY, "-", 316, 358, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
+        {KIND_LABEL, SLOT_NONE, "เป่าลม = ชื้นขึ้น  SW5 = รับทราบ", 530, 300,
+         AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 358, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 0},
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_MQ, NULL, 600, 10, 16, 16, COL_OK, 0, 0, 0},
         {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 8, AUTO_PX,
-         AUTO_PX, COL_DIM, 0, 0, 16}};
+         AUTO_PX, COL_DIM, 0, 0, 20}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;
