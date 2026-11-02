@@ -78,8 +78,10 @@ static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 
 static const char BROKER[] = "broker.hivemq.com";
 static const char ROOT[] = "bento-aiot";
-/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
-static const char CLIENT_ID[] = "bento-farm-";
+/* CLIENT_ID = "bento-farm-" + TEAM, + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ:
+ * ไม่ชน id เก่า, built in main() */
+/* TOPIC_EVENT = ROOT/TEAM/event, built in main() */
+/* TOPIC_CMD = ROOT/TEAM/cmd, built in main() */
 /* ---- end of settings ---- */
 
 static const char *const BUTTON_NAMES[] = {"SW6", "SW5"};
@@ -1807,7 +1809,7 @@ int main(void)
     farm.watch.level = LEVEL_NONE;
     farm.watch.acked = true;
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "bento-farm-%s", TEAM);
     (void)snprintf(farm.names.topic_event,
                    sizeof(farm.names.topic_event), "%s/%s/event", ROOT,
                    TEAM);
