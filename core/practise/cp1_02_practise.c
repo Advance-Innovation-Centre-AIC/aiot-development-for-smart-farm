@@ -161,9 +161,7 @@ static const knob_t KNOBS[KNOB_COUNT] = {
     {"VR3 น้ำในถัง", "ลิตร", 0, 500, 0, 11},
     {"VR4 ตั้งเวลารดน้ำ", "นาที", 0, 60, 0, 13}};
 
-/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
- * button = pressed(0). */
-static const char *const BUTTON_NAMES[2] = {"SW5", "SW6"};
+/* The button names on the panel (SW5, SW6) live in show_band(). */
 
 typedef struct {
     int32_t x;
@@ -226,8 +224,9 @@ static bento_status_t pause_ms(uint32_t delay_ms)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -280,14 +279,14 @@ static bool map_range(int32_t x, int32_t in_low, int32_t in_high,
     /* ช่อง B: ความกว้างช่วงเข้า = อะไร - in_low ? */
     const int32_t width = BLANK - in_low;
     const bool has_width = width != 0;
+    const int32_t scaled = walked * (out_high - out_low);
 
     /* in_high is read once blank B is filled */
     (void)in_high;
     *result = (bento_real_t)0;
     if (has_width) {
         *result = (bento_real_t)out_low +
-                  ((bento_real_t)(walked * (out_high - out_low)) /
-                   (bento_real_t)width);
+                  ((bento_real_t)scaled / (bento_real_t)width);
     }
     return has_width;
 }
@@ -462,8 +461,10 @@ static bento_status_t to_unit(uint16_t raw, const knob_t *knob,
 /* How far the value moves for one raw count. */
 static bento_real_t step_size(const knob_t *knob)
 {
-    return (bento_real_t)(knob->high - knob->low) /
-           (bento_real_t)(RAW_HI - RAW_LO);
+    const int32_t span = knob->high - knob->low;
+    const int32_t raw_span = RAW_HI - RAW_LO;
+
+    return (bento_real_t)span / (bento_real_t)raw_span;
 }
 
 /* The dead-band: change the number only when raw is more than band
@@ -714,16 +715,19 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 
 static void show_band(const app_t *app)
 {
+    /* names on the panel: SW5 = lower button = pressed(1), SW6 =
+     * upper button = pressed(0) */
+    static const char *const button_names[2] = {"SW5", "SW6"};
     char text[TEXT_BYTES];
 
     if (app->band != 0) {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: %ld count",
-                       BUTTON_NAMES[0], (long)app->band);
+                       button_names[0], (long)app->band);
     } else {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: ปิด",
-                       BUTTON_NAMES[0]);
+                       button_names[0]);
     }
     set_text(app->ui, app->help, text);
 }

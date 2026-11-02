@@ -134,12 +134,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -151,9 +145,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -295,8 +295,8 @@ static void frame_hex(const frame_t *frame, char *text)
     uint32_t i;
 
     for (i = 0U; i < frame->length; i++) {
-        text[out] =
-            hex_digits[(uint32_t)frame->bytes[i] >> NIBBLE_BITS];
+        text[out] = hex_digits[(uint32_t)frame->bytes[i] >>
+                               (uint32_t)NIBBLE_BITS];
         text[out + 1U] = hex_digits[(uint32_t)frame->bytes[i] &
                                     (uint32_t)NIBBLE_MASK];
         out += 2U;

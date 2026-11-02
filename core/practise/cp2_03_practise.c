@@ -4,7 +4,7 @@
  *
  * ไฟล์นี้เหมือน cp2_03_decision_ladder ทุกอย่าง ยกเว้น next_state() ใน
  * ส่วน "3) สมอง" ที่เว้นช่องไว้ 3 ช่อง: A, B, C แต่ละช่องเขียนว่า BLANK
- * หรือ BLANK_FLAG เติมคำตอบแทนให้ครบแล้วรัน โปรแกรมตรวจการเปลี่ยนสถานะ
+ * หรือ blank_flag เติมคำตอบแทนให้ครบแล้วรัน โปรแกรมตรวจการเปลี่ยนสถานะ
  * 8 กรณีก่อนเปิดจอ (self_test) ผ่านครบ = Console ขึ้น "ผ่าน!" แล้วเล่นต่อได้
  * ยังไม่ถูก = Console บอกว่ากรณีไหนผิด แล้วหยุด (ยังไม่เปิดจอ)
  * OK -> WATCH (เกินเส้น) -> ALARM (เกินต่อเนื่อง HOLD_S วิ) ALARM ค้างไว้
@@ -13,7 +13,7 @@
  *
  * Fill-in practice (Code Quest level 3): the alarm state machine. The
  * program is cp2_03_decision_ladder except next_state(), which leaves
- * three blanks, A, B and C, written BLANK or BLANK_FLAG. Fill them in
+ * three blanks, A, B and C, written BLANK or blank_flag. Fill them in
  * and run: self_test checks 8 transitions before the screen opens.
  * All pass = "ผ่าน!" on the console and the board runs as the full
  * example; a wrong case is printed and the program stops before the
@@ -22,7 +22,7 @@
  * Twin of cp2_03_practise.py (aiot-development-for-smart-farm/core/practise/cp2_03_practise.py). Style: CLEAN_C.md.
  * Differs from the .py:
  *   - C cannot leave a name undefined and still build: each blank
- *     ____ is BLANK (0) or BLANK_FLAG (false) here, so an unfilled
+ *     ____ is BLANK (0) or blank_flag (false) here, so an unfilled
  *     file builds, self_test names the first wrong case and stops
  *     before the screen, as the .py stops at its NameError.
  *   - The states are an enum and the test seconds are tenths, so a
@@ -136,12 +136,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -153,9 +147,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -185,11 +185,11 @@ static bento_status_t read_input(bento_random_t *noise, int32_t *value)
 /* ---- 3) The brain: decides, never touches the hardware ---- */
 
 /* Each blank ____ of the .py: write your answer in place of BLANK
- * (a number) or BLANK_FLAG (a yes or no). */
+ * (a number), or of blank_flag (a yes or no) in next_state(). */
 enum {
     BLANK = 0
 };
-static const bool BLANK_FLAG = false;
+
 typedef enum {
     STATE_OK,
     STATE_WATCH,
@@ -225,7 +225,7 @@ static bool hold(bool on, bool over, uint32_t *since_ms,
     if (over == on) {
         *since_ms = now_ms;
     } else if (bento_time_ticks_diff(now_ms, *since_ms) >=
-               (HOLD_S * MS_PER_S)) {
+               ((int32_t)HOLD_S * (int32_t)MS_PER_S)) {
         result = over;
         *since_ms = now_ms;
     } else {
@@ -240,6 +240,7 @@ static bool hold(bool on, bool over, uint32_t *since_ms,
 static alarm_state_t next_state(alarm_state_t state, bool over,
                                 bool acknowledged, bento_real_t t_s)
 {
+    const bool blank_flag = false; /* blank B: replace it in the line */
     alarm_state_t next = STATE_COOLDOWN;
 
     /* acknowledged is read once blank B is filled */
@@ -253,7 +254,7 @@ static alarm_state_t next_state(alarm_state_t state, bool over,
         next = (t_s >= (bento_real_t)BLANK) ? STATE_ALARM : STATE_WATCH;
     } else if (state == STATE_ALARM) {
         /* ช่อง B: อะไรเท่านั้นที่ปลด ALARM ได้? */
-        next = BLANK_FLAG ? STATE_COOLDOWN : STATE_ALARM;
+        next = blank_flag ? STATE_COOLDOWN : STATE_ALARM;
     } else {
         /* ช่อง C: พักนานเท่าไรจึงกลับ OK? */
         next = (t_s >= (bento_real_t)BLANK) ? STATE_OK : STATE_COOLDOWN;
@@ -297,18 +298,20 @@ static void print_case(const state_case_t *test, alarm_state_t got)
 static bool self_test(void)
 {
     static const state_case_t cases[] = {
-        {STATE_WATCH, true, false, (HOLD_S * TENTHS_PER_S) - 1,
-         STATE_WATCH},
-        {STATE_WATCH, true, false, HOLD_S * TENTHS_PER_S, STATE_ALARM},
+        {STATE_WATCH, true, false,
+         ((int32_t)HOLD_S * (int32_t)TENTHS_PER_S) - 1, STATE_WATCH},
+        {STATE_WATCH, true, false,
+         (int32_t)HOLD_S * (int32_t)TENTHS_PER_S, STATE_ALARM},
         {STATE_WATCH, false, false, TENTHS_PER_S, STATE_OK},
         /* back to normal, but nobody has acknowledged it yet */
-        {STATE_ALARM, false, false, 99 * TENTHS_PER_S, STATE_ALARM},
-        {STATE_ALARM, true, false, 99 * TENTHS_PER_S, STATE_ALARM},
+        {STATE_ALARM, false, false, 990, STATE_ALARM},
+        {STATE_ALARM, true, false, 990, STATE_ALARM},
         {STATE_ALARM, false, true, 0, STATE_COOLDOWN},
-        {STATE_COOLDOWN, true, false, (COOLDOWN_S * TENTHS_PER_S) - 1,
+        {STATE_COOLDOWN, true, false,
+         ((int32_t)COOLDOWN_S * (int32_t)TENTHS_PER_S) - 1,
          STATE_COOLDOWN},
-        {STATE_COOLDOWN, true, false, COOLDOWN_S * TENTHS_PER_S,
-         STATE_OK}};
+        {STATE_COOLDOWN, true, false,
+         (int32_t)COOLDOWN_S * (int32_t)TENTHS_PER_S, STATE_OK}};
     const uint32_t count = (uint32_t)(sizeof(cases) / sizeof(cases[0]));
     bool passed = true;
     uint32_t i;
@@ -341,9 +344,6 @@ typedef struct {
     bento_ui_id_t segs[WAYS];
     bento_ui_id_t help;
 } ladder_screen_t;
-
-static const uint32_t STATE_COLORS[] = {COL_OK, COL_WARN, COL_BAD,
-                                        COL_INFO};
 
 static int16_t px(int32_t value)
 {
@@ -526,6 +526,8 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static void show_way(const ladder_screen_t *screen, int32_t i, bool on,
                      int32_t flips, alarm_state_t state)
 {
+    static const uint32_t state_colors[] = {COL_OK, COL_WARN, COL_BAD,
+                                            COL_INFO};
     char count[TEXT_CHARS];
 
     (void)snprintf(count, sizeof(count), "%" PRId32, flips);
@@ -536,7 +538,7 @@ static void show_way(const ladder_screen_t *screen, int32_t i, bool on,
     } else {
         set_text(screen->ui, screen->states[i], STATE_NAMES[state]);
         (void)bento_ui_set_color(screen->ui, screen->leds[i],
-                                 STATE_COLORS[state]);
+                                 state_colors[state]);
         (void)bento_ui_set_value(screen->ui, screen->leds[i],
                                  (state == STATE_OK) ? 0 : 1);
     }

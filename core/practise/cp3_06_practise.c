@@ -4,7 +4,7 @@
  *
  * ไฟล์นี้คือ cp3_06_modbus_frame ในโหมดดูกรอบ (ไม่มีส่วนเครือข่าย)
  * fc06_write() ในส่วน "3) สมอง" เว้นช่องไว้ 2 ช่อง: A, B ช่อง A เขียนว่า
- * BLANK_FORMAT ช่อง B เขียนว่า BLANK เติมคำตอบแทนให้ครบ ครั้งนี้สร้างกรอบ
+ * blank_format ช่อง B เขียนว่า BLANK เติมคำตอบแทนให้ครบ ครั้งนี้สร้างกรอบ
  * เป็นสองท่อน: PDU 5 ไบต์ (fc, addr, value) แล้วต่อท้าย MBAP 7 ไบต์
  * ช่อง A = รูปแบบของ PDU สำหรับ pack() (ดู fc03_read เป็นตัวอย่าง: ">" =
  * big-endian, B = 1 ไบต์, H = 2 ไบต์) ช่อง B = ค่าช่อง len ใน MBAP (นับ
@@ -17,7 +17,7 @@
  * Fill-in practice (Code Quest level 3): build a Modbus TCP FC06
  * frame yourself. The program is cp3_06_modbus_frame in frame-view
  * mode, without the network. fc06_write() leaves two blanks: A, the
- * pack() format of the 5-byte PDU (written BLANK_FORMAT), and B, the
+ * pack() format of the 5-byte PDU (written blank_format), and B, the
  * MBAP len field (written BLANK). Fill them in and run: self_test
  * checks 3 frames against known answers before the screen opens. All
  * pass = "ผ่าน!" on the console, then SW5 shows an FC03 frame and SW6
@@ -27,7 +27,7 @@
  * Twin of cp3_06_practise.py (aiot-development-for-smart-farm/core/practise/cp3_06_practise.py). Style: CLEAN_C.md.
  * Differs from the .py:
  *   - C cannot leave a name undefined and still build: blank A is
- *     BLANK_FORMAT ("") and blank B is BLANK (0) here, so an unfilled
+ *     blank_format ("") and blank B is BLANK (0) here, so an unfilled
  *     file builds, self_test names the first wrong frame and stops
  *     before the screen, as the .py stops at its NameError.
  *   - C has no struct module: pack() reads the same format text
@@ -142,12 +142,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -159,9 +153,15 @@ static bento_status_t sleep_ms(uint32_t ms)
     return status;
 }
 
+/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -177,8 +177,8 @@ static bento_status_t beep(bento_ui_t *ui, tune_t name)
 /* ---- 3) The brain: decides, never touches the hardware ---- */
 
 /* Each blank ____ of the .py: write your answer in place of
- * BLANK_FORMAT (a pack() format) or BLANK (a number). */
-static const char BLANK_FORMAT[] = "";
+ * blank_format (a pack() format, in fc06_write()) or BLANK (a
+ * number). */
 enum {
     BLANK = 0
 };
@@ -287,6 +287,7 @@ static void fc03_read(frame_t *frame, uint32_t tid, uint32_t unit,
 static void fc06_write(frame_t *frame, uint32_t tid, uint32_t unit,
                        uint32_t addr, uint32_t value)
 {
+    static const char blank_format[] = ""; /* blank A: replace it */
     const uint32_t pdu_values[] = {FC_WRITE, addr, value};
     /* ช่อง B: len = นับไบต์ที่ตามหลังช่องนี้ */
     const uint32_t mbap_values[] = {tid & (uint32_t)TID_MASK, 0U, BLANK,
@@ -297,7 +298,7 @@ static void fc06_write(frame_t *frame, uint32_t tid, uint32_t unit,
     /* a format that does not fit leaves its part empty; self_test
      * shows the short frame */
     /* ช่อง A: รูปแบบของ fc(1) addr(2) value(2) */
-    (void)pack(&pdu, BLANK_FORMAT, pdu_values, PDU_VALUES);
+    (void)pack(&pdu, blank_format, pdu_values, PDU_VALUES);
     (void)pack(&mbap, ">HHHB", mbap_values, MBAP_VALUES);
     join(frame, &mbap, &pdu);
 }
@@ -310,8 +311,8 @@ static void frame_hex(const frame_t *frame, char *text)
     uint32_t i;
 
     for (i = 0U; i < frame->length; i++) {
-        text[out] =
-            hex_digits[(uint32_t)frame->bytes[i] >> NIBBLE_BITS];
+        text[out] = hex_digits[(uint32_t)frame->bytes[i] >>
+                               (uint32_t)NIBBLE_BITS];
         text[out + 1U] = hex_digits[(uint32_t)frame->bytes[i] &
                                     (uint32_t)NIBBLE_MASK];
         out += 2U;
