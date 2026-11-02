@@ -1421,7 +1421,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1437,9 +1437,9 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
 static bento_status_t add_seismograph(farm_t *farm)
 {
     const rect_t card = {12, 44, 420, 206};
-    const spec_t chart = {22, 74, 400, 124, COL_OK, 0, CHART_MAX, 0};
-    const spec_t legend = {22, 212, -1, -1, COL_DIM, 0, 0, 14};
-    const spec_t spikes = {260, 210, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t chart = {22, 80, 400, 118, COL_OK, 0, CHART_MAX, 0};
+    const spec_t legend = {22, 212, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t spikes = {260, 212, -1, -1, COL_TEXT, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "กราฟสั่นใบพัด (ค่าสั่น x100)", &label);
@@ -1471,10 +1471,10 @@ static bento_status_t add_seismograph(farm_t *farm)
 static bento_status_t add_fan(farm_t *farm)
 {
     const rect_t card = {442, 44, 338, 206};
-    const spec_t ring = {456, 76, 120, 120, 0U, 0, PUMP_MAX_S, 0};
-    const spec_t lamp = {596, 84, 36, 36, COL_INFO, 0, 0, 0};
-    const spec_t fan = {596, 130, -1, -1, COL_DIM, 0, 0, 20};
-    const spec_t verdict = {456, 212, -1, -1, COL_WARN, 0, 0, 16};
+    const spec_t ring = {456, 80, 120, 120, 0U, 0, PUMP_MAX_S, 0};
+    const spec_t lamp = {596, 88, 36, 36, COL_INFO, 0, 0, 0};
+    const spec_t fan = {596, 134, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t verdict = {456, 212, -1, -1, COL_WARN, 0, 0, 20};
     bento_status_t status = add_card(
         farm->ui, &card, "พัดลม = ไฟสีฟ้า (คำสั่ง 0)", &farm->screen.title);
 
@@ -1501,17 +1501,17 @@ static bento_status_t add_fan(farm_t *farm)
 
 static bento_status_t add_heat(farm_t *farm)
 {
-    const rect_t card = {12, 260, 420, 84};
+    const rect_t card = {12, 260, 420, 96};
     const spec_t bar = {24,
-                        292,
+                        298,
                         280,
                         18,
                         0U,
                         TEMP_LOW_C,
                         TEMP_LOW_C + TEMP_SPAN_C,
                         TEMP_LOW_C};
-    const spec_t heat = {318, 286, -1, -1, COL_TEXT, 0, 0, 0};
-    const spec_t hot = {24, 316, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t heat = {318, 292, -1, -1, COL_TEXT, 0, 0, 0};
+    const spec_t hot = {24, 322, -1, -1, COL_DIM, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "ความร้อนในโรงเรือน (VR1)", &label);
@@ -1533,10 +1533,10 @@ static bento_status_t add_heat(farm_t *farm)
 
 static bento_status_t add_backup(farm_t *farm)
 {
-    const rect_t card = {442, 260, 338, 84};
-    const spec_t bar = {456, 292, 200, 18, 0U, 0, 0, 0};
-    const spec_t tank = {670, 286, -1, -1, COL_TEXT, 0, 0, 0};
-    const spec_t hint = {456, 316, -1, -1, COL_DIM, 0, 0, 14};
+    const rect_t card = {442, 260, 338, 96};
+    const spec_t bar = {456, 298, 200, 18, 0U, 0, 0, 0};
+    const spec_t tank = {670, 292, -1, -1, COL_TEXT, 0, 0, 0};
+    const spec_t hint = {456, 322, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1561,9 +1561,9 @@ static bento_status_t add_backup(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 362, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
