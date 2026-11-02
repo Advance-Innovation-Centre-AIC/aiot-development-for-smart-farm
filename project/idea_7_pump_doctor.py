@@ -234,7 +234,7 @@ def send(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def set_needle(scale, value):
@@ -262,23 +262,23 @@ def build_screen():
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
     w["gauge"] = gauge
     w["diag"] = ui.Label("กำลังฟัง\nค่าปกติ 5 วิ", x=240, y=96, color=COL_WARN, value=20)
-    w["detail"] = ui.Label("วางบอร์ดนิ่ง ๆ", x=240, y=190, color=COL_DIM, value=14)
-    w["peak"] = ui.Label("สูงสุด --", x=28, y=290, color=COL_DIM, value=16)
+    w["detail"] = ui.Label("วางบอร์ดนิ่ง ๆ", x=240, y=190, color=COL_DIM, value=20)
+    w["peak"] = ui.Label("สูงสุด --", x=28, y=290, color=COL_DIM, value=20)
     # ขวาบน: ปั๊ม
     w["title"] = card(402, 44, 378, 150, "ปั๊มบ่อ = ไฟสีฟ้า (คำสั่ง 0)")
     w["led"] = ui.Led(x=416, y=78, w=40, h=40, color=COL_INFO)
     w["pump"] = ui.Label("ปิด", x=468, y=84, color=COL_DIM, value=24)
     w["left"] = ui.Bar(x=416, y=130, w=350, h=14, min=0, max=PUMP_MAX_S, value=0)
-    w["run"] = ui.Label("เดินสะสม 00:00:00", x=416, y=154, color=COL_TEXT, value=16)
+    w["run"] = ui.Label("เดินสะสม 00:00:00", x=416, y=154, color=COL_TEXT, value=20)
     # ขวาล่าง: น้ำ
     card(402, 204, 378, 140, "น้ำในถัง (VR4)  ดินแปลง (VR1)")
     w["tank_bar"] = ui.Bar(x=416, y=240, w=260, h=22)
     w["tank"] = ui.Label("-- %", x=690, y=236, color=COL_TEXT)
-    w["soil"] = ui.Label("ดิน -- %", x=416, y=274, color=COL_TEXT, value=16)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด  " % TANK_MIN + BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=416, y=304, color=COL_DIM, value=14)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
+    w["soil"] = ui.Label("ดิน -- %", x=416, y=274, color=COL_TEXT, value=20)
+    ui.Label("ต่ำกว่า %d%% ไม่เปิด  " % TANK_MIN + BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=416, y=304, color=COL_DIM, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

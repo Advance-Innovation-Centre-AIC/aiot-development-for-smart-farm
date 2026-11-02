@@ -1475,7 +1475,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1533,8 +1533,8 @@ static bento_status_t add_dial(farm_t *farm)
 static bento_status_t add_diagnosis(farm_t *farm)
 {
     const spec_t diag = {240, 96, -1, -1, COL_WARN, 0, 0, 20};
-    const spec_t detail = {240, 190, -1, -1, COL_DIM, 0, 0, 14};
-    const spec_t peak = {28, 290, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t detail = {240, 190, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t peak = {28, 290, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &diag,
                    "กำลังฟัง\nค่าปกติ 5 วิ", &farm->screen.diag);
@@ -1557,7 +1557,7 @@ static bento_status_t add_pump(farm_t *farm)
     const spec_t lamp = {416, 78, 40, 40, COL_INFO, 0, 0, 0};
     const spec_t pump = {468, 84, -1, -1, COL_DIM, 0, 0, 24};
     const spec_t left = {416, 130, 350, 14, 0U, 0, PUMP_MAX_S, 0};
-    const spec_t run = {416, 154, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t run = {416, 154, -1, -1, COL_TEXT, 0, 0, 20};
     bento_status_t status = add_card(
         farm->ui, &card, "ปั๊มบ่อ = ไฟสีฟ้า (คำสั่ง 0)", &farm->screen.title);
 
@@ -1586,8 +1586,8 @@ static bento_status_t add_water(farm_t *farm)
     const rect_t card = {402, 204, 378, 140};
     const spec_t bar = {416, 240, 260, 22, 0U, 0, 0, 0};
     const spec_t tank = {690, 236, -1, -1, COL_TEXT, 0, 0, 0};
-    const spec_t soil = {416, 274, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t hint = {416, 304, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t soil = {416, 274, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t hint = {416, 304, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1617,9 +1617,9 @@ static bento_status_t add_water(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
