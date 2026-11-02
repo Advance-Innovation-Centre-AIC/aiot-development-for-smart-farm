@@ -28,8 +28,10 @@
  *     MicroPython's import rgbmatrix would raise;
  *   - dsp.dew_point, dsp.heat_index and dsp.comfort_zone return a
  *     status, which ends the program where MicroPython would raise;
- *   - the real-number settings live in the function that reads them
- *     (MISRA 8.9); a comment at the top says where;
+ *   - the settings sit in one block at the top (deviation CT02); the
+ *     real ones are float, the type of the sensor and dsp values they
+ *     meet; the Magnus A and B are MAGNUS_A and MAGNUS_B (no
+ *     one-letter names);
  *   - "%.1f" numbers are formatted by bento_fmt_real_precision, the
  *     board's own float formatting; round() rounds half to even, as
  *     Python's does;
@@ -53,18 +55,22 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* T - Td at or below this = condensation risk, degrees C. */
+static const float RISK_C = 2.0F;
+/* The board warms its own sensor: compare with a room thermometer and
+ * put the difference here, such as -3.0. */
+static const float TEMP_OFFSET = 0.0F;
+/* The Magnus constants, the set dsp.dew_point uses in the firmware. */
+static const float MAGNUS_A = 17.27F; /* .py: A */
+static const float MAGNUS_B = 237.7F; /* .py: B */
 enum {
     TICK_MS = 1000,  /* read the SHT40 and refresh the screen */
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-/* T - Td at or below this = condensation risk, degrees C. */
-static const float RISK_C = 2.0F;
-/* TEMP_OFFSET (the board's own warmth) is temp_offset in
- * work_out_air(), and the Magnus constants A, B are in rh_at(): each
- * lives in the one function that reads it (MISRA 8.9). */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -306,13 +312,9 @@ static bento_status_t beep(bento_ui_t *ui, int32_t tune)
  * cancels out. */
 static float rh_at(float td, float t)
 {
-    /* the Magnus constants, the set dsp.dew_point uses in the
-     * firmware */
-    static const float magnus_a = 17.27F;
-    static const float magnus_b = 237.7F;
     const float full = 100.0F;
-    const float dew_term = (magnus_a * td) / (magnus_b + td);
-    const float air_term = (magnus_a * t) / (magnus_b + t);
+    const float dew_term = (MAGNUS_A * td) / (MAGNUS_B + td);
+    const float air_term = (MAGNUS_A * t) / (MAGNUS_B + t);
     const float rh = full * expf(dew_term - air_term);
 
     return (rh < full) ? rh : full;
@@ -321,13 +323,10 @@ static float rh_at(float td, float t)
 /* Td from the raw pair, T from the offset, RH worked back from Td. */
 static bento_status_t work_out_air(const reading_t *reading, air_t *air)
 {
-    /* TEMP_OFFSET: the board warms its own sensor; compare with a room
-     * thermometer and put the difference here, such as -3.0 */
-    static const float temp_offset = 0.0F;
     bento_status_t status =
         bento_dsp_dew_point(reading->t_raw, reading->rh_raw, &air->td);
 
-    air->t = reading->t_raw + temp_offset;
+    air->t = reading->t_raw + TEMP_OFFSET;
     if (status == BENTO_OK) {
         air->rh = rh_at(air->td, air->t);
     }
