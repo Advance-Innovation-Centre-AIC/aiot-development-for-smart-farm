@@ -31,8 +31,8 @@
  *     compared by enum and id, never by name. The event's name is
  *     only written on screen, from the same names modui.c gives.
  *   - TH_START is THRESHOLD_START here (the lint refuses "th").
- *   - The roller's three options are one text joined with newlines
- *     in the source, as the .py's "\n".join builds it.
+ *   - MODES is one text joined with newlines in the settings block,
+ *     as the .py's "\n".join builds the roller's options from it.
  *   - A watering method outside the three (the .py's IndexError)
  *     ends the program with BENTO_E_INVALID_ARGUMENT.
  *   - Every light matrix status is ignored, as the .py's try/except
@@ -52,16 +52,23 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    THRESHOLD_START =
-        40,          /* THRESHOLD_START: the starting threshold, % */
+    THRESHOLD_START = 40 /* .py: TH_START; the starting threshold, % */
+};
+/* the Roller's options, joined by newlines (value = the row, from 0) */
+static const char MODES[] = "น้ำหยด\n"
+                            "พ่นฝอย\n"
+                            "สปริงเกอร์";
+enum {
     LOOP_MS = 30,    /* read the events this often */
     TICK_MS = 500,   /* read the soil and refresh its line this often */
     RUN_MS = 180000, /* the program ends after three minutes */
     SPEAKER = 40,    /* speaker volume, 0-100 % */
     VOLUME = 25      /* tone velocity, 0-127 (about 20 %) */
 };
+/* .py: BTN_NAMES = ("SW5", "SW6"): this file uses the touch screen instead */
+/* ---- end of settings ---- */
 
 /* Knob and modes. */
 enum {
@@ -476,9 +483,6 @@ static bento_status_t add_buttons(router_screen_t *screen)
  * pump light and its caption. */
 static bento_status_t add_mode_and_led(router_screen_t *screen)
 {
-    const char *modes = "น้ำหยด\n"
-                        "พ่นฝอย\n"
-                        "สปริงเกอร์";
     const rect_t roller_box = {ROLLER_X, BUTTON_Y, ROLLER_W, ROLLER_H};
     const rect_t led_box = {LED_X, LED_Y, LED_SIZE, LED_SIZE};
     const point_t caption_at = {PUMP_LABEL_X, PUMP_LABEL_Y};
@@ -487,8 +491,8 @@ static bento_status_t add_mode_and_led(router_screen_t *screen)
     bento_status_t status;
 
     place(&args, roller_box);
-    args.text = modes;
-    args.text_len = (uint32_t)strlen(modes);
+    args.text = MODES;
+    args.text_len = (uint32_t)strlen(MODES);
     args.color = COL_TEXT;
     status = bento_ui_roller_create(screen->ui, &args,
                                     &screen->routed[ROUTED_MODE]);
