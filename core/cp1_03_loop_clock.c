@@ -61,9 +61,8 @@ enum {
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
 
-/* The board warms itself: compare with a room thermometer and put the
- * difference here, such as -9.5. */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* TEMP_OFFSET, the SHT40 offset a student sets, lives in read_temp(),
+ * its one reader, as temp_offset. */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -139,9 +138,8 @@ enum {
     TUNE_KINDS = 7
 };
 
-/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
- * button = pressed(0). */
-static const char *const BUTTON_NAMES[2] = {"SW5", "SW6"};
+/* The button names on the panel (SW5 = lower = pressed(1), SW6 =
+ * upper = pressed(0)) live in add_help(), their one reader. */
 
 typedef struct {
     int32_t x;
@@ -240,6 +238,9 @@ static void read_accel(readings_t *readings)
  * waits 50 ms, which makes the IMU start late (the "late" column). */
 static bento_status_t read_temp(readings_t *readings)
 {
+    /* The board warms itself: compare with a room thermometer and put
+     * the difference here, such as -9.5. */
+    static const bento_real_t temp_offset = (bento_real_t)0.0;
     bento_status_t status = BENTO_OK;
     uint32_t tries = 0U;
 
@@ -250,7 +251,7 @@ static bento_status_t read_temp(readings_t *readings)
         float humidity = 0.0F;
 
         if (bento_sensors_sht40_read(&celsius, &humidity) == BENTO_OK) {
-            readings->temp = celsius + TEMP_OFFSET;
+            readings->temp = celsius + temp_offset;
             readings->temp_known = true;
         } else {
             status = pause_ms((uint32_t)RETRY_MS);
@@ -292,9 +293,10 @@ static bento_status_t wait_ms(int32_t total_ms, button_t *button)
                                      bento_time_ticks_ms(), start_ms);
 
     while ((status == BENTO_OK) && (left_ms > 0)) {
-        status = pause_ms((uint32_t)((left_ms < WAIT_STEP_MS)
-                                         ? left_ms
-                                         : WAIT_STEP_MS));
+        const int32_t step_ms =
+            (left_ms < WAIT_STEP_MS) ? left_ms : WAIT_STEP_MS;
+
+        status = pause_ms((uint32_t)step_ms);
         if (status == BENTO_OK) {
             status = sample(button);
         }
@@ -308,8 +310,9 @@ static bento_status_t wait_ms(int32_t total_ms, button_t *button)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -471,12 +474,13 @@ static void poll_screen(bento_ui_t *ui)
 
 static bento_status_t add_help(screen_t *screen)
 {
+    static const char *const button_names[2] = {"SW5", "SW6"};
     const label_spec_t help = {MARGIN_X, HELP_Y, FONT_TEXT, COL_DIM};
     char text[TEXT_BYTES];
 
     (void)snprintf(text, sizeof(text),
                    "ช้า = ช้ากว่าเป้าเกิน %ld ms   %s (ล่าง) = สลับโหมด",
-                   (long)LATE_MS, BUTTON_NAMES[0]);
+                   (long)LATE_MS, button_names[0]);
     return add_label(screen->ui, text, &help, &screen->help);
 }
 
@@ -584,8 +588,8 @@ static void format_real(char *text, bento_real_t value, int32_t digits)
 static void show_values(const screen_t *screen,
                         const readings_t *readings)
 {
-    char accel[BENTO_FMT_BUF_SIZE] = "--";
-    char temp[BENTO_FMT_BUF_SIZE] = "--";
+    char accel[BENTO_FMT_BUF_SIZE];
+    char temp[BENTO_FMT_BUF_SIZE];
     char text[TEXT_BYTES];
 
     if (readings->accel_known) {

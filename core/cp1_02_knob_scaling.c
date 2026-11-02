@@ -145,9 +145,8 @@ static const knob_t KNOBS[KNOB_COUNT] = {
     {"VR3 น้ำในถัง", "ลิตร", 0, 500, 0, 11},
     {"VR4 ตั้งเวลารดน้ำ", "นาที", 0, 60, 0, 13}};
 
-/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
- * button = pressed(0). */
-static const char *const BUTTON_NAMES[2] = {"SW5", "SW6"};
+/* The button names on the panel (SW5 = lower = pressed(1), SW6 =
+ * upper = pressed(0)) live in show_band(), their one reader. */
 
 typedef struct {
     int32_t x;
@@ -210,8 +209,9 @@ static bento_status_t pause_ms(uint32_t delay_ms)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -233,9 +233,10 @@ static bento_real_t map_range(int32_t x, int32_t in_low,
                               int32_t out_high)
 {
     const int32_t scaled = (x - in_low) * (out_high - out_low);
+    const int32_t in_span = in_high - in_low;
 
     return (bento_real_t)out_low +
-           ((bento_real_t)scaled / (bento_real_t)(in_high - in_low));
+           ((bento_real_t)scaled / (bento_real_t)in_span);
 }
 
 /* A value outside low..high is cut to the nearer end. */
@@ -263,8 +264,10 @@ static bento_real_t to_unit(uint16_t raw, const knob_t *knob)
 /* How far the value moves for one raw count. */
 static bento_real_t step_size(const knob_t *knob)
 {
-    return (bento_real_t)(knob->high - knob->low) /
-           (bento_real_t)(RAW_HI - RAW_LO);
+    const int32_t out_span = knob->high - knob->low;
+    const int32_t raw_span = RAW_HI - RAW_LO;
+
+    return (bento_real_t)out_span / (bento_real_t)raw_span;
 }
 
 /* The dead-band: change the number only when raw is more than band
@@ -533,16 +536,17 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 
 static void show_band(const app_t *app)
 {
+    static const char *const button_names[2] = {"SW5", "SW6"};
     char text[TEXT_BYTES];
 
     if (app->band != 0) {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: %ld count",
-                       BUTTON_NAMES[0], (long)app->band);
+                       button_names[0], (long)app->band);
     } else {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: ปิด",
-                       BUTTON_NAMES[0]);
+                       button_names[0]);
     }
     set_text(app->ui, app->help, text);
 }

@@ -62,9 +62,8 @@ enum {
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
 
-/* The board warms itself: compare with a room thermometer and put the
- * difference here, such as -9.5. */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* TEMP_OFFSET, the SHT40 offset a student sets, lives in show_temp(),
+ * its one reader, as temp_offset. */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -276,8 +275,9 @@ static bento_status_t just_pressed(app_t *app, uint32_t i, bool *edge)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -329,9 +329,9 @@ static bool two_point(const app_t *app, uint16_t raw,
         far_enough(app->dry, app->wet)) {
         const int32_t scaled =
             ((int32_t)raw - (int32_t)app->dry) * PERCENT_MAX;
+        const int32_t span = (int32_t)app->wet - (int32_t)app->dry;
         const bento_real_t value =
-            (bento_real_t)scaled /
-            (bento_real_t)((int32_t)app->wet - (int32_t)app->dry);
+            (bento_real_t)scaled / (bento_real_t)span;
 
         *percent = value;
         if (value > (bento_real_t)PERCENT_MAX) {
@@ -598,11 +598,13 @@ static void show_points(const app_t *app)
     static const char *const steps[3] = {"หมุน VR1 ไปจุดแห้ง กด SW6",
                                          "หมุน VR1 ไปจุดเปียก กด SW6",
                                          "ครบสองจุด  SW6 = เริ่มใหม่"};
-    char dry[BENTO_FMT_BUF_SIZE] = "--";
-    char wet[BENTO_FMT_BUF_SIZE] = "--";
+    char dry[BENTO_FMT_BUF_SIZE];
+    char wet[BENTO_FMT_BUF_SIZE];
     char text[TEXT_BYTES];
     uint32_t step = 2U;
 
+    (void)snprintf(dry, sizeof(dry), "--");
+    (void)snprintf(wet, sizeof(wet), "--");
     if (app->dry_known) {
         (void)snprintf(dry, sizeof(dry), "%u", (unsigned int)app->dry);
     }
@@ -700,6 +702,9 @@ static bento_status_t check_buttons(app_t *app)
 /* 1) The offset, every CLIMATE_MS. */
 static bento_status_t show_temp(const app_t *app)
 {
+    /* The board warms itself: compare with a room thermometer and put
+     * the difference here, such as -9.5. */
+    static const bento_real_t temp_offset = (bento_real_t)0.0;
     char raw_text[BENTO_FMT_BUF_SIZE];
     char offset_text[BENTO_FMT_BUF_SIZE];
     char fixed_text[BENTO_FMT_BUF_SIZE];
@@ -710,8 +715,8 @@ static bento_status_t show_temp(const app_t *app)
 
     if ((status == BENTO_OK) && known) {
         format_real(raw_text, celsius);
-        format_real(offset_text, TEMP_OFFSET);
-        format_real(fixed_text, celsius + TEMP_OFFSET);
+        format_real(offset_text, temp_offset);
+        format_real(fixed_text, celsius + temp_offset);
         (void)snprintf(text, sizeof(text), "%s %s%s = %s", raw_text,
                        (offset_text[0] == '-') ? "" : "+", offset_text,
                        fixed_text);
