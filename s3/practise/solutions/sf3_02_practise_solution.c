@@ -362,7 +362,9 @@ static bento_status_t read_threshold(int32_t *threshold)
     uint16_t raw = 0U;
     const bento_status_t status = bento_pots_read(THRESHOLD_POT, &raw);
 
-    *threshold = PEAK_MIN + (((int32_t)raw * PEAK_SPAN) / POT_FULL);
+    *threshold =
+        (int32_t)PEAK_MIN +
+        (((int32_t)raw * (int32_t)PEAK_SPAN) / (int32_t)POT_FULL);
     return status;
 }
 
@@ -482,7 +484,7 @@ static void draw_matrix(int32_t frame)
         for (x = 0; x < (frame * 2); x++) {
             /* two pixels a byte, the left one in the low nibble */
             const uint32_t shift =
-                (uint32_t)NIBBLE_BITS * (uint32_t)(x % 2);
+                (uint32_t)NIBBLE_BITS * ((uint32_t)x % 2U);
 
             picture[MATRIX_BOTTOM_ROW + (x / 2)] |=
                 (uint8_t)(color << shift);
@@ -863,7 +865,9 @@ static bento_status_t on_mood(const ears_screen_t *screen, ears_t *ears,
 static void matrix_tick(coop_t *coop, int32_t level, uint32_t now_ms)
 {
     const int32_t frame =
-        coop->panic ? PANIC_FRAME : ((level * MATRIX_LEVELS) / PERCENT);
+        coop->panic
+            ? (int32_t)PANIC_FRAME
+            : ((level * (int32_t)MATRIX_LEVELS) / (int32_t)PERCENT);
 
     if (!coop->has_drawn || (frame != coop->drawn) ||
         (bento_time_ticks_diff(now_ms, coop->sent_ms) >= MATRIX_MS)) {
