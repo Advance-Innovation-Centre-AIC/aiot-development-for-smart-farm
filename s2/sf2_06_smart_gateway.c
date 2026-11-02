@@ -1378,7 +1378,7 @@ static bento_status_t add_plc(farm_t *farm)
     const spec_t bar = {276, 80, 380, 24, 0U, 0, 0, 0};
     const spec_t tank = {670, 76, -1, -1, COL_TEXT, 0, 0, 0};
     const spec_t lamp = {276, 124, 40, 40, COL_INFO, 0, 0, 0};
-    const spec_t plc = {330, 132, -1, -1, COL_DIM, 0, 0, 0};
+    const spec_t plc = {330, 132, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status = add_card(farm->ui, &card, "ถังน้ำ + PLC");
 
     if (status == BENTO_OK) {
@@ -1430,7 +1430,7 @@ static bento_status_t add_history(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
     const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
