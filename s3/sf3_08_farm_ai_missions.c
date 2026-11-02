@@ -55,12 +55,11 @@
  *     next one, and the program closes the module's Edge AI link
  *     (bento_edgeai_deinit) after the final stop.
  *   - A button read that fails ends the run, as an exception from
- *     buttons.pressed() does.
+ *     buttons.pressed() does. A board without the model link
+ *     (reTerminal) runs rule-only, as an empty edge_ai.models().
  *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
- *     yet: the program says so and ends (Edge AI comes first, as on
- *     a board without the model link, such as the reTerminal). Where
- *     only MQTT is missing, it says so and runs offline, as the .py
- *     does.
+ *     yet: the program says so and runs rule-only and offline, as the
+ *     .py does with no model and no broker.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -194,6 +193,14 @@ enum {
     PAYLOAD_BYTES = 512,
     TEAM_CHARS = 6, /* "team" and two digits */
     TEAM_PREFIX = 4
+};
+
+/* The Emulator's line in the AI card (show_ai_gap). */
+enum {
+    GAP_X = 104, /* right of the empty result "-" / "ยังไม่มีผล" */
+    GAP_Y = 126,
+    GAP_W = 240, /* ends at x 344, left of the arc */
+    GAP_PX = 20
 };
 
 /* The rule each mission pairs with the AI (rk). */
@@ -1017,8 +1024,15 @@ static void ai_find(ai_t *ai, const mission_t *mission)
 {
     const bento_status_t status = bento_edgeai_init();
     int32_t count = 0;
+    bool has_link = false;
 
-    ai->linked = status != BENTO_E_UNSUPPORTED;
+    /* a reTerminal answers init the same way but says "no link" to
+     * the query; only the BENTO Emulator's C runtime refuses both */
+    ai->linked = true;
+    if (status == BENTO_E_UNSUPPORTED) {
+        ai->linked =
+            bento_edgeai_supported(&has_link) != BENTO_E_UNSUPPORTED;
+    }
     if ((status != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0; /* the AI core does not answer: none found */
@@ -3510,19 +3524,33 @@ static bento_status_t watch(farm_t *farm)
     return status;
 }
 
-/* No Edge AI from C here (the BENTO Emulator): the note line says
- * so, and the program ends normally. */
-static void show_ai_gap(farm_t *farm)
+/* No Edge AI from C (BENTO_E_UNSUPPORTED, as in the BENTO Emulator):
+ * three lines in the AI card, beside the empty result, say so; the
+ * run goes on rule-only, as the .py does with no model. */
+static bento_status_t show_ai_gap(const farm_t *farm)
 {
     static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t made = 0U;
+    bento_status_t status;
 
-    note(farm, gap, COLOR_BAD);
-    poll_display(farm->ui);
-    (void)printf(
-        "%s / Edge AI from C is not in the BENTO Emulator yet: "
-        "run it on a Dev Kit or Eva Kit.\n",
-        gap);
+    bento_ui_widget_args_init(&args);
+    args.text = gap;
+    args.text_len = (uint32_t)strlen(gap);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W; /* wraps to three lines left of the arc */
+    args.color = COLOR_WARN;
+    args.font_px = GAP_PX;
+    status = bento_ui_label_create(farm->ui, &args, &made);
+    if (status == BENTO_OK) {
+        poll_display(farm->ui);
+        (void)printf("%s / Edge AI from C is not in the BENTO Emulator "
+                     "yet: run it on a Dev Kit or Eva Kit.\n",
+                     gap);
+    }
+    return status;
 }
 
 /* The model first (the mic opens after it), then the network, then
@@ -3536,26 +3564,25 @@ static bento_status_t run_mission(farm_t *farm)
     poll_display(farm->ui);
     status = ai_start(&farm->ai, farm->mission, &started);
     if ((status == BENTO_OK) && !farm->ai.linked) {
-        show_ai_gap(farm);
-    } else if ((status == BENTO_OK) && !started) {
+        status = show_ai_gap(farm);
+    }
+    if ((status == BENTO_OK) && !started) {
         (void)printf("ไม่พบหรือโหลดโมเดลไม่ได้: %s%s%s - ใช้กฎอย่างเดียว\n",
                      farm->mission->store_model,
                      (farm->mission->builtin_model[0] != '\0') ? " / "
                                                                : "",
                      farm->mission->builtin_model);
-    } else {
-        /* a model runs, or Stop ends the run */
     }
-    if ((status == BENTO_OK) && farm->ai.linked) {
+    if (status == BENTO_OK) {
         show_model(farm);
         rules_init(&farm->rules, farm->mission->rule);
         status = go_online(farm);
     }
-    if ((status == BENTO_OK) && farm->ai.linked) {
+    if (status == BENTO_OK) {
         show_link(farm);
         status = watch(farm);
     }
-    if ((status == BENTO_OK) && farm->ai.linked) {
+    if (status == BENTO_OK) {
         note(farm, "ครบเวลา - กด Program to Device เพื่อเล่นใหม่",
              COLOR_WARN);
     }
