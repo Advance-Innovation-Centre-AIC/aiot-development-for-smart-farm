@@ -109,7 +109,7 @@ STEPS = ("หมุน VR1 ไปจุดแห้ง กด SW6", "หมุ�
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
@@ -117,21 +117,21 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("สอบเทียบก่อนเชื่อ", x=12, y=6, color=COL_TEXT, value=24)
     card(12, 44, 378, 150, "1) ชดเชย: SHT40 (C)")
-    ui.Label("ดิบ + TEMP_OFFSET = ค่าที่ใช้", x=24, y=78, color=COL_DIM, value=16)
+    ui.Label("ดิบ + TEMP_OFFSET = ค่าที่ใช้", x=24, y=78, color=COL_DIM, value=20)
     w = {"t_fix": ui.Label("--", x=24, y=110, color=COL_OK, value=24)}
     card(402, 44, 378, 150, "2) ตั้งศูนย์: มุมเอียง (องศา)")
     w["a_raw"] = ui.Label("ดิบ --", x=414, y=78, color=COL_WARN, value=20)
     w["a_fix"] = ui.Label("--", x=414, y=116, color=COL_OK, value=20)
-    w["zero"] = ui.Label("ศูนย์ = 0, 0 (กด SW5)", x=414, y=160, color=COL_DIM, value=14)
+    w["zero"] = ui.Label("ศูนย์ = 0, 0 (กด SW5)", x=414, y=160, color=COL_DIM, value=20)
     card(12, 202, 768, 136, "3) สองจุด: VR1 = หัววัดดิน")
     w["p_raw"] = ui.Label("raw --", x=24, y=232, color=COL_WARN, value=20)
-    w["pts"] = ui.Label(" ", x=200, y=236, color=COL_TEXT, value=16)
+    w["pts"] = ui.Label(" ", x=200, y=236, color=COL_TEXT, value=20)
     w["pct"] = ui.Label("-- %", x=560, y=226, color=COL_OK, value=28)
     w["bar"] = ui.Bar(x=24, y=270, w=744, h=18, min=0, max=100, value=0)
     w["bar"].color(COL_OK)          # สีตอนสร้างใช้ไม่ได้กับ Bar ต้องตั้งหลังสร้าง
-    w["step"] = ui.Label(" ", x=24, y=300, color=COL_WARN, value=16)
+    w["step"] = ui.Label(" ", x=24, y=300, color=COL_WARN, value=20)
     w["help"] = ui.Label("SW5 (ล่าง) = ตั้งศูนย์   SW6 (บน) = แห้ง / เปียก / เริ่มใหม่",
-                         x=12, y=352, color=COL_DIM, value=16)
+                         x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
