@@ -299,9 +299,6 @@ enum {
     COLOR_INFO = 0x4A9EFF  /* card titles */
 };
 
-static const char *const SENSOR_NAMES[SENSOR_COUNT] = {"IMU", "radar",
-                                                       "mic"};
-
 /* Sleeps, and turns Stop into BENTO_E_CANCELLED. */
 static bento_status_t wait_ms(uint32_t duration_ms)
 {
@@ -318,8 +315,10 @@ static bento_status_t wait_ms(uint32_t duration_ms)
 static int32_t as_percent(uint8_t pct)
 {
     const float score = (float)pct / (float)PERCENT;
+    const bento_real_t percent =
+        (bento_real_t)score * (bento_real_t)PERCENT;
 
-    return (int32_t)((bento_real_t)score * (bento_real_t)PERCENT);
+    return (int32_t)percent;
 }
 
 /* str() of the OSError the binding raises for a failed query. */
@@ -432,6 +431,8 @@ static void keep_row(const bento_edgeai_model_info_t *info,
                      int32_t index, int32_t compiled,
                      lab_model_t *model)
 {
+    static const char *const sensor_names[SENSOR_COUNT] = {
+        "IMU", "radar", "mic"};
     const char *source = "?";
 
     if (compiled >= 0) {
@@ -441,7 +442,7 @@ static void keep_row(const bento_edgeai_model_info_t *info,
     (void)snprintf(model->name, sizeof(model->name), "%s", info->name);
     model->source = source;
     model->sensor = (info->sensor < (uint8_t)SENSOR_COUNT)
-                        ? SENSOR_NAMES[info->sensor]
+                        ? sensor_names[info->sensor]
                         : "?";
     model->class_count = info->class_count;
     if (model->class_count > (uint32_t)MAX_CLASSES) {
@@ -1126,8 +1127,10 @@ static bento_status_t read_controls(lab_t *lab, want_t *want)
         status = sample_button(lab, &lab->go_button);
     }
     if ((status == BENTO_OK) && button_clicked(&lab->next_button)) {
+        const uint32_t next = (lab->current + 1U) % lab->model_count;
+
         want->kind = WANT_PICK;
-        want->pick = (int32_t)((lab->current + 1U) % lab->model_count);
+        want->pick = (int32_t)next;
     }
     if ((status == BENTO_OK) && button_clicked(&lab->go_button)) {
         want->kind = WANT_TOGGLE;

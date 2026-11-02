@@ -394,7 +394,8 @@ static bento_status_t zone_cm(int32_t *alert_cm)
     uint16_t raw = 0U;
     const bento_status_t status = bento_pots_read(ZONE_POT, &raw);
 
-    *alert_cm = MIN_CM + (((int32_t)raw * SPAN_CM) / POT_FULL);
+    *alert_cm = (int32_t)MIN_CM +
+                (((int32_t)raw * (int32_t)SPAN_CM) / (int32_t)POT_FULL);
     return status;
 }
 
@@ -413,8 +414,10 @@ static bool read_radar(radar_reading_t *reading)
     reading->has_target = answered && (range.target != 0U);
     reading->cm = 0;
     if (reading->has_target) {
-        reading->cm = (int32_t)((bento_real_t)range.distance_m *
-                                (bento_real_t)CM_PER_M);
+        const bento_real_t cm =
+            (bento_real_t)range.distance_m * (bento_real_t)CM_PER_M;
+
+        reading->cm = (int32_t)cm;
     }
     reading->moving = radar.presence != 0U;
     reading->energy = radar.energy;

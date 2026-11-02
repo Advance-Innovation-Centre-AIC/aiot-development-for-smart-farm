@@ -73,11 +73,10 @@
 #include "bento_wifi.h"
 
 /* Edit these before running. */
-static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";  /* no spaces */
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>"; /* 8+ chars */
 static const char TEAM[] = "teamXX"; /* team01-team99, as in the app */
-static const char BROKER[] =
-    "broker.hivemq.com"; /* or test.mosquitto.org */
+/* WIFI_SSID and WIFI_PASS are wifi_ssid and wifi_pass in
+ * join_wifi(), BROKER is broker in open_broker(): each is read there
+ * only. */
 
 static const char OFFLINE[] = "ออฟไลน์ (ทำงานต่อ)";
 
@@ -530,8 +529,8 @@ static bento_real_t room_humidity(bento_real_t raw_humidity,
     const bento_real_t base_c = (bento_real_t)243.12;
     const bento_real_t sensor_part = (slope * raw_c) / (base_c + raw_c);
     const bento_real_t room_part = (slope * room_c) / (base_c + room_c);
-    const bento_real_t factor =
-        (bento_real_t)exp((double)(sensor_part - room_part));
+    const bento_real_t exponent = sensor_part - room_part;
+    const bento_real_t factor = (bento_real_t)exp((double)exponent);
     const bento_real_t humidity = raw_humidity * factor;
 
     return (humidity > (bento_real_t)PERCENT) ? (bento_real_t)PERCENT
@@ -599,8 +598,10 @@ static void read_distance(farm_t *farm)
         (range.target != 0U);
     farm->distance_cm = 0;
     if (farm->has_target) {
-        farm->distance_cm = (int32_t)((bento_real_t)range.distance_m *
-                                      (bento_real_t)CM_PER_M);
+        const bento_real_t cm =
+            (bento_real_t)range.distance_m * (bento_real_t)CM_PER_M;
+
+        farm->distance_cm = (int32_t)cm;
     }
 }
 
@@ -749,15 +750,18 @@ static bento_status_t wait_wifi(void)
 /* wifi.connect(), then an address that is not 0.0.0.0. */
 static bento_status_t join_wifi(void)
 {
+    static const char wifi_ssid[] =
+        "<ชื่อ Hotspot ของกลุ่ม>"; /* no spaces */
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>"; /* 8+ */
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -776,13 +780,15 @@ static bento_status_t join_wifi(void)
  * connect that fails gives its client back at once. */
 static bento_status_t open_broker(farm_t *farm)
 {
+    /* or test.mosquitto.org */
+    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     bento_status_t status;
     bool waiting;
 
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)MQTT_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = farm->client_id;
@@ -952,11 +958,12 @@ static void report(const farm_screen_t *screen, farm_t *farm,
 static bento_status_t announce_pen(const farm_screen_t *screen,
                                    const farm_t *farm)
 {
-    char distance[BENTO_FMT_BUF_SIZE] = "null";
+    char distance[BENTO_FMT_BUF_SIZE];
     const bento_status_t status =
         farm->inside ? beep_two(screen->ui, NOTE_C6, NOTE_E5)
                      : beep_two(screen->ui, NOTE_G5, NOTE_C6);
 
+    (void)snprintf(distance, sizeof(distance), "%s", "null");
     if (farm->has_target) {
         (void)snprintf(distance, sizeof(distance), "%" PRId32,
                        farm->distance_cm);
@@ -1045,6 +1052,19 @@ static bool read_number(json_reader_t *reader, json_field_t *field)
     return field->length > 0U;
 }
 
+/* The bytes at text are the word's letters, length of them. */
+static bool same_bytes(const uint8_t *text, const char *word,
+                       uint32_t length)
+{
+    bool same = true;
+    uint32_t i;
+
+    for (i = 0U; (i < length) && same; i++) {
+        same = text[i] == (uint8_t)word[i];
+    }
+    return same;
+}
+
 /* true, false or null, every letter of it. */
 static bool read_word(json_reader_t *reader, const char *word,
                       json_kind_t kind, json_field_t *field)
@@ -1052,7 +1072,7 @@ static bool read_word(json_reader_t *reader, const char *word,
     const uint32_t length = (uint32_t)strlen(word);
     const bool same =
         ((reader->length - reader->at) >= length) &&
-        (memcmp(&reader->text[reader->at], word, length) == 0);
+        same_bytes(&reader->text[reader->at], word, length);
 
     if (same) {
         field->kind = kind;
@@ -1129,7 +1149,7 @@ static bool field_is(const json_reader_t *reader,
     const uint32_t length = (uint32_t)strlen(word);
 
     return (field->kind == JSON_STRING) && (field->length == length) &&
-           (memcmp(&reader->text[field->start], word, length) == 0);
+           same_bytes(&reader->text[field->start], word, length);
 }
 
 /* One "key": value pair; a key read twice keeps its last value. */
@@ -1224,8 +1244,9 @@ static int32_t pump_seconds(const json_reader_t *reader,
 
         whole = is_digit(byte) || ((i == 0U) && (byte == (uint8_t)'-'));
         if (whole && is_digit(byte) && (seconds <= PUMP_MAX_S)) {
-            seconds =
-                (seconds * TENTHS) + (int32_t)(byte - (uint8_t)'0');
+            const uint8_t digit = byte - (uint8_t)'0';
+
+            seconds = (seconds * (int32_t)TENTHS) + (int32_t)digit;
         }
     }
     if (whole && (reader->text[field->start] == (uint8_t)'-')) {
@@ -1471,6 +1492,7 @@ static bento_status_t read_knobs(farm_t *farm)
     uint16_t soil = 0U;
     uint16_t fan = 0U;
     uint16_t guard = 0U;
+    int32_t fan_part;
     bento_status_t status = bento_pots_read(SOIL_POT, &soil);
 
     if (status == BENTO_OK) {
@@ -1479,11 +1501,13 @@ static bento_status_t read_knobs(farm_t *farm)
     if (status == BENTO_OK) {
         status = bento_pots_read(GUARD_POT, &guard);
     }
-    farm->soil = ((int32_t)soil * PERCENT) / POT_FULL;
+    fan_part = (int32_t)fan * (int32_t)FAN_SPAN;
+    farm->soil = ((int32_t)soil * (int32_t)PERCENT) / (int32_t)POT_FULL;
     farm->fan_at = (bento_real_t)FAN_LO +
-                   ((bento_real_t)((int32_t)fan * FAN_SPAN) /
-                    (bento_real_t)POT_FULL);
-    farm->guard = GUARD_LO + (((int32_t)guard * GUARD_SPAN) / POT_FULL);
+                   ((bento_real_t)fan_part / (bento_real_t)POT_FULL);
+    farm->guard =
+        (int32_t)GUARD_LO +
+        (((int32_t)guard * (int32_t)GUARD_SPAN) / (int32_t)POT_FULL);
     return status;
 }
 
