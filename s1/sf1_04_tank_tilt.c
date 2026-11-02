@@ -46,11 +46,17 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    SPEAKER = 40,  /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
-    VOLUME = 25,   /* ความดังเสียง 0-127 */
-    SAFE_DEG = 20, /* เอียงเกินกี่องศา = อันตราย */
+    SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
+    VOLUME = 25,  /* ความดังเสียง 0-127 */
+    SAFE_DEG = 20 /* เอียงเกินกี่องศา = อันตราย */
+};
+/* แรงรวมเกินกี่ g = กระแทก */
+static const bento_real_t BUMP_G = (bento_real_t)1.8;
+/* .py: BTN_NAMES. ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+enum {
     RUN_MS = 120000,
     TICK_MS = 500,
     ZERO_SAMPLES = 5,
@@ -58,14 +64,13 @@ enum {
     NEEDLE_LEN = 48,
     TARGET_DEG = 3 /* เกม: เอียงไม่เกินนี้ = อยู่ในเป้า */
 };
+/* ---- end of settings ---- */
 
-/* แรงรวมเกินกี่ g = กระแทก */
-static const bento_real_t BUMP_G = (bento_real_t)1.8;
 /* Read by one function each, so they live there (MISRA 8.9): the
  * gravity 9.81 in g_force(), range_deg (เอียงเท่านี้ จุดบนจอไฟ RGB
  * ชนขอบ, SAFE_DEG x 1.5) in bubble_cell(), degrees_per_radian in
- * tilt_angles(), the button names SW5 / SW6 in run_tank(), and the
- * level colours in show_tilt() and matrix_update(). */
+ * tilt_angles(), and the level colours in show_tilt() and
+ * matrix_update(). */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -1019,8 +1024,6 @@ static bento_status_t finish(const tilt_screen_t *screen,
 static bento_status_t run_tank(const tilt_screen_t *screen,
                                tank_t *tank)
 {
-    /* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
-    static const char *const button_names[] = {"SW5", "SW6"};
     char text[TEXT_CHARS];
     uint32_t start_ms;
     bento_status_t status = measure_zero(screen, &tank->zero);
@@ -1029,7 +1032,7 @@ static bento_status_t run_tank(const tilt_screen_t *screen,
         set_color(screen->ui, screen->help, COL_DIM);
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = ตั้งศูนย์ใหม่   %s (บน) = ล้างตัวนับ",
-                       button_names[0], button_names[1]);
+                       BUTTON_NAMES[0], BUTTON_NAMES[1]);
         set_text(screen->ui, screen->help, text);
     }
     tank->last_ms = bento_time_ticks_ms();
