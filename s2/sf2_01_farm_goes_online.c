@@ -81,7 +81,7 @@ enum {
     CARD_BORDER_PX = 1,
     CARD_INSET_X = 12,
     CARD_INSET_Y = 6,
-    CARD_TITLE_PX = 16
+    CARD_TITLE_PX = 20
 };
 
 /* Times, scales and the link. */
@@ -538,8 +538,8 @@ typedef struct {
 static bento_status_t build_wifi_card(online_screen_t *screen)
 {
     static const box_t card = {12, 44, 380, 150, 0U, 0, 0, 0};
-    static const box_t seg = {24, 76, 150, 56, COLOR_WARN, 0, 0, 0};
-    static const spot_t ip = {190, 92, COLOR_TEXT, 20};
+    static const box_t seg = {24, 82, 150, 56, COLOR_WARN, 0, 0, 0};
+    static const spot_t ip = {190, 98, COLOR_TEXT, 20};
     static const spot_t state = {24, 148, COLOR_WARN, 20};
     bento_ui_id_t unused;
     bento_status_t status =
@@ -562,10 +562,10 @@ static bento_status_t build_wifi_card(online_screen_t *screen)
 static bento_status_t build_online_card(online_screen_t *screen)
 {
     static const box_t card = {402, 44, 378, 150, 0U, 0, 0, 0};
-    static const box_t arc = {414, 72, 116, 116, 0U, 0, 0, 0};
-    static const spot_t pct = {546, 78, COLOR_TEXT, 28};
+    static const box_t arc = {414, 82, 110, 110, 0U, 0, 0, 0};
+    static const spot_t pct = {546, 84, COLOR_TEXT, 28};
     static const box_t led = {546, 124, 24, 24, COLOR_OK, 0, 0, 0};
-    static const spot_t drops = {580, 126, COLOR_DIM, 16};
+    static const spot_t drops = {580, 126, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "ออนไลน์กี่ % ของเวลา", &unused);
@@ -592,7 +592,7 @@ static bento_status_t build_online_card(online_screen_t *screen)
 static bento_status_t build_chart_card(online_screen_t *screen)
 {
     static const box_t card = {12, 202, 400, 136, 0U, 0, 0, 0};
-    static const box_t chart = {24, 230, 376, 100, COLOR_OK, 0, 100, 0};
+    static const box_t chart = {24, 240, 376, 90, COLOR_OK, 0, 100, 0};
     bento_ui_id_t unused;
     bento_status_t status = add_card(
         screen->ui, &card, "เขียว=ลิงก์ ฟ้า=สัญญาณ (ถ้าวัดได้)", &unused);
@@ -615,9 +615,9 @@ static bento_status_t build_chart_card(online_screen_t *screen)
 static bento_status_t build_air_card(online_screen_t *screen)
 {
     static const box_t card = {422, 202, 358, 136, 0U, 0, 0, 0};
-    static const spot_t t = {434, 236, COLOR_TEXT, 24};
-    static const spot_t h = {434, 282, COLOR_TEXT, 24};
-    static const spot_t note = {12, 352, COLOR_DIM, 16};
+    static const spot_t t = {434, 244, COLOR_TEXT, 24};
+    static const spot_t h = {434, 290, COLOR_TEXT, 24};
+    static const spot_t note = {12, 352, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "อากาศในโรงเรือน", &unused);
@@ -638,7 +638,7 @@ static bento_status_t build_screen(online_screen_t *screen)
 {
     static const char farm_name[] = "โรงเรือนกลุ่ม XX"; /* ชื่อบนจอ */
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
-    static const spot_t farm = {320, 12, COLOR_INFO, 16};
+    static const spot_t farm = {320, 12, COLOR_INFO, 20};
     bento_ui_id_t unused;
     bento_status_t status = bento_ui_screen_default(screen->ui);
 

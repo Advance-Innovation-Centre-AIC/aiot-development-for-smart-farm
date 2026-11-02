@@ -159,7 +159,7 @@ def read_signal():
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -173,24 +173,24 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ฟาร์มต่ออินเทอร์เน็ต", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label(FARM_NAME, x=320, y=12, color=COL_INFO, value=16)
+    ui.Label(FARM_NAME, x=320, y=12, color=COL_INFO, value=20)
     w = {}
     card(12, 44, 380, 150, "ต่อ WiFi (ms) และ IP")
-    w["seg"] = ui.Seg7(text="----", x=24, y=76, w=150, h=56, color=COL_WARN)
-    w["ip"] = ui.Label("-", x=190, y=92, color=COL_TEXT, value=20)
+    w["seg"] = ui.Seg7(text="----", x=24, y=82, w=150, h=56, color=COL_WARN)
+    w["ip"] = ui.Label("-", x=190, y=98, color=COL_TEXT, value=20)
     w["state"] = ui.Label("กำลังจะเริ่มต่อ", x=24, y=148, color=COL_WARN, value=20)
     card(402, 44, 378, 150, "ออนไลน์กี่ % ของเวลา")
-    w["arc"] = ui.Arc(x=414, y=72, w=116, h=116)
-    w["pct"] = ui.Label("--", x=546, y=78, color=COL_TEXT, value=28)
+    w["arc"] = ui.Arc(x=414, y=82, w=110, h=110)
+    w["pct"] = ui.Label("--", x=546, y=84, color=COL_TEXT, value=28)
     w["led"] = ui.Led(x=546, y=124, w=24, h=24, color=COL_OK)
-    w["drops"] = ui.Label("หลุด 0 ครั้ง", x=580, y=126, color=COL_DIM, value=16)
+    w["drops"] = ui.Label("หลุด 0 ครั้ง", x=580, y=126, color=COL_DIM, value=20)
     card(12, 202, 400, 136, "เขียว=ลิงก์ ฟ้า=สัญญาณ (ถ้าวัดได้)")
-    w["chart"] = line_chart(24, 230, 376, 100, 0, 100, COL_OK)
+    w["chart"] = line_chart(24, 240, 376, 90, 0, 100, COL_OK)
     w["s_sig"] = w["chart"].add_series(COL_INFO)
     card(422, 202, 358, 136, "อากาศในโรงเรือน")
-    w["t"] = ui.Label("อุณหภูมิ -- C", x=434, y=236, color=COL_TEXT, value=24)
-    w["h"] = ui.Label("ความชื้น -- %", x=434, y=282, color=COL_TEXT, value=24)
-    w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=16)
+    w["t"] = ui.Label("อุณหภูมิ -- C", x=434, y=244, color=COL_TEXT, value=24)
+    w["h"] = ui.Label("ความชื้น -- %", x=434, y=290, color=COL_TEXT, value=24)
+    w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
