@@ -1116,7 +1116,7 @@ static bento_status_t build_now_card(alert_screen_t *screen)
     static const box_t card = {12, 44, 500, 200, 0U, 0, 0, 0};
     static const spot_t crop = {24, 80, COLOR_INFO, 20};
     static const spot_t reading = {24, 110, COLOR_TEXT, 24};
-    static const spot_t mood = {24, 150, COLOR_WARN, 0};
+    static const spot_t mood = {24, 150, COLOR_WARN, 20};
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "ตอนนี้", &unused);
@@ -1141,7 +1141,7 @@ static bento_status_t build_now_card(alert_screen_t *screen)
 static bento_status_t build_chart(alert_screen_t *screen)
 {
     static const box_t answer_card = {522, 44, 258, 200, 0U, 0, 0, 0};
-    static const spot_t answer = {534, 84, COLOR_DIM, 0};
+    static const spot_t answer = {534, 84, COLOR_DIM, 20};
     static const box_t chart = {12,         252, 400,         86,
                                 COLOR_WARN, 0,   CHART_MAX_C, 0};
     static const spot_t legend = {424, 256, COLOR_DIM, 20};
@@ -1177,7 +1177,7 @@ static bento_status_t build_chart(alert_screen_t *screen)
 static bento_status_t build_screen(alert_screen_t *screen)
 {
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
-    static const spot_t status_line = {12, 352, COLOR_DIM, 0};
+    static const spot_t status_line = {12, 352, COLOR_DIM, 20};
     static const box_t link_led = {606, 12, 18, 18, COLOR_OK, 0, 0, 0};
     static const spot_t link_text = {632, 10, COLOR_DIM, 20};
     bento_ui_id_t unused;
