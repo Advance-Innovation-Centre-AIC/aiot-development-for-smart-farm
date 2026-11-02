@@ -65,15 +65,14 @@
  * every message on the console. TEAM is the number the teacher hands
  * out, such as team05; it must match the app. */
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_PASS is wifi_pass in wifi_up(), BROKER is broker_host in
+ * open_broker(). */
 static const char TEAM[] = "teamXX";
-static const char BROKER[] = "broker.hivemq.com";
 
-/* The models, Store first, then the built-in one, and the labels
- * that count as trouble (the built-in Motion says shaking). */
+/* The models, Store first, then the built-in one; the labels that
+ * count as trouble are in is_danger(). */
 static const char *const MODEL_KEYS[] = {"AnomalousVibration",
                                          "Motion"};
-static const char *const DANGER[] = {"anomaly", "shaking"};
 
 /* The settings of the two judges and of the link. */
 enum {
@@ -159,8 +158,6 @@ typedef enum {
     AGREE_RULE,
     AGREE_BOTH
 } agree_t;
-
-static const char *const AGREE_KEYS[] = {"none", "ai", "rule", "both"};
 
 /* The model that runs, with its labels. */
 typedef struct {
@@ -367,10 +364,15 @@ static bento_status_t finish_op(void)
 
 static char lower_ascii(char letter)
 {
+    static const char upper_letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char lower_letters[] = "abcdefghijklmnopqrstuvwxyz";
     char lower = letter;
+    size_t i;
 
-    if ((letter >= 'A') && (letter <= 'Z')) {
-        lower = (char)((letter - 'A') + 'a');
+    for (i = 0U; upper_letters[i] != '\0'; i++) {
+        if (letter == upper_letters[i]) {
+            lower = lower_letters[i];
+        }
     }
     return lower;
 }
@@ -544,6 +546,7 @@ static void work_out_vib(vib_t *vib, uint32_t now_ms)
     bento_real_t sum = (bento_real_t)0;
     bento_real_t spread = (bento_real_t)0;
     bento_real_t average;
+    bento_real_t mean_square;
     uint32_t i;
 
     for (i = 0U; i < (uint32_t)WIN; i++) {
@@ -555,7 +558,8 @@ static void work_out_vib(vib_t *vib, uint32_t now_ms)
 
         spread += away * away;
     }
-    vib->vib = (bento_real_t)sqrt((double)(spread / window));
+    mean_square = spread / window;
+    vib->vib = (bento_real_t)sqrt((double)mean_square);
     if (!vib->has_base) {
         vib->total += vib->vib;
         vib->learnt++;
@@ -623,13 +627,15 @@ static uint32_t history_hits(const verdict_t *ai)
 
 static bool is_danger(const char *label)
 {
+    /* the built-in Motion says shaking */
+    static const char *const danger_labels[] = {"anomaly", "shaking"};
     const uint32_t count =
-        (uint32_t)(sizeof(DANGER) / sizeof(DANGER[0]));
+        (uint32_t)(sizeof(danger_labels) / sizeof(danger_labels[0]));
     bool danger = false;
     uint32_t i;
 
     for (i = 0U; i < count; i++) {
-        danger = danger || (strcmp(label, DANGER[i]) == 0);
+        danger = danger || (strcmp(label, danger_labels[i]) == 0);
     }
     return danger;
 }
@@ -759,6 +765,7 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -768,8 +775,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = WIFI_PASS;
-        params.pass_len = (uint32_t)strlen(WIFI_PASS);
+        params.pass = wifi_pass;
+        params.pass_len = (uint32_t)strlen(wifi_pass);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -802,6 +809,7 @@ static bento_status_t wait_broker(uint32_t broker)
 /* A fresh client id each time, so the broker never kicks a twin. */
 static bento_status_t open_broker(link_t *link)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -810,8 +818,8 @@ static bento_status_t open_broker(link_t *link)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -890,6 +898,8 @@ static void format_hundredths(char *text, uint32_t capacity,
 /* The message of contract item 3.11 (m = "pump", rk = "vib"). */
 static void write_payload(pump_t *pump, agree_t agree, int32_t level)
 {
+    static const char *const agree_keys[] = {"none", "ai", "rule",
+                                             "both"};
     char rule_vib[BENTO_FMT_BUF_SIZE];
     char rule_limit[BENTO_FMT_BUF_SIZE];
     const verdict_t *ai = &pump->ai;
@@ -907,7 +917,7 @@ static void write_payload(pump_t *pump, agree_t agree, int32_t level)
         TEAM, pump->link.sent, pump->model.name, ai->label, ai->conf,
         ai->second, ai->second_conf, ai->latency_ms,
         vib_on(&pump->vib) ? 1 : 0, rule_vib, rule_limit,
-        AGREE_KEYS[agree], level, pump->alarm ? 1 : 0);
+        agree_keys[agree], level, pump->alarm ? 1 : 0);
 }
 
 /* Sends when the key (label, level, alarm) changed, or as a
@@ -1124,10 +1134,11 @@ static void draw_link(const pump_t *pump, agree_t agree)
  * tones follow. */
 static bento_status_t follow_alarm(pump_t *pump, int32_t level)
 {
+    const bool alarm = level == ALARM_LEVEL;
     bento_status_t status = BENTO_OK;
 
-    if ((level == ALARM_LEVEL) != pump->alarm) {
-        pump->alarm = level == ALARM_LEVEL;
+    if (alarm != pump->alarm) {
+        pump->alarm = alarm;
         status = set_led(pump, pump->alarm);
         if (status == BENTO_OK) {
             matrix_scroll(pump->alarm ? "PUMP ALARM" : "PUMP OK",

@@ -71,12 +71,12 @@
  * every message on the console. TEAM is the number the teacher hands
  * out, such as team05; it must match the app. */
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_PASS is wifi_pass in wifi_up(), BROKER is broker_host in
+ * open_broker(). */
 static const char TEAM[] = "teamXX";
-static const char BROKER[] = "broker.hivemq.com";
 
 /* The name the board reports, not the card's name in the Store. */
-static const char *const MODEL_KEYS[] = {"Voice Commands"};
+static const char *const MODEL_KEYS[1] = {"Voice Commands"};
 
 /* The two words that act, and what each one asks for. */
 typedef enum {
@@ -168,8 +168,6 @@ typedef enum {
     WHY_UNCONFIRMED,
     WHY_OPEN /* still waiting */
 } why_t;
-
-static const char *const WHY_TEXTS[] = {"", "cancel", "unconfirmed"};
 
 /* The model that runs, with its labels. */
 typedef struct {
@@ -319,10 +317,15 @@ static bento_status_t finish_op(void)
 
 static char lower_ascii(char letter)
 {
+    static const char upper_letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char lower_letters[] = "abcdefghijklmnopqrstuvwxyz";
     char lower = letter;
+    size_t i;
 
-    if ((letter >= 'A') && (letter <= 'Z')) {
-        lower = (char)((letter - 'A') + 'a');
+    for (i = 0U; upper_letters[i] != '\0'; i++) {
+        if (letter == upper_letters[i]) {
+            lower = lower_letters[i];
+        }
     }
     return lower;
 }
@@ -496,6 +499,7 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -505,8 +509,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = WIFI_PASS;
-        params.pass_len = (uint32_t)strlen(WIFI_PASS);
+        params.pass = wifi_pass;
+        params.pass_len = (uint32_t)strlen(wifi_pass);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -539,6 +543,7 @@ static bento_status_t wait_broker(uint32_t broker)
 /* A fresh client id each time, so the broker never kicks a twin. */
 static bento_status_t open_broker(link_t *link)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -547,8 +552,8 @@ static bento_status_t open_broker(link_t *link)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -853,6 +858,8 @@ static void listen(voice_t *voice, uint32_t now_ms)
  * (contract item 3.11). */
 static void close_question(voice_t *voice, why_t why)
 {
+    static const char *const why_texts[] = {"", "cancel",
+                                            "unconfirmed"};
     verdict_t *ai = &voice->ai;
     char text[TEXT_BYTES];
 
@@ -861,7 +868,7 @@ static void close_question(voice_t *voice, why_t why)
         (void)snprintf(text, sizeof(text), "ทำแล้ว: %s", ASK[ai->want]);
     } else {
         (void)snprintf(text, sizeof(text), "ไม่ได้ทำ: %s",
-                       WHY_TEXTS[why]);
+                       why_texts[why]);
         show_pump(voice);
     }
     show_text(voice, SLOT_ASK, text);
@@ -870,7 +877,7 @@ static void close_question(voice_t *voice, why_t why)
                    "\"voice\", \"cmd\": \"%s\", \"ok\": %d, "
                    "\"why\": \"%s\"}",
                    TEAM, WORDS[ai->want], (why == WHY_DONE) ? 1 : 0,
-                   WHY_TEXTS[why]);
+                   why_texts[why]);
     (void)send(&voice->link, voice->link.topic_event,
                voice->payload); /* an event is not counted */
     ai->want = WORD_NONE;

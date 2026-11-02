@@ -70,15 +70,14 @@
  * every message on the console. TEAM is the number the teacher hands
  * out, such as team05; it must match the app. */
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_PASS is wifi_pass in wifi_up(), BROKER is broker_host in
+ * open_broker(). */
 static const char TEAM[] = "teamXX";
-static const char BROKER[] = "broker.hivemq.com";
 
 /* The names on the board: the Store's model first, then the
- * built-in one, and the label that counts as a siren. */
+ * built-in one; the label that counts as a siren is in is_danger(). */
 static const char *const MODEL_KEYS[] = {"SirenDetection",
                                          "Siren Detection"};
-static const char *const DANGER[] = {"sirens"};
 
 /* The settings. */
 enum {
@@ -321,10 +320,15 @@ static bento_status_t finish_op(void)
 
 static char lower_ascii(char letter)
 {
+    static const char upper_letters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char lower_letters[] = "abcdefghijklmnopqrstuvwxyz";
     char lower = letter;
+    size_t i;
 
-    if ((letter >= 'A') && (letter <= 'Z')) {
-        lower = (char)((letter - 'A') + 'a');
+    for (i = 0U; upper_letters[i] != '\0'; i++) {
+        if (letter == upper_letters[i]) {
+            lower = lower_letters[i];
+        }
     }
     return lower;
 }
@@ -477,13 +481,14 @@ static uint32_t history_hits(const verdict_t *ai)
 
 static bool is_danger(const char *label)
 {
+    static const char *const danger_labels[1] = {"sirens"};
     const uint32_t count =
-        (uint32_t)(sizeof(DANGER) / sizeof(DANGER[0]));
+        (uint32_t)(sizeof(danger_labels) / sizeof(danger_labels[0]));
     bool danger = false;
     uint32_t i;
 
     for (i = 0U; i < count; i++) {
-        danger = danger || (strcmp(label, DANGER[i]) == 0);
+        danger = danger || (strcmp(label, danger_labels[i]) == 0);
     }
     return danger;
 }
@@ -545,6 +550,7 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -554,8 +560,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = WIFI_PASS;
-        params.pass_len = (uint32_t)strlen(WIFI_PASS);
+        params.pass = wifi_pass;
+        params.pass_len = (uint32_t)strlen(wifi_pass);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -588,6 +594,7 @@ static bento_status_t wait_broker(uint32_t broker)
 /* A fresh client id each time, so the broker never kicks a twin. */
 static bento_status_t open_broker(link_t *link)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -596,8 +603,8 @@ static bento_status_t open_broker(link_t *link)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
