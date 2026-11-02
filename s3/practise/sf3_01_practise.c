@@ -92,7 +92,8 @@ enum {
     TITLE_Y = 6,
     TITLE_PX = 24,
     BIG_PX = 28,
-    TEXT_PX = 16,
+    THAI_PX = 20, /* Thai is 20 px or larger on the board */
+    TEXT_PX = 16, /* Latin only */
     SMALL_PX = 14,
     CARD_RADIUS = 12,
     CARD_BORDER = 1,
@@ -103,7 +104,7 @@ enum {
     GATE_W = 470,
     GATE_H = 196,
     STATE_X = 24,
-    STATE_Y = 72,
+    STATE_Y = 76,
     DISTANCE_Y = 112,
     DISTANCE_W = 150,
     DISTANCE_H = 56,
@@ -123,7 +124,7 @@ enum {
     COUNTER_X = 492,
     COUNTER_W = 288,
     COUNT_X = 504,
-    COUNT_Y = 72,
+    COUNT_Y = 78,
     COUNT_W = 150,
     COUNT_H = 60,
     SWITCH_Y = 146,
@@ -133,18 +134,18 @@ enum {
     ARM_Y = 150,
     ZONE_Y = 196,
     LEGEND_X = 12,
-    LEGEND_Y = 244,
+    LEGEND_Y = 242,
     CHART_X = 12,
-    CHART_Y = 264,
+    CHART_Y = 268,
     CHART_W = 400,
-    CHART_H = 74,
+    CHART_H = 72,
     LOG_X = 422,
     LOG_Y = 250,
     LOG_W = 358,
     LOG_H = 88,
     LAST_X = 434,
-    LAST_Y = 280,
-    ENERGY_Y = 308,
+    LAST_Y = 284,
+    ENERGY_Y = 312,
     STATUS_X = 12,
     STATUS_Y = 352
 };
@@ -314,7 +315,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
     if (status == BENTO_OK) {
         status =
             add_text(ui, title, place->x + CARD_TITLE_DX,
-                     place->y + CARD_TITLE_DY, COLOR_INFO, TEXT_PX);
+                     place->y + CARD_TITLE_DY, COLOR_INFO, THAI_PX);
     }
     return status;
 }
@@ -692,7 +693,7 @@ static bento_status_t build_gate(guard_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_text(screen->ui, "การเคลื่อนไหว", MOTION_X, MOTION_Y,
-                          COLOR_DIM, TEXT_PX);
+                          COLOR_DIM, THAI_PX);
     }
     return status;
 }
@@ -746,12 +747,12 @@ static bento_status_t build_counter(guard_screen_t *screen)
             bento_ui_switch_create(screen->ui, &args, &screen->toggle);
     }
     if (status == BENTO_OK) {
-        status = add_label(screen->ui, " ", &arm, COLOR_OK, TEXT_PX,
+        status = add_label(screen->ui, " ", &arm, COLOR_OK, THAI_PX,
                            &screen->arm);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "เขตเตือน - cm (VR3)", &zone,
-                           COLOR_INFO, TEXT_PX, &screen->zone);
+                           COLOR_INFO, THAI_PX, &screen->zone);
     }
     if (status == BENTO_OK) {
         show_arm(screen, true);
@@ -769,7 +770,7 @@ static bento_status_t build_log(guard_screen_t *screen)
     bento_ui_id_t unused;
     bento_status_t status =
         add_text(screen->ui, "ฟ้า = ระยะเป้า   แดง = เขตเตือน", LEGEND_X,
-                 LEGEND_Y, COLOR_DIM, SMALL_PX);
+                 LEGEND_Y, COLOR_DIM, THAI_PX);
 
     if (status == BENTO_OK) {
         status = add_line_chart(screen->ui, &chart, MAX_CM, COLOR_INFO,
@@ -784,7 +785,7 @@ static bento_status_t build_log(guard_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "ยังไม่มี", &last, COLOR_TEXT,
-                           TEXT_PX, &screen->last);
+                           THAI_PX, &screen->last);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, "energy: -", &energy, COLOR_DIM,
@@ -821,7 +822,7 @@ static bento_status_t build_screen(guard_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", &status_line, COLOR_WARN,
-                           TEXT_PX, &screen->status);
+                           THAI_PX, &screen->status);
     }
     if (status == BENTO_OK) {
         drain_events(screen->ui);
