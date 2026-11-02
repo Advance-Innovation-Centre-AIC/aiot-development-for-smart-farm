@@ -78,9 +78,17 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) Settings: edit these before running ---- */
-/* WIFI_SSID and WIFI_PASS: edit them at the top of join_wifi(). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const char WIFI_SSID[] =
+    "<ชื่อ Hotspot ของกลุ่ม>"; /* short, English or digits */
+static const char WIFI_PASS[] =
+    "<รหัส Hotspot ของกลุ่ม>"; /* 8 or more; share no real one */
 static const char TEAM[] = "teamXX";
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-farm-TEAM + a suffix, built in try_broker() */
+/* TOPIC_CMD = bento-aiot/TEAM/cmd, built in main() */
+/* TOPIC = bento-aiot/TEAM/telemetry, built in main() */
+/* ---- end of settings ---- */
 
 /* The pump, the tower and the timing. */
 enum {
@@ -928,19 +936,15 @@ static void handle_command(const uint8_t *payload, uint32_t length,
 /* wifi.connect(): any refusal is "not joined", Stop is Stop. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* edit these two: short, English or digits; 8 or more, share no
-     * real one */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -983,20 +987,17 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * the broker never clashes with it. */
 static bento_status_t try_broker(valve_t *valve, bool *linked)
 {
-    static const char broker[] = "broker.hivemq.com";
-    static const char client_base[] =
-        "bento-farm-"; /* + TEAM + a suffix */
     char client_id[CLIENT_BYTES];
     bento_mqtt_config_t config;
     const uint32_t suffix =
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK;
     bento_status_t status;
 
-    (void)snprintf(client_id, sizeof(client_id), "%s%s-%04" PRIx32,
-                   client_base, TEAM, suffix);
+    (void)snprintf(client_id, sizeof(client_id),
+                   "bento-farm-%s-%04" PRIx32, TEAM, suffix);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1674,7 +1675,6 @@ static bento_status_t run(const screen_t *screen, valve_t *valve)
 
 int main(void)
 {
-    static const char root[] = "bento-aiot";
     screen_t screen;
     valve_t valve;
     bento_status_t status;
@@ -1683,9 +1683,9 @@ int main(void)
     (void)memset(&valve, 0, sizeof(valve));
     screen.ui = bento_runtime_get_ui();
     (void)snprintf(valve.topic_cmd, sizeof(valve.topic_cmd),
-                   "%s/%s/cmd", root, TEAM);
-    (void)snprintf(valve.topic, sizeof(valve.topic), "%s/%s/telemetry",
-                   root, TEAM);
+                   "bento-aiot/%s/cmd", TEAM);
+    (void)snprintf(valve.topic, sizeof(valve.topic),
+                   "bento-aiot/%s/telemetry", TEAM);
     /* a build without sound refuses it, as hasattr() skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
     status = build_screen(&screen);
