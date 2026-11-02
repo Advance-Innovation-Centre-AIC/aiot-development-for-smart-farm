@@ -55,6 +55,8 @@
  *     MicroPython; the C library prints none.
  *   - Stop ends the program at the next sleep (MicroPython's
  *     KeyboardInterrupt); the finally's finish() still runs.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and runs offline, as the .py does.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -229,6 +231,7 @@ typedef struct {
     char topic_cmd[NAME_BYTES];
     uint32_t broker;
     bool has_broker;
+    bool no_mqtt; /* the BENTO Emulator: no MQTT from C yet */
 } door_app_t;
 
 /* Where a widget goes and what it starts with. */
@@ -1391,23 +1394,49 @@ static bento_status_t open_broker(door_app_t *app, bool *linked)
         (void)bento_mqtt_close(app->broker); /* the next try opens */
         app->has_broker = false;
     }
+    if (status == BENTO_E_UNSUPPORTED) {
+        app->no_mqtt = true; /* the Emulator: no try will answer */
+    }
     if (status != BENTO_E_CANCELLED) {
         status = BENTO_OK;
     }
     return status;
 }
 
-/* Three tries, a new client id every time. */
+/* The BENTO Emulator answers every MQTT call with E_UNSUPPORTED: one
+ * label says so inside the door panel, then the
+ * guard watches offline as if the broker did not answer. */
+static bento_status_t show_emulator_gap(const door_app_t *app)
+{
+    static const char gap_text[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    /* five lines of 26 px inside the door panel (x 12-182), between
+     * its word (ink to y 108) and the cm line (y 290): the strip
+     * under the cards ends in the firmware's Console button */
+    const spec_t gap = {22, 116, 154, -1, COL_TEXT, 0, 0, 20};
+
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run "
+        "it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    return add_label(app->ui, &gap, gap_text);
+}
+
+/* Three tries, a new client id every time; none more once the
+ * Emulator has said it has no MQTT. */
 static bento_status_t connect_broker(door_app_t *app, bool *linked)
 {
     bento_status_t status = BENTO_OK;
     int32_t attempt;
 
     *linked = false;
-    for (attempt = 1;
-         (status == BENTO_OK) && !*linked && (attempt <= BROKER_TRIES);
+    for (attempt = 1; (status == BENTO_OK) && !*linked &&
+                      !app->no_mqtt && (attempt <= BROKER_TRIES);
          attempt++) {
         status = open_broker(app, linked);
+    }
+    if ((status == BENTO_OK) && app->no_mqtt) {
+        status = show_emulator_gap(app);
     }
     return status;
 }
