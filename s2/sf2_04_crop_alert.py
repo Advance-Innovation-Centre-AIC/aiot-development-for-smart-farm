@@ -132,7 +132,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def show_link(w, ok):
@@ -146,23 +146,23 @@ def build_screen():
     ui.Label("พืชไม่สบาย มือถือรู้ทันที", x=12, y=6, color=COL_TEXT, value=24)
     w = {"box": None, "leds": []}
     card(12, 44, 500, 200, "ตอนนี้")
-    w["crop"] = ui.Label("-", x=24, y=74, color=COL_INFO, value=16)
-    w["th"] = ui.Label("-- C  -- %", x=24, y=100, color=COL_TEXT, value=24)
-    w["mood"] = ui.Label("...", x=24, y=140, color=COL_WARN)
+    w["crop"] = ui.Label("-", x=24, y=80, color=COL_INFO, value=20)
+    w["th"] = ui.Label("-- C  -- %", x=24, y=110, color=COL_TEXT, value=24)
+    w["mood"] = ui.Label("...", x=24, y=150, color=COL_WARN)
     for i in range(3):
         x = 24 + i * 130
         w["leds"].append(ui.Led(x=x, y=198, w=20, h=20, color=LEVEL_COLORS[i]))
-        ui.Label(("สบาย", "เครียด", "แย่")[i], x=x + 28, y=198, color=COL_DIM, value=14)
+        ui.Label(("สบาย", "เครียด", "แย่")[i], x=x + 28, y=198, color=COL_DIM, value=20)
     card(522, 44, 258, 200, "แจ้งสถานะ")
-    w["ack"] = ui.Label("-", x=534, y=80, color=COL_DIM)
+    w["ack"] = ui.Label("-", x=534, y=84, color=COL_DIM)
     w["chart"] = ui.Chart(x=12, y=252, w=400, h=86, color=COL_WARN, min=0, max=CHART_MAX_C)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
     ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[1] + " = รับทราบ",
-             x=424, y=256, color=COL_DIM, value=14)
+             x=424, y=256, color=COL_DIM, value=20)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
