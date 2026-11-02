@@ -98,7 +98,7 @@ COLORS = (COL_DIM, COL_WARN, COL_OK, COL_INFO)   # สีเส้นในก�
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -114,7 +114,7 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("แข่งกรอง: ดิบ EMA Median Kalman", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("ค่ากระโดดทุก %d ตัวอย่าง - เส้นไหนปล่อยผ่าน" % SPIKE_EVERY, x=12, y=38,
-             color=COL_DIM, value=16)
+             color=COL_DIM, value=20)
     ch = line_chart(12, 66, 400, 272, 0, 100, COLORS[0])
     # กราฟเดียวมีได้ 4 เส้น (เส้น 0 มากับกราฟ + add_series อีก 3)
     w = {"ch": ch, "s": [0] + [ch.add_series(c) for c in COLORS[1:]]}
@@ -122,9 +122,9 @@ def build_screen():
     w["row"] = [ui.Label(n, x=436, y=100 + 46 * i, color=COLORS[i], value=20)
                 for i, n in enumerate(NAMES)]
     ui.Label("ผ่าน = ห่างค่าจริงเกิน %d ตอนกระโดด" % SPIKE_PASS, x=436, y=296,
-             color=COL_DIM, value=16)
+             color=COL_DIM, value=20)
     w["help"] = ui.Label("VR1 = ค่าจริง   VR2 = alpha ของ EMA", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
