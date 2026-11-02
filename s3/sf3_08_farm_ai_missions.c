@@ -60,6 +60,12 @@
  *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
  *     yet: the program says so and runs rule-only and offline, as the
  *     .py does with no model and no broker.
+ *   - The .py's colours and tables stay with the code that reads
+ *     them: COL_TEXT, COL_DIM, COL_CARD, COL_OK, COL_WARN, COL_BAD,
+ *     COL_INFO and LVL_COL are the COLOR_* below the settings;
+ *     LOUD_S and NO_MODEL are columns of MISSIONS; VOICE_SAY is in
+ *     voice_outcome(), MEANING in meaning_of() and LVL_TEXT in
+ *     draw_level().
  */
 #include <inttypes.h>
 #include <math.h>
