@@ -1135,7 +1135,7 @@ static const widget_spec_t *bottom_widgets(size_t *count)
         {KIND_LABEL, SLOT_REPLY, "-", 336, 312, AUTO_PX, AUTO_PX,
          COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_NONE, "VR3 = แดดบนหลังคา  SW5 = พ่นหมอกแล้ว",
-         470, 52, AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
+         430, 52, AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 352, AUTO_PX, AUTO_PX,
          COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_MQ, NULL, 606, 12, 18, 18, COL_OK, 0, 0, 0},

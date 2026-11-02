@@ -170,7 +170,7 @@ def build_screen():
         w["leds"].append(ui.Led(x=lx, y=288, w=16, h=16, color=LEVEL_COLORS[i]))
         ui.Label(("ชื้นดี", "เริ่มแห้ง", "แห้งเกิน")[i], x=lx + 22, y=284, color=COL_DIM, value=20)
     w["ack"] = ui.Label("-", x=336, y=312, color=COL_DIM, value=20)
-    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = พ่นหมอกแล้ว", x=470, y=52, color=COL_DIM, value=20)
+    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = พ่นหมอกแล้ว", x=430, y=52, color=COL_DIM, value=20)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
     w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
