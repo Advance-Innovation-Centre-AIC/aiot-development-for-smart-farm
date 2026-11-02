@@ -167,34 +167,34 @@ def send(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_node_card(w):
     card(12, 44, 380, 130, "โหนดเซนเซอร์ (ส่งทุก 5 วิ)")
-    ui.Label("ดิน VR1", x=24, y=78, color=COL_TEXT, value=16)
-    w["soil_bar"] = ui.Bar(x=110, y=80, w=200, h=20)
-    w["soil"] = ui.Label("-- %", x=320, y=76, color=COL_TEXT, value=16)
-    ui.Label("ถัง VR4", x=24, y=116, color=COL_TEXT, value=16)
-    w["tank_bar"] = ui.Bar(x=110, y=118, w=200, h=20)
-    w["tank"] = ui.Label("-- %", x=320, y=114, color=COL_TEXT, value=16)
-    w["sent"] = ui.Label("ส่งแล้ว 0 ใบ", x=24, y=148, color=COL_DIM, value=14)
+    ui.Label("ดิน VR1", x=24, y=84, color=COL_TEXT, value=20)
+    w["soil_bar"] = ui.Bar(x=110, y=88, w=200, h=20)
+    w["soil"] = ui.Label("-- %", x=320, y=86, color=COL_TEXT, value=16)
+    ui.Label("ถัง VR4", x=24, y=122, color=COL_TEXT, value=20)
+    w["tank_bar"] = ui.Bar(x=110, y=126, w=200, h=20)
+    w["tank"] = ui.Label("-- %", x=320, y=124, color=COL_TEXT, value=16)
+    w["sent"] = ui.Label("ส่งแล้ว 0 ใบ", x=250, y=50, color=COL_DIM, value=20)
 
 
 def build_plc_card(w):
     card(12, 182, 380, 152, "PLC (รีเลย์ = ไฟสีฟ้า)")
-    w["relay"] = ui.Led(x=28, y=216, w=44, h=44, color=COL_INFO)
-    w["pump"] = ui.Label("ปั๊มหยุด", x=84, y=224, color=COL_DIM, value=20)
+    w["relay"] = ui.Led(x=28, y=222, w=44, h=44, color=COL_INFO)
+    w["pump"] = ui.Label("ปั๊มหยุด", x=84, y=230, color=COL_DIM, value=20)
     w["why"] = ui.Label("why = start", x=28, y=272, color=COL_DIM, value=16)
     w["arc"] = ui.Arc(x=270, y=208, w=110, h=110, min=0, max=PLC_MAX_S, value=0)
     w["arc"].color(COL_OK)
-    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=28, y=304, color=COL_WARN, value=14)
+    ui.Label(BTN_NAMES[0] + " = หยุดฉุกเฉิน", x=28, y=302, color=COL_WARN, value=20)
 
 
 def build_rules_card(w):
     card(402, 44, 378, 290, "กฎของ PLC (ตรวจก่อนทุกคำสั่ง)")
-    ui.Label("เปิดสูงสุด %d วิ / ถัง < %d%% ไม่เปิด" % (PLC_MAX_S, PLC_TANK_MIN), x=414, y=80, color=COL_TEXT, value=16)
-    w["got"] = ui.Label("รับคำสั่งแล้ว 0", x=414, y=120, color=COL_DIM, value=16)
+    ui.Label("เปิดสูงสุด %d วิ / ถัง < %d%% ไม่เปิด" % (PLC_MAX_S, PLC_TANK_MIN), x=414, y=86, color=COL_TEXT, value=20)
+    w["got"] = ui.Label("รับคำสั่งแล้ว 0", x=414, y=126, color=COL_DIM, value=20)
 
 
 def show_link(w, ok):
@@ -206,13 +206,13 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("แปลงผัก: โหนด + PLC", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"status": ui.Label("กำลังเริ่ม", x=300, y=12, color=COL_DIM, value=16)}
+    w = {"status": ui.Label("กำลังเริ่ม", x=240, y=12, color=COL_DIM, value=20)}
     build_node_card(w)
     build_plc_card(w)
     build_rules_card(w)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=586, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=612, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

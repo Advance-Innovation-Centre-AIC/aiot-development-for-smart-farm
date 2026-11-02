@@ -96,7 +96,7 @@ enum {
     CARD_BORDER_PX = 1,
     CARD_INSET_X = 12,
     CARD_INSET_Y = 6,
-    CARD_TITLE_PX = 16
+    CARD_TITLE_PX = 20
 };
 
 /* Times, scales and the link. */
@@ -1138,13 +1138,13 @@ typedef struct {
 static bento_status_t build_node_card(field_screen_t *screen)
 {
     static const box_t card = {12, 44, 380, 130, 0U, 0, 0, 0};
-    static const spot_t soil_name = {24, 78, COLOR_TEXT, 16};
-    static const box_t soil_bar = {110, 80, 200, 20, 0U, 0, 0, 0};
-    static const spot_t soil = {320, 76, COLOR_TEXT, 16};
-    static const spot_t tank_name = {24, 116, COLOR_TEXT, 16};
-    static const box_t tank_bar = {110, 118, 200, 20, 0U, 0, 0, 0};
-    static const spot_t tank = {320, 114, COLOR_TEXT, 16};
-    static const spot_t sent = {24, 148, COLOR_DIM, 14};
+    static const spot_t soil_name = {24, 84, COLOR_TEXT, 20};
+    static const box_t soil_bar = {110, 88, 200, 20, 0U, 0, 0, 0};
+    static const spot_t soil = {320, 86, COLOR_TEXT, 16};
+    static const spot_t tank_name = {24, 122, COLOR_TEXT, 20};
+    static const box_t tank_bar = {110, 126, 200, 20, 0U, 0, 0, 0};
+    static const spot_t tank = {320, 124, COLOR_TEXT, 16};
+    static const spot_t sent = {250, 50, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "โหนดเซนเซอร์ (ส่งทุก 5 วิ)", &unused);
@@ -1179,8 +1179,8 @@ static bento_status_t build_node_card(field_screen_t *screen)
 static bento_status_t build_plc_card(field_screen_t *screen)
 {
     static const box_t card = {12, 182, 380, 152, 0U, 0, 0, 0};
-    static const box_t relay = {28, 216, 44, 44, COLOR_INFO, 0, 0, 0};
-    static const spot_t pump = {84, 224, COLOR_DIM, 20};
+    static const box_t relay = {28, 222, 44, 44, COLOR_INFO, 0, 0, 0};
+    static const spot_t pump = {84, 230, COLOR_DIM, 20};
     static const spot_t why = {28, 272, COLOR_DIM, 16};
     static const box_t arc = {270, 208, 110, 110, 0U, 0, PLC_MAX_S, 0};
     bento_ui_id_t unused;
@@ -1208,10 +1208,10 @@ static bento_status_t build_plc_card(field_screen_t *screen)
 static bento_status_t build_rules_card(field_screen_t *screen)
 {
     static const char *const button_names[] = {"SW5", "SW6"};
-    static const spot_t button = {28, 304, COLOR_WARN, 14};
+    static const spot_t button = {28, 302, COLOR_WARN, 20};
     static const box_t card = {402, 44, 378, 290, 0U, 0, 0, 0};
-    static const spot_t rules = {414, 80, COLOR_TEXT, 16};
-    static const spot_t got = {414, 120, COLOR_DIM, 16};
+    static const spot_t rules = {414, 86, COLOR_TEXT, 20};
+    static const spot_t got = {414, 126, COLOR_DIM, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t unused;
     bento_status_t status;
@@ -1240,10 +1240,10 @@ static bento_status_t build_rules_card(field_screen_t *screen)
 static bento_status_t build_screen(field_screen_t *screen)
 {
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
-    static const spot_t status_line = {300, 12, COLOR_DIM, 16};
-    static const spot_t note = {12, 352, COLOR_DIM, 0};
-    static const box_t link_led = {606, 12, 18, 18, COLOR_OK, 0, 0, 0};
-    static const spot_t link_text = {632, 10, COLOR_DIM, 16};
+    static const spot_t status_line = {240, 12, COLOR_DIM, 20};
+    static const spot_t note = {12, 352, COLOR_DIM, 20};
+    static const box_t link_led = {586, 12, 18, 18, COLOR_OK, 0, 0, 0};
+    static const spot_t link_text = {612, 10, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
