@@ -96,7 +96,7 @@ enum {
     CARD_BORDER_PX = 1,
     CARD_INSET_X = 12,
     CARD_INSET_Y = 6,
-    CARD_TITLE_PX = 16
+    CARD_TITLE_PX = 20
 };
 
 /* Times, scales and the table. */
@@ -545,7 +545,7 @@ typedef struct {
 static bento_status_t build_config_card(cloud_screen_t *screen)
 {
     static const box_t card = {12, 44, 768, 218, 0U, 0, 0, 0};
-    static const box_t table = {24, 72,         744,        184,
+    static const box_t table = {24, 84,         744,        172,
                                 0U, TABLE_COLS, TABLE_ROWS, 0};
     static const int32_t widths[TABLE_COLS] = {140, 330, 140, 134};
     bento_ui_id_t unused;
@@ -568,10 +568,10 @@ static bento_status_t build_config_card(cloud_screen_t *screen)
 /* A Bar takes its colour only after it is made. */
 static bento_status_t build_link_card(cloud_screen_t *screen)
 {
-    static const box_t card = {12, 268, 390, 70, 0U, 0, 0, 0};
-    static const box_t led = {24, 298, 34, 34, COLOR_OK, 0, 0, 0};
-    static const box_t bar = {120, 309, 140, 14, 0U, 0, WAIT_MS, 0};
-    static const box_t seg = {272, 296, 120, 38, COLOR_INFO, 0, 0, 0};
+    static const box_t card = {12, 266, 390, 82, 0U, 0, 0, 0};
+    static const box_t led = {24, 305, 34, 34, COLOR_OK, 0, 0, 0};
+    static const box_t bar = {120, 316, 140, 14, 0U, 0, WAIT_MS, 0};
+    static const box_t seg = {272, 303, 120, 38, COLOR_INFO, 0, 0, 0};
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "สาย TLS: รอมาแล้วกี่ ms", &unused);
@@ -594,9 +594,9 @@ static bento_status_t build_link_card(cloud_screen_t *screen)
 
 static bento_status_t build_sent_card(cloud_screen_t *screen)
 {
-    static const box_t card = {412, 268, 368, 70, 0U, 0, 0, 0};
-    static const box_t seg = {424, 296, 70, 38, COLOR_OK, 0, 0, 0};
-    static const spot_t note = {506, 306, COLOR_DIM, 14};
+    static const box_t card = {412, 266, 368, 82, 0U, 0, 0, 0};
+    static const box_t seg = {424, 303, 70, 38, COLOR_OK, 0, 0, 0};
+    static const spot_t note = {506, 308, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status = add_card(
         screen->ui, &card, "tesaiot.publish() ส่งแล้ว (ใบ)", &unused);
@@ -615,7 +615,7 @@ static bento_status_t build_sent_card(cloud_screen_t *screen)
 static bento_status_t build_screen(cloud_screen_t *screen)
 {
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
-    static const spot_t status_line = {12, 352, COLOR_DIM, 0};
+    static const spot_t status_line = {12, 352, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status = bento_ui_screen_default(screen->ui);
 

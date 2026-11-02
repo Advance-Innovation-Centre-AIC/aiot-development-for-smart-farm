@@ -137,37 +137,37 @@ def wait_platform(w):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_config_card(w):
     # 6 แถวซ้อนกันจะล้นการ์ด จึงวาง 3 แถว x (คีย์, ค่า) 2 คู่
     card(12, 44, 768, 218, "tesaiot.config() บนแฟลช ถอดไฟแล้วยังอยู่")
-    table = ui.Table(x=24, y=72, w=744, h=184, cols=4, rows=3)
+    table = ui.Table(x=24, y=84, w=744, h=172, cols=4, rows=3)
     for col, width in enumerate((140, 330, 140, 134)):
         table.col_width(col, width)
     w["table"] = table
 
 
 def build_link_card(w):
-    card(12, 268, 390, 70, "สาย TLS: รอมาแล้วกี่ ms")
-    w["led"] = ui.Led(x=24, y=298, w=34, h=34, color=COL_OK)  # 0 = หรี่ = ยังไม่ติด
-    w["bar"] = ui.Bar(x=120, y=309, w=140, h=14, min=0, max=WAIT_MS)
+    card(12, 266, 390, 82, "สาย TLS: รอมาแล้วกี่ ms")
+    w["led"] = ui.Led(x=24, y=305, w=34, h=34, color=COL_OK)  # 0 = หรี่ = ยังไม่ติด
+    w["bar"] = ui.Bar(x=120, y=316, w=140, h=14, min=0, max=WAIT_MS)
     w["bar"].color(COL_WARN)  # สีตอนสร้างใช้กับ Bar ไม่ได้ ต้องตั้งหลังสร้าง
-    w["seg_ms"] = ui.Seg7(text="0", x=272, y=296, w=120, h=38, color=COL_INFO)
+    w["seg_ms"] = ui.Seg7(text="0", x=272, y=303, w=120, h=38, color=COL_INFO)
 
 
 def build_sent_card(w):
-    card(412, 268, 368, 70, "tesaiot.publish() ส่งแล้ว (ใบ)")
-    w["seg_sent"] = ui.Seg7(text="0", x=424, y=296, w=70, h=38, color=COL_OK)
-    w["note"] = ui.Label("ยังไม่ได้ส่ง", x=506, y=306, color=COL_DIM, value=14)
+    card(412, 266, 368, 82, "tesaiot.publish() ส่งแล้ว (ใบ)")
+    w["seg_sent"] = ui.Seg7(text="0", x=424, y=303, w=70, h=38, color=COL_OK)
+    w["note"] = ui.Label("ยังไม่ได้ส่ง", x=506, y=308, color=COL_DIM, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("ฟาร์มจำที่อยู่คลาวด์เอง", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"status": ui.Label("กำลังอ่านคลังค่าตั้ง", x=12, y=352, color=COL_DIM)}
+    w = {"status": ui.Label("กำลังอ่านคลังค่าตั้ง", x=12, y=352, color=COL_DIM, value=20)}
     build_config_card(w)
     build_link_card(w)
     build_sent_card(w)
