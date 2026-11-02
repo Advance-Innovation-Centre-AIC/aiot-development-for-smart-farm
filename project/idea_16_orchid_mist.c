@@ -1218,8 +1218,8 @@ static bento_status_t add_ring(farm_t *farm)
 {
     const spec_t ring = {40, 60, 230, 230, 0U, 0, PERCENT, 0};
     const spec_t humidity = {112, 148, -1, -1, COL_TEXT, 0, 0, 28};
-    const spec_t band = {104, 186, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t lowest_highest = {40, 300, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t band = {104, 186, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lowest_highest = {40, 300, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status = add_widget(farm->ui, bento_ui_arc_create,
                                        &ring, NULL, &farm->screen.ring);
 
@@ -1245,12 +1245,12 @@ static bento_status_t add_ring(farm_t *farm)
 /* Right: the mist pump card, its countdown bar and the bursts. */
 static bento_status_t add_pump(farm_t *farm)
 {
-    const spec_t panel = {300, 60, 480, 150, COL_CARD, COL_MIST, 14, 1};
-    const spec_t title = {314, 66, -1, -1, COL_MIST, 0, 0, 16};
+    const spec_t panel = {300, 60, 480, 156, COL_CARD, COL_MIST, 14, 1};
+    const spec_t title = {314, 66, -1, -1, COL_MIST, 0, 0, 20};
     const spec_t lamp = {316, 100, 40, 40, COL_MIST, 0, 0, 0};
     const spec_t pump = {370, 106, -1, -1, COL_DIM, 0, 0, 24};
     const spec_t time_left = {316, 160, 448, 16, 0U, 0, PUMP_MAX_S, 0};
-    const spec_t bursts = {316, 182, -1, -1, COL_PINK, 0, 0, 16};
+    const spec_t bursts = {316, 182, -1, -1, COL_PINK, 0, 0, 20};
     bento_ui_id_t unkept = 0U;
     bento_status_t status = add_widget(farm->ui, bento_ui_panel_create,
                                        &panel, NULL, &unkept);
@@ -1281,11 +1281,11 @@ static bento_status_t add_pump(farm_t *farm)
 /* Below it: the mist tank, the rules and the stop button. */
 static bento_status_t add_tank(farm_t *farm)
 {
-    const spec_t caption = {300, 226, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t bar = {420, 230, 240, 16, 0U, 0, 0, 0};
+    const spec_t caption = {300, 226, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t bar = {430, 230, 230, 16, 0U, 0, 0, 0};
     const spec_t tank = {672, 224, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t rule = {300, 262, -1, -1, COL_DIM, 0, 0, 14};
-    const spec_t hint = {300, 290, -1, -1, COL_DRY, 0, 0, 14};
+    const spec_t rule = {300, 262, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t hint = {300, 294, -1, -1, COL_DRY, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t unkept = 0U;
     bento_status_t status =
@@ -1318,9 +1318,9 @@ static bento_status_t add_tank(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_PETAL, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {596, 12, 18, 18, COL_PETAL, 0, 0, 0};
+    const spec_t link = {622, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
