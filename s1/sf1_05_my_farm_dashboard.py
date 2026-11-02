@@ -183,14 +183,14 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
 def build_overview_tab(w, tab):
     w["arc"] = ui.Arc(x=0, y=0, w=150, h=150, min=0, max=100, value=0, parent=tab)
     w["score"] = ui.Label("0", x=50, y=54, color=COL_TEXT, value=28, parent=tab)
-    ui.Label("สุขภาพฟาร์ม", x=20, y=156, color=COL_INFO, value=16, parent=tab)
+    ui.Label("สุขภาพฟาร์ม", x=20, y=156, color=COL_INFO, value=20, parent=tab)
     w["air"] = ui.Label("อากาศ -- C  -- %RH", x=170, y=0, color=COL_TEXT, value=24, parent=tab)
-    ui.Label("ความชื้นดิน (VR1)", x=170, y=40, color=COL_INFO, value=16, parent=tab)
+    ui.Label("ความชื้นดิน (VR1)", x=170, y=36, color=COL_INFO, value=20, parent=tab)
     w["bar_soil"] = ui.Bar(x=170, y=66, w=360, h=24, min=0, max=100, value=0, parent=tab)
     w["lbl_soil"] = ui.Label("-- %", x=544, y=62, color=COL_TEXT, value=20, parent=tab)
     w["led"] = ui.Led(x=170, y=104, w=32, h=32, color=COL_INFO, value=0, parent=tab)
     w["lbl_pump"] = ui.Label("ปั๊มน้ำ: ปิด", x=214, y=108, color=COL_DIM, value=20, parent=tab)
-    w["event"] = ui.Label(BTN_NAMES[1] + " (บน) = สลับจอไฟ RGB", x=170, y=156, color=COL_DIM, value=16, parent=tab)
+    w["event"] = ui.Label(BTN_NAMES[1] + " (บน) = สลับจอไฟ RGB", x=170, y=156, color=COL_DIM, value=20, parent=tab)
 
 
 def build_screen():
@@ -203,7 +203,7 @@ def build_screen():
     tab = tabs.add_tab("กราฟ")
     w["chart"] = line_chart(0, 0, 400, 180, 0, 100, COL_WARN, tab)
     w["s_soil"] = w["chart"].add_series(COL_OK)
-    ui.Label("ส้ม = อุณหภูมิ\nเขียว = ชื้นดิน", x=420, y=10, color=COL_TEXT, value=16, parent=tab)
+    ui.Label("ส้ม = อุณหภูมิ\nเขียว = ชื้นดิน", x=420, y=10, color=COL_TEXT, value=20, parent=tab)
     w["advice"] = ui.Label(" ", x=12, y=352, color=COL_WARN, value=20)
     ui.poll()
     return w
