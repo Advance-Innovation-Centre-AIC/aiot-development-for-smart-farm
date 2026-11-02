@@ -29,12 +29,13 @@
  *   - class Stop is a text kept in the program's state and a failed
  *     status; main() shows and prints it as the except does.
  *   - `import buttons` fails on the Eva Kit: here that board has
- *     bento_buttons_count() 0.
+ *     bento_buttons_count() 0. `import edge_ai` fails where there is
+ *     no model link: here bento_edgeai_supported() false ends the
+ *     program with BENTO_E_UNSUPPORTED.
  *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
- *     yet: the program says so and ends. It shows the .py's own
- *     "Deploy ... on a Dev Kit" card, with the Emulator line under it;
- *     a board without the model link (`import edge_ai` fails there)
- *     takes the same way.
+ *     yet: the program says so and ends, as the .py does without the
+ *     model. It shows the .py's own "Deploy ... on a Dev Kit" card,
+ *     with the Emulator line under it.
  *   - gc.collect() and gc.mem_free(): C has no garbage collector, so
  *     the "free heap:" line is not printed.
  *   - The dict of texts, colours and values already sent is one entry
@@ -1275,8 +1276,9 @@ static bento_status_t watch_model(app_t *app, run_t *run)
     return status;
 }
 
-/* No Edge AI from C here (the BENTO Emulator): the .py's "use a
- * real board" card, the Emulator line under it, then a normal end. */
+/* No Edge AI from C (BENTO_E_UNSUPPORTED, as in the BENTO Emulator):
+ * the .py's own "no model" card, the Emulator line under it, then a
+ * normal end, as the .py ends there. */
 static bento_status_t show_emulator_gap(app_t *app)
 {
     static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
@@ -1310,9 +1312,10 @@ int main(void)
     app->ui = bento_runtime_get_ui();
     app->has_buttons = bento_buttons_count() > 0U;
     status = bento_edgeai_supported(&supported);
-    if ((status == BENTO_E_UNSUPPORTED) ||
-        ((status == BENTO_OK) && !supported)) {
+    if (status == BENTO_E_UNSUPPORTED) {
         status = show_emulator_gap(app);
+    } else if ((status == BENTO_OK) && !supported) {
+        status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
     } else if (status == BENTO_OK) {
         status = find_model(app) ? watch_model(app, &run)
                                  : show_missing(app);
