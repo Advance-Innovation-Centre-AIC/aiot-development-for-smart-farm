@@ -40,6 +40,8 @@
  *   - The Stop class is a flag: the reason is shown, the tune plays,
  *     and the program ends quietly with 0.
  *   - The tune table keeps only the tunes this program plays.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet:
+ *     the program says so and ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -165,6 +167,14 @@ typedef struct {
     int16_t y;
 } point_t;
 
+/* Where the Emulator's "no MQTT from C" line sits: on space that shows
+ * nothing at that point of the run. */
+enum {
+    GAP_X = 456,
+    GAP_Y = 80,
+    GAP_W = 314 /* the line wraps inside its card */
+};
+
 typedef struct {
     int16_t x;
     int16_t y;
@@ -191,6 +201,7 @@ typedef struct {
     char client_base[CLIENT_BYTES];
     char client_id[CLIENT_BYTES];
     char topic[TOPIC_BYTES];
+    bool no_mqtt; /* the BENTO Emulator: no MQTT from C yet */
 } link_t;
 
 /* What the reporting loop counts. */
@@ -606,6 +617,7 @@ static bento_status_t try_broker(link_t *link, bool *linked)
         status = wait_broker(link->broker);
     }
     *linked = status == BENTO_OK;
+    link->no_mqtt = status == BENTO_E_UNSUPPORTED;
     if (*linked) {
         (void)printf("[MQTT] Connected to %s:%d as '%s'\n", broker,
                      PORT, link->client_id);
@@ -626,8 +638,8 @@ static bento_status_t connect_broker(const report_screen_t *screen,
     bento_status_t status = BENTO_OK;
 
     *linked = false;
-    for (attempt = 1;
-         (attempt <= BROKER_TRIES) && !*linked && (status == BENTO_OK);
+    for (attempt = 1; (attempt <= BROKER_TRIES) && !*linked &&
+                      !link->no_mqtt && (status == BENTO_OK);
          attempt++) {
         if (attempt > 1) {
             (void)snprintf(text, sizeof(text),
@@ -635,6 +647,35 @@ static bento_status_t connect_broker(const report_screen_t *screen,
             note(screen, text, COL_WARN);
         }
         status = try_broker(link, linked);
+    }
+    return status;
+}
+
+/* The BENTO Emulator's C runtime has no MQTT yet (every bento_mqtt_*
+ * call answers BENTO_E_UNSUPPORTED): say so on screen and in the
+ * console, in bento-ide's words. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+    bento_status_t status;
+
+    bento_ui_widget_args_init(&args);
+    args.text = gap;
+    args.text_len = (uint32_t)strlen(gap);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W;
+    args.color = COL_WARN;
+    args.font_px = FONT_ROW;
+    status = bento_ui_label_create(ui, &args, &label);
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\n",
+                 gap);
+    if (status == BENTO_OK) {
+        present(ui);
     }
     return status;
 }
@@ -656,6 +697,10 @@ static bento_status_t connect_farm(const report_screen_t *screen,
     if ((status == BENTO_OK) && passed) {
         status = connect_broker(screen, link, &passed);
         *problem = passed ? NULL : "broker ไม่ตอบ";
+    }
+    /* then the .py's own way out: the broker did not answer */
+    if ((status == BENTO_OK) && link->no_mqtt) {
+        status = show_emulator_gap(screen->ui);
     }
     return status;
 }
