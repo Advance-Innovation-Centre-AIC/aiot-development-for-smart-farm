@@ -1223,7 +1223,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  14,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_WARM, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_WARM, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1244,18 +1244,18 @@ static bento_status_t add_thermometer(farm_t *farm)
         MARK_LIFT_PX = 8
     };
     const rect_t card = {12, 44, 210, 290};
-    const spec_t thermo = {34, THERMO_Y, 40,      THERMO_H,
+    const spec_t thermo = {34, THERMO_Y, 26,      THERMO_H,
                            0U, 0,        PERCENT, 0};
-    const spec_t top = {82, 74, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t top = {68, 74, -1, -1, COL_DIM, 0, 0, 14};
     /* the dry mark's height, in one signed type (MISRA 10.4) */
     const int32_t wet_share = (int32_t)PERCENT - (int32_t)SOIL_DRY;
     const int32_t dry_y =
         (int32_t)THERMO_Y +
         ((wet_share * (int32_t)THERMO_H) / (int32_t)PERCENT);
     const int16_t mark_y = px(dry_y - (int32_t)MARK_LIFT_PX);
-    const spec_t mark = {82, mark_y, -1, -1, COL_HOT, 0, 0, 14};
-    const spec_t heat = {88, 200, -1, -1, COL_TEXT, 0, 0, 28};
-    const spec_t heat_note = {88, 244, -1, -1, COL_HOT, 0, 0, 16};
+    const spec_t mark = {68, mark_y, -1, -1, COL_HOT, 0, 0, 20};
+    const spec_t heat = {68, 200, -1, -1, COL_TEXT, 0, 0, 28};
+    const spec_t heat_note = {68, 244, -1, -1, COL_HOT, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1292,7 +1292,7 @@ static bento_status_t add_fan(farm_t *farm)
     const spec_t ring = {297, 80, 160, 160, 0U, 0, PUMP_MAX_S, 0};
     const spec_t lamp = {357, 140, 40, 40, COL_COOL, 0, 0, 0};
     const spec_t fan = {248, 252, -1, -1, COL_DIM, 0, 0, 24};
-    const spec_t hint = {248, 298, -1, -1, COL_WARM, 0, 0, 14};
+    const spec_t hint = {236, 298, -1, -1, COL_WARM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status = add_card(
@@ -1325,7 +1325,7 @@ static bento_status_t add_hot_clock(farm_t *farm)
 {
     const rect_t card = {532, 44, 248, 168};
     const spec_t clock = {548, 78, 200, 64, COL_HOT, 0, 0, 0};
-    const spec_t runs = {548, 160, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t runs = {548, 160, -1, -1, COL_DIM, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "ร้อนเกินเกณฑ์สะสม", &label);
@@ -1345,9 +1345,11 @@ static bento_status_t add_hot_clock(farm_t *farm)
 static bento_status_t add_battery(farm_t *farm)
 {
     const rect_t card = {532, 222, 248, 108};
-    const spec_t bar = {548, 256, 150, 22, 0U, 0, 0, 0};
+    const spec_t bar = {548, 256, 150, 14, 0U, 0, 0, 0};
     const spec_t tank = {708, 254, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t rule = {548, 292, -1, -1, COL_DIM, 0, 0, 14};
+    /* 20 px does not fit the rule on one line: two labels */
+    const spec_t rule = {548, 274, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t rule_end = {548, 300, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1362,10 +1364,14 @@ static bento_status_t add_battery(farm_t *farm)
                             "-- %", &farm->screen.tank);
     }
     if (status == BENTO_OK) {
-        (void)snprintf(text, sizeof(text),
-                       "ต่ำกว่า %d%% ไม่เปิด / สูงสุด %d วิ", TANK_MIN,
-                       PUMP_MAX_S);
+        (void)snprintf(text, sizeof(text), "ต่ำกว่า %d%% ไม่เปิด",
+                       TANK_MIN);
         status = add_widget(farm->ui, bento_ui_label_create, &rule,
+                            text, &label);
+    }
+    if (status == BENTO_OK) {
+        (void)snprintf(text, sizeof(text), "/ สูงสุด %d วิ", PUMP_MAX_S);
+        status = add_widget(farm->ui, bento_ui_label_create, &rule_end,
                             text, &label);
     }
     return status;
@@ -1373,9 +1379,9 @@ static bento_status_t add_battery(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 0};
+    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t lamp = {600, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {626, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t link = {626, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);

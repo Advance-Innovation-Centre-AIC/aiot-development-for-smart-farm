@@ -195,7 +195,7 @@ def send_report(n, soil, tank, running, hot_s, runs):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=14, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_WARM, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_WARM, value=20)
 
 
 def show_link(w, ok):
@@ -210,30 +210,31 @@ def build_screen():
     w = {}
     # ซ้าย: เทอร์โมมิเตอร์ (Bar สูงกว่ากว้าง = แนวตั้ง)
     card(12, 44, 210, 290, "ความร้อนในเล้า VR1")
-    w["thermo"] = ui.Bar(x=34, y=78, w=40, h=240, min=0, max=100, value=0)
-    ui.Label("100", x=82, y=74, color=COL_DIM, value=14)
-    ui.Label("%d เกณฑ์" % SOIL_DRY, x=82, y=78 + (100 - SOIL_DRY) * 240 // 100 - 8, color=COL_HOT, value=14)
-    w["heat"] = ui.Label("-- %", x=88, y=200, color=COL_TEXT, value=28)
-    w["heat_t"] = ui.Label("", x=88, y=244, color=COL_HOT, value=16)
+    w["thermo"] = ui.Bar(x=34, y=78, w=26, h=240, min=0, max=100, value=0)
+    ui.Label("100", x=68, y=74, color=COL_DIM, value=14)
+    ui.Label("%d เกณฑ์" % SOIL_DRY, x=68, y=78 + (100 - SOIL_DRY) * 240 // 100 - 8, color=COL_HOT, value=20)
+    w["heat"] = ui.Label("-- %", x=68, y=200, color=COL_TEXT, value=28)
+    w["heat_t"] = ui.Label("", x=68, y=244, color=COL_HOT, value=20)
     # กลาง: วงแหวนพัดลม
     w["title"] = card(232, 44, 290, 290, "พัดลม = ไฟสีฟ้า (คำสั่ง 0)")
     w["arc"] = ui.Arc(x=297, y=80, w=160, h=160, max=PUMP_MAX_S)
     w["arc"].color(COL_COOL)
     w["led"] = ui.Led(x=357, y=140, w=40, h=40, color=COL_COOL)
     w["pump"] = ui.Label("พัดลมหยุด", x=248, y=252, color=COL_DIM, value=24)
-    ui.Label(BTN_NAMES[0] + " = หยุดพัดลมฉุกเฉิน ไม่พึ่งเน็ต", x=248, y=298, color=COL_WARM, value=14)
+    ui.Label(BTN_NAMES[0] + " = หยุดพัดลมฉุกเฉิน ไม่พึ่งเน็ต", x=236, y=298, color=COL_WARM, value=20)
     # ขวาบน: นาฬิการ้อนสะสม (ฟีเจอร์เฉพาะเรื่อง)
     card(532, 44, 248, 168, "ร้อนเกินเกณฑ์สะสม")
     w["hot"] = ui.Seg7(text="00:00", x=548, y=78, w=200, h=64, color=COL_HOT)
-    w["runs"] = ui.Label("เปิดพัดลมไป 0 ครั้ง", x=548, y=160, color=COL_DIM, value=16)
+    w["runs"] = ui.Label("เปิดพัดลมไป 0 ครั้ง", x=548, y=160, color=COL_DIM, value=20)
     # มุมขวาล่างสุดเว้นไว้ให้ปุ่ม Console
     card(532, 222, 248, 108, "ไฟแบตสำรอง VR4")
-    w["tank_bar"] = ui.Bar(x=548, y=256, w=150, h=22)
+    w["tank_bar"] = ui.Bar(x=548, y=256, w=150, h=14)
     w["tank"] = ui.Label("-- %", x=708, y=254, color=COL_TEXT, value=16)
-    ui.Label("ต่ำกว่า %d%% ไม่เปิด / สูงสุด %d วิ" % (TANK_MIN, PUMP_MAX_S), x=548, y=292, color=COL_DIM, value=14)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM)
+    ui.Label("ต่ำกว่า %d%% ไม่เปิด" % TANK_MIN, x=548, y=274, color=COL_DIM, value=20)   # 20 px ไม่พอบรรทัดเดียว
+    ui.Label("/ สูงสุด %d วิ" % PUMP_MAX_S, x=548, y=300, color=COL_DIM, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=600, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=626, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=626, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
