@@ -50,23 +50,30 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    WIN = 30,        /* values in the window (30 x 0.5 s = 15 s) */
-    BAND_SD = 2,     /* the yellow lines: mean +- this many SD */
+    WIN = 30 /* values in the window (30 x 0.5 s = 15 s) */
+};
+/* |z| above this = unusual, the screen LED lights. */
+static const bento_real_t Z_MAX = (bento_real_t)2.5;
+enum {
+    BAND_SD = 2 /* the yellow lines: mean +- this many SD */
+};
+/* The smallest SD divided by (VR1 in %, the temperature in C): a still
+ * value has an SD near 0, which would make z shoot up. */
+static const bento_real_t SD_MIN[2] = {(bento_real_t)1.0,
+                                       (bento_real_t)0.1};
+/* The board warms itself: compare with a room thermometer and put the
+ * difference here, such as -9.5. */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+enum {
     TICK_MS = 500,   /* one value and one screen update this often */
     SAMPLE_MS = 20,  /* read the button this often while waiting */
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
-
-/* |z| above this = unusual, the screen LED lights. */
-static const float Z_MAX = 2.5F;
-/* TEMP_OFFSET (the board's own warmth) is set in read_temperature(). */
-/* The smallest SD divided by (VR1 in %, the temperature in C): a still
- * value has an SD near 0, which would make z shoot up. */
-static const float SD_MIN[2] = {1.0F, 0.1F};
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -262,9 +269,6 @@ static int32_t round_even(float value)
  * tried three times; still nothing = not known. */
 static bento_status_t read_temperature(reading_t *reading)
 {
-    /* The board warms itself: compare with a room thermometer and put
-     * the difference here, such as -9.5. */
-    static const float temp_offset = 0.0F;
     bento_status_t status = BENTO_OK;
     int32_t tries;
 
@@ -275,7 +279,7 @@ static bento_status_t read_temperature(reading_t *reading)
         float celsius = 0.0F;
 
         if (bento_sensors_sht40_temperature(&celsius) == BENTO_OK) {
-            reading->value = celsius + temp_offset;
+            reading->value = celsius + (float)TEMP_OFFSET;
             reading->known = true;
         } else {
             status = pause_ms((uint32_t)RETRY_MS);
@@ -542,7 +546,7 @@ static bento_status_t build_card(app_t *app)
     char title[TEXT_BYTES];
     bento_status_t status;
 
-    format_real(limit, sizeof(limit), Z_MAX, 1, false);
+    format_real(limit, sizeof(limit), (float)Z_MAX, 1, false);
     (void)snprintf(title, sizeof(title),
                    "เทียบ %d ค่าก่อนหน้า  ไฟ = |z| เกิน %s", WIN, limit);
     status = add_card(app->ui, &box, title);
@@ -688,7 +692,7 @@ static void show_stats(const app_t *app, float value,
 /* The statistics of the window before the value (not counting it). */
 static void window_stats(const app_t *app, float value, stats_t *stats)
 {
-    const float sd_min = SD_MIN[app->source];
+    const float sd_min = (float)SD_MIN[app->source];
 
     stats->mean = value;
     stats->sd = 0.0F;
@@ -719,14 +723,14 @@ static void remember(app_t *app, float value)
 /* Judge one value: the LED and a tone on the rising edge only. */
 static bento_status_t judge(app_t *app, float value)
 {
-    const float sd_min = SD_MIN[app->source];
+    const float sd_min = (float)SD_MIN[app->source];
     stats_t stats;
     bool alarm;
     float band;
     bento_status_t status = BENTO_OK;
 
     window_stats(app, value, &stats);
-    alarm = (stats.z > Z_MAX) || (stats.z < -Z_MAX);
+    alarm = (stats.z > (float)Z_MAX) || (stats.z < -(float)Z_MAX);
     if (alarm && !app->alarm) {
         status = beep(app->ui, TUNE_BAD);
     }
