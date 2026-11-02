@@ -1529,6 +1529,10 @@ static bento_status_t show_emulator_gap(bento_ui_t *ui)
 {
     static const char note[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
                                "ให้รันบน Dev Kit หรือ Eva Kit";
+    /* the BENTO Emulator does not wrap a label to its width, so the
+     * label breaks its lines itself (a new line for a space) */
+    static const char lines[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator\n"
+                                "ให้รันบน Dev Kit หรือ Eva Kit";
     bento_ui_widget_args_t args;
     bento_ui_id_t id = 0U;
 
@@ -1536,11 +1540,11 @@ static bento_status_t show_emulator_gap(bento_ui_t *ui)
                  "run it on a Dev Kit or Eva Kit.\r\n",
                  note);
     bento_ui_widget_args_init(&args);
-    args.text = note;
-    args.text_len = (uint32_t)strlen(note);
+    args.text = lines;
+    args.text_len = (uint32_t)strlen(lines);
     args.x = GAP_X;
     args.y = GAP_Y;
-    args.w = GAP_W; /* wraps into two lines */
+    args.w = GAP_W; /* the board wraps at this width */
     args.color = COL_DRY;
     args.font_px = GAP_FONT_PX;
     return bento_ui_label_create(ui, &args, &id);
