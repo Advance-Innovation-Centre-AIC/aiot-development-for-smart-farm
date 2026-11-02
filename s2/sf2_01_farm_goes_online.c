@@ -43,14 +43,14 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 /* ใช้ Hotspot มือถือ (WiFi ที่ต้อง login ผ่านเว็บ บอร์ดใช้ไม่ได้) */
-static const char WIFI_SSID[] =
-    "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
-/* WIFI_PASS: ตั้งใน join_wifi() (set it in join_wifi()) */
-/* FARM_NAME: ชื่อบนจอ ตั้งใน build_screen() */
-/* TEMP_OFFSET (ชดเชยความอุ่นจากชิป เช่น -7.0) และ HUM_FIX: ตั้งใน
- * read_climate() */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* ชื่อบนจอ */
+static const char FARM_NAME[] = "โรงเรือนกลุ่ม XX";
 
 enum {
     RUN_MS = 60000, /* เฝ้าดูลิงก์กี่ ms */
@@ -59,10 +59,15 @@ enum {
     IP_WAIT_MS = 200
 };
 
+/* ชดเชยความอุ่นจากชิป เช่น -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+static const bool HUM_FIX = true; /* แปลงความชื้นเป็นของห้อง */
+
 enum {
-    SPEAKER = 40, /* the speaker, 0-100 % */
-    VOLUME = 25   /* each tone, 0-127 */
+    SPEAKER = 40, /* ลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป) */
+    VOLUME = 25   /* ความดังเสียง 0-127 */
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -234,18 +239,16 @@ static uint32_t pct_color(int32_t pct)
  * temperature. The humidity follows the offset only when HUM_FIX. */
 static void read_climate(maybe_t *t, maybe_t *h)
 {
-    static const bool hum_fix = true; /* แปลงความชื้นเป็นของห้อง */
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
     float t_raw = 0.0F;
     float humidity = 0.0F;
 
     t->known = bento_sensors_sht40_temperature(&t_raw) == BENTO_OK;
     h->known = t->known &&
                (bento_sensors_sht40_humidity(&humidity) == BENTO_OK);
-    t->value = (bento_real_t)t_raw + temp_offset;
+    t->value = (bento_real_t)t_raw + TEMP_OFFSET;
     h->value = (bento_real_t)humidity;
-    if (h->known && t->known && (temp_offset != (bento_real_t)0.0) &&
-        hum_fix) {
+    if (h->known && t->known && (TEMP_OFFSET != (bento_real_t)0.0) &&
+        HUM_FIX) {
         h->value =
             room_humidity(h->value, (bento_real_t)t_raw, t->value);
     }
@@ -420,8 +423,6 @@ bento_wifi_ap_t g_networks[BENTO_WIFI_SCAN_MAX];
  * ends the run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char wifi_pass[] =
-        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
@@ -429,8 +430,8 @@ static bento_status_t join_wifi(bool *joined)
     bento_wifi_connect_params_init(&params);
     params.ssid = WIFI_SSID;
     params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
@@ -636,7 +637,6 @@ static bento_status_t build_air_card(online_screen_t *screen)
 
 static bento_status_t build_screen(online_screen_t *screen)
 {
-    static const char farm_name[] = "โรงเรือนกลุ่ม XX"; /* ชื่อบนจอ */
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
     static const spot_t farm = {320, 12, COLOR_INFO, 20};
     bento_ui_id_t unused;
@@ -650,7 +650,7 @@ static bento_status_t build_screen(online_screen_t *screen)
             add_label(screen->ui, &heading, "ฟาร์มต่ออินเทอร์เน็ต", &unused);
     }
     if (status == BENTO_OK) {
-        status = add_label(screen->ui, &farm, farm_name, &unused);
+        status = add_label(screen->ui, &farm, FARM_NAME, &unused);
     }
     if (status == BENTO_OK) {
         status = build_wifi_card(screen);
