@@ -20,8 +20,6 @@
  *     right answer): C does not compile an empty blank, so the
  *     self-test says ยังไม่ถูก until the blank is filled, where
  *     MicroPython stops with a NameError.
- *   - THRESH_DB is THRESH_DB_TENTHS (4.0 dB = 40): an enum holds no
- *     real number, and the radar takes tenths of a dB anyway.
  *   - hasattr(ui, "volume"): the volume is always set, and a build
  *     without sound refuses it, which is ignored.
  *   - try/except OSError around the radar and the RGB matrix: the
@@ -44,20 +42,29 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* Settings: change them and run again. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     MIN_CM = 50, /* VR3 sets the alert zone 50-250 cm */
     SPAN_CM = 200,
-    CONFIRM_N = 3,         /* rounds in a row before we believe */
-    THRESH_DB_TENTHS = 40, /* 4.0 dB above the still scene */
-    MAX_CM = 300,          /* far end of the bar, ruler, chart */
-    VOLUME = 25,           /* tone loudness 0-127 */
-    SPEAKER = 40,          /* speaker 0-100 % (fw 2.4.2+) */
-    RUN_MS = 180000,       /* one round: 3 minutes */
-    SAMPLE_MS = 250,       /* read the radar this often */
-    TICK_MS = 500,         /* redraw this often */
-    MATRIX_MS = 3000       /* send the RGB matrix picture again */
+    CONFIRM_N = 3 /* rounds in a row before we believe (1 or more) */
 };
+/* dB a target must be above the still scene (0.1-60) */
+static const bento_real_t THRESH_DB = (bento_real_t)4.0;
+enum {
+    MAX_CM = 300 /* far end of the bar, ruler, chart */
+};
+/* on the board: SW5 = lower = pressed(1), SW6 = upper = pressed(0) */
+static const char *const BUTTON_NAMES[] = {"SW5",
+                                           "SW6"}; /* .py: BTN_NAMES */
+enum {
+    VOLUME = 25,     /* tone loudness 0-127 */
+    SPEAKER = 40,    /* speaker 0-100 % (fw 2.4.2+) */
+    RUN_MS = 180000, /* one round: 3 minutes */
+    SAMPLE_MS = 250, /* read the radar this often */
+    TICK_MS = 500,   /* redraw this often */
+    MATRIX_MS = 3000 /* send the RGB matrix picture again */
+};
+/* ---- end of settings ---- */
 
 /* The blanks to fill in: -1 is never a right answer. */
 enum {
@@ -72,7 +79,6 @@ enum {
     ZONE_POT = 2,  /* VR3 */
     POT_FULL = 4095,
     CM_PER_M = 100,
-    TENTHS_PER_DB = 10,
     BEEP_MS = 120,
     SIREN_TONE_MS = 140,
     SIREN_STEP_MS = 150,
@@ -431,8 +437,6 @@ static bool read_radar(radar_reading_t *reading)
  * not answer. */
 static bento_status_t calibrate_radar(bool *learned)
 {
-    const float threshold_db =
-        (float)THRESH_DB_TENTHS / (float)TENTHS_PER_DB;
     bento_status_t status = BENTO_OK;
 
     *learned = bento_sensors_radar_config(0.0F) == BENTO_OK;
@@ -440,7 +444,8 @@ static bento_status_t calibrate_radar(bool *learned)
         status = pause_ms(SCENE_SETTLE_MS);
     }
     if ((status == BENTO_OK) && *learned) {
-        *learned = bento_sensors_radar_config(threshold_db) == BENTO_OK;
+        *learned =
+            bento_sensors_radar_config((float)THRESH_DB) == BENTO_OK;
     }
     return status;
 }
@@ -653,11 +658,10 @@ static void say(const guard_screen_t *screen, const char *text,
 
 static void show_arm(const guard_screen_t *screen, bool armed)
 {
-    static const char *const button_names[] = {"SW5", "SW6"};
     char text[TEXT_BYTES];
 
     (void)snprintf(text, sizeof(text), "ระบบเฝ้า: %s (%s)",
-                   armed ? "เปิด" : "ปิด", button_names[0]);
+                   armed ? "เปิด" : "ปิด", BUTTON_NAMES[0]);
     set_text(screen->ui, screen->arm, text);
     (void)bento_ui_set_color(screen->ui, screen->arm,
                              armed ? COLOR_OK : COLOR_DIM);
