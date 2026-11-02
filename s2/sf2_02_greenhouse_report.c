@@ -90,7 +90,7 @@ enum {
     CARD_BORDER_PX = 1,
     CARD_INSET_X = 12,
     CARD_INSET_Y = 6,
-    CARD_TITLE_PX = 16
+    CARD_TITLE_PX = 20
 };
 
 /* Times, scales and the link. */
@@ -621,7 +621,7 @@ static bento_status_t build_numbers(report_screen_t *screen)
         const int16_t x = (int16_t)(i * step_px);
         const box_t card = {
             (int16_t)(12 + x), 44, 176, 100, 0U, 0, 0, 0};
-        const box_t seg = {(int16_t)(22 + x), 80, 150, 52,
+        const box_t seg = {(int16_t)(22 + x), 84, 150, 52,
                            colors[i],         0,  0,   0};
 
         status = add_card(screen->ui, &card, names[i], &unused);
@@ -637,7 +637,7 @@ static bento_status_t build_numbers(report_screen_t *screen)
 static bento_status_t build_knobs(report_screen_t *screen)
 {
     static const box_t card = {564, 44, 216, 100, 0U, 0, 0, 0};
-    const int16_t step_px = 22;
+    const int16_t step_px = 20;
     bento_ui_id_t unused;
     bento_status_t status =
         add_card(screen->ui, &card, "ดิน / แสง / ถัง (จำลอง)", &unused);
@@ -645,7 +645,7 @@ static bento_status_t build_knobs(report_screen_t *screen)
 
     for (i = 0; (i < KNOB_COUNT) && (status == BENTO_OK); i++) {
         const box_t bar = {
-            576, (int16_t)(72 + (i * step_px)), 190, 14, 0U, 0, 0, 0};
+            576, (int16_t)(84 + (i * step_px)), 190, 14, 0U, 0, 0, 0};
 
         status = add_box(screen->ui, UI_WIDGET_BAR, &bar, NULL,
                          &screen->bars[i]);
@@ -658,7 +658,7 @@ static bento_status_t build_knobs(report_screen_t *screen)
 static bento_status_t build_chart(report_screen_t *screen)
 {
     static const box_t card = {12, 152, 420, 186, 0U, 0, 0, 0};
-    static const box_t chart = {22,         178, 400, 152,
+    static const box_t chart = {22,         190, 400, 140,
                                 COLOR_INFO, 15,  40,  0};
     bento_ui_id_t unused;
     bento_status_t status = add_card(
@@ -681,8 +681,8 @@ static bento_status_t build_chart(report_screen_t *screen)
 static bento_status_t build_tilt(report_screen_t *screen)
 {
     static const box_t card = {442, 152, 338, 186, 0U, 0, 0, 0};
-    static const spot_t tilt = {456, 184, COLOR_TEXT, 28};
-    static const spot_t caption = {456, 266, COLOR_DIM, 16};
+    static const spot_t tilt = {456, 192, COLOR_TEXT, 28};
+    static const spot_t caption = {456, 258, COLOR_DIM, 20};
     static const box_t next = {456, 294, 300, 18, 0U, 0, SEND_MS, 0};
     bento_ui_id_t unused;
     bento_status_t status =
@@ -705,7 +705,7 @@ static bento_status_t build_top(report_screen_t *screen)
 {
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
     static const box_t led = {250, 12, 20, 20, COLOR_OK, 0, 0, 0};
-    static const spot_t sent = {600, 12, COLOR_TEXT, 16};
+    static const spot_t sent = {290, 12, COLOR_TEXT, 20};
     bento_ui_id_t unused;
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
@@ -729,9 +729,9 @@ static bento_status_t build_top(report_screen_t *screen)
 
 static bento_status_t build_screen(report_screen_t *screen)
 {
-    static const spot_t note = {12, 352, COLOR_DIM, 0};
-    static const box_t link_led = {606, 12, 18, 18, COLOR_OK, 0, 0, 0};
-    static const spot_t link_text = {632, 10, COLOR_DIM, 16};
+    static const spot_t note = {12, 352, COLOR_DIM, 20};
+    static const box_t link_led = {586, 12, 18, 18, COLOR_OK, 0, 0, 0};
+    static const spot_t link_text = {612, 10, COLOR_DIM, 20};
     bento_status_t status = build_top(screen);
 
     if (status == BENTO_OK) {

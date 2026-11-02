@@ -155,7 +155,7 @@ def publish_json(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -175,24 +175,24 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("โรงเรือนรายงานตัว", x=12, y=6, color=COL_TEXT, value=24)
     w = {"led": ui.Led(x=250, y=12, w=20, h=20, color=COL_OK),
-         "sent": ui.Label("ส่งแล้ว 0 ใบ", x=600, y=12, color=COL_TEXT, value=16), "segs": [], "bars": []}
+         "sent": ui.Label("ส่งแล้ว 0 ใบ", x=290, y=12, color=COL_TEXT, value=20), "segs": [], "bars": []}
     for i, name in enumerate(("อุณหภูมิ C", "ความชื้น %", "ความกด hPa")):
         card(12 + i * 184, 44, 176, 100, name)
-        w["segs"].append(ui.Seg7(text="--", x=22 + i * 184, y=80, w=150, h=52, color=(COL_OK, COL_INFO, COL_WARN)[i]))
+        w["segs"].append(ui.Seg7(text="--", x=22 + i * 184, y=84, w=150, h=52, color=(COL_OK, COL_INFO, COL_WARN)[i]))
     card(564, 44, 216, 100, "ดิน / แสง / ถัง (จำลอง)")
     for i in range(3):
-        w["bars"].append(ui.Bar(x=576, y=72 + i * 22, w=190, h=14))
+        w["bars"].append(ui.Bar(x=576, y=84 + i * 20, w=190, h=14))
     card(12, 152, 420, 186, "กราฟ C: ฟ้า = บอร์ด  เขียว = ส่งแล้ว")
     # 15-40 C เพราะช่วง 0-100 ทำให้เส้นแบน
-    w["chart"] = line_chart(22, 178, 400, 152, 15, 40, COL_INFO)
+    w["chart"] = line_chart(22, 190, 400, 140, 15, 40, COL_INFO)
     w["s_sent"] = w["chart"].add_series(COL_OK)
     card(442, 152, 338, 186, "az เทียบตอนเริ่ม")
-    w["tilt"] = ui.Label("--", x=456, y=184, color=COL_TEXT, value=28)
-    ui.Label("ส่งใบถัดไปใน", x=456, y=266, color=COL_DIM, value=16)
+    w["tilt"] = ui.Label("--", x=456, y=192, color=COL_TEXT, value=28)
+    ui.Label("ส่งใบถัดไปใน", x=456, y=258, color=COL_DIM, value=20)
     w["next"] = ui.Bar(x=456, y=294, w=300, h=18, max=SEND_MS)
-    w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=586, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=612, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
