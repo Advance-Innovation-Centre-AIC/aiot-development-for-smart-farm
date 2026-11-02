@@ -198,11 +198,13 @@ enum {
     FOUND_MAX = 8,
     COUGHS_KEPT = 256,
     FAIL_PRINT_EVERY = 100,
-    NAME_BYTES = 48,  /* the client id or a topic */
-    TEXT_BYTES = 128, /* a label's text: a SET_TEXT holds 126 */
-    TAIL_BYTES = 160, /* the keys an event adds */
-    PAYLOAD_BYTES = 512,
-    TEAM_CHARS = 6, /* "team" and two digits */
+    NAME_BYTES = 48,     /* the client id or the topics' base */
+    TOPIC_BYTES = 56,    /* the base and its longest suffix "plc/cmd" */
+    TEXT_BYTES = 128,    /* a label's text: a SET_TEXT holds 126 */
+    TAIL_BYTES = 160,    /* the keys an event adds */
+    PAYLOAD_BYTES = 800, /* the state with every field at its longest;
+                            fit_status() sends at most MAX_BYTES */
+    TEAM_CHARS = 6,      /* "team" and two digits */
     TEAM_PREFIX = 4
 };
 
@@ -1833,7 +1835,7 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
 /* The broker is up: listen to ai/cmd. Refused = send only. */
 static void listen_commands(farm_t *farm)
 {
-    char topic[NAME_BYTES];
+    char topic[TOPIC_BYTES];
     char text[TEXT_BYTES];
     uint8_t granted_qos = 0U;
     bool ok;
@@ -1922,7 +1924,7 @@ static bool broker_alive(const state_t *state)
 static bool send(const state_t *state, const char *suffix,
                  const char *line)
 {
-    char topic[NAME_BYTES];
+    char topic[TOPIC_BYTES];
     bool delivered = false;
 
     (void)printf("%s\n", line);
@@ -3403,7 +3405,7 @@ static command_kind_t read_inbox(farm_t *farm, command_t *command)
 {
     bento_mqtt_msg_t message;
     char topic[BENTO_MQTT_TOPIC_MAX];
-    char wanted[NAME_BYTES];
+    char wanted[TOPIC_BYTES];
     command_kind_t kind = COMMAND_NONE;
 
     bento_mqtt_msg_init(&message);
