@@ -165,7 +165,7 @@ def score_color(score):
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -183,7 +183,7 @@ def crop_text(crop):
 def build_picker(w, idx):
     card(12, 64, 196, 276, "เลือกพืช (ปัด)")
     # Roller: value= ตอนสร้างคือขนาดฟอนต์ เลือกแถวด้วย .value() ทีหลัง
-    roller = ui.Roller(x=24, y=94, w=172, h=236, color=COL_TEXT)
+    roller = ui.Roller(x=24, y=98, w=172, h=232, color=COL_TEXT)
     for crop in CROPS:
         roller.add_option(crop[0])
     roller.value(idx)
@@ -192,24 +192,24 @@ def build_picker(w, idx):
 
 def build_now_card(w):
     card(218, 64, 300, 190, "ตอนนี้")
-    w["lbl_t"] = ui.Label("อุณหภูมิ -- C", x=230, y=92, color=COL_TEXT, value=24)
-    w["lbl_h"] = ui.Label("ความชื้น -- %", x=230, y=124, color=COL_TEXT, value=24)
-    w["mood"] = ui.Label("...", x=230, y=162, color=COL_WARN, value=28)
-    w["why"] = ui.Label("", x=230, y=206, color=COL_DIM, value=16)
+    w["lbl_t"] = ui.Label("อุณหภูมิ -- C", x=230, y=96, color=COL_TEXT, value=24)
+    w["lbl_h"] = ui.Label("ความชื้น -- %", x=230, y=128, color=COL_TEXT, value=24)
+    w["mood"] = ui.Label("...", x=230, y=164, color=COL_WARN, value=28)
+    w["why"] = ui.Label("", x=230, y=206, color=COL_DIM, value=20)
 
 
 def build_score_card(w):
     card(528, 64, 252, 190, "คะแนนความสบาย")
-    w["arc"] = ui.Arc(x=540, y=90, w=104, h=104, min=0, max=100, value=100)
+    w["arc"] = ui.Arc(x=540, y=94, w=104, h=104, min=0, max=100, value=100)
     w["arc"].color(COL_OK)
     w["score"] = ui.Label("100", x=660, y=118, color=COL_TEXT, value=28)
     w["leds"] = []
     names = ("สบาย", "เครียด", "แย่")
     for i in range(3):  # ไฟสถานะ 3 ดวง ติดทีละดวง
-        x = 540 + i * 80
+        x = 540 + i * 84
         w["leds"].append(ui.Led(x=x, y=202, w=20, h=20, color=LEVEL_COLORS[i], value=0))
-        ui.Label(names[i], x=x + 26, y=202, color=COL_DIM, value=14)
-    ui.Label("100 = สบายทุกครั้งที่อ่าน", x=540, y=230, color=COL_DIM, value=14)
+        ui.Label(names[i], x=x + 26, y=202, color=COL_DIM, value=20)
+    ui.Label("100 = สบายทุกครั้งที่อ่าน", x=540, y=228, color=COL_DIM, value=20)
 
 
 def build_chart(w):
@@ -218,21 +218,21 @@ def build_chart(w):
     w["s_temp"] = 0
     w["s_lo"] = w["chart"].add_series(COL_OK)
     w["s_hi"] = w["chart"].add_series(COL_OK)
-    ui.Label("เส้นส้ม = อุณหภูมิ", x=608, y=266, color=COL_WARN, value=14)
-    ui.Label("เส้นเขียว = ช่วงที่ชอบ", x=608, y=290, color=COL_OK, value=14)
+    ui.Label("เส้นส้ม = อุณหภูมิ", x=608, y=266, color=COL_WARN, value=20)
+    ui.Label("เส้นเขียว = ช่วงที่ชอบ", x=608, y=294, color=COL_OK, value=20)
 
 
 def build_screen(idx):
     ui.screen()
     time.sleep_ms(200)
     ui.Label("พืชของเราสบายดีไหม", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"crop": ui.Label(crop_text(CROPS[idx]), x=12, y=38, color=COL_INFO, value=16)}
+    w = {"crop": ui.Label(crop_text(CROPS[idx]), x=12, y=38, color=COL_INFO, value=20)}
     build_picker(w, idx)
     build_now_card(w)
     build_score_card(w)
     build_chart(w)
     w["status"] = ui.Label("ปัดวงล้อด้านซ้ายเพื่อเปลี่ยนพืช", x=12, y=352,
-                           color=COL_DIM, value=16)
+                           color=COL_DIM, value=20)
     ui.poll()
     return w
 

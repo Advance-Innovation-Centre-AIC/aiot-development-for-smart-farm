@@ -466,7 +466,7 @@ static bento_status_t add_card(bento_ui_t *ui, const widget_spec_t *box,
     const int16_t title_dx = 12;
     const int16_t title_dy = 6;
     static const widget_spec_t label = {
-        bento_ui_label_create, NULL, 0, 0, 0, 0, COL_INFO, 0, 0, 16};
+        bento_ui_label_create, NULL, 0, 0, 0, 0, COL_INFO, 0, 0, 20};
     widget_spec_t place = label;
     bento_ui_id_t widget;
     bento_status_t status = add_widget(ui, box, &widget);
@@ -541,9 +541,9 @@ static bento_status_t build_picker(comfort_screen_t *screen,
     static const widget_spec_t roller = {bento_ui_roller_create,
                                          NULL,
                                          24,
-                                         94,
+                                         98,
                                          172,
-                                         236,
+                                         232,
                                          COL_TEXT,
                                          0,
                                          0,
@@ -581,13 +581,13 @@ static bento_status_t build_now_card(comfort_screen_t *screen)
                                       12,
                                       1};
     static const widget_spec_t specs[] = {
-        {bento_ui_label_create, "อุณหภูมิ -- C", 230, 92, 0, 0, COL_TEXT,
+        {bento_ui_label_create, "อุณหภูมิ -- C", 230, 96, 0, 0, COL_TEXT,
          0, 0, 24},
-        {bento_ui_label_create, "ความชื้น -- %", 230, 124, 0, 0, COL_TEXT,
+        {bento_ui_label_create, "ความชื้น -- %", 230, 128, 0, 0, COL_TEXT,
          0, 0, 24},
-        {bento_ui_label_create, "...", 230, 162, 0, 0, COL_WARN, 0, 0,
+        {bento_ui_label_create, "...", 230, 164, 0, 0, COL_WARN, 0, 0,
          28},
-        {bento_ui_label_create, "", 230, 206, 0, 0, COL_DIM, 0, 0, 16}};
+        {bento_ui_label_create, "", 230, 206, 0, 0, COL_DIM, 0, 0, 20}};
     bento_ui_id_t *const outs[] = {&screen->lbl_t, &screen->lbl_h,
                                    &screen->mood, &screen->why};
     bento_status_t status = add_card(screen->ui, &box, "ตอนนี้");
@@ -607,8 +607,8 @@ static bento_status_t add_level_leds(comfort_screen_t *screen)
     static const widget_spec_t led = {
         bento_ui_led_create, NULL, 540, 202, 20, 20, 0, 0, 0, 0};
     static const widget_spec_t label = {
-        bento_ui_label_create, NULL, 566, 202, 0, 0, COL_DIM, 0, 0, 14};
-    const int16_t step_x = 80;
+        bento_ui_label_create, NULL, 566, 202, 0, 0, COL_DIM, 0, 0, 20};
+    const int16_t step_x = 84;
     widget_spec_t place;
     bento_ui_id_t widget;
     int32_t i;
@@ -642,7 +642,7 @@ static bento_status_t build_score_card(comfort_screen_t *screen)
                                       12,
                                       1};
     static const widget_spec_t arc = {
-        bento_ui_arc_create, NULL, 540, 90, 104, 104, 0, 0, 100, 100};
+        bento_ui_arc_create, NULL, 540, 94, 104, 104, 0, 0, 100, 100};
     static const widget_spec_t score = {bento_ui_label_create,
                                         "100",
                                         660,
@@ -656,13 +656,13 @@ static bento_status_t build_score_card(comfort_screen_t *screen)
     static const widget_spec_t note = {bento_ui_label_create,
                                        "100 = สบายทุกครั้งที่อ่าน",
                                        540,
-                                       230,
+                                       228,
                                        0,
                                        0,
                                        COL_DIM,
                                        0,
                                        0,
-                                       14};
+                                       20};
     bento_ui_id_t widget;
     bento_status_t status = add_card(screen->ui, &box, "คะแนนความสบาย");
 
@@ -691,9 +691,9 @@ static bento_status_t build_chart(comfort_screen_t *screen)
         CHART_MAX_C,           0};
     static const widget_spec_t legends[] = {
         {bento_ui_label_create, "เส้นส้ม = อุณหภูมิ", 608, 266, 0, 0,
-         COL_WARN, 0, 0, 14},
-        {bento_ui_label_create, "เส้นเขียว = ช่วงที่ชอบ", 608, 290, 0, 0,
-         COL_OK, 0, 0, 14}};
+         COL_WARN, 0, 0, 20},
+        {bento_ui_label_create, "เส้นเขียว = ช่วงที่ชอบ", 608, 294, 0, 0,
+         COL_OK, 0, 0, 20}};
     bento_ui_id_t *const outs[] = {NULL, NULL};
     bento_status_t status =
         add_widget(screen->ui, &chart, &screen->chart);
@@ -725,7 +725,7 @@ static bento_status_t build_heading(comfort_screen_t *screen,
         {bento_ui_label_create, "พืชของเราสบายดีไหม", 12, 6, 0, 0,
          COL_TEXT, 0, 0, 24},
         {bento_ui_label_create, NULL, 12, 38, 0, 0, COL_INFO, 0, 0,
-         16}};
+         20}};
     char text[TEXT_CHARS];
     bento_ui_id_t widget;
     bento_status_t status = add_widget(screen->ui, &specs[0], &widget);
@@ -750,7 +750,7 @@ static bento_status_t build_screen(comfort_screen_t *screen,
                                        COL_DIM,
                                        0,
                                        0,
-                                       16};
+                                       20};
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
     if (status == BENTO_OK) {
