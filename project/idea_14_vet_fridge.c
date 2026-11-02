@@ -1,0 +1,1704 @@
+/*
+ * idea_14_vet_fridge.c -- ตู้เก็บยาและวัคซีนสัตว์: อุณหภูมิหลุดช่วง
+ * ยาเสื่อม มือถือรู้ทันที (Animal medicine fridge: out of range spoils
+ * the vaccine, the phone knows at once)
+ *
+ * ไฟล์นี้เป็นจุดเริ่มต้นของโครงงาน แม่แบบ A (idea_3_silo) โครงเน็ตเดิม
+ * หน้าจอใหม่ ธีมสว่าง: เลขใหญ่ Seg7 แถบช่วงกับไม้บรรทัด (Bar + Scale)
+ * และต่ำสุด/สูงสุด บอร์ดคิดเอง 2 อย่าง: ต่ำสุด/สูงสุด (SW6 = ล้าง) และ
+ * เวลาหลุดช่วงรวมกับจำนวนครั้ง ส่ง MQTT หัวข้อและคีย์เหมือน sf2_04 +
+ * "out_s" และ "exc_n" คำสั่ง ack และ set t_hi เหมือนเดิม
+ * ลองเล่น: หมุน VR3 จนขึ้นเตือนร้อน (ห้องแอร์เย็นจัดจะขึ้นเตือนเย็นเอง)
+ * แล้วส่ง {"cmd":"ack"} หรือกด SW5 ต้องแก้ก่อนรัน: WIFI_SSID,
+ * WIFI_PASS, TEAM, CROP, TEMP_OFFSET เกณฑ์ = ค่าสาธิตในห้อง 25-30 C
+ * วัคซีนจริงต้องเก็บ 2-8 C ตามฉลาก ห้ามใช้ค่าในไฟล์นี้กับตู้จริง
+ *
+ * A project starter on template A (idea_3_silo): the same network
+ * code, a new light-themed screen. A big Seg7 number, a range bar
+ * with a ruler (Bar + Scale) and the lowest / highest readings. The
+ * board keeps the lowest and highest (SW6 clears them) and the time
+ * and number of times out of range, and sends the sf2_04 topic and
+ * keys plus "out_s" and "exc_n"; the commands are still ack and set
+ * t_hi. Try it: turn VR3 until the hot alert shows (a cold
+ * air-conditioned room raises the cold alert by itself), then send
+ * {"cmd":"ack"} or press SW5. Edit WIFI_SSID, WIFI_PASS, TEAM, CROP
+ * and TEMP_OFFSET first. The limits are a 25-30 C classroom demo; a
+ * real vaccine is kept at 2-8 C, so never use these on a real fridge.
+ *
+ * Twin of idea_14_vet_fridge.py
+ * (aiot-development-for-smart-farm/project/idea_14_vet_fridge.py).
+ * Style: CLEAN_C.md.
+
+ * Differs from the original:
+ *   - json.loads: a small reader takes "cmd" and "t_hi" from one
+ *     top-level object, skipping nested values by their brackets.
+ *     Text that is not one object changes nothing, as the except
+ *     does; so does text only MicroPython's lenient reader takes
+ *     (a missing comma or colon).
+ *   - "cmd" is compared as written: a backslash escape in it is
+ *     not decoded, and the payload is not checked for UTF-8.
+ *   - json.dumps: the same keys and values, written in the order the
+ *     .py lists them (MicroPython's dict prints its hash-slot order).
+ *   - get_message() keeps one slot a newer message overwrites; the C
+ *     client keeps a ring, so each round takes every waiting message
+ *     and keeps the newest.
+ *   - Prints: the [WiFi] and [MQTT] lines C can know; the binding's
+ *     lines with radio or cy result codes are not printed.
+ *   - The Stop exception is a halted flag that ends every loop; the
+ *     finally is the client close and "[MQTT] Disconnected" in main.
+ *   - The IDE's Stop ends the program quietly, where MicroPython
+ *     raises KeyboardInterrupt.
+ *   - import pots, buttons and rgbmatrix fail before anything is
+ *     drawn on a board without the QWA309 base board; here the first
+ *     such call ends the program with its status.
+ *   - hasattr(ui, "volume"): the volume is set; a board without it
+ *     answers E_UNSUPPORTED, which is skipped like the hasattr.
+ */
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "bento_buttons.h"
+#include "bento_fmt.h"
+#include "bento_mqtt.h"
+#include "bento_pots.h"
+#include "bento_rgbmatrix.h"
+#include "bento_runtime.h"
+#include "bento_sensors.h"
+#include "bento_time.h"
+#include "bento_ui_core.h"
+#include "bento_wifi.h"
+
+/* ---- 1) ตั้งค่า: แก้ก่อนรัน ---- */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+static const char TEAM[] = "teamXX";
+static const char CROP[] = "วัคซีนสัตว์";
+/* บอร์ดอ่านสูงกว่าห้อง: ใส่ค่าชดเชย เช่น -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+
+static const char BROKER[] = "broker.hivemq.com";
+static const char ROOT[] = "bento-aiot";
+static const char CLIENT_ID[] = "bento-farm-"; /* + TEAM + a number */
+
+enum { /* timing, in ms */
+    READ_MS = 1000,
+    BEEP_MS = 5000,
+    POLL_MS = 20,
+    RUN_MS = 600000,
+    SETTLE_MS = 200, /* the cleared screen settles */
+    NOTE_MS = 90,
+    NOTE_GAP_MS = 100,
+    CONNECT_POLL_MS = 100,
+    MS_PER_S = 1000,
+    SCROLL_MS = 80
+};
+enum { /* the broker */
+    BROKER_PORT = 1883,
+    KEEPALIVE_S = 60,
+    BROKER_TRIES = 3,
+    CLIENT_SUFFIX_MASK = 0xFFFF
+};
+enum { /* the farm */
+    T_HI_MAX = 45,
+    FAR_C = 3,   /* this far past a limit is level 2 */
+    FAR_RH = 10, /* the same for humidity */
+    SUN_POT = 2, /* VR3 */
+    SUN_MAX_C = 10,
+    POT_FULL = 4095,
+    CONFIRM_BUTTON = 1, /* SW5 */
+    RESET_BUTTON = 0,   /* SW6 */
+    BAND_LO = 10,       /* the band's and the ruler's range, C */
+    BAND_HI = 40,
+    RULER_TICKS = 7,
+    RULER_MAJOR_EVERY = 1,
+    S_PER_MIN = 60,
+    TEAM_CHARS = 6,
+    TEAM_PREFIX_CHARS = 4,
+    INT_CAP = 1000000, /* any larger JSON integer is out of range */
+    DECIMAL_BASE = 10
+};
+enum { /* sound */
+    SPEAKER = 40,
+    VOLUME = 25
+};
+enum { /* alert levels */
+    LEVEL_NONE = -1,
+    LEVEL_OK = 0,
+    LEVEL_WARN = 1,
+    LEVEL_BAD = 2,
+    LEVEL_COUNT = 3
+};
+enum { /* one crop's limits, in this order */
+    LIM_T_LO,
+    LIM_T_HI,
+    LIM_H_LO,
+    LIM_H_HI,
+    LIM_COUNT
+};
+enum { /* ธีมสว่าง: ใบบันทึกขาว ฟ้าอมเขียว, 0xRRGGBB */
+    COL_PAGE = 0xE6EFF1,
+    COL_CARD = 0xFFFFFF,
+    COL_EDGE = 0xA9C4CA,
+    COL_TEXT = 0x10262E,
+    COL_DIM = 0x52707A,
+    COL_TEAL = 0x0F7C8C,
+    COL_OK = 0x0E9F6E,
+    COL_WARN = 0xC77700,
+    COL_BAD = 0xD12E3A,
+    CARD_TITLE_COLOR = COL_TEAL
+};
+enum { /* layout, in px */
+    AUTO_PX = -1,
+    BOX_X = 212,
+    BOX_Y = 90,
+    BOX_W = 368,
+    BOX_H = 150,
+    CARD_RADIUS = 8,
+    CARD_BORDER = 1,
+    PAGE_RADIUS = 12,
+    CARD_TITLE_DX = 10,
+    CARD_TITLE_DY = 6,
+    TITLE_PX = 16
+};
+enum {                      /* buffers, in bytes */
+    TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
+    WHY_THAI_BYTES = 64,    /* two Thai problems and " + " */
+    WHY_ENGLISH_BYTES = 16, /* "cold+dry" */
+    TOPIC_BYTES = 40,
+    CLIENT_ID_BYTES = 24, /* 22 used, a broker takes 23 */
+    PAYLOAD_BYTES = 256,
+    TOPIC_KEEP = 128,  /* the binding keeps 127 bytes */
+    PAYLOAD_KEEP = 255 /* and 255 of the payload */
+};
+
+/* The kept widgets, in the order build_screen() makes them. */
+enum {
+    SLOT_SEG,
+    SLOT_MOOD,
+    SLOT_RH,
+    SLOT_BAND,
+    SLOT_RANGE,
+    SLOT_CROP,
+    SLOT_LOWEST,
+    SLOT_HIGHEST,
+    SLOT_OUT,
+    SLOT_REPLY,
+    SLOT_STATUS,
+    SLOT_MQ,
+    SLOT_MQ_TEXT,
+    SLOT_COUNT
+};
+enum { /* a widget the program never changes */
+    SLOT_NONE = SLOT_COUNT
+};
+enum { /* the kinds of widget on this screen */
+    KIND_LABEL,
+    KIND_CARD, /* a Panel and its title */
+    KIND_PANEL,
+    KIND_SEG7,
+    KIND_BAR,
+    KIND_LED,
+    KIND_SCALE
+};
+enum { /* tunes */
+    TUNE_TAP,
+    TUNE_GOOD,
+    TUNE_BAD,
+    TUNE_EMPTY,
+    TUNE_COUNT
+};
+enum { /* the longest tune */
+    TUNE_NOTES_MAX = 3
+};
+enum { /* JSON values */
+    VALUE_STRING,
+    VALUE_NUMBER,
+    VALUE_TRUE,
+    VALUE_FALSE,
+    VALUE_NULL,
+    VALUE_NESTED
+};
+
+typedef struct {
+    uint8_t kind;
+    uint8_t slot;
+    const char *text;
+    int16_t x;
+    int16_t y;
+    int16_t w;
+    int16_t h;
+    uint32_t color;
+    int32_t min;
+    int32_t max;
+    int32_t value; /* value=: a font size or a start value */
+} widget_spec_t;
+
+typedef struct {
+    const char *thai;
+    const char *code;
+    int32_t limits[LIM_COUNT];
+} crop_t;
+
+typedef struct {
+    uint8_t count;
+    uint8_t notes[TUNE_NOTES_MAX];
+} tune_t;
+
+typedef struct {
+    bento_ui_t *ui;
+    bento_ui_id_t ids[SLOT_COUNT];
+
+    bento_ui_id_t box;
+    bool has_box;
+} screen_t;
+
+/* What the .py keeps in its Watch object. */
+typedef struct {
+    const crop_t *crop;
+    int32_t lim[LIM_COUNT];
+    int32_t level;
+    bool acked;
+    int32_t alerts;
+    bool has_reading;         /* false: read again in the next round */
+    bento_real_t last_temp_c; /* the reading has_reading speaks of */
+    bool has_extremes;        /* false: the lowest / highest show -- */
+    bento_real_t lowest_c;
+    bento_real_t highest_c;
+    int32_t out_s; /* seconds out of range in all */
+    int32_t exc_n; /* times it left the range */
+    bool out;
+} watch_t;
+
+typedef struct {
+    screen_t screen;
+    watch_t watch;
+    uint32_t broker; /* 0 = no client */
+    bool halted;     /* the .py raised Stop */
+    char topic_event[TOPIC_BYTES];
+    char topic_cmd[TOPIC_BYTES];
+} farm_t;
+
+typedef struct {
+    bento_real_t temp_c; /* with the offset and the sun */
+    bento_real_t rh;
+    int32_t sun_c;
+} reading_t;
+
+typedef struct {
+    int32_t level;
+    char why_thai[WHY_THAI_BYTES];
+    char why_english[WHY_ENGLISH_BYTES];
+} verdict_t;
+
+typedef struct {
+    uint32_t read_ms;
+    uint32_t beep_ms;
+    bool was_down;
+    bool was_reset;
+} timers_t;
+
+typedef struct {
+    uint8_t payload[PAYLOAD_KEEP];
+    uint32_t len;
+} message_t;
+
+typedef struct {
+    const uint8_t *text;
+    uint32_t len;
+    uint32_t at;
+} json_reader_t;
+
+typedef struct {
+    uint8_t kind;
+    uint32_t start;
+    uint32_t len;
+} json_value_t;
+
+typedef struct {
+    bool has_cmd;
+    json_value_t cmd;
+    bool has_t_hi;
+    json_value_t t_hi;
+} command_t;
+
+/* ---- small helpers ---- */
+
+/* Sleeps, and turns Stop into BENTO_E_CANCELLED. */
+static bento_status_t wait_ms(uint32_t duration_ms)
+{
+    bento_status_t status = bento_time_sleep_ms(duration_ms);
+
+    if ((status == BENTO_OK) && !bento_runtime_is_running()) {
+        status = BENTO_E_CANCELLED;
+    }
+    return status;
+}
+
+static bool going_on(bento_status_t status, const farm_t *farm)
+{
+    return (status == BENTO_OK) && !farm->halted;
+}
+
+/* The widget setters ignore a refusal, as modui.c does. */
+static void set_text(const screen_t *screen, uint32_t slot,
+                     const char *text)
+{
+    (void)bento_ui_set_text(screen->ui, screen->ids[slot], text,
+                            (uint32_t)strlen(text));
+}
+
+static void set_color(const screen_t *screen, uint32_t slot,
+                      uint32_t color)
+{
+    (void)bento_ui_set_color(screen->ui, screen->ids[slot], color);
+}
+
+static void set_value(const screen_t *screen, uint32_t slot,
+                      int32_t value)
+{
+    (void)bento_ui_set_value(screen->ui, screen->ids[slot], value);
+}
+
+/* ui.poll() here only lets the screen catch up; it answers no
+ * events when it fails. */
+static void drain_events(const screen_t *screen)
+{
+    bento_ui_event_t events[BENTO_UI_POLL_EVENTS_MAX];
+    uint32_t count = 0U;
+
+    (void)bento_ui_poll(screen->ui, events, BENTO_UI_POLL_EVENTS_MAX,
+                        &count, NULL);
+}
+
+static bento_status_t beep(bento_ui_t *ui, uint32_t tune)
+{
+    static const tune_t tunes[TUNE_COUNT] = {{1U, {76U, 0U, 0U}},
+                                             {3U, {72U, 79U, 84U}},
+                                             {2U, {84U, 76U, 0U}},
+                                             {3U, {84U, 76U, 69U}}};
+    bento_status_t status = BENTO_OK;
+    uint32_t i;
+
+    for (i = 0U; (status == BENTO_OK) && (i < tunes[tune].count); i++) {
+        /* ui.tone() sends and forgets (modui.c) */
+        (void)bento_ui_sfx_tone(ui, tunes[tune].notes[i],
+                                (uint8_t)BENTO_UI_WAVE_SINE,
+                                (uint8_t)VOLUME, (uint16_t)NOTE_MS);
+        status = wait_ms(NOTE_GAP_MS);
+    }
+    return status;
+}
+
+/* round(value, 1): nearbyint(value * 10) / 10 in the board's float
+ * width (py/modbuiltins.c), a tie going to the even one. */
+static bento_real_t round_tenths(bento_real_t value)
+{
+    const bento_real_t scale = (bento_real_t)10.0;
+    const bento_real_t half = (bento_real_t)0.5;
+    const bento_real_t scaled = value * scale;
+    int32_t whole = (int32_t)scaled; /* toward zero */
+    const bento_real_t rest = scaled - (bento_real_t)whole;
+    const bool odd = (whole % 2) != 0;
+
+    if ((rest > half) || ((rest == half) && odd)) {
+        whole++;
+    } else if ((rest < -half) || ((rest == -half) && odd)) {
+        whole--;
+    } else {
+        /* already the nearest */
+    }
+    return (bento_real_t)whole / scale;
+}
+
+/* ---- 2) ฮาร์ดแวร์ ---- */
+
+/* false when the sensor cannot be read, as the except does. */
+static bool read_climate(reading_t *reading)
+{
+    float temp_c = 0.0F;
+    float rh = 0.0F;
+    bool ok = bento_sensors_sht40_temperature(&temp_c) == BENTO_OK;
+
+    ok = ok && (bento_sensors_sht40_humidity(&rh) == BENTO_OK);
+    if (ok) {
+        reading->temp_c = (bento_real_t)temp_c + TEMP_OFFSET;
+        reading->rh = (bento_real_t)rh;
+    }
+    return ok;
+}
+
+/* ---- 3) สมอง ---- */
+
+/* "team" and two digits, never team00: another team's name would
+ * knock that team off the broker. */
+static bool valid_team(void)
+{
+    bool valid =
+        (strlen(TEAM) == (size_t)TEAM_CHARS) &&
+        (strncmp(TEAM, "team", (size_t)TEAM_PREFIX_CHARS) == 0) &&
+        (strcmp(TEAM, "team00") != 0);
+    size_t i;
+
+    for (i = (size_t)TEAM_PREFIX_CHARS;
+         valid && (i < (size_t)TEAM_CHARS); i++) {
+        valid = (TEAM[i] >= '0') && (TEAM[i] <= '9');
+    }
+    return valid;
+}
+
+/* (ชื่อไทย, รหัสอังกฤษ, T ต่ำ, T สูง, RH ต่ำ, RH สูง) ค่าสาธิต
+ * (ห้องเรียนไม่มีตู้เย็น): ห้อง 27 C = ปกติ VR3 ครึ่งรอบ (+5) = เริ่มหลุด
+ * วัคซีนจริง 2-8 C. NULL when CROP is none of them. */
+static const crop_t *find_crop(void)
+{
+    static const crop_t crops[] = {
+        {"วัคซีนสัตว์", "vaccine", {20, 30, 20, 95}},
+        {"ยาฉีดสัตว์", "injection", {20, 30, 20, 95}},
+        {"ยาเม็ดสัตว์", "tablet", {18, 32, 20, 80}}};
+    const crop_t *found = NULL;
+    size_t i;
+
+    for (i = 0U;
+         (found == NULL) && (i < (sizeof(crops) / sizeof(crops[0])));
+         i++) {
+        if (strcmp(crops[i].thai, CROP) == 0) {
+            found = &crops[i];
+        }
+    }
+    return found;
+}
+
+static void append(char *text, size_t size, const char *separator,
+                   const char *part)
+{
+    const size_t used = strlen(text);
+
+    (void)snprintf(&text[used], size - used, "%s%s",
+                   (used > 0U) ? separator : "", part);
+}
+
+/* The level 0-2 and the problems in Thai and English; level 2 is
+ * far out (FAR_C past a temperature limit or FAR_RH past RH). */
+static void judge(const reading_t *reading, const int32_t *lim,
+                  verdict_t *verdict)
+{
+    static const char *const thai[LIM_COUNT] = {"เย็นจัด", "ตู้อุ่น", "แห้งไป",
+                                                "ตู้ชื้น"};
+    static const char *const english[LIM_COUNT] = {"cold", "hot", "dry",
+                                                   "wet"};
+    const bento_real_t temp_c = reading->temp_c;
+    const bento_real_t rh = reading->rh;
+    bool out[LIM_COUNT];
+    bool far;
+    uint32_t i;
+
+    out[LIM_T_LO] = temp_c < (bento_real_t)lim[LIM_T_LO];
+    out[LIM_T_HI] = temp_c > (bento_real_t)lim[LIM_T_HI];
+    out[LIM_H_LO] = rh < (bento_real_t)lim[LIM_H_LO];
+    out[LIM_H_HI] = rh > (bento_real_t)lim[LIM_H_HI];
+    far = (temp_c < (bento_real_t)(lim[LIM_T_LO] - FAR_C)) ||
+          (temp_c > (bento_real_t)(lim[LIM_T_HI] + FAR_C)) ||
+          (rh < (bento_real_t)(lim[LIM_H_LO] - FAR_RH)) ||
+          (rh > (bento_real_t)(lim[LIM_H_HI] + FAR_RH));
+    verdict->why_thai[0] = '\0';
+    verdict->why_english[0] = '\0';
+    for (i = 0U; i < (uint32_t)LIM_COUNT; i++) {
+        if (out[i]) {
+            append(verdict->why_thai, sizeof(verdict->why_thai), " + ",
+                   thai[i]);
+            append(verdict->why_english, sizeof(verdict->why_english),
+                   "+", english[i]);
+        }
+    }
+    if (verdict->why_english[0] == '\0') {
+        verdict->level = LEVEL_OK;
+        (void)snprintf(verdict->why_thai, sizeof(verdict->why_thai),
+                       "อยู่ในช่วง");
+        (void)snprintf(verdict->why_english,
+                       sizeof(verdict->why_english), "ok");
+    } else {
+        verdict->level = far ? LEVEL_BAD : LEVEL_WARN;
+    }
+}
+
+/* ---- JSON: the two fields on_command() asks for ---- */
+
+static bool at_end(const json_reader_t *reader)
+{
+    return reader->at >= reader->len;
+}
+
+static uint8_t peek(const json_reader_t *reader)
+{
+    return at_end(reader) ? 0U : reader->text[reader->at];
+}
+
+static bool is_space(uint8_t byte)
+{
+    return (byte == (uint8_t)' ') || (byte == (uint8_t)'\t') ||
+           (byte == (uint8_t)'\n') || (byte == (uint8_t)'\r');
+}
+
+static bool is_digit(uint8_t byte)
+{
+    return (byte >= (uint8_t)'0') && (byte <= (uint8_t)'9');
+}
+
+static bool is_token_byte(uint8_t byte)
+{
+    return is_digit(byte) ||
+           ((byte >= (uint8_t)'a') && (byte <= (uint8_t)'z')) ||
+           (byte == (uint8_t)'E') || (byte == (uint8_t)'.') ||
+           (byte == (uint8_t)'+') || (byte == (uint8_t)'-');
+}
+
+static void skip_space(json_reader_t *reader)
+{
+    while (!at_end(reader) && is_space(peek(reader))) {
+        reader->at++;
+    }
+}
+
+/* Takes byte after any spaces; false when something else is there. */
+static bool take_byte(json_reader_t *reader, uint8_t byte)
+{
+    bool taken;
+
+    skip_space(reader);
+    taken = !at_end(reader) && (peek(reader) == byte);
+    if (taken) {
+        reader->at++;
+    }
+    return taken;
+}
+
+/* A string from its opening quote; value holds what is inside. */
+static bool read_string(json_reader_t *reader, json_value_t *value)
+{
+    bool closed = false;
+
+    reader->at++;
+    value->kind = VALUE_STRING;
+    value->start = reader->at;
+    while (!closed && !at_end(reader)) {
+        const uint8_t byte = peek(reader);
+
+        if (byte == (uint8_t)'\\') {
+            reader->at += 2U; /* the escaped byte is never the end */
+        } else {
+            closed = byte == (uint8_t)'"';
+            reader->at++;
+        }
+    }
+    value->len = closed ? ((reader->at - value->start) - 1U) : 0U;
+    return closed;
+}
+
+/* One bracket byte: a { or [ goes one level in, a } or ] one out
+ * (either closes either kind, as MicroPython's reader allows). */
+static void step_bracket(uint8_t byte, uint32_t *depth, bool *done)
+{
+    if ((byte == (uint8_t)'{') || (byte == (uint8_t)'[')) {
+        (*depth)++;
+    } else if ((byte == (uint8_t)'}') || (byte == (uint8_t)']')) {
+        (*depth)--;
+        *done = *depth == 0U;
+    } else {
+        /* a byte inside the nested value */
+    }
+}
+
+/* A list or object inside the command: skipped by its brackets. */
+static bool skip_nested(json_reader_t *reader, json_value_t *value)
+{
+    json_value_t inner;
+    uint32_t depth = 0U;
+    bool ok = true;
+    bool done = false;
+
+    value->kind = VALUE_NESTED;
+    while (ok && !done) {
+        if (at_end(reader)) {
+            ok = false;
+        } else if (peek(reader) == (uint8_t)'"') {
+            ok = read_string(reader, &inner);
+        } else {
+            step_bracket(peek(reader), &depth, &done);
+            reader->at++;
+        }
+    }
+    return ok;
+}
+
+static bool is_word(const json_reader_t *reader,
+                    const json_value_t *value, const char *word)
+{
+    return (value->len == (uint32_t)strlen(word)) &&
+           (memcmp(&reader->text[value->start], word, value->len) == 0);
+}
+
+/* Moves past digits; false when there is none. */
+static bool skip_digits(const uint8_t *text, uint32_t len, uint32_t *at)
+{
+    const uint32_t first = *at;
+
+    while ((*at < len) && is_digit(text[*at])) {
+        (*at)++;
+    }
+    return *at > first;
+}
+
+/* -?digits(.digits)?([eE][+-]?digits)? and nothing else. */
+static bool is_number(const json_reader_t *reader,
+                      const json_value_t *value)
+{
+    const uint8_t *text = &reader->text[value->start];
+    const uint32_t len = value->len;
+    uint32_t at = ((len > 0U) && (text[0] == (uint8_t)'-')) ? 1U : 0U;
+    bool ok = skip_digits(text, len, &at);
+
+    if (ok && (at < len) && (text[at] == (uint8_t)'.')) {
+        at++;
+        ok = skip_digits(text, len, &at);
+    }
+    if (ok && (at < len) &&
+        ((text[at] == (uint8_t)'e') || (text[at] == (uint8_t)'E'))) {
+        at++;
+        if ((at < len) && ((text[at] == (uint8_t)'+') ||
+                           (text[at] == (uint8_t)'-'))) {
+            at++;
+        }
+        ok = skip_digits(text, len, &at);
+    }
+    return ok && (at == len);
+}
+
+/* A number, true, false or null. */
+static bool read_token(json_reader_t *reader, json_value_t *value)
+{
+    bool ok = true;
+
+    value->start = reader->at;
+    while (!at_end(reader) && is_token_byte(peek(reader))) {
+        reader->at++;
+    }
+    value->len = reader->at - value->start;
+    if (is_word(reader, value, "true")) {
+        value->kind = VALUE_TRUE;
+    } else if (is_word(reader, value, "false")) {
+        value->kind = VALUE_FALSE;
+    } else if (is_word(reader, value, "null")) {
+        value->kind = VALUE_NULL;
+    } else {
+        value->kind = VALUE_NUMBER;
+        ok = is_number(reader, value);
+    }
+    return ok;
+}
+
+static bool read_value(json_reader_t *reader, json_value_t *value)
+{
+    bool ok;
+
+    skip_space(reader);
+    if (peek(reader) == (uint8_t)'"') {
+        ok = read_string(reader, value);
+    } else if ((peek(reader) == (uint8_t)'{') ||
+               (peek(reader) == (uint8_t)'[')) {
+        ok = skip_nested(reader, value);
+    } else {
+        ok = read_token(reader, value);
+    }
+    return ok;
+}
+
+/* "key": value; a later "cmd" or "t_hi" wins, as in a dict. */
+static bool read_member(json_reader_t *reader, command_t *command)
+{
+    json_value_t key;
+    json_value_t value;
+    bool ok;
+
+    skip_space(reader);
+    ok = (peek(reader) == (uint8_t)'"') && read_string(reader, &key);
+    ok = ok && take_byte(reader, (uint8_t)':');
+    ok = ok && read_value(reader, &value);
+    if (ok && is_word(reader, &key, "cmd")) {
+        command->cmd = value;
+        command->has_cmd = true;
+    } else if (ok && is_word(reader, &key, "t_hi")) {
+        command->t_hi = value;
+        command->has_t_hi = true;
+    } else {
+        /* a key the program does not ask for */
+    }
+    return ok;
+}
+
+/* json.loads of one object: false when the text is anything else. */
+static bool read_command(const message_t *message, command_t *command)
+{
+    json_reader_t reader = {message->payload, message->len, 0U};
+    bool ok = take_byte(&reader, (uint8_t)'{');
+    bool closed = ok && take_byte(&reader, (uint8_t)'}');
+
+    command->has_cmd = false;
+    command->has_t_hi = false;
+    while (ok && !closed) {
+        ok = read_member(&reader, command);
+        closed = ok && take_byte(&reader, (uint8_t)'}');
+        if (ok && !closed) {
+            ok = take_byte(&reader, (uint8_t)',');
+        }
+    }
+    skip_space(&reader);
+    return ok && at_end(&reader);
+}
+
+/* isinstance(v, int): an integer, or true and false (bool is an
+ * int); one past INT_CAP stands for any larger value. */
+static bool value_as_int(const message_t *message,
+                         const json_value_t *value, int32_t *number)
+{
+    const uint8_t *text = &message->payload[value->start];
+    const bool negative =
+        (value->len > 0U) && (text[0] == (uint8_t)'-');
+    bool is_int = value->kind == VALUE_NUMBER;
+    int32_t magnitude = 0;
+    uint32_t i;
+
+    for (i = negative ? 1U : 0U; is_int && (i < value->len); i++) {
+        is_int = is_digit(text[i]);
+        if (is_int && (magnitude <= INT_CAP)) {
+            magnitude = (magnitude * DECIMAL_BASE) + (int32_t)text[i] -
+                        (int32_t)'0';
+        }
+    }
+    *number = negative ? -magnitude : magnitude;
+    if (value->kind == VALUE_TRUE) {
+        is_int = true;
+        *number = 1;
+    } else if (value->kind == VALUE_FALSE) {
+        is_int = true;
+        *number = 0;
+    } else {
+        /* a number, or no integer at all */
+    }
+    return is_int;
+}
+
+static bool cmd_is(const message_t *message, const command_t *command,
+                   const char *word)
+{
+    const json_value_t *cmd = &command->cmd;
+
+    return command->has_cmd && (cmd->kind == VALUE_STRING) &&
+           (cmd->len == (uint32_t)strlen(word)) &&
+           (memcmp(&message->payload[cmd->start], word, cmd->len) == 0);
+}
+
+/* ---- 4) เครือข่าย ---- */
+
+/* wifi.connect(): *joined is its True or False. A refused or
+ * timed-out join is False; any other failure ends the program, as
+ * the binding's OSError does. */
+static bento_status_t join_wifi(bool *joined)
+{
+    bento_wifi_connect_params_t params;
+    bento_status_t status;
+
+    bento_wifi_connect_params_init(&params);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
+    (void)printf("[WiFi] Connecting...\r\n");
+    status = bento_wifi_connect_start(&params);
+    if (status == BENTO_OK) {
+        status = BENTO_E_IN_PROGRESS;
+    }
+    while (status == BENTO_E_IN_PROGRESS) {
+        status = wait_ms(CONNECT_POLL_MS);
+        if (status == BENTO_OK) {
+            status = bento_wifi_connect_poll();
+        } else { /* Stop between two polls: leave the radio alone */
+            (void)bento_wifi_connect_cancel(); /* nothing to report */
+        }
+    }
+    *joined = status == BENTO_OK;
+    if ((status == BENTO_E_FAILED) || (status == BENTO_E_TIMEOUT)) {
+        status = BENTO_OK;
+    }
+    return status;
+}
+
+/* wifi.ip() is "0.0.0.0" until DHCP answers; so is an address that
+ * cannot be read. Prints the line wifi.connect() prints. */
+static bool has_address(void)
+{
+    char address[BENTO_WIFI_IPV4_TEXT_MAX];
+    uint32_t ip_v4 = 0U;
+    uint32_t length = 0U;
+
+    if (bento_wifi_ip(BENTO_WIFI_IF_STA, &ip_v4) != BENTO_OK) {
+        ip_v4 = 0U;
+    }
+    /* a BENTO_WIFI_IPV4_TEXT_MAX buffer holds any address */
+    (void)bento_wifi_ipv4_format(ip_v4, address,
+                                 (uint32_t)sizeof(address), &length);
+    (void)printf("[WiFi] Connected! IP=%s\r\n", address);
+    return ip_v4 != 0U;
+}
+
+/* One mqtt.connect() with a fresh client id: *linked is its True or
+ * False. A client that did not link is closed, as the binding does. */
+static bento_status_t open_broker(farm_t *farm, bool *linked)
+{
+    char client_id[CLIENT_ID_BYTES];
+    bento_mqtt_config_t config;
+    bento_status_t status;
+
+    (void)snprintf(
+        client_id, sizeof(client_id), "%s%s-%04" PRIx32, CLIENT_ID,
+        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+    bento_mqtt_config_init(&config);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
+    config.port = (uint16_t)BROKER_PORT;
+    config.keepalive_s = (uint16_t)KEEPALIVE_S;
+    config.client_id = client_id;
+    config.client_id_len = (uint32_t)strlen(client_id);
+    (void)printf("[MQTT] Connecting to %s:%d ...\r\n", BROKER,
+                 BROKER_PORT);
+    status = bento_mqtt_open_start(&config, &farm->broker);
+    if (status == BENTO_OK) {
+        status = BENTO_E_IN_PROGRESS;
+    }
+    while (status == BENTO_E_IN_PROGRESS) {
+        status = wait_ms(CONNECT_POLL_MS);
+        if (status == BENTO_OK) {
+            status = bento_mqtt_open_poll(farm->broker);
+        }
+    }
+    *linked = status == BENTO_OK;
+    if (*linked) {
+        (void)printf("[MQTT] Connected to %s:%d as '%s'\r\n", BROKER,
+                     BROKER_PORT, client_id);
+    } else if (farm->broker != 0U) {
+        (void)bento_mqtt_close(farm->broker); /* freed either way */
+        farm->broker = 0U;
+    } else {
+        /* no client started */
+    }
+    return (status == BENTO_E_CANCELLED) ? status : BENTO_OK;
+}
+
+static void show_status(const screen_t *screen, const char *text,
+                        uint32_t color)
+{
+    set_color(screen, SLOT_STATUS, color);
+    set_text(screen, SLOT_STATUS, text);
+}
+
+/* The public broker does not answer now and then: three tries. */
+static bento_status_t connect_broker(farm_t *farm, bool *linked)
+{
+    char text[TEXT_BYTES];
+    int32_t attempt;
+    bento_status_t status = BENTO_OK;
+
+    *linked = false;
+    for (attempt = 1;
+         (status == BENTO_OK) && !*linked && (attempt <= BROKER_TRIES);
+         attempt++) {
+        if (attempt > 1) {
+            (void)snprintf(text, sizeof(text),
+                           "ลองต่อ broker ใหม่ %" PRId32 "/3", attempt);
+            show_status(&farm->screen, text, COL_WARN);
+            drain_events(&farm->screen);
+        }
+        status = open_broker(farm, linked);
+    }
+    return status;
+}
+
+/* mqtt.subscribe(): True or False. A lost link raises there, which
+ * nothing catches: that status ends the program here. */
+static bento_status_t subscribe_cmd(const farm_t *farm,
+                                    bool *subscribed)
+{
+    uint8_t granted_qos = 0U;
+    bento_status_t status = bento_mqtt_subscribe(
+        farm->broker, farm->topic_cmd,
+        (uint32_t)strlen(farm->topic_cmd), 0U, &granted_qos);
+
+    *subscribed = status == BENTO_OK;
+    if (status == BENTO_OK) {
+        (void)printf("[MQTT] Subscribed to '%s' (QoS=%d)\r\n",
+                     farm->topic_cmd, (int)granted_qos);
+    } else if (status == BENTO_E_FAILED) {
+        (void)printf("[MQTT] subscribe rejected by broker\r\n");
+    } else {
+        /* a failure the binding prints with a cy code */
+    }
+    return (status == BENTO_E_SESSION) ? status : BENTO_OK;
+}
+
+/* WiFi, an address, the broker and the subscribe; *problem says
+ * which step failed, or stays NULL. */
+static bento_status_t connect_farm(farm_t *farm, const char **problem)
+{
+    bool joined = false;
+    bool linked = false;
+    bool subscribed = false;
+    bento_status_t status;
+
+    *problem = NULL;
+    show_status(&farm->screen, "ต่อ WiFi...", COL_WARN);
+    drain_events(&farm->screen); /* the line shows before the wait */
+    status = join_wifi(&joined);
+    if ((status == BENTO_OK) && (!joined || !has_address())) {
+        *problem = "WiFi ไม่ติด: ตรวจชื่อ/รหัส";
+    }
+    if ((status == BENTO_OK) && (*problem == NULL)) {
+        status = connect_broker(farm, &linked);
+    }
+    if ((status == BENTO_OK) && linked) {
+        status = subscribe_cmd(farm, &subscribed);
+    }
+    if ((status == BENTO_OK) && (*problem == NULL) && !subscribed) {
+        *problem = "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่";
+    }
+    return status;
+}
+
+/* get_message(): every message waiting, keeping the newest. */
+static bool take_newest(uint32_t broker, message_t *message)
+{
+    char topic[TOPIC_KEEP]; /* the program never reads the topic */
+    bento_mqtt_msg_t info;
+    bool found = false;
+    bool more = true;
+
+    while (more) {
+        bento_mqtt_msg_init(&info);
+        more =
+            bento_mqtt_poll(broker, &info, topic, sizeof(topic),
+                            message->payload, PAYLOAD_KEEP) == BENTO_OK;
+        if (more) {
+            message->len = info.payload_len;
+            found = true;
+        }
+    }
+    return found;
+}
+
+/* ---- 5) หน้าจอ ---- */
+
+static void fill_args(bento_ui_widget_args_t *args,
+                      const widget_spec_t *spec)
+{
+    bento_ui_widget_args_init(args);
+    if (spec->text != NULL) {
+        args->text = spec->text;
+        args->text_len = (uint32_t)strlen(spec->text);
+    }
+    args->x = spec->x;
+    args->y = spec->y;
+    args->w = spec->w;
+    args->h = spec->h;
+    args->color = spec->color;
+    args->min_val = spec->min;
+    args->max_val = spec->max;
+    args->font_px = spec->value;
+}
+
+/* A card: a rounded Panel, then its title inside the top left. */
+static bento_status_t add_card(bento_ui_t *ui,
+                               const widget_spec_t *spec)
+{
+    bento_ui_widget_args_t args;
+    bento_ui_id_t id = 0U;
+    bento_status_t status;
+
+    fill_args(&args, spec);
+    args.text = NULL;
+    args.text_len = 0U;
+    status = bento_ui_panel_create(ui, &args, &id);
+    if (status == BENTO_OK) {
+        bento_ui_widget_args_init(&args);
+        args.text = spec->text;
+        args.text_len = (uint32_t)strlen(spec->text);
+        args.x = (int16_t)(spec->x + CARD_TITLE_DX);
+        args.y = (int16_t)(spec->y + CARD_TITLE_DY);
+        args.color = CARD_TITLE_COLOR;
+        args.font_px = TITLE_PX;
+        status = bento_ui_label_create(ui, &args, &id);
+    }
+    return status;
+}
+
+static bento_status_t
+add_widget(bento_ui_t *ui, const widget_spec_t *spec, bento_ui_id_t *id)
+{
+    bento_ui_widget_args_t args;
+    bento_status_t status;
+
+    fill_args(&args, spec);
+    switch (spec->kind) {
+    case KIND_CARD:
+        status = add_card(ui, spec);
+        break;
+    case KIND_SEG7:
+        status = bento_ui_seg7_create(ui, &args, id);
+        break;
+    case KIND_PANEL:
+        status = bento_ui_panel_create(ui, &args, id);
+        break;
+    case KIND_BAR: /* made in the theme colour, then .color() */
+        args.color = 0U;
+        status = bento_ui_bar_create(ui, &args, id);
+        if ((status == BENTO_OK) && (spec->color != 0U)) {
+            (void)bento_ui_set_color(ui, *id, spec->color); /* setter */
+        }
+        break;
+    case KIND_LED:
+        status = bento_ui_led_create(ui, &args, id);
+        break;
+    case KIND_SCALE:
+        status = bento_ui_scale_create(ui, &args, id);
+        break;
+    default:
+        status = bento_ui_label_create(ui, &args, id);
+        break;
+    }
+    return status;
+}
+
+/* The screen, widget by widget in the .py's order; card() is one
+ * KIND_CARD row. The band Bar is coloured right after it is made. */
+static const widget_spec_t WIDGETS[] = {
+    {KIND_PANEL, SLOT_NONE, NULL, 4, 0, 784, 342, COL_PAGE, COL_EDGE,
+     PAGE_RADIUS, 0},
+    {KIND_LABEL, SLOT_NONE, "ตู้ยาและวัคซีนสัตว์  ใบบันทึกอุณหภูมิ", 18, 8,
+     AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 24},
+    {KIND_CARD, SLOT_NONE, "อุณหภูมิในตู้ตอนนี้", 16, 44, 400, 250, COL_CARD,
+     COL_EDGE, CARD_RADIUS, CARD_BORDER},
+    {KIND_SEG7, SLOT_SEG, "--.-", 30, 72, 150, 64, COL_TEAL, 0, 0, 0},
+    {KIND_LABEL, SLOT_NONE, "C", 114, 96, AUTO_PX, AUTO_PX, COL_DIM, 0,
+     0, 24},
+    {KIND_LABEL, SLOT_MOOD, "...", 226, 78, AUTO_PX, AUTO_PX, COL_WARN,
+     0, 0, 16},
+    {KIND_LABEL, SLOT_RH, "ชื้น -- %", 226, 126, AUTO_PX, AUTO_PX,
+     COL_DIM, 0, 0, 14},
+    {KIND_BAR, SLOT_BAND, NULL, 30, 158, 372, 26, COL_EDGE, BAND_LO,
+     BAND_HI, BAND_LO},
+    {KIND_SCALE, SLOT_NONE, NULL, 30, 188, 372, 34, COL_DIM, BAND_LO,
+     BAND_HI, 0},
+    {KIND_LABEL, SLOT_RANGE, "-", 30, 232, AUTO_PX, AUTO_PX, COL_TEXT,
+     0, 0, 16},
+    {KIND_LABEL, SLOT_CROP, "-", 30, 258, AUTO_PX, AUTO_PX, COL_DIM, 0,
+     0, 14},
+    {KIND_CARD, SLOT_NONE, "ต่ำสุด / สูงสุด ตั้งแต่ล้าง", 426, 44, 352, 120,
+     COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
+    {KIND_LABEL, SLOT_LOWEST, "ต่ำสุด --", 438, 72, AUTO_PX, AUTO_PX,
+     COL_TEAL, 0, 0, 24},
+    {KIND_LABEL, SLOT_HIGHEST, "สูงสุด --", 608, 72, AUTO_PX, AUTO_PX,
+     COL_BAD, 0, 0, 24},
+    {KIND_LABEL, SLOT_NONE, "SW6 = ล้างค่า (ทำทุกเช้า)", 438, 120, AUTO_PX,
+     AUTO_PX, COL_DIM, 0, 0, 14},
+    {KIND_CARD, SLOT_NONE, "หลุดช่วง", 426, 172, 352, 122, COL_CARD,
+     COL_EDGE, CARD_RADIUS, CARD_BORDER},
+    {KIND_LABEL, SLOT_OUT, "หลุดช่วงรวม 00:00  (0 ครั้ง)", 438, 198,
+     AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 16},
+    {KIND_LED, SLOT_NONE, NULL, 438, 228, 16, 16, COL_OK, 0, 0, 0},
+    {KIND_LABEL, SLOT_NONE, "ในช่วง", 458, 226, AUTO_PX, AUTO_PX,
+     COL_DIM, 0, 0, 14},
+    {KIND_LED, SLOT_NONE, NULL, 530, 228, 16, 16, COL_WARN, 0, 0, 0},
+    {KIND_LABEL, SLOT_NONE, "ใกล้หลุด", 550, 226, AUTO_PX, AUTO_PX,
+     COL_DIM, 0, 0, 14},
+    {KIND_LED, SLOT_NONE, NULL, 622, 228, 16, 16, COL_BAD, 0, 0, 0},
+    {KIND_LABEL, SLOT_NONE, "หลุดไกล", 642, 226, AUTO_PX, AUTO_PX,
+     COL_DIM, 0, 0, 14},
+    {KIND_LABEL, SLOT_REPLY, "-", 438, 254, AUTO_PX, AUTO_PX, COL_DIM,
+     0, 0, 14},
+    {KIND_LABEL, SLOT_NONE, "VR3 = ร้อนจากนอกตู้  SW5 = รับทราบ", 18, 298,
+     AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+    {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 18, 316, AUTO_PX, AUTO_PX,
+     COL_DIM, 0, 0, 16},
+    {KIND_LED, SLOT_MQ, NULL, 600, 14, 16, 16, COL_OK, 0, 0, 0},
+    {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 624, 12, AUTO_PX,
+     AUTO_PX, COL_DIM, 0, 0, 16}};
+
+/* The ruler under the band: 7 ticks, every one major. */
+static void setup_ruler(const screen_t *screen, bento_ui_id_t ruler)
+{
+    /* the tick setter's refusal was ignored before too */
+    (void)bento_ui_set_ticks(screen->ui, ruler, RULER_TICKS,
+                             RULER_MAJOR_EVERY);
+}
+
+static bento_status_t build_screen(screen_t *screen)
+{
+    bento_ui_id_t unkept = 0U;
+    size_t i;
+    bento_status_t status = bento_ui_screen_default(screen->ui);
+
+    if (status == BENTO_OK) {
+        status = wait_ms(SETTLE_MS);
+    }
+    for (i = 0U; (status == BENTO_OK) &&
+                 (i < (sizeof(WIDGETS) / sizeof(WIDGETS[0])));
+         i++) {
+        const uint8_t slot = WIDGETS[i].slot;
+
+        status = add_widget(screen->ui, &WIDGETS[i],
+                            (slot == (uint8_t)SLOT_NONE)
+                                ? &unkept
+                                : &screen->ids[slot]);
+        if ((status == BENTO_OK) && (WIDGETS[i].kind == KIND_SCALE)) {
+            setup_ruler(screen, unkept);
+        }
+    }
+    if (status == BENTO_OK) {
+        drain_events(screen);
+    }
+    return status;
+}
+
+static void show_link(const screen_t *screen, bool linked)
+{
+    set_value(screen, SLOT_MQ, linked ? 1 : 0);
+    set_text(screen, SLOT_MQ_TEXT,
+             linked ? "MQTT: ต่อแล้ว" : "MQTT: ออฟไลน์");
+}
+
+static void show_reply(const screen_t *screen, const watch_t *watch,
+                       const char *text, uint32_t color)
+{
+    char line[TEXT_BYTES];
+
+    (void)snprintf(line, sizeof(line), "แจ้งแล้ว %" PRId32 " ครั้ง  %s",
+                   watch->alerts, text);
+    set_color(screen, SLOT_REPLY, color);
+    set_text(screen, SLOT_REPLY, line);
+}
+
+static void show_crop(const screen_t *screen, const watch_t *watch)
+{
+    char line[TEXT_BYTES];
+
+    (void)snprintf(line, sizeof(line),
+                   "ช่วงที่ยอมได้ %" PRId32 " - %" PRId32 " C",
+                   watch->lim[LIM_T_LO], watch->lim[LIM_T_HI]);
+    set_text(screen, SLOT_RANGE, line);
+    set_text(screen, SLOT_CROP, watch->crop->thai);
+}
+
+/* mm:ss of a number of seconds. */
+static void format_mmss(char *text, size_t size, int32_t seconds)
+{
+    (void)snprintf(text, size, "%02" PRId32 ":%02" PRId32,
+                   seconds / S_PER_MIN, seconds % S_PER_MIN);
+}
+
+/* The temperature on the band's scale, 10-40. */
+static int32_t clamp_band(bento_real_t temp_c)
+{
+    bento_real_t kept = temp_c;
+
+    if (kept < (bento_real_t)BAND_LO) {
+        kept = (bento_real_t)BAND_LO;
+    } else if (kept > (bento_real_t)BAND_HI) {
+        kept = (bento_real_t)BAND_HI;
+    } else {
+        /* already on the band */
+    }
+    return (int32_t)kept;
+}
+
+/* "ต่ำสุด 21.5", or "ต่ำสุด --" before anything is known. */
+static void show_extreme(const screen_t *screen, uint32_t slot,
+                         const char *name, const watch_t *watch,
+                         bento_real_t value)
+{
+    char real[BENTO_FMT_BUF_SIZE];
+    char line[TEXT_BYTES];
+    uint32_t length = 0U;
+
+    if (watch->has_extremes) {
+        /* a BENTO_FMT_BUF_SIZE buffer always fits */
+        (void)bento_fmt_real_precision(real, sizeof(real), value, 1,
+                                       &length);
+    } else {
+        (void)snprintf(real, sizeof(real), "--");
+    }
+    (void)snprintf(line, sizeof(line), "%s %s", name, real);
+    set_text(screen, slot, line);
+}
+
+static void show_minmax(const screen_t *screen, const watch_t *watch)
+{
+    show_extreme(screen, SLOT_LOWEST, "ต่ำสุด", watch, watch->lowest_c);
+    show_extreme(screen, SLOT_HIGHEST, "สูงสุด", watch, watch->highest_c);
+}
+
+static void show_reading(const screen_t *screen, const watch_t *watch,
+                         const reading_t *reading,
+                         const verdict_t *verdict)
+{
+    static const uint32_t level_colors[LEVEL_COUNT] = {COL_OK, COL_WARN,
+                                                       COL_BAD};
+    static const char *const moods[LEVEL_COUNT] = {
+        "อยู่ในช่วง ใช้ยาได้", "ใกล้หลุด: ", "หลุดช่วง!\n"};
+    char real[BENTO_FMT_BUF_SIZE];
+    char clock[TEXT_BYTES];
+    char line[TEXT_BYTES];
+    uint32_t length = 0U;
+
+    /* a BENTO_FMT_BUF_SIZE buffer always fits */
+    (void)bento_fmt_real_precision(real, sizeof(real), reading->temp_c,
+                                   1, &length);
+    set_text(screen, SLOT_SEG, real);
+    set_value(screen, SLOT_BAND, clamp_band(reading->temp_c));
+    set_color(screen, SLOT_MOOD, level_colors[verdict->level]);
+    (void)snprintf(line, sizeof(line), "%s%s", moods[verdict->level],
+                   (verdict->level == LEVEL_OK) ? ""
+                                                : verdict->why_thai);
+    set_text(screen, SLOT_MOOD, line);
+    (void)snprintf(line, sizeof(line), "ชื้น %" PRId32 " %%",
+                   (int32_t)reading->rh);
+    set_text(screen, SLOT_RH, line);
+    format_mmss(clock, sizeof(clock), watch->out_s);
+    (void)snprintf(line, sizeof(line),
+                   "หลุดช่วงรวม %s  (%" PRId32 " ครั้ง)", clock,
+                   watch->exc_n);
+    set_text(screen, SLOT_OUT, line);
+    show_minmax(screen, watch);
+}
+
+/* The box is deleted by message only (modui.c sends and forgets). */
+static void close_box(screen_t *screen)
+{
+    if (screen->has_box) {
+        (void)bento_ui_delete(screen->ui, screen->box);
+        screen->has_box = false;
+    }
+}
+
+/* A MsgBox takes 126 bytes at most. */
+static bento_status_t open_box(screen_t *screen,
+                               const verdict_t *verdict)
+{
+    char text[TEXT_BYTES];
+    bento_ui_widget_args_t args;
+    bento_status_t status;
+
+    (void)snprintf(text, sizeof(text),
+                   "ตู้ยาหลุดช่วง!\n%s\nSW5 / ack = รับทราบ",
+                   verdict->why_thai);
+    bento_ui_widget_args_init(&args);
+    args.text = text;
+    args.text_len = (uint32_t)strlen(text);
+    args.x = BOX_X;
+    args.y = BOX_Y;
+    args.w = BOX_W;
+    args.h = BOX_H;
+    args.font_px = 0;
+    status = bento_ui_msgbox_create(screen->ui, &args, &screen->box);
+    screen->has_box = status == BENTO_OK;
+    return status;
+}
+
+/* ---- 6) โปรแกรมหลัก ---- */
+
+/* The .py's stop(): the matrix and the box cleared, the reason on
+ * the screen, then the program ends (halted). */
+static bento_status_t stop_here(farm_t *farm, const char *text,
+                                uint32_t color)
+{
+    screen_t *screen = &farm->screen;
+    bento_status_t status;
+
+    show_link(screen, false);
+    status = bento_rgbmatrix_scroll(
+        NULL, 0U, BENTO_RGBMATRIX_SCROLL_COLOR_DEFAULT,
+        BENTO_RGBMATRIX_SCROLL_MS_DEFAULT);
+    if (status == BENTO_OK) {
+        status = bento_rgbmatrix_clear();
+    }
+    if (status == BENTO_OK) {
+        close_box(screen);
+        show_status(screen, text, color);
+        drain_events(screen);
+    }
+    farm->halted = true;
+    return status;
+}
+
+/* send(): false only when the link is gone (publish raises then);
+ * a publish the network refuses answers False, which send ignores. */
+static bool send_event(const farm_t *farm, const reading_t *reading,
+                       const verdict_t *verdict)
+{
+    char payload[PAYLOAD_BYTES];
+    char temp_c[BENTO_FMT_BUF_SIZE];
+    char rh[BENTO_FMT_BUF_SIZE];
+
+    uint32_t length = 0U;
+    const watch_t *watch = &farm->watch;
+
+    /* a BENTO_FMT_BUF_SIZE buffer always fits */
+    (void)bento_fmt_real(temp_c, sizeof(temp_c),
+                         round_tenths(reading->temp_c), &length);
+    (void)bento_fmt_real(rh, sizeof(rh), round_tenths(reading->rh),
+                         &length);
+
+    (void)snprintf(
+        payload, sizeof(payload),
+        "{\"id\": \"%s\", \"crop\": \"%s\", \"level\": %" PRId32
+        ", \"alert\": \"%s\", \"temp_c\": %s, \"rh\": %s, "
+        "\"sun_c\": %" PRId32 ", \"out_s\": %" PRId32
+        ", \"exc_n\": %" PRId32 "}",
+        TEAM, watch->crop->code, verdict->level, verdict->why_english,
+        temp_c, rh, reading->sun_c, watch->out_s, watch->exc_n);
+    return bento_mqtt_publish(farm->broker, farm->topic_event,
+                              (uint32_t)strlen(farm->topic_event),
+                              (const uint8_t *)payload,
+                              (uint32_t)strlen(payload), 0U,
+                              0U) != BENTO_E_SESSION;
+}
+
+/* The level changed: send first, then the matrix, the tune, the ack
+ * line and, at level 2, the alert box. */
+static bento_status_t on_level(farm_t *farm, const reading_t *reading,
+                               const verdict_t *verdict)
+{
+    static const char *const words[LEVEL_COUNT] = {"OK", "CHECK",
+                                                   "ALERT"};
+    static const int32_t colors[LEVEL_COUNT] = {BENTO_RGBMATRIX_GREEN,
+                                                BENTO_RGBMATRIX_YELLOW,
+                                                BENTO_RGBMATRIX_RED};
+    static const uint32_t tunes[LEVEL_COUNT] = {TUNE_GOOD, TUNE_TAP,
+                                                TUNE_EMPTY};
+    const int32_t level = verdict->level;
+    const bool bad = level == LEVEL_BAD;
+    bento_status_t status = BENTO_OK;
+
+    farm->watch.level = level;
+    farm->watch.acked = level < LEVEL_BAD;
+    farm->watch.alerts++;
+    if (!send_event(farm, reading, verdict)) {
+        status = stop_here(farm, "สายหลุดตอนส่ง", COL_BAD);
+    }
+    if (going_on(status, farm)) {
+        status = bento_rgbmatrix_scroll(words[level],
+                                        (uint32_t)strlen(words[level]),
+                                        colors[level], SCROLL_MS);
+    }
+    if (going_on(status, farm)) {
+        status = beep(farm->screen.ui, tunes[level]);
+    }
+    if (going_on(status, farm)) {
+        show_reply(&farm->screen, &farm->watch,
+                   bad ? "รอสัตวแพทย์รับทราบ" : "ส่งแล้ว",
+                   bad ? (uint32_t)COL_BAD : (uint32_t)COL_DIM);
+        close_box(&farm->screen);
+        if (bad) {
+            status = open_box(&farm->screen, verdict);
+        }
+    }
+    return status;
+}
+
+/* The lowest and highest since the last clear. */
+static void keep_extremes(watch_t *watch, bento_real_t temp_c)
+{
+    if (!watch->has_extremes || (temp_c < watch->lowest_c)) {
+        watch->lowest_c = temp_c;
+    }
+    if (!watch->has_extremes || (temp_c > watch->highest_c)) {
+        watch->highest_c = temp_c;
+    }
+    watch->has_extremes = true;
+}
+
+/* Time out of range, and one more time each time it just left. */
+static void count_out(watch_t *watch, int32_t level)
+{
+    if (level > LEVEL_OK) {
+        watch->out_s += READ_MS / MS_PER_S;
+        if (!watch->out) {
+            watch->exc_n++;
+        }
+    }
+    watch->out = level > LEVEL_OK;
+}
+
+/* *alerted when the level changed and was just reported. A sensor
+ * that cannot be read is tried again in the next round. */
+static bento_status_t read_and_judge(farm_t *farm, bool *alerted)
+{
+    reading_t reading = {(bento_real_t)0.0, (bento_real_t)0.0, 0};
+    verdict_t verdict;
+    uint16_t raw = 0U;
+    bento_status_t status = bento_pots_read(SUN_POT, &raw);
+
+    *alerted = false;
+    if (status == BENTO_OK) {
+        /* VR3 = ร้อนจากนอกตู้ +0..10 C */
+        reading.sun_c = ((int32_t)raw * SUN_MAX_C) / POT_FULL;
+        farm->watch.has_reading = read_climate(&reading);
+    }
+    if ((status == BENTO_OK) && farm->watch.has_reading) {
+        reading.temp_c += (bento_real_t)reading.sun_c;
+        farm->watch.last_temp_c = reading.temp_c;
+        keep_extremes(&farm->watch, reading.temp_c);
+        judge(&reading, farm->watch.lim, &verdict);
+        count_out(&farm->watch, verdict.level);
+        show_reading(&farm->screen, &farm->watch, &reading, &verdict);
+    }
+    if ((status == BENTO_OK) && farm->watch.has_reading &&
+        (verdict.level != farm->watch.level)) {
+        status = on_level(farm, &reading, &verdict);
+        *alerted = true;
+    }
+    return status;
+}
+
+/* A command from the app: *confirmed for "ack"; "set" takes a new t_hi
+ * in a sensible range; anything else is ignored quietly. */
+static bento_status_t on_command(farm_t *farm, const message_t *message,
+                                 bool *confirmed)
+{
+    watch_t *watch = &farm->watch;
+    command_t command;
+    int32_t t_hi = 0;
+    bento_status_t status = BENTO_OK;
+
+    if (read_command(message, &command)) {
+        *confirmed = cmd_is(message, &command, "ack");
+        if (cmd_is(message, &command, "set") && command.has_t_hi &&
+            value_as_int(message, &command.t_hi, &t_hi) &&
+            (watch->lim[LIM_T_LO] < t_hi) && (t_hi <= T_HI_MAX)) {
+            watch->lim[LIM_T_HI] = t_hi;
+            watch->level = LEVEL_NONE; /* judge again, report at once */
+            watch->has_reading = false;
+            show_crop(&farm->screen, watch);
+            status = beep(farm->screen.ui, TUNE_TAP);
+        }
+    }
+    return status;
+}
+
+/* SW5 = acknowledged at the fridge, without the network; a press counts
+ * when the button has just gone down. */
+static bento_status_t check_button(farm_t *farm, timers_t *timers,
+                                   bool *confirmed)
+{
+    bool down = false;
+    bento_status_t status =
+        bento_buttons_pressed(CONFIRM_BUTTON, &down);
+
+    if ((status == BENTO_OK) && down && !timers->was_down) {
+        *confirmed = true;
+        if (farm->watch.acked) { /* nothing to acknowledge yet */
+            show_reply(&farm->screen, &farm->watch, "ยังไม่มีเหตุเตือน",
+                       COL_DIM);
+            status = beep(farm->screen.ui, TUNE_TAP);
+        }
+    }
+    timers->was_down = down;
+    return status;
+}
+
+/* SW6 clears the lowest and highest to the last reading (nothing is
+ * sent); a press counts when the button has just gone down. */
+static bento_status_t check_reset(farm_t *farm, timers_t *timers)
+{
+    watch_t *watch = &farm->watch;
+    bool down = false;
+    bento_status_t status = bento_buttons_pressed(RESET_BUTTON, &down);
+
+    if ((status == BENTO_OK) && down && !timers->was_reset) {
+        watch->has_extremes = watch->has_reading;
+        watch->lowest_c = watch->last_temp_c;
+        watch->highest_c = watch->last_temp_c;
+        show_minmax(&farm->screen, watch);
+        status = beep(farm->screen.ui, TUNE_TAP);
+    }
+    timers->was_reset = down;
+    return status;
+}
+
+/* Acknowledged: the beeping stops, the box closes, the matrix says
+ * ACK. */
+static bento_status_t acknowledge(farm_t *farm)
+{
+    static const char done_word[] = "ACK";
+    bento_status_t status;
+
+    farm->watch.acked = true;
+    close_box(&farm->screen);
+    show_reply(&farm->screen, &farm->watch, "รับทราบแล้ว", COL_OK);
+    status =
+        bento_rgbmatrix_scroll(done_word, (uint32_t)strlen(done_word),
+                               BENTO_RGBMATRIX_CYAN, SCROLL_MS);
+    if (status == BENTO_OK) {
+        status = beep(farm->screen.ui, TUNE_TAP);
+    }
+    return status;
+}
+
+/* The inbox every round, the button, then an acknowledgement. */
+static bento_status_t handle_inputs(farm_t *farm, timers_t *timers)
+{
+    message_t message;
+    bool confirmed = false;
+    bento_status_t status = BENTO_OK;
+
+    if (take_newest(farm->broker, &message)) {
+        status = on_command(farm, &message, &confirmed);
+    }
+    if (status == BENTO_OK) {
+        status = check_button(farm, timers, &confirmed);
+    }
+    if (status == BENTO_OK) {
+        status = check_reset(farm, timers);
+    }
+    if ((status == BENTO_OK) && confirmed && !farm->watch.acked) {
+        status = acknowledge(farm);
+    }
+    return status;
+}
+
+/* One round: listen every POLL_MS, read the sensor every READ_MS,
+ * and beep every BEEP_MS while level 2 waits for an ack. */
+static bento_status_t run_round(farm_t *farm, timers_t *timers)
+{
+    const uint32_t now_ms = bento_time_ticks_ms();
+    bool alerted = false;
+    bento_status_t status = handle_inputs(farm, timers);
+
+    if (status == BENTO_OK) {
+        drain_events(&farm->screen);
+    }
+    if ((status == BENTO_OK) &&
+        (!farm->watch.has_reading ||
+         (bento_time_ticks_diff(now_ms, timers->read_ms) >= READ_MS))) {
+        timers->read_ms = now_ms;
+        status = read_and_judge(farm, &alerted);
+        if (alerted) {
+            timers->beep_ms = now_ms;
+        }
+    }
+    if (going_on(status, farm) && (farm->watch.level == LEVEL_BAD) &&
+        !farm->watch.acked &&
+        (bento_time_ticks_diff(now_ms, timers->beep_ms) >= BEEP_MS)) {
+        timers->beep_ms = now_ms;
+        status = beep(farm->screen.ui, TUNE_BAD);
+    }
+    if (going_on(status, farm)) {
+        status = wait_ms(POLL_MS);
+    }
+    return status;
+}
+
+static bento_status_t watch_house(farm_t *farm)
+{
+    const uint32_t start_ms = bento_time_ticks_ms();
+    timers_t timers = {start_ms, start_ms, false, false};
+    bento_status_t status = BENTO_OK;
+
+    while (going_on(status, farm) &&
+           (bento_time_ticks_diff(bento_time_ticks_ms(), start_ms) <
+            RUN_MS)) {
+        status = run_round(farm, &timers);
+    }
+    if (going_on(status, farm)) {
+        char line[TEXT_BYTES];
+        char clock[TEXT_BYTES];
+
+        format_mmss(clock, sizeof(clock), farm->watch.out_s);
+        (void)snprintf(line, sizeof(line), "จบรอบ หลุดช่วงรวม %s", clock);
+        status = stop_here(farm, line, COL_DIM);
+    }
+    return status;
+}
+
+static void start_watch(watch_t *watch, const crop_t *crop)
+{
+    watch->crop = crop;
+    (void)memcpy(watch->lim, crop->limits, sizeof(watch->lim));
+    watch->level = LEVEL_NONE;
+    watch->acked = true;
+    watch->alerts = 0;
+    watch->has_reading = false;
+    watch->last_temp_c = (bento_real_t)0.0;
+    watch->has_extremes = false;
+    watch->lowest_c = (bento_real_t)0.0;
+    watch->highest_c = (bento_real_t)0.0;
+    watch->out_s = 0;
+    watch->exc_n = 0;
+    watch->out = false;
+}
+
+/* From the settings check to the end of the run; each step runs only
+ * while nothing has stopped the program. */
+static bento_status_t run_farm(farm_t *farm)
+{
+    const crop_t *crop = find_crop();
+    const char *problem = NULL;
+    bento_status_t status = BENTO_OK;
+
+    if (crop == NULL) {
+        status = stop_here(farm, "แก้ CROP ให้ตรงกับ CROPS", COL_BAD);
+    }
+    if (going_on(status, farm)) {
+        start_watch(&farm->watch, crop);
+        show_crop(&farm->screen, &farm->watch);
+        if (!valid_team()) {
+            status = stop_here(farm, "แก้ TEAM ก่อน", COL_BAD);
+        }
+    }
+    if (going_on(status, farm)) {
+        status = connect_farm(farm, &problem);
+    }
+    if (going_on(status, farm) && (problem != NULL)) {
+        status = stop_here(farm, problem, COL_BAD);
+    }
+    if (going_on(status, farm)) {
+        show_link(&farm->screen, true);
+        show_status(&farm->screen, "เฝ้าตู้ยาอยู่", COL_OK);
+        status = watch_house(farm);
+    }
+    return status;
+}
+
+int main(void)
+{
+    farm_t farm;
+    bento_status_t status;
+
+    (void)memset(&farm, 0, sizeof(farm));
+    farm.screen.ui = bento_runtime_get_ui();
+    (void)snprintf(farm.topic_event, sizeof(farm.topic_event),
+                   "%s/%s/event", ROOT, TEAM);
+    (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
+                   ROOT, TEAM);
+    /* sent and forgotten; E_UNSUPPORTED is the hasattr() that fails */
+    (void)bento_ui_sfx_volume_set(farm.screen.ui, SPEAKER);
+    status = build_screen(&farm.screen);
+    if (status == BENTO_OK) {
+        status = run_farm(&farm);
+    }
+    if (farm.broker != 0U) {
+        (void)bento_mqtt_close(farm.broker); /* the finally's except */
+    }
+    (void)printf("[MQTT] Disconnected\r\n");
+    return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
+}
