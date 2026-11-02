@@ -76,8 +76,8 @@ BRIGHT = (80, 170, 255)      # ความสว่าง Led ต่อสถ�
 def card(x, title, caption):
     # การ์ดหนึ่งใบต่อหนึ่งหน้าตา: หัวเรื่อง = ชื่อ widget, บรรทัดล่าง = ชนิดข้อมูลที่เหมาะ
     ui.Panel(x=x, y=64, w=186, h=186, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=70, color=COL_INFO, value=16)
-    ui.Label(caption, x=x + 12, y=226, color=COL_DIM, value=14)
+    ui.Label(title, x=x + 12, y=70, color=COL_INFO, value=20)
+    ui.Label(caption, x=x + 8, y=224, color=COL_DIM, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -100,7 +100,7 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("ค่าเดียว หลายหน้าตา", x=12, y=6, color=COL_TEXT, value=24)
     ui.Label("VR1 = ความชื้นดิน 0-100 %  เลือก widget ตามชนิดข้อมูล", x=12, y=38,
-             color=COL_DIM, value=16)
+             color=COL_DIM, value=20)
     w = {}
     card(12, "Label + Seg7", "ตัวเลข: อ่านค่าแม่น")
     w["num"] = ui.Label("-- %", x=24, y=100, color=COL_TEXT, value=28)
@@ -111,7 +111,7 @@ def build_screen():
     w["arc"] = ui.Arc(x=254, y=130, w=90, h=90, min=0, max=100, value=0)
     w["arc"].color(COL_INFO)
     card(400, "Scale + เข็ม", "หน้าปัด: อยู่ช่วงไหน")
-    gauge = ui.Scale(x=430, y=94, w=126, h=126, color=COL_TEXT, min=0, max=100)
+    gauge = ui.Scale(x=430, y=98, w=126, h=126, color=COL_TEXT, min=0, max=100)
     gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)   # หน้าปัดกลม ตัวเลขอยู่ด้านใน
     gauge.ticks(11, 2)                # 11 ขีด มีเลขทุก 2 ขีด = 0 20 40 60 80 100
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
@@ -120,10 +120,10 @@ def build_screen():
     w["led"] = ui.Led(x=656, y=104, w=60, h=60, color=COL_BAD, value=1)
     w["zone"] = ui.Label(" ", x=606, y=184, color=COL_TEXT, value=20)
     w["chart"] = line_chart(12, 262, 400, 76, 0, 100, COL_INFO)
-    ui.Label("Chart = ประวัติ: ขึ้นหรือลง", x=424, y=266, color=COL_DIM, value=14)
-    w["sent"] = ui.Label(" ", x=424, y=296, color=COL_TEXT, value=16)
+    ui.Label("Chart = ประวัติ: ขึ้นหรือลง", x=424, y=266, color=COL_DIM, value=20)
+    w["sent"] = ui.Label(" ", x=424, y=296, color=COL_TEXT, value=20)
     w["help"] = ui.Label("หมุน VR1 ช้า ๆ  ปล่อยนิ่ง = ไม่ต้องส่งค่าไปจอ", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 

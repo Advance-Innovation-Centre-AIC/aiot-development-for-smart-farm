@@ -85,7 +85,8 @@ enum {
     CARD_RADIUS = 12,
     CARD_TEXT_X = 12,
     CARD_TITLE_Y = 70,
-    CARD_CAPTION_Y = 226,
+    CARD_CAPTION_X = 8,
+    CARD_CAPTION_Y = 224,
     NUMBER_CARD_X = 12,
     PERCENT_CARD_X = 206,
     GAUGE_CARD_X = 400,
@@ -103,7 +104,7 @@ enum {
     ARC_Y = 130,
     ARC_SIZE = 90,
     GAUGE_X = 430,
-    GAUGE_Y = 94,
+    GAUGE_Y = 98,
     GAUGE_SIZE = 126,
     TICKS_TOTAL = 11, /* 11 ticks, a number every 2: 0 20 ... 100 */
     TICKS_MAJOR = 2,
@@ -121,9 +122,7 @@ enum {
     CHART_NOTE_Y = 266,
     SENT_Y = 296,
     HELP_Y = 352,
-    FONT_TINY = 14,
-    FONT_SMALL = 16,
-    FONT_ZONE = 20,
+    FONT_TEXT = 20, /* Thai is 20 px or larger on the board */
     FONT_TITLE = 24,
     FONT_NUMBER = 28,
     SETTLE_MS = 200, /* let the cleared screen settle */
@@ -312,7 +311,7 @@ static bento_status_t add_card(bento_ui_t *ui, int32_t x,
 {
     const rect_t box = {px(x), CARD_Y, CARD_SIZE, CARD_SIZE};
     const point_t title_at = {px(x + CARD_TEXT_X), CARD_TITLE_Y};
-    const point_t caption_at = {px(x + CARD_TEXT_X), CARD_CAPTION_Y};
+    const point_t caption_at = {px(x + CARD_CAPTION_X), CARD_CAPTION_Y};
     bento_ui_widget_args_t args;
     bento_ui_id_t unused;
     bento_status_t status;
@@ -324,11 +323,11 @@ static bento_status_t add_card(bento_ui_t *ui, int32_t x,
     args.font_px = 1;
     status = bento_ui_panel_create(ui, &args, &unused);
     if (status == BENTO_OK) {
-        status = add_label(ui, title, title_at, COL_INFO, FONT_SMALL,
+        status = add_label(ui, title, title_at, COL_INFO, FONT_TEXT,
                            &unused);
     }
     if (status == BENTO_OK) {
-        status = add_label(ui, caption, caption_at, COL_DIM, FONT_TINY,
+        status = add_label(ui, caption, caption_at, COL_DIM, FONT_TEXT,
                            &unused);
     }
     return status;
@@ -439,7 +438,7 @@ static bento_status_t add_led_card(faces_screen_t *screen)
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", zone_at, COL_TEXT,
-                           FONT_ZONE, &screen->zone);
+                           FONT_TEXT, &screen->zone);
     }
     return status;
 }
@@ -466,11 +465,11 @@ static bento_status_t add_history(faces_screen_t *screen)
                                 (uint8_t)BENTO_UI_PROP_CHART_POINTS,
                                 CHART_POINTS);
         status = add_label(screen->ui, "Chart = ประวัติ: ขึ้นหรือลง",
-                           note_at, COL_DIM, FONT_TINY, &unused);
+                           note_at, COL_DIM, FONT_TEXT, &unused);
     }
     if (status == BENTO_OK) {
         status = add_label(screen->ui, " ", sent_at, COL_TEXT,
-                           FONT_SMALL, &screen->sent);
+                           FONT_TEXT, &screen->sent);
     }
     return status;
 }
@@ -486,7 +485,7 @@ static bento_status_t add_headings(bento_ui_t *ui)
     if (status == BENTO_OK) {
         status = add_label(
             ui, "VR1 = ความชื้นดิน 0-100 %  เลือก widget ตามชนิดข้อมูล",
-            hint_at, COL_DIM, FONT_SMALL, &unused);
+            hint_at, COL_DIM, FONT_TEXT, &unused);
     }
     return status;
 }
@@ -521,7 +520,7 @@ static bento_status_t build_screen(faces_screen_t *screen)
     if (status == BENTO_OK) {
         status = add_label(screen->ui,
                            "หมุน VR1 ช้า ๆ  ปล่อยนิ่ง = ไม่ต้องส่งค่าไปจอ",
-                           help_at, COL_DIM, FONT_SMALL, &screen->help);
+                           help_at, COL_DIM, FONT_TEXT, &screen->help);
     }
     if (status == BENTO_OK) {
         (void)present(screen->ui);
