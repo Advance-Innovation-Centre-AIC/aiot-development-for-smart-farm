@@ -138,7 +138,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=10, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_ICE, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_ICE, value=20)
 
 
 def show_link(w, ok):
@@ -163,30 +163,30 @@ def build_screen():
     w["thermo"].color(COL_ICE)  # Bar: color() = สีส่วนที่เติม (แบบ sf1_03) ใน Emulator จะเห็นเป็นสีราง
     ui.Label("%d C" % THERMO_MAX, x=x + bw + 8, y=y - 8, color=COL_DIM, value=14)
     ui.Label("0 C", x=x + bw + 8, y=y + bh - 12, color=COL_DIM, value=14)
-    w["mark"] = ui.Label("< เกณฑ์", x=x + bw + 8, y=y, color=COL_BAD, value=14)
-    card(190, 44, 320, 186, "ในกล่องตอนนี้")
-    w["crop"] = ui.Label("-", x=202, y=70, color=COL_DIM, value=14)
-    w["seg"] = ui.Seg7(text="--.-", x=202, y=94, w=180, h=64, color=COL_ICE)
-    ui.Label("C", x=392, y=120, color=COL_DIM)
-    w["rh"] = ui.Label("RH -- %", x=420, y=120, color=COL_DIM, value=16)
-    w["mood"] = ui.Label("...", x=202, y=172, color=COL_WARN)
-    w["tmax"] = ui.Label("สูงสุด -- C", x=202, y=202, color=COL_DIM, value=14)
-    card(520, 44, 260, 186, "งบความร้อนผลไม้")
-    w["arc"] = ui.Arc(x=540, y=72, w=120, h=120, min=0, max=100, value=100)
+    w["mark"] = ui.Label("< เกณฑ์", x=x + bw + 8, y=y, color=COL_BAD, value=20)
+    card(190, 44, 410, 196, "ในกล่องตอนนี้")
+    w["crop"] = ui.Label("-", x=202, y=80, color=COL_DIM, value=20)
+    w["seg"] = ui.Seg7(text="--.-", x=202, y=110, w=180, h=64, color=COL_ICE)
+    ui.Label("C", x=392, y=136, color=COL_DIM)
+    w["rh"] = ui.Label("RH -- %", x=420, y=136, color=COL_DIM, value=16)
+    w["mood"] = ui.Label("...", x=202, y=178, color=COL_WARN, value=20)
+    w["tmax"] = ui.Label("สูงสุด -- C", x=202, y=206, color=COL_DIM, value=20)
+    card(610, 44, 170, 196, "งบความร้อนผลไม้")
+    w["arc"] = ui.Arc(x=645, y=78, w=100, h=100, min=0, max=100, value=100)
     w["arc"].color(COL_OK)
-    w["left"] = ui.Label("เหลือ -- วิ", x=670, y=100, color=COL_TEXT, value=16)
-    w["used"] = ui.Label("ใช้ไป 0 วิ", x=670, y=128, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=540, y=200, color=COL_DIM, value=14)
-    card(190, 240, 320, 104, "บอกคนขับ")
+    w["left"] = ui.Label("เหลือ -- วิ", x=622, y=180, color=COL_TEXT, value=20)
+    w["used"] = ui.Label("ใช้ไป 0 วิ", x=622, y=208, color=COL_DIM, value=20)
+    card(190, 244, 590, 100, "บอกคนขับ")
     w["leds"] = []
     for i in range(3):
-        lx = 202 + i * 100
-        w["leds"].append(ui.Led(x=lx, y=274, w=18, h=18, color=LEVEL_COLORS[i]))
-        ui.Label(("เย็นดี", "เริ่มอุ่น", "ร้อนเกิน")[i], x=lx + 24, y=274, color=COL_DIM, value=14)
-    ui.Label("VR3 = ร้อนจากนอกกล่อง  " + BTN_NAMES[1] + " = รับทราบ", x=202, y=310, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+        lx = 202 + i * 90
+        w["leds"].append(ui.Led(x=lx, y=285, w=18, h=18, color=LEVEL_COLORS[i]))
+        ui.Label(("เย็นดี", "เริ่มอุ่น", "ร้อนเกิน")[i], x=lx + 24, y=280, color=COL_DIM, value=20)
+    ui.Label("VR3 = ร้อนจากนอกกล่อง  " + BTN_NAMES[1] + " = รับทราบ", x=202, y=312, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=480, y=280, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

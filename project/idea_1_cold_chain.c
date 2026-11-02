@@ -160,7 +160,7 @@ enum {
     CARD_RADIUS = 10,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    CARD_TITLE_PX = 16,
+    CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
 };
 
@@ -756,7 +756,7 @@ static bento_status_t add_thermo_card(screen_t *screen)
         {UI_WIDGET_LABEL, SLOT_NONE, "0 C", SCALE_X,
          THERMO_Y + THERMO_H - 12, AUTO, AUTO, COL_DIM, 0, 0, 14},
         {UI_WIDGET_LABEL, SLOT_MARK, "< เกณฑ์", SCALE_X, THERMO_Y, AUTO,
-         AUTO, COL_BAD, 0, 0, 14},
+         AUTO, COL_BAD, 0, 0, 20},
     };
     bento_status_t status = add_widget(screen, &title);
 
@@ -769,20 +769,20 @@ static bento_status_t add_thermo_card(screen_t *screen)
 
 static bento_status_t add_now_card(screen_t *screen)
 {
-    static const card_t card = {190, 44, 320, 186, "ในกล่องตอนนี้"};
+    static const card_t card = {190, 44, 410, 196, "ในกล่องตอนนี้"};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LABEL, SLOT_CROP, "-", 202, 70, AUTO, AUTO, COL_DIM,
-         0, 0, 14},
-        {UI_WIDGET_SEG7, SLOT_SEG, "--.-", 202, 94, 180, 64, COL_ICE, 0,
-         0, 0},
-        {UI_WIDGET_LABEL, SLOT_NONE, "C", 392, 120, AUTO, AUTO, COL_DIM,
+        {UI_WIDGET_LABEL, SLOT_CROP, "-", 202, 80, AUTO, AUTO, COL_DIM,
+         0, 0, 20},
+        {UI_WIDGET_SEG7, SLOT_SEG, "--.-", 202, 110, 180, 64, COL_ICE,
          0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_RH, "RH -- %", 420, 120, AUTO, AUTO,
+        {UI_WIDGET_LABEL, SLOT_NONE, "C", 392, 136, AUTO, AUTO, COL_DIM,
+         0, 0, 0},
+        {UI_WIDGET_LABEL, SLOT_RH, "RH -- %", 420, 136, AUTO, AUTO,
          COL_DIM, 0, 0, 16},
-        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 202, 172, AUTO, AUTO,
-         COL_WARN, 0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_PEAK, "สูงสุด -- C", 202, 202, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 202, 178, AUTO, AUTO,
+         COL_WARN, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_PEAK, "สูงสุด -- C", 202, 206, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
     };
 
     return add_card_with(screen, &card, specs,
@@ -791,16 +791,14 @@ static bento_status_t add_now_card(screen_t *screen)
 
 static bento_status_t add_budget_card(screen_t *screen)
 {
-    static const card_t card = {520, 44, 260, 186, "งบความร้อนผลไม้"};
+    static const card_t card = {610, 44, 170, 196, "งบความร้อนผลไม้"};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_ARC, SLOT_ARC, NULL, 540, 72, 120, 120, 0U, 0,
+        {UI_WIDGET_ARC, SLOT_ARC, NULL, 645, 78, 100, 100, 0U, 0,
          PERCENT, PERCENT},
-        {UI_WIDGET_LABEL, SLOT_LEFT, "เหลือ -- วิ", 670, 100, AUTO, AUTO,
-         COL_TEXT, 0, 0, 16},
-        {UI_WIDGET_LABEL, SLOT_USED, "ใช้ไป 0 วิ", 670, 128, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
-        {UI_WIDGET_LABEL, SLOT_NOTICE, "-", 540, 200, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_LEFT, "เหลือ -- วิ", 622, 180, AUTO, AUTO,
+         COL_TEXT, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_USED, "ใช้ไป 0 วิ", 622, 208, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
     };
 
     return add_card_with(screen, &card, specs,
@@ -810,29 +808,31 @@ static bento_status_t add_budget_card(screen_t *screen)
 /* The driver's card, the status line and the link lamp. */
 static bento_status_t add_driver_card(screen_t *screen)
 {
-    static const card_t card = {190, 240, 320, 104, "บอกคนขับ"};
+    static const card_t card = {190, 244, 590, 100, "บอกคนขับ"};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LED, SLOT_LED_OK, NULL, 202, 274, 18, 18, COL_ICE, 0,
+        {UI_WIDGET_LED, SLOT_LED_OK, NULL, 202, 285, 18, 18, COL_ICE, 0,
          0, 0},
-        {UI_WIDGET_LABEL, SLOT_NONE, "เย็นดี", 226, 274, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
-        {UI_WIDGET_LED, SLOT_LED_WARM, NULL, 302, 274, 18, 18, COL_WARN,
+        {UI_WIDGET_LABEL, SLOT_NONE, "เย็นดี", 226, 280, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LED, SLOT_LED_WARM, NULL, 292, 285, 18, 18, COL_WARN,
          0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_NONE, "เริ่มอุ่น", 326, 274, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
-        {UI_WIDGET_LED, SLOT_LED_BAD, NULL, 402, 274, 18, 18, COL_BAD,
+        {UI_WIDGET_LABEL, SLOT_NONE, "เริ่มอุ่น", 316, 280, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LED, SLOT_LED_BAD, NULL, 382, 285, 18, 18, COL_BAD,
          0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_NONE, "ร้อนเกิน", 426, 274, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_NONE, "ร้อนเกิน", 406, 280, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NONE,
-         "VR3 = ร้อนจากนอกกล่อง  SW5 = รับทราบ", 202, 310, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+         "VR3 = ร้อนจากนอกกล่อง  SW5 = รับทราบ", 202, 312, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_NOTICE, "-", 480, 280, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 352, AUTO, AUTO,
-         COL_DIM, 0, 0, 0},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 606, 12, 18, 18, COL_OK, 0,
          0, 0},
         {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_card_with(screen, &card, specs,
