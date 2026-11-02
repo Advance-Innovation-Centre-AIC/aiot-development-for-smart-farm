@@ -166,7 +166,9 @@ enum {
     PAYLOAD_BYTES = 256, /* the binding keeps 255 and a NUL */
     TOPIC_KEEP = 64,     /* the program never reads the topic */
     JSON_BYTES = 256,
-    SAY_BYTES = SAY_MAX + 1
+    SAY_BYTES = SAY_MAX + 1,
+    VALVE_SHOWN_BYTES = VALVE_SHOWN_MAX + 1, /* str(n)[:6] and a NUL */
+    ACT_SHOWN_BYTES = ACT_SHOWN_MAX + 1 /* str(act)[:12] and a NUL */
 };
 
 /* The tunes, by name. */
@@ -864,7 +866,7 @@ static void decide(decision_t *decision, action_t action,
 static void decide_valve(const command_t *command, int32_t tank,
                          decision_t *decision)
 {
-    char shown[TEXT_BYTES];
+    char shown[VALVE_SHOWN_BYTES];
     const bool valve_zero = (command->n.kind == JSON_ABSENT) ||
                             (command->n.kind == JSON_FALSE) ||
                             (((command->n.kind == JSON_INTEGER) ||
@@ -900,7 +902,7 @@ static void decide_valve(const command_t *command, int32_t tank,
 /* "beep", "say", "ack" and anything else. */
 static void decide_other(const command_t *command, decision_t *decision)
 {
-    char shown[TEXT_BYTES];
+    char shown[ACT_SHOWN_BYTES];
     const json_field_t *act = &command->cmd;
 
     if (text_is(command, act, "beep")) {
