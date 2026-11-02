@@ -98,7 +98,7 @@ def at_risk(t, td):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -113,23 +113,23 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("จุดน้ำค้าง: เตือนหยดน้ำเกาะ", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("เสี่ยงเมื่อ T - Td <= %.1f C" % RISK_C, x=12, y=38, color=COL_DIM, value=16)
+    ui.Label("เสี่ยงเมื่อ T - Td <= %.1f C" % RISK_C, x=12, y=38, color=COL_DIM, value=20)
     card(12, 64, 250, 120, "อากาศ T (C)")
-    w = {"t": ui.Seg7(text="0", x=24, y=94, w=150, h=56, color=COL_WARN)}
+    w = {"t": ui.Seg7(text="0", x=24, y=98, w=150, h=56, color=COL_WARN)}
     card(272, 64, 250, 120, "จุดน้ำค้าง Td (C)")
-    w["td"] = ui.Seg7(text="0", x=284, y=94, w=150, h=56, color=COL_INFO)
+    w["td"] = ui.Seg7(text="0", x=284, y=98, w=150, h=56, color=COL_INFO)
     card(532, 64, 248, 120, "ห่าง T - Td")
-    w["gap"] = ui.Seg7(text="0", x=544, y=94, w=130, h=56, color=COL_OK)
-    w["led"] = ui.Led(x=700, y=102, w=40, h=40, color=COL_BAD, value=0)
-    card(12, 194, 380, 144, "ความชื้น และฟีเจอร์อื่น")
-    w["rh"] = ui.Label(" ", x=24, y=224, color=COL_TEXT, value=16)
-    w["rh2"] = ui.Label(" ", x=24, y=252, color=COL_TEXT, value=16)
-    w["hi"] = ui.Label(" ", x=24, y=280, color=COL_DIM, value=16)
-    w["state"] = ui.Label(" ", x=24, y=308, color=COL_OK, value=16)
-    ui.Label("ส้ม = T   ฟ้า = Td", x=422, y=194, color=COL_DIM, value=14)
-    w["chart"] = line_chart(422, 216, 358, 122, 0, 50, COL_WARN)
+    w["gap"] = ui.Seg7(text="0", x=544, y=98, w=130, h=56, color=COL_OK)
+    w["led"] = ui.Led(x=700, y=106, w=40, h=40, color=COL_BAD, value=0)
+    card(12, 194, 380, 150, "ความชื้น และฟีเจอร์อื่น")
+    w["rh"] = ui.Label(" ", x=24, y=228, color=COL_TEXT, value=20)
+    w["rh2"] = ui.Label(" ", x=24, y=256, color=COL_TEXT, value=20)
+    w["hi"] = ui.Label(" ", x=24, y=284, color=COL_DIM, value=20)
+    w["state"] = ui.Label(" ", x=24, y=312, color=COL_OK, value=20)
+    ui.Label("ส้ม = T   ฟ้า = Td", x=422, y=194, color=COL_DIM, value=20)
+    w["chart"] = line_chart(422, 224, 358, 114, 0, 50, COL_WARN)
     w["s_td"] = w["chart"].add_series(COL_INFO)
-    w["help"] = ui.Label("หายใจรด SHT40 แล้วดูช่องห่าง T - Td", x=12, y=352, color=COL_DIM, value=16)
+    w["help"] = ui.Label("หายใจรด SHT40 แล้วดูช่องห่าง T - Td", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
