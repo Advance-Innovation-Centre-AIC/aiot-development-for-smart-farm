@@ -153,7 +153,9 @@ enum {
     CLIENT_ID_BYTES = 32, /* the broker takes 23 */
     PAYLOAD_KEEP = 255,   /* what the MicroPython binding keeps */
     VALUE_BYTES = 256, /* a decoded value: never longer than its text */
-    WORD_BYTES = 8,    /* the longest command word, and its NUL */
+    /* the [:n] cut of a value: n letters of up to 4 bytes */
+    SHOWN_BYTES = (UNKNOWN_SHOW_MAX * 4) + 1,
+    WORD_BYTES = 8, /* the longest command word, and its NUL */
     SAY_BYTES = 24,
     CLOCK_BYTES = 24, /* two int32_t of digits */
     /* the telemetry with every int32_t at its widest */
@@ -1079,7 +1081,7 @@ static void set_outcome(outcome_t *outcome, action_t action,
 static void pump_command(const command_t *command, act_t act,
                          int32_t tank, outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char shown[SHOWN_BYTES];
 
     if ((act == ACT_LED) && !pump_number_is_zero(command)) {
         value_text(command, &command->fields[FIELD_N], shown,
@@ -1105,7 +1107,7 @@ static void pump_command(const command_t *command, act_t act,
 static void other_command(const command_t *command, act_t act,
                           outcome_t *outcome)
 {
-    char shown[VALUE_BYTES];
+    char shown[SHOWN_BYTES];
 
     if (act == ACT_BEEP) {
         set_outcome(outcome, DO_BEEP, "เจ้าของบ่อเรียก!", COL_POND);
