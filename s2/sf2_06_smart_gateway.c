@@ -171,7 +171,9 @@ enum {
     SAY_BYTES = 24,
     WHY_BYTES = 72,     /* 16 characters of up to 4 bytes */
     QUOTED_BYTES = 112, /* the reason as JSON: 16 x 6 bytes + quotes */
-    REPORT_BYTES = 256
+    REPORT_BYTES = 256,
+    /* SW5's note: "รดน้ำ" and any int, or "ถังน้ำไม่พอ" */
+    WATER_NOTE_BYTES = 48
 };
 
 /* SW5 or SW6, sampled while the program waits so a short press
@@ -1239,9 +1241,9 @@ static void water_request(maybe_t tank, order_t *order, char *note)
     order->pump = 1;
     order->sec = PUMP_SEC;
     if (order->wanted) {
-        (void)snprintf(note, TEXT_BYTES, "รดน้ำ %d วิ", PUMP_SEC);
+        (void)snprintf(note, WATER_NOTE_BYTES, "รดน้ำ %d วิ", PUMP_SEC);
     } else {
-        copy_text(note, TEXT_BYTES, "ถังน้ำไม่พอ");
+        copy_text(note, WATER_NOTE_BYTES, "ถังน้ำไม่พอ");
     }
 }
 
@@ -2043,7 +2045,7 @@ static bento_status_t buttons_and_touch(farm_t *farm, bool *water)
 static void decide(farm_t *farm, maybe_t soil, maybe_t tank,
                    uint32_t now_ms, bool water, order_t *order)
 {
-    char note[TEXT_BYTES];
+    char note[WATER_NOTE_BYTES];
     char text[TEXT_BYTES];
     char event[REPORT_BYTES];
 
