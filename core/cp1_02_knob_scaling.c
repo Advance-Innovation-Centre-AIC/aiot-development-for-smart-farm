@@ -44,11 +44,10 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    DEADBAND =
-        20,     /* raw must move more than this to change the number */
-    RAW_LO = 0, /* raw count at the knob's left end */
+    DEADBAND = 20,   /* raw must move more than this to change it */
+    RAW_LO = 0,      /* raw count at the knob's left end */
     RAW_HI = 4095,   /* raw count at the knob's right end */
     SAMPLE_MS = 20,  /* read the button this often (debounce) */
     TICK_MS = 500,   /* read the knobs and refresh this often */
@@ -56,6 +55,11 @@ enum {
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
+/* Names on the panel: SW5 = lower button = pressed(1), SW6 = upper
+ * button = pressed(0). */
+static const char *const BUTTON_NAMES[2] = {"SW5",
+                                            "SW6"}; /* .py: BTN_NAMES */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -144,9 +148,6 @@ static const knob_t KNOBS[KNOB_COUNT] = {
     {"VR2 อุณหภูมิเป้า", "C", 15, 40, 1, 11},
     {"VR3 น้ำในถัง", "ลิตร", 0, 500, 0, 11},
     {"VR4 ตั้งเวลารดน้ำ", "นาที", 0, 60, 0, 13}};
-
-/* The button names on the panel (SW5 = lower = pressed(1), SW6 =
- * upper = pressed(0)) live in show_band(), their one reader. */
 
 typedef struct {
     int32_t x;
@@ -536,17 +537,16 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 
 static void show_band(const app_t *app)
 {
-    static const char *const button_names[2] = {"SW5", "SW6"};
     char text[TEXT_BYTES];
 
     if (app->band != 0) {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: %ld count",
-                       button_names[0], (long)app->band);
+                       BUTTON_NAMES[0], (long)app->band);
     } else {
         (void)snprintf(text, sizeof(text),
                        "%s (ล่าง) = เปิด/ปิดกันกะพริบ   ตอนนี้: ปิด",
-                       button_names[0]);
+                       BUTTON_NAMES[0]);
     }
     set_text(app->ui, app->help, text);
 }
