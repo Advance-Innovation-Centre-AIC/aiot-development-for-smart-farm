@@ -132,13 +132,13 @@ def build_screen():
     w["led"] = ui.Led(x=620, y=60, w=56, h=56, color=COL_INFO, value=0)       # ไฟปั๊มบนจอ
     ui.Label("ปั๊ม", x=690, y=74, color=COL_DIM, value=20)
     w["auto"] = ui.Switch(x=620, y=140, w=64, h=32, value=0)
-    ui.Label("อัตโนมัติ", x=694, y=146, color=COL_DIM, value=16)
+    ui.Label("อัตโนมัติ", x=694, y=146, color=COL_DIM, value=20)
     w["soil"] = ui.Label(" ", x=12, y=150, color=COL_TEXT, value=20)
     w["th"] = ui.Slider(x=24, y=190, w=388, h=24, min=0, max=100, value=TH_START)
     w["last"] = ui.Label(" ", x=12, y=236, color=COL_WARN, value=24)
     w["note"] = ui.Label(" ", x=12, y=278, color=COL_TEXT, value=20)
     w["help"] = ui.Label("แตะ = ถาม  กดค้าง = เปิด  หยุด = ปิด", x=12, y=352,
-                         color=COL_DIM, value=16)
+                         color=COL_DIM, value=20)
     ui.poll()
     return w
 
