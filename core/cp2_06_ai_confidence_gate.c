@@ -930,28 +930,27 @@ static bento_status_t show_emulator_gap(bento_ui_t *ui)
     return add_label(ui, gap_text, &spec, &unused);
 }
 
-/* Opens the Edge AI link and looks for the model. Where the link is
- * not there (the Emulator, or a board without it such as the
- * reTerminal), the model counts as not found. */
+/* Opens the Edge AI link and looks for the model. Any failure here
+ * means "not found", as the .py's find_model catches every error;
+ * only the BENTO Emulator adds its note. */
 static bento_status_t look_for_model(const screen_t *screen,
                                      const char *key, model_t *model)
 {
-    bento_status_t status = bento_edgeai_init();
+    const bento_status_t link = bento_edgeai_init();
     bool has_link = false;
+    bento_status_t status = BENTO_OK;
 
     model->found = false;
-    if (status == BENTO_E_UNSUPPORTED) {
+    if (link == BENTO_OK) {
+        find_model(key, model);
+    } else if ((link == BENTO_E_UNSUPPORTED) &&
+               (bento_edgeai_supported(&has_link) ==
+                BENTO_E_UNSUPPORTED)) {
         /* a reTerminal refuses init too but answers this query; only
          * the BENTO Emulator's C runtime refuses both */
-        if (bento_edgeai_supported(&has_link) == BENTO_E_UNSUPPORTED) {
-            status = show_emulator_gap(screen->ui);
-        } else {
-            status = BENTO_OK;
-        }
-    } else if (status == BENTO_OK) {
-        find_model(key, model);
+        status = show_emulator_gap(screen->ui);
     } else {
-        /* any other failure ends the program, as before */
+        /* no link or a failed init: the model is not found */
     }
     return status;
 }
