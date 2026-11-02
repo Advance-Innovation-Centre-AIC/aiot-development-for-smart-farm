@@ -55,8 +55,12 @@
  *     next one, and the program closes the module's Edge AI link
  *     (bento_edgeai_deinit) after the final stop.
  *   - A button read that fails ends the run, as an exception from
- *     buttons.pressed() does. A board without the model link
- *     (reTerminal) runs rule-only, as an empty edge_ai.models().
+ *     buttons.pressed() does.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
+ *     yet: the program says so and ends (Edge AI comes first, as on
+ *     a board without the model link, such as the reTerminal). Where
+ *     only MQTT is missing, it says so and runs offline, as the .py
+ *     does.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -347,6 +351,7 @@ typedef struct {
     char labels[BENTO_EDGEAI_MAX_CLASSES][BENTO_EDGEAI_LABEL_LEN];
     bool mic;
     bool running;
+    bool linked; /* false: no Edge AI from C at all (the Emulator) */
     bool has_sequence;
     uint32_t sequence;
     window_t history;
@@ -457,6 +462,7 @@ typedef struct {
     bool paused;
     bool ai_off;
     bool online;
+    bool mqtt_missing; /* no MQTT from C at all (the Emulator) */
     bool has_broker;
     uint32_t broker;
     char base[NAME_BYTES];
@@ -1009,9 +1015,11 @@ static void find_key(ai_t *ai, const char *key, int32_t count)
  * key: the order on a board can change after a reboot. */
 static void ai_find(ai_t *ai, const mission_t *mission)
 {
+    const bento_status_t status = bento_edgeai_init();
     int32_t count = 0;
 
-    if ((bento_edgeai_init() != BENTO_OK) ||
+    ai->linked = status != BENTO_E_UNSUPPORTED;
+    if ((status != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0; /* the AI core does not answer: none found */
     }
@@ -1775,6 +1783,7 @@ static bento_status_t open_broker(state_t *state, bool *linked)
     config.client_id = client_id;
     config.client_id_len = (uint32_t)strlen(client_id);
     status = bento_mqtt_open_start(&config, &state->broker);
+    state->mqtt_missing = status == BENTO_E_UNSUPPORTED;
     state->has_broker = status == BENTO_OK;
     if (state->has_broker) {
         status = wait_broker(state->broker);
@@ -1795,7 +1804,8 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
 
     *linked = false;
     for (attempt = 1;
-         (attempt <= BROKER_TRIES) && (status == BENTO_OK) && !*linked;
+         (attempt <= BROKER_TRIES) && (status == BENTO_OK) &&
+         !*linked && !farm->state.mqtt_missing;
          attempt++) {
         if (attempt > 1) {
             (void)snprintf(text, sizeof(text),
@@ -1826,12 +1836,53 @@ static void listen_commands(farm_t *farm)
     note(farm, text, ok ? COLOR_OK : COLOR_WARN);
 }
 
-/* Wi-Fi, the broker, then ai/cmd. A step that fails leaves the run
- * offline (the console instead). Only Stop is an error. */
-static bento_status_t go_online(farm_t *farm)
+/* No MQTT from C here (the BENTO Emulator): the note line says so,
+ * and the run goes on offline, as when the broker is unreachable. */
+static void show_mqtt_gap(farm_t *farm)
+{
+    static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+
+    note(farm, gap, COLOR_WARN);
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\n",
+                 gap);
+    (void)printf("ต่อ broker ไม่ได้: ออฟไลน์ (ทำงานต่อ)\n");
+}
+
+/* Wi-Fi, then the broker, then ai/cmd; a step that fails says so.
+ * *linked: on the broker. Only Stop is an error. */
+static bento_status_t connect_link(farm_t *farm, bool *linked)
 {
     char text[TEXT_BYTES];
     bool up = false;
+    bento_status_t status;
+
+    note(farm, "ต่อ WiFi...", COLOR_WARN);
+    poll_display(farm->ui); /* the label is up before the wait */
+    status = wifi_up(&up);
+    if ((status == BENTO_OK) && up) {
+        status = connect_broker(farm, linked);
+    }
+    if ((status == BENTO_OK) && *linked) {
+        listen_commands(farm);
+    } else if ((status == BENTO_OK) && farm->state.mqtt_missing) {
+        show_mqtt_gap(farm);
+    } else if (status == BENTO_OK) {
+        (void)snprintf(text, sizeof(text),
+                       "ต่อ %s ไม่ได้: ออฟไลน์ (ทำงานต่อ)",
+                       up ? "broker" : "WiFi");
+        note(farm, text, COLOR_WARN);
+    } else {
+        /* Stop ends the run */
+    }
+    return status;
+}
+
+/* A step that fails leaves the run offline (the console instead).
+ * Only Stop is an error. */
+static bento_status_t go_online(farm_t *farm)
+{
     bool linked = false;
     bento_status_t status = BENTO_OK;
 
@@ -1840,22 +1891,7 @@ static bento_status_t go_online(farm_t *farm)
     } else if (ssid_unset() && !wifi_connected()) {
         note(farm, "ตั้งชื่อ Hotspot ก่อน: ออฟไลน์", COLOR_WARN);
     } else {
-        note(farm, "ต่อ WiFi...", COLOR_WARN);
-        poll_display(farm->ui); /* the label is up before the wait */
-        status = wifi_up(&up);
-        if ((status == BENTO_OK) && up) {
-            status = connect_broker(farm, &linked);
-        }
-        if ((status == BENTO_OK) && linked) {
-            listen_commands(farm);
-        } else if (status == BENTO_OK) {
-            (void)snprintf(text, sizeof(text),
-                           "ต่อ %s ไม่ได้: ออฟไลน์ (ทำงานต่อ)",
-                           up ? "broker" : "WiFi");
-            note(farm, text, COLOR_WARN);
-        } else {
-            /* Stop ends the run */
-        }
+        status = connect_link(farm, &linked);
     }
     farm->state.online = linked;
     return status;
@@ -3474,6 +3510,21 @@ static bento_status_t watch(farm_t *farm)
     return status;
 }
 
+/* No Edge AI from C here (the BENTO Emulator): the note line says
+ * so, and the program ends normally. */
+static void show_ai_gap(farm_t *farm)
+{
+    static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+
+    note(farm, gap, COLOR_BAD);
+    poll_display(farm->ui);
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap);
+}
+
 /* The model first (the mic opens after it), then the network, then
  * the watch. */
 static bento_status_t run_mission(farm_t *farm)
@@ -3484,23 +3535,27 @@ static bento_status_t run_mission(farm_t *farm)
     note(farm, "กำลังหาโมเดล (บนบอร์ดอาจนาน 15 วิ)...", COLOR_WARN);
     poll_display(farm->ui);
     status = ai_start(&farm->ai, farm->mission, &started);
-    if ((status == BENTO_OK) && !started) {
+    if ((status == BENTO_OK) && !farm->ai.linked) {
+        show_ai_gap(farm);
+    } else if ((status == BENTO_OK) && !started) {
         (void)printf("ไม่พบหรือโหลดโมเดลไม่ได้: %s%s%s - ใช้กฎอย่างเดียว\n",
                      farm->mission->store_model,
                      (farm->mission->builtin_model[0] != '\0') ? " / "
                                                                : "",
                      farm->mission->builtin_model);
+    } else {
+        /* a model runs, or Stop ends the run */
     }
-    if (status == BENTO_OK) {
+    if ((status == BENTO_OK) && farm->ai.linked) {
         show_model(farm);
         rules_init(&farm->rules, farm->mission->rule);
         status = go_online(farm);
     }
-    if (status == BENTO_OK) {
+    if ((status == BENTO_OK) && farm->ai.linked) {
         show_link(farm);
         status = watch(farm);
     }
-    if (status == BENTO_OK) {
+    if ((status == BENTO_OK) && farm->ai.linked) {
         note(farm, "ครบเวลา - กด Program to Device เพื่อเล่นใหม่",
              COLOR_WARN);
     }
