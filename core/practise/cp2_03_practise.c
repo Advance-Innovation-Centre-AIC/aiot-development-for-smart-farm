@@ -46,7 +46,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     LIMIT = 50, /* เส้นเตือน (%) */
     /* ขั้น 2: ติดเมื่อเกิน LIMIT + HYST ดับเมื่อต่ำกว่า LIMIT - HYST */
@@ -62,10 +62,10 @@ enum {
     SPEAKER = 40,    /* ความดังลำโพงรวม 0-100% (firmware 2.4.2+) */
     VOLUME = 25      /* ความดังเสียง 0-127 (ราว 20%) ทุกเสียงในไฟล์ */
 };
-
-/* On the panel: SW5 = the lower button = pressed(1), SW6 = the upper
- * one = pressed(0). */
+/* .py: BTN_NAMES. ชื่อบนแผง: SW5 = ปุ่มล่าง = pressed(1),
+ * SW6 = ปุ่มบน = pressed(0) */
 static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+/* ---- end of settings ---- */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
