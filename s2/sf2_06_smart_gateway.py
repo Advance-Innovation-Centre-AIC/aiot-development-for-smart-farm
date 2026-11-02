@@ -179,7 +179,7 @@ def send(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -207,13 +207,13 @@ def build_screen():
     w["led"] = ui.Led(x=276, y=124, w=40, h=40, color=COL_INFO)
     w["plc"] = ui.Label("PLC: ?", x=330, y=132, color=COL_DIM)
     w["auto"] = ui.Switch(x=276, y=190, w=64, h=32, value=1)
-    ui.Label("ออโต้: ดิน < %d%%" % SOIL_MIN, x=352, y=194, color=COL_TEXT, value=16)
+    ui.Label("ออโต้: ดิน < %d%%" % SOIL_MIN, x=352, y=194, color=COL_TEXT, value=20)
     w["chart"] = line_chart(12, 252, 400, 86, 0, 100, COL_OK)
     w["s_pump"] = w["chart"].add_series(COL_WARN)
-    ui.Label(BTN_NAMES[0] + "=รดน้ำ " + BTN_NAMES[1] + "=ออโต้", x=424, y=290, color=COL_DIM, value=14)
+    ui.Label(BTN_NAMES[0] + "=รดน้ำ " + BTN_NAMES[1] + "=ออโต้", x=424, y=290, color=COL_DIM, value=20)
     w["note"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq"] = ui.Led(x=590, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=616, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

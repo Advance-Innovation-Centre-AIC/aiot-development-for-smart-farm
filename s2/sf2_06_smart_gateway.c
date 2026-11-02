@@ -1300,7 +1300,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_ui_id_t label_id = 0U;
     bento_status_t status =
@@ -1356,7 +1356,7 @@ static bento_status_t add_soil(farm_t *farm)
 static bento_status_t add_auto(farm_t *farm)
 {
     const spec_t toggle = {276, 190, 64, 32, 0U, 0, 0, 1};
-    const spec_t rule = {352, 194, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t rule = {352, 194, -1, -1, COL_TEXT, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1408,7 +1408,7 @@ static bento_status_t add_history(farm_t *farm)
 {
     static const char auto_button_name[] = "SW6"; /* BTN_NAMES[1] */
     const spec_t chart = {12, 252, 400, 86, COL_OK, 0, PERCENT, 0};
-    const spec_t hint = {424, 290, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t hint = {424, 290, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1431,8 +1431,8 @@ static bento_status_t add_history(farm_t *farm)
 static bento_status_t add_status_line(farm_t *farm)
 {
     const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "กำลังเริ่ม",
                    &farm->screen.note);
