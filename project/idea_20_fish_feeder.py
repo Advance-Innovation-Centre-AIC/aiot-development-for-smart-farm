@@ -197,7 +197,7 @@ def send_report(n, soil, tank, running, meals, next_s):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_TRACK, max=18, value=2)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_POND, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_POND, value=20)
 
 
 def show_link(w, ok):
@@ -211,27 +211,27 @@ def build_screen():
     ui.Label("บ่อปลา: ให้อาหารจากมือถือ", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
     card(12, 44, 262, 290, "อาหารในถังเก็บ VR4")
-    w["hopper"] = ui.Arc(x=38, y=76, w=210, h=210, min=0, max=100, value=0)
-    w["hopper_t"] = ui.Label("-- %", x=104, y=160, color=COL_TEXT, value=28)
-    ui.Label("ต่ำกว่า %d%% ไม่หมุน" % TANK_MIN, x=70, y=296, color=COL_DIM, value=14)
+    w["hopper"] = ui.Arc(x=38, y=80, w=210, h=210, min=0, max=100, value=0)
+    w["hopper_t"] = ui.Label("-- %", x=104, y=164, color=COL_TEXT, value=28)
+    ui.Label("ต่ำกว่า %d%% ไม่หมุน" % TANK_MIN, x=70, y=296, color=COL_DIM, value=20)
     w["title"] = card(286, 44, 246, 290, "เครื่องให้อาหาร = ไฟสีฟ้า")
     w["led"] = ui.Led(x=302, y=80, w=40, h=40, color=COL_FISH)
     w["feed"] = ui.Label("พัก", x=354, y=84, color=COL_DIM, value=24)
     w["left"] = ui.Bar(x=302, y=134, w=214, h=14, min=0, max=PUMP_MAX_S, value=0)
-    ui.Label("อาหารเหลือในบ่อ VR1", x=302, y=170, color=COL_POND, value=16)
-    w["pond"] = ui.Bar(x=302, y=198, w=214, h=26, min=0, max=100, value=0)
-    w["pond_t"] = ui.Label("-- %", x=302, y=232, color=COL_TEXT, value=16)
-    ui.Label(BTN_NAMES[0] + " = หยุดให้อาหารฉุกเฉิน", x=302, y=296, color=COL_WARN, value=14)
+    ui.Label("อาหารเหลือในบ่อ VR1", x=302, y=170, color=COL_POND, value=20)
+    w["pond"] = ui.Bar(x=302, y=204, w=214, h=26, min=0, max=100, value=0)
+    w["pond_t"] = ui.Label("-- %", x=302, y=238, color=COL_TEXT, value=20)
+    ui.Label(BTN_NAMES[0] + " = หยุดให้อาหารฉุกเฉิน", x=302, y=296, color=COL_WARN, value=20)
     # มุมขวาล่างสุดเว้นไว้ให้ปุ่ม Console
     card(544, 44, 236, 150, "มื้อที่ให้ไปแล้ว")
-    w["meals"] = ui.Seg7(text="0", x=560, y=78, w=110, h=64, color=COL_FISH)
-    ui.Label("มื้อ", x=640, y=110, color=COL_DIM, value=16)
+    w["meals"] = ui.Seg7(text="0", x=560, y=82, w=110, h=64, color=COL_FISH)
+    ui.Label("มื้อ", x=640, y=114, color=COL_DIM, value=20)
     card(544, 204, 236, 126, "มื้อถัดไปอีก")
-    w["next"] = ui.Label("--:--", x=560, y=234, color=COL_TEXT, value=28)
-    w["next_t"] = ui.Label("ทุก %d วิ (สาธิต)" % MEAL_EVERY_S, x=560, y=280, color=COL_DIM, value=14)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM)
-    w["mq"] = ui.Led(x=600, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=626, y=10, color=COL_DIM, value=16)
+    w["next"] = ui.Label("--:--", x=560, y=240, color=COL_TEXT, value=28)
+    w["next_t"] = ui.Label("ทุก %d วิ (สาธิต)" % MEAL_EVERY_S, x=560, y=288, color=COL_DIM, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=350, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=590, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=616, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

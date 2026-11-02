@@ -1208,7 +1208,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_TRACK, 18,       2};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_POND, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_POND, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1224,9 +1224,9 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
 static bento_status_t add_hopper(farm_t *farm)
 {
     const rect_t card = {12, 44, 262, 290};
-    const spec_t gauge = {38, 76, 210, 210, 0U, 0, PERCENT, 0};
-    const spec_t gauge_text = {104, 160, -1, -1, COL_TEXT, 0, 0, 28};
-    const spec_t rule = {70, 296, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t gauge = {38, 80, 210, 210, 0U, 0, PERCENT, 0};
+    const spec_t gauge_text = {104, 164, -1, -1, COL_TEXT, 0, 0, 28};
+    const spec_t rule = {70, 296, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1253,10 +1253,10 @@ static bento_status_t add_hopper(farm_t *farm)
 /* The pond's feed under the feeder. */
 static bento_status_t add_pond(farm_t *farm)
 {
-    const spec_t caption = {302, 170, -1, -1, COL_POND, 0, 0, 16};
-    const spec_t pond = {302, 198, 214, 26, 0U, 0, PERCENT, 0};
-    const spec_t pond_text = {302, 232, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t hint = {302, 296, -1, -1, COL_WARN, 0, 0, 14};
+    const spec_t caption = {302, 170, -1, -1, COL_POND, 0, 0, 20};
+    const spec_t pond = {302, 204, 214, 26, 0U, 0, PERCENT, 0};
+    const spec_t pond_text = {302, 238, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t hint = {302, 296, -1, -1, COL_WARN, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1313,10 +1313,10 @@ static bento_status_t add_meals(farm_t *farm)
 {
     const rect_t given = {544, 44, 236, 150};
     const rect_t coming = {544, 204, 236, 126};
-    const spec_t meals = {560, 78, 110, 64, COL_FISH, 0, 0, 0};
-    const spec_t unit = {640, 110, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t next = {560, 234, -1, -1, COL_TEXT, 0, 0, 28};
-    const spec_t every = {560, 280, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t meals = {560, 82, 110, 64, COL_FISH, 0, 0, 0};
+    const spec_t unit = {640, 114, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t next = {560, 240, -1, -1, COL_TEXT, 0, 0, 28};
+    const spec_t every = {560, 288, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1348,9 +1348,9 @@ static bento_status_t add_meals(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {600, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {626, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 350, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
