@@ -67,10 +67,10 @@ static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 
 /* สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ */
 static const char BROKER[] = "broker.hivemq.com";
-/* + TEAM + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ: ไม่ชน id เก่า */
-static const char CLIENT_ID[] = "bento-farm-";
-/* TOPIC = ROOT/TEAM/telemetry, TOPIC_EVENT = ROOT/TEAM/event */
-static const char ROOT[] = "bento-aiot";
+/* CLIENT_ID = "bento-farm-" + TEAM, + เลขจากนาฬิกาบอร์ดทุกครั้งที่ต่อ:
+ * ไม่ชน id เก่า, built in main() */
+/* TOPIC = "bento-aiot/" + TEAM + "/telemetry", built in main() */
+/* TOPIC_EVENT = "bento-aiot/" + TEAM + "/event", built in main() */
 
 enum {
     READ_MS = 1000,
@@ -1135,12 +1135,12 @@ int main(void)
     farm.buttons[BUTTON_SEND].index = 1U; /* SW5 */
     farm.buttons[BUTTON_CALL].index = 0U; /* SW6 */
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "bento-farm-%s", TEAM);
     (void)snprintf(farm.names.topic, sizeof(farm.names.topic),
-                   "%s/%s/telemetry", ROOT, TEAM);
+                   "bento-aiot/%s/telemetry", TEAM);
     (void)snprintf(farm.names.topic_event,
-                   sizeof(farm.names.topic_event), "%s/%s/event", ROOT,
-                   TEAM);
+                   sizeof(farm.names.topic_event),
+                   "bento-aiot/%s/event", TEAM);
     status = start_farm(&farm);
     if (status == BENTO_OK) {
         status = report(&farm);
