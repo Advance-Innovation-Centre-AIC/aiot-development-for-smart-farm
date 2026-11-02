@@ -81,9 +81,9 @@
  * goes to the console. */
 static const char MISSION[] = "pump";
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-static const char BROKER[] = "broker.hivemq.com";
+/* The hotspot's password is in wifi_up(), the broker in
+ * open_broker(). */
 
 /* The AI side (counted as sf3_04). */
 enum {
@@ -172,7 +172,6 @@ enum {
     MS_PER_MINUTE = 60000,
     SUFFIX_CHARS = 4, /* "_out" of wood_out and plastic_out */
     FOUND_MAX = 8,
-    HITS_MAX = 4,
     COUGHS_KEPT = 256,
     FAIL_PRINT_EVERY = 100,
     NAME_BYTES = 48,  /* the client id or a topic */
@@ -193,9 +192,6 @@ typedef enum {
     RULE_UNSET
 } rule_kind_t;
 
-static const char *const RULE_KEYS[] = {"vib", "loud", "rate",
-                                        "dur", "btn",  ""};
-
 /* The missions, in the order of MISSIONS. */
 typedef enum {
     MISSION_PUMP = 0,
@@ -214,8 +210,9 @@ typedef struct {
     const char *key;
     const char *thai;
     const char *problem;
-    const char *models[2];
-    const char *hits[HITS_MAX];
+    const char *store_model;
+    const char *builtin_model; /* "" = none */
+    const char *hits;          /* the labels, one space between */
     rule_kind_t rule;
     const char *alarm_text;
     int32_t loud_s;
@@ -223,73 +220,31 @@ typedef struct {
 } mission_t;
 
 static const mission_t MISSIONS[] = {
-    {"pump",
-     "หมอปั๊มน้ำ",
-     "ปั๊มสั่นผิดปกติ ซ่อมก่อนพัง",
-     {"AnomalousVibration", "Motion Detection"},
-     {"anomaly", "shaking", NULL, NULL},
-     RULE_VIB,
-     "STOP PUMP",
-     2,
+    {"pump", "หมอปั๊มน้ำ", "ปั๊มสั่นผิดปกติ ซ่อมก่อนพัง", "AnomalousVibration",
+     "Motion Detection", "anomaly shaking", RULE_VIB, "STOP PUMP", 2,
      "ไม่มีโมเดล: ใช้กฎอย่างเดียว"},
-    {"siren",
-     "ยามฟังไซเรน",
-     "รถฉุกเฉินมา ต้องเปิดประตู",
-     {"SirenDetection", "Siren Detection"},
-     {"sirens", NULL, NULL, NULL},
-     RULE_LOUD,
-     "OPEN GATE",
-     2,
+    {"siren", "ยามฟังไซเรน", "รถฉุกเฉินมา ต้องเปิดประตู", "SirenDetection",
+     "Siren Detection", "sirens", RULE_LOUD, "OPEN GATE", 2,
      "ไม่มีโมเดล: ใช้กฎอย่างเดียว"},
-    {"barn",
-     "หูโรงเรือน",
-     "หมูไอถี่ / ก๊อกน้ำเปิดทิ้ง",
-     {"HomeSounds", "Cough Detection"},
-     {"cough", "water_tap", "baby_cry", NULL},
-     RULE_RATE,
-     "CHECK BARN",
-     2,
+    {"barn", "หูโรงเรือน", "หมูไอถี่ / ก๊อกน้ำเปิดทิ้ง", "HomeSounds",
+     "Cough Detection", "cough water_tap baby_cry", RULE_RATE,
+     "CHECK BARN", 2, "ไม่มีโมเดล: ใช้กฎอย่างเดียว"},
+    {"night", "ยามกลางคืน", "เลื่อยยนต์ ไฟไหม้ สุนัข ตอนดึก",
+     "Environment Sounds", "Alarm Detection",
+     "chainsaw crackling_fire dog alarm", RULE_LOUD, "CHECK FARM", 2,
      "ไม่มีโมเดล: ใช้กฎอย่างเดียว"},
-    {"night",
-     "ยามกลางคืน",
-     "เลื่อยยนต์ ไฟไหม้ สุนัข ตอนดึก",
-     {"Environment Sounds", "Alarm Detection"},
-     {"chainsaw", "crackling_fire", "dog", "alarm"},
-     RULE_LOUD,
-     "CHECK FARM",
-     2,
-     "ไม่มีโมเดล: ใช้กฎอย่างเดียว"},
-    {"voice",
-     "สั่งปั๊มด้วยเสียง",
-     "พูด go / stop สั่งปั๊มผ่าน PLC",
-     {"Voice Commands", NULL},
-     {"go", "stop", NULL, NULL},
-     RULE_BUTTON,
-     "PUMP",
-     2,
+    {"voice", "สั่งปั๊มด้วยเสียง", "พูด go / stop สั่งปั๊มผ่าน PLC",
+     "Voice Commands", "", "go stop", RULE_BUTTON, "PUMP", 2,
      "ไม่มีโมเดล: ปุ่มแทนเสียง (ไม่ใช่ AI)"},
-    {"worker",
-     "คนงานปลอดภัย",
-     "คนงานคนเดียว ล้มหรือหมดสติ",
-     {"HumanActivity", NULL},
-     {"sitting", "standing", NULL, NULL},
-     RULE_DURATION,
-     "SOS",
-     2,
+    {"worker", "คนงานปลอดภัย", "คนงานคนเดียว ล้มหรือหมดสติ", "HumanActivity",
+     "", "sitting standing", RULE_DURATION, "SOS", 2,
      "ไม่มีโมเดล: ใช้ IMU อย่างเดียว"},
-    {"drill",
-     "ช่างซ่อมโรงเรือน",
-     "สว่านทะลุชิ้นงาน (ผู้สอนสาธิต)",
-     {"DrillMaterialMic", NULL},
-     {"wood_out", "plastic_out", NULL, NULL},
-     RULE_LOUD,
-     "STOP DRILL",
-     1,
-     "ไม่มีโมเดล: ใช้ความดังอย่างเดียว"}};
+    {"drill", "ช่างซ่อมโรงเรือน", "สว่านทะลุชิ้นงาน (ผู้สอนสาธิต)",
+     "DrillMaterialMic", "", "wood_out plastic_out", RULE_LOUD,
+     "STOP DRILL", 1, "ไม่มีโมเดล: ใช้ความดังอย่างเดียว"}};
 
 /* "model" when the board has no model of the mission. */
 static const char RULE_ONLY[] = "rule-only";
-static const char RAIN[] = "rain"; /* night: an event, not an alarm */
 
 /* Who sees trouble; the screen's cells and the level follow it. */
 typedef enum {
@@ -300,10 +255,6 @@ typedef enum {
 } agree_t;
 
 static const char *const AGREE_KEYS[] = {"none", "ai", "rule", "both"};
-static const char *const LEVEL_TEXTS[] = {
-    "ระดับ 0: ปกติ", "ระดับ 1: ฝ่ายเดียว ไปดู", "ระดับ 2: ยืนยันสองทาง!"};
-static const uint32_t LEVEL_COLORS[] = {COLOR_OK, COLOR_WARN,
-                                        COLOR_BAD};
 
 /* The tunes the board plays; each one mutes the ears for MUTE_MS. */
 typedef enum {
@@ -878,14 +829,20 @@ static bento_status_t stop_engine(void)
     return (status == BENTO_E_CANCELLED) ? status : BENTO_OK;
 }
 
+/* str.lower() of one ASCII letter; any other byte as it is. */
 static char lower_ascii(char letter)
 {
-    char lower = letter;
+    static const char upper[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char lower[] = "abcdefghijklmnopqrstuvwxyz";
+    char result = letter;
+    uint32_t i;
 
-    if ((letter >= 'A') && (letter <= 'Z')) {
-        lower = (char)((letter - 'A') + 'a');
+    for (i = 0U; upper[i] != '\0'; i++) {
+        if (upper[i] == letter) {
+            result = lower[i];
+        }
     }
-    return lower;
+    return result;
 }
 
 /* key.lower() in name.lower() */
@@ -1043,15 +1000,14 @@ static void find_key(ai_t *ai, const char *key, int32_t count)
 static void ai_find(ai_t *ai, const mission_t *mission)
 {
     int32_t count = 0;
-    uint32_t key;
 
     if ((bento_edgeai_init() != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0; /* the AI core does not answer: none found */
     }
-    for (key = 0U; (key < 2U) && (mission->models[key] != NULL);
-         key++) {
-        find_key(ai, mission->models[key], count);
+    find_key(ai, mission->store_model, count);
+    if (mission->builtin_model[0] != '\0') {
+        find_key(ai, mission->builtin_model, count);
     }
 }
 /* The Store's model first; none, or none that starts, then the
@@ -1140,14 +1096,23 @@ static int32_t ceil_ms(uint32_t latency_us)
     return whole_ms + ((latency_ms > (float)whole_ms) ? 1 : 0);
 }
 
+/* Is label one of the mission's trouble labels (space-separated)? */
 static bool is_hit(const mission_t *mission, const char *label)
 {
+    const char *hits = mission->hits;
+    const size_t length = strlen(label);
     bool hit = false;
-    uint32_t i;
+    size_t start = 0U;
 
-    for (i = 0U; (i < (uint32_t)HITS_MAX) && (mission->hits[i] != NULL);
-         i++) {
-        hit = hit || (strcmp(label, mission->hits[i]) == 0);
+    while (!hit && (hits[start] != '\0')) {
+        size_t end = start;
+
+        while ((hits[end] != '\0') && (hits[end] != ' ')) {
+            end++;
+        }
+        hit = ((end - start) == length) && (length > 0U) &&
+              (strncmp(&hits[start], label, length) == 0);
+        start = (hits[end] == ' ') ? (end + 1U) : end;
     }
     return hit;
 }
@@ -1171,8 +1136,8 @@ static void ai_take(farm_t *farm, const bento_edgeai_result_t *result)
         ai->hit_conf = ai->conf;
     }
     window_push(&ai->history, hit);
-    if (farm->id == MISSION_NIGHT) {
-        window_push(&ai->rain, (strcmp(ai->label, RAIN) == 0) &&
+    if (farm->id == MISSION_NIGHT) { /* rain: an event, not an alarm */
+        window_push(&ai->rain, (strcmp(ai->label, "rain") == 0) &&
                                    (ai->conf >= CONF_MIN));
     }
 }
@@ -1274,6 +1239,7 @@ static bento_real_t spread(const bento_real_t *samples, uint32_t count)
     bento_real_t sum = (bento_real_t)0;
     bento_real_t squares = (bento_real_t)0;
     bento_real_t mean;
+    bento_real_t variance;
     uint32_t i;
 
     for (i = 0U; i < count; i++) {
@@ -1285,7 +1251,8 @@ static bento_real_t spread(const bento_real_t *samples, uint32_t count)
 
         squares += away * away;
     }
-    return (bento_real_t)sqrt((double)(squares / size));
+    variance = squares / size;
+    return (bento_real_t)sqrt((double)variance);
 }
 
 /* True when the window is full and the vibration is new; the first
@@ -1727,6 +1694,8 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
+    /* WIFI_PASS: at least 8 characters; never share a file with it */
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -1736,8 +1705,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = WIFI_PASS;
-        params.pass_len = (uint32_t)strlen(WIFI_PASS);
+        params.pass = wifi_pass;
+        params.pass_len = (uint32_t)strlen(wifi_pass);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -1779,6 +1748,8 @@ static void close_broker(state_t *state)
 /* One try, with a new client id, so an old id never collides. */
 static bento_status_t open_broker(state_t *state, bool *linked)
 {
+    /* BROKER; the spare is test.mosquitto.org (change the app too) */
+    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -1787,8 +1758,8 @@ static bento_status_t open_broker(state_t *state, bool *linked)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1932,6 +1903,8 @@ static const char *model_name(const farm_t *farm)
 /* The state of item 3.11, without p2/c2 and ms when drop says so. */
 static void write_status(farm_t *farm, const char *model, int32_t drop)
 {
+    static const char *const rule_keys[] = {"vib", "loud", "rate",
+                                            "dur", "btn",  ""};
     const ai_t *ai = &farm->ai;
     const state_t *state = &farm->state;
     char second[TAIL_BYTES];
@@ -1955,7 +1928,7 @@ static void write_status(farm_t *farm, const char *model, int32_t drop)
         "\"agree\": \"%s\", \"lvl\": %" PRId32 ", \"alarm\": %d}",
         TEAM, state->sent, MISSION, model, ai->label, ai->conf,
         (drop >= 1) ? "" : second, (drop >= 2) ? "" : latency,
-        RULE_KEYS[state->judged.kind], state->judged.rule, value, limit,
+        rule_keys[state->judged.kind], state->judged.rule, value, limit,
         AGREE_KEYS[state->agree], state->level,
         state->alarm.on ? 1 : 0);
 }
@@ -2595,8 +2568,9 @@ static void rule_text(const farm_t *farm, char *text, uint32_t capacity)
                        "กฎ: ดัง >= %d ต่อเนื่อง %" PRId32 " วิ", LOUD_LV,
                        farm->mission->loud_s);
     } else if (kind == RULE_RATE) {
-        (void)snprintf(text, capacity, "กฎ: ไอ >= %d ครั้งใน %d นาที",
-                       COUGH_MAX, RATE_MS / MS_PER_MINUTE);
+        (void)snprintf(text, capacity,
+                       "กฎ: ไอ >= %d ครั้งใน %" PRId32 " นาที", COUGH_MAX,
+                       (int32_t)RATE_MS / (int32_t)MS_PER_MINUTE);
     } else if ((kind == RULE_DURATION) && (farm->id == MISSION_BARN)) {
         (void)snprintf(text, capacity, "กฎ: ก๊อกเปิดต่อเนื่อง >= %d วิ",
                        TAP_S);
@@ -2604,8 +2578,9 @@ static void rule_text(const farm_t *farm, char *text, uint32_t capacity)
         (void)snprintf(text, capacity, "กฎ: ไม่ขยับ >= %d วิ แล้วถาม",
                        STILL_S);
     } else {
-        (void)snprintf(text, capacity, "กฎ: SW6 ยืนยัน go ภายใน %d วิ",
-                       GO_CONFIRM_MS / MS_PER_S);
+        (void)snprintf(text, capacity,
+                       "กฎ: SW6 ยืนยัน go ภายใน %" PRId32 " วิ",
+                       (int32_t)GO_CONFIRM_MS / (int32_t)MS_PER_S);
     }
 }
 
@@ -2711,7 +2686,8 @@ static void draw_rule(farm_t *farm, uint32_t now_ms)
     if (judged->limit.value != (bento_real_t)0) {
         const bento_real_t scaled =
             judged->value.value * (bento_real_t)PERCENT;
-        const int32_t share = (int32_t)(scaled / judged->limit.value);
+        const bento_real_t ratio = scaled / judged->limit.value;
+        const int32_t share = (int32_t)ratio;
 
         bar = (share < PERCENT) ? share : PERCENT;
     }
@@ -2731,18 +2707,18 @@ static void alarm_line(farm_t *farm, uint32_t now_ms)
     if (farm->id == MISSION_VOICE) {
         put(farm, SLOT_ALARM, state->voice_text, COLOR_INFO);
     } else if (state->has_asked) {
-        (void)snprintf(text, sizeof(text),
-                       "โอเคไหม? กด SW6 (อีก %" PRId32 " วิ)",
-                       seconds_left((CHECKIN_S * MS_PER_S) -
-                                    bento_time_ticks_diff(
-                                        now_ms, state->asked_ms)));
+        (void)snprintf(
+            text, sizeof(text), "โอเคไหม? กด SW6 (อีก %" PRId32 " วิ)",
+            seconds_left(
+                ((int32_t)CHECKIN_S * (int32_t)MS_PER_S) -
+                bento_time_ticks_diff(now_ms, state->asked_ms)));
         put(farm, SLOT_ALARM, text, COLOR_WARN);
     } else if (state->alarm.on) {
         put(farm, SLOT_ALARM, "เตือนอยู่! กด SW6 รับทราบ", COLOR_BAD);
     } else if (state->alarm.acked) {
         (void)snprintf(text, sizeof(text),
-                       "รับทราบแล้ว (เตือนใหม่หลังสงบ %d วิ)",
-                       ACKED_REARM_MS / MS_PER_S);
+                       "รับทราบแล้ว (เตือนใหม่หลังสงบ %" PRId32 " วิ)",
+                       (int32_t)ACKED_REARM_MS / (int32_t)MS_PER_S);
         put(farm, SLOT_ALARM, text, COLOR_WARN);
     } else {
         (void)snprintf(text, sizeof(text),
@@ -2758,6 +2734,10 @@ static void draw_level(farm_t *farm, uint32_t now_ms)
                                    SLOT_CELL_RULE, SLOT_CELL_NONE};
     static const agree_t answers[] = {AGREE_BOTH, AGREE_AI, AGREE_RULE,
                                       AGREE_NONE};
+    static const char *const level_texts[] = {
+        "ระดับ 0: ปกติ", "ระดับ 1: ฝ่ายเดียว ไปดู", "ระดับ 2: ยืนยันสองทาง!"};
+    static const uint32_t level_colors[] = {COLOR_OK, COLOR_WARN,
+                                            COLOR_BAD};
     const state_t *state = &farm->state;
     uint32_t i;
 
@@ -2766,9 +2746,9 @@ static void draw_level(farm_t *farm, uint32_t now_ms)
         put_value(farm, cells[i], (state->agree == answers[i]) ? 1 : 0);
     }
     put_value(farm, SLOT_LEVEL_LED, 1);
-    put_color(farm, SLOT_LEVEL_LED, LEVEL_COLORS[state->level]);
-    put(farm, SLOT_LEVEL, LEVEL_TEXTS[state->level],
-        LEVEL_COLORS[state->level]);
+    put_color(farm, SLOT_LEVEL_LED, level_colors[state->level]);
+    put(farm, SLOT_LEVEL, level_texts[state->level],
+        level_colors[state->level]);
     alarm_line(farm, now_ms);
 }
 
@@ -3008,7 +2988,8 @@ static bento_status_t voice_outcome(farm_t *farm,
         status = sound(farm, TUNE_NO);
     } else {
         (void)snprintf(state->voice_text, sizeof(state->voice_text),
-                       "go ไม่ทำ: สั่งถี่เกิน %d วิ", PLC_GAP_MS / MS_PER_S);
+                       "go ไม่ทำ: สั่งถี่เกิน %" PRId32 " วิ",
+                       (int32_t)PLC_GAP_MS / (int32_t)MS_PER_S);
         say(state, "NO", BENTO_RGBMATRIX_YELLOW, now_ms);
         status = sound(farm, TUNE_NO);
     }
@@ -3027,8 +3008,8 @@ voice_do(farm_t *farm, const gate_result_t *result, uint32_t now_ms)
 
     if (result->has && (result->ok < 0)) {
         (void)snprintf(text, sizeof(text),
-                       "ได้ยิน go: กด SW6 หรือ go ซ้ำ ภายใน %d วิ",
-                       GO_CONFIRM_MS / MS_PER_S);
+                       "ได้ยิน go: กด SW6 หรือ go ซ้ำ ภายใน %" PRId32 " วิ",
+                       (int32_t)GO_CONFIRM_MS / (int32_t)MS_PER_S);
         note(farm, text, COLOR_WARN);
     } else if (result->has) {
         send_voice(farm, result);
@@ -3063,7 +3044,7 @@ static bento_status_t worker_step(farm_t *farm, uint32_t now_ms)
         note(farm, text, COLOR_WARN);
     } else if (state->has_asked &&
                (bento_time_ticks_diff(now_ms, state->asked_ms) >=
-                (CHECKIN_S * MS_PER_S))) {
+                ((int32_t)CHECKIN_S * (int32_t)MS_PER_S))) {
         state->has_asked = false;
         state->checkin_failed = true;
         send_event(farm, "check_in", "\"ok\": 0");
@@ -3403,8 +3384,9 @@ static bento_status_t inbox(farm_t *farm, uint32_t now_ms)
     } else if ((kind != COMMAND_NONE) &&
                (bento_time_ticks_diff(now_ms, farm->state.command_ms) <
                 CMD_GAP_MS)) {
-        (void)snprintf(text, sizeof(text), "คำสั่งถี่เกิน %d วิ: ไม่ทำ",
-                       CMD_GAP_MS / MS_PER_S);
+        (void)snprintf(text, sizeof(text),
+                       "คำสั่งถี่เกิน %" PRId32 " วิ: ไม่ทำ",
+                       (int32_t)CMD_GAP_MS / (int32_t)MS_PER_S);
         note(farm, text, COLOR_WARN);
     } else if (kind != COMMAND_NONE) {
         status = obey(farm, kind, &command, now_ms);
@@ -3494,11 +3476,10 @@ static bento_status_t run_mission(farm_t *farm)
     status = ai_start(&farm->ai, farm->mission, &started);
     if ((status == BENTO_OK) && !started) {
         (void)printf("ไม่พบหรือโหลดโมเดลไม่ได้: %s%s%s - ใช้กฎอย่างเดียว\n",
-                     farm->mission->models[0],
-                     (farm->mission->models[1] != NULL) ? " / " : "",
-                     (farm->mission->models[1] != NULL)
-                         ? farm->mission->models[1]
-                         : "");
+                     farm->mission->store_model,
+                     (farm->mission->builtin_model[0] != '\0') ? " / "
+                                                               : "",
+                     farm->mission->builtin_model);
     }
     if (status == BENTO_OK) {
         show_model(farm);
