@@ -31,10 +31,12 @@
  *     A failed select prints the C status number, not the OSError
  *     text. The program also closes the module's Edge AI link
  *     (bento_edgeai_deinit) after the final stop.
+ *   - A board without the model link (reTerminal) answers
+ *     BENTO_E_UNSUPPORTED to bento_edgeai_init(): the same "no model"
+ *     path as an empty edge_ai.models().
  *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
- *     yet: the program says so and ends. bento_edgeai_init() answers
- *     BENTO_E_UNSUPPORTED there (and on a board without the model
- *     link, such as the reTerminal).
+ *     yet: the program says so (a line under the title, and on the
+ *     console), then takes the .py's own "no model" path.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -1145,19 +1147,34 @@ static void report_none(const doctor_t *doctor)
     (void)printf("%s - ใช้ sf3_03 แทน\n", text);
 }
 
-/* No Edge AI from C here (the BENTO Emulator): the status line says
- * so, and the program ends normally. */
-static void show_emulator_gap(const doctor_t *doctor)
+/* No Edge AI from C (BENTO_E_UNSUPPORTED, as in the BENTO Emulator):
+ * one line under the title says so, then the .py's own "no model"
+ * path follows. */
+static bento_status_t show_emulator_gap(doctor_t *doctor)
 {
-    static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
-                              "ให้รันบน Dev Kit หรือ Eva Kit";
+    static const part_t gap = {UI_WIDGET_LABEL,
+                               SLOT_NONE,
+                               "Edge AI จาก C ยังไม่มีใน BENTO "
+                               "Emulator ให้รันบน Dev Kit หรือ Eva Kit",
+                               180,
+                               38,
+                               -1,
+                               -1,
+                               COLOR_WARN,
+                               0,
+                               0,
+                               20,
+                               0U};
+    const bento_status_t status = add_part(doctor, &gap);
 
-    say(doctor, gap, COLOR_BAD);
-    poll_display(doctor->ui);
-    (void)printf(
-        "%s / Edge AI from C is not in the BENTO Emulator yet: "
-        "run it on a Dev Kit or Eva Kit.\n",
-        gap);
+    if (status == BENTO_OK) {
+        poll_display(doctor->ui);
+        (void)printf(
+            "%s / Edge AI from C is not in the BENTO Emulator yet: "
+            "run it on a Dev Kit or Eva Kit.\n",
+            gap.text);
+    }
+    return status;
 }
 
 static bento_status_t run_doctor(doctor_t *doctor)
@@ -1198,11 +1215,14 @@ int main(void)
 
         find_models(doctor, &linked);
         if (!linked) {
-            show_emulator_gap(doctor);
-        } else if (doctor->found_count == 0U) {
+            status = show_emulator_gap(doctor);
+        }
+        if ((status == BENTO_OK) && (doctor->found_count == 0U)) {
             report_none(doctor);
-        } else {
+        } else if (status == BENTO_OK) {
             status = run_doctor(doctor);
+        } else {
+            /* the gap line could not be drawn: the run ends */
         }
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
