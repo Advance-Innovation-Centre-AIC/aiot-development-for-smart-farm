@@ -45,6 +45,8 @@
  *   - The widget dict and the loop's variables are structs kept in
  *     main() and passed by pointer; the JSON line is a file-scope
  *     buffer (CLEAN_C.md C9).
+ *   - In the BENTO Emulator, Edge AI from C is not available yet: the
+ *     program says so and ends as the original does with no model.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -143,6 +145,8 @@ enum {
     SENT_Y = 230,
     JSON_X = 12,
     JSON_Y = 300,
+    GAP_X = 12, /* the Emulator line, between the ring and the JSON */
+    GAP_Y = 268,
     NOTE_X = 12,
     NOTE_Y = 352
 };
@@ -445,18 +449,41 @@ static bento_status_t try_key(const char *key, int32_t rows,
     return status;
 }
 
+/* The BENTO Emulator has no Edge AI from C yet: one line on the
+ * screen and on the Console. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap_text[] =
+        "Edge AI จาก C ยังไม่มีใน BENTO "
+        "Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    const rect_t place = {GAP_X, GAP_Y, 0, 0};
+    bento_ui_id_t unused;
+
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    return add_label(ui, gap_text, &place, COLOR_WARN, THAI_PX,
+                     &unused);
+}
+
 /* The first model in MODEL_KEYS order that can be selected. The
  * AI core not answering is the original's empty list. */
-static bento_status_t pick_model(watch_t *watch, bool *selected)
+static bento_status_t pick_model(const link_screen_t *screen,
+                                 watch_t *watch, bool *selected)
 {
     const uint32_t keys =
         (uint32_t)(sizeof(MODEL_KEYS) / sizeof(MODEL_KEYS[0]));
     int32_t rows = 0;
     uint32_t key;
+    const bento_status_t count_status = bento_edgeai_count(&rows);
     bento_status_t status = BENTO_OK;
 
     *selected = false;
-    if (bento_edgeai_count(&rows) != BENTO_OK) {
+    if (count_status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_gap(screen->ui);
+    }
+    if (count_status != BENTO_OK) {
         rows = 0;
     }
     for (key = 0U; (key < keys) && !*selected && (status == BENTO_OK);
@@ -1156,7 +1183,7 @@ static bento_status_t run(const link_screen_t *screen, link_t *link,
     char text[TEXT_BYTES];
     link_result_t result = LINK_UNSET;
     bool selected = false;
-    bento_status_t status = pick_model(watch, &selected);
+    bento_status_t status = pick_model(screen, watch, &selected);
 
     if ((status == BENTO_OK) && !selected) {
         (void)snprintf(text, sizeof(text),
