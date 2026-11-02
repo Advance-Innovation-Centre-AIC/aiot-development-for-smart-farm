@@ -43,14 +43,14 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* PEAK_FULL: not used in C because the .py never reads it */
-/* Settings: change them and run again. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     VOLUME = 25,
     SPEAKER = 40,
     SENS = 3, /* microphone sensitivity 1-5 */
     PEAK_MIN = 3000,
     PEAK_SPAN = 27000,  /* VR3 sets 3000-30000 */
+    PEAK_FULL = 32768,  /* the .py never reads it either */
     EVENT_GAP_MS = 400, /* ms before a sound may count again */
     MUTE_MS = 800,      /* ms deaf after our own speaker */
     WINDOW_MS = 30000,  /* ms of the count looking back */
@@ -62,6 +62,7 @@ enum {
     MATRIX_MS = 3000,
     SCROLL_MS = 80
 };
+/* ---- end of settings ---- */
 
 /* The board's microphone, as the frozen mic.py opens it. */
 enum {
