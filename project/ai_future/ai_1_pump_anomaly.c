@@ -74,6 +74,7 @@ static const char TEAM[] = "teamXX";
 static const char *const MODEL_KEYS[] = {"AnomalousVibration",
                                          "Motion"};
 
+/* MIN_BASE: now MIN_BASE_HUNDREDTHS in work_out_vib() */
 /* The settings of the two judges and of the link. */
 enum {
     CONF_MIN = 60, /* below this many % the AI is not counted */
