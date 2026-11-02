@@ -59,16 +59,10 @@
 #include "bento_wifi.h"
 
 /* ---- 1) ตั้งค่า ---- */
-static const char WIFI_SSID[] =
-    "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
-static const char WIFI_PASS[] =
-    "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
+/* WIFI_SSID, WIFI_PASS: ตั้งใน join_wifi() (set them in join_wifi()) */
 static const char TEAM[] = "teamXX";
 
-static const char BROKER[] = "broker.hivemq.com";
-static const char CLIENT_ID[] =
-    "bento-farm-"; /* + TEAM + a clock number */
-static const char ROOT[] = "bento-aiot";
+/* BROKER: ตั้งใน try_broker(); ROOT, CLIENT_ID: ตั้งใน main() */
 static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
 
 enum {
@@ -174,8 +168,9 @@ static bento_status_t pause_ms(uint32_t ms)
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t tunes[TUNE_COUNT][TUNE_NOTES_MAX] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
@@ -456,9 +451,6 @@ typedef enum {
     FIELD_COUNT
 } field_t;
 
-static const char *const FIELD_NAMES[FIELD_COUNT] = {"cmd", "on", "n",
-                                                     "sec", "text"};
-
 enum {
     JSON_DEPTH_MAX = 16,
     FIELD_NONE = -1,
@@ -546,8 +538,8 @@ static bool read_word(json_reader_t *reader, const char *word)
     bool same = (command->len - reader->offset) >= length;
 
     if (same) {
-        same =
-            memcmp(&command->text[reader->offset], word, length) == 0;
+        same = strncmp((const char *)&command->text[reader->offset],
+                       word, (size_t)length) == 0;
     }
     if (same) {
         reader->offset += length;
@@ -659,7 +651,8 @@ static uint32_t unicode_number(const uint8_t *digits)
         if (digit >= (uint32_t)DECIMAL) {
             digit -= (uint32_t)HEX_LETTER_GAP;
         }
-        number = (number << HEX_BITS) | (digit & (uint32_t)HEX_MASK);
+        number = (number << (uint32_t)HEX_BITS) |
+                 (digit & (uint32_t)HEX_MASK);
     }
     return number;
 }
@@ -755,6 +748,8 @@ static uint32_t decode_string(const uint8_t *text,
 static int32_t field_named(const command_t *command,
                            const json_value_t *key)
 {
+    static const char *const field_names[FIELD_COUNT] = {
+        "cmd", "on", "n", "sec", "text"};
     char name[KEY_BYTES];
     const uint32_t length =
         decode_string(command->text, key, name, sizeof(name));
@@ -762,8 +757,8 @@ static int32_t field_named(const command_t *command,
     int32_t i;
 
     for (i = 0; i < (int32_t)FIELD_COUNT; i++) {
-        if ((length == (uint32_t)strlen(FIELD_NAMES[i])) &&
-            (memcmp(name, FIELD_NAMES[i], length) == 0)) {
+        if ((length == (uint32_t)strlen(field_names[i])) &&
+            (strcmp(name, field_names[i]) == 0)) {
             found = i;
         }
     }
@@ -926,7 +921,7 @@ static bool value_is(const command_t *command, field_t field,
             decode_string(command->text, value, text, sizeof(text));
 
         same = (length == (uint32_t)strlen(word)) &&
-               (memcmp(text, word, length) == 0);
+               (strcmp(text, word) == 0);
     }
     return same;
 }
@@ -1085,10 +1080,11 @@ static int32_t pump_seconds(const command_t *command)
 static void ascii_only(const command_t *command, char *out,
                        uint32_t cap)
 {
-    char text[TEXT_BYTES] = "";
+    char text[TEXT_BYTES];
     uint32_t length = 0U;
     uint32_t i;
 
+    text[0] = '\0';
     if (command->fields[FIELD_TEXT].kind != JSON_MISSING) {
         value_text(command, FIELD_TEXT, text, sizeof(text));
     }
@@ -1225,15 +1221,19 @@ static bool has_ip(void)
  * run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
+    static const char wifi_pass[] =
+        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
+    static const char wifi_ssid[] =
+        "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
@@ -1260,6 +1260,7 @@ static bento_status_t join_wifi(bool *joined)
 static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                                  bool *linked)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     char client_id[NAME_BYTES];
     bento_mqtt_config_t config;
     bool waiting;
@@ -1269,8 +1270,8 @@ static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                    names->client_id,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1848,6 +1849,9 @@ static bento_status_t listen(farm_t *farm)
 
 int main(void)
 {
+    static const char root[] = "bento-aiot";
+    static const char client_prefix[] =
+        "bento-farm-"; /* + TEAM + a clock number */
     farm_t farm;
     bento_status_t status;
 
@@ -1857,11 +1861,11 @@ int main(void)
     farm.shown = -1;
     farm.stop_button.index = 1U; /* SW5 */
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "%s%s", client_prefix, TEAM);
     (void)snprintf(farm.names.topic_cmd, sizeof(farm.names.topic_cmd),
-                   "%s/%s/cmd", ROOT, TEAM);
+                   "%s/%s/cmd", root, TEAM);
     (void)snprintf(farm.names.topic, sizeof(farm.names.topic),
-                   "%s/%s/telemetry", ROOT, TEAM);
+                   "%s/%s/telemetry", root, TEAM);
     status = start_farm(&farm);
     if (status == BENTO_OK) {
         status = listen(&farm);

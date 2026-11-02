@@ -53,20 +53,13 @@
 #include "bento_wifi.h"
 
 /* ---- 1) ตั้งค่า (แก้ได้) ---- */
-static const char WIFI_SSID[] =
-    "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
-static const char WIFI_PASS[] =
-    "<รหัส Hotspot ของกลุ่ม>";          /* อย่างน้อย 8 ตัว */
+/* WIFI_SSID, WIFI_PASS: ตั้งใน join_wifi() (set them in join_wifi()) */
 static const char TEAM[] = "teamXX"; /* เลขกลุ่มที่ผู้สอนแจก เช่น team05 */
-/* ชดเชยความอุ่นจากชิป เช่น -7.0 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* TEMP_OFFSET (ชดเชยความอุ่นจากชิป เช่น -7.0): ตั้งใน read_climate() */
 
-/* สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ */
-static const char BROKER[] = "broker.hivemq.com";
-static const char CLIENT_ID[] =
-    "bento-farm-"; /* + TEAM + a clock number */
-static const char ROOT[] = "bento-aiot";
-static const bool SOUND = true; /* false = ดังเฉพาะตอนกด SW5 */
+/* BROKER (สำรอง: "test.mosquitto.org" ถ้าผู้สอนประกาศ): ตั้งใน
+ * try_broker(); ROOT, CLIENT_ID: ตั้งใน main() */
+/* SOUND (False = ดังเฉพาะตอนกด SW5): ตั้งใน on_sent() */
 
 enum {
     READ_MS = 1000,
@@ -167,8 +160,9 @@ static bento_status_t pause_ms(uint32_t ms)
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t tunes[TUNE_COUNT][TUNE_NOTES_MAX] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
@@ -205,6 +199,7 @@ typedef struct {
  * both are unknown. */
 static void read_climate(readings_t *now)
 {
+    static const bento_real_t temp_offset = (bento_real_t)0.0;
     float t_raw = 0.0F;
     float humidity = 0.0F;
     float hpa = 0.0F;
@@ -213,7 +208,7 @@ static void read_climate(readings_t *now)
         (bento_sensors_sht40_temperature(&t_raw) == BENTO_OK) &&
         (bento_sensors_sht40_humidity(&humidity) == BENTO_OK);
     now->h.known = now->t.known;
-    now->t.value = (bento_real_t)t_raw + TEMP_OFFSET;
+    now->t.value = (bento_real_t)t_raw + temp_offset;
     now->h.value = (bento_real_t)humidity;
     now->p.known = bento_sensors_dps368_pressure(&hpa) == BENTO_OK;
     now->p.value = (bento_real_t)hpa;
@@ -484,15 +479,19 @@ static bool has_ip(void)
  * run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
+    static const char wifi_pass[] =
+        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
+    static const char wifi_ssid[] =
+        "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
@@ -519,6 +518,7 @@ static bento_status_t join_wifi(bool *joined)
 static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                                  bool *linked)
 {
+    static const char broker_host[] = "broker.hivemq.com";
     char client_id[NAME_BYTES];
     bento_mqtt_config_t config;
     bool waiting;
@@ -528,8 +528,8 @@ static bento_status_t try_broker(const names_t *names, uint32_t *broker,
                    names->client_id,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker_host;
+    config.host_len = (uint32_t)strlen(broker_host);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -768,11 +768,14 @@ static bento_status_t build_screen(report_screen_t *screen)
 static void show_now(const report_screen_t *screen,
                      const readings_t *now, maybe_t az0)
 {
-    const maybe_t climate[KNOB_COUNT] = {now->t, now->h, now->p};
+    maybe_t climate[KNOB_COUNT];
     char text[BENTO_FMT_BUF_SIZE + 1U];
     uint32_t length = 0U;
     int32_t i;
 
+    climate[0] = now->t;
+    climate[1] = now->h;
+    climate[2] = now->p;
     for (i = 0; i < KNOB_COUNT; i++) {
         (void)snprintf(text, sizeof(text), "--");
         if (climate[i].known) {
@@ -975,6 +978,7 @@ static bento_status_t read_if_due(farm_t *farm, uint32_t now_ms)
 static bento_status_t on_sent(farm_t *farm, const char *payload,
                               bool manual)
 {
+    static const bool sound = true; /* false = ดังเฉพาะตอนกด SW5 */
     char text[TEXT_BYTES];
     bento_status_t status;
 
@@ -982,7 +986,7 @@ static bento_status_t on_sent(farm_t *farm, const char *payload,
                    farm->sent);
     show_text(farm->screen.ui, farm->screen.sent, text);
     status = bento_rgbmatrix_score(farm->sent, BENTO_RGBMATRIX_GREEN);
-    if ((status == BENTO_OK) && (SOUND || manual)) {
+    if ((status == BENTO_OK) && (sound || manual)) {
         status = beep(farm->screen.ui, TUNE_GOOD);
     }
     if (status == BENTO_OK) {
@@ -1082,6 +1086,9 @@ static bento_status_t report(farm_t *farm)
 
 int main(void)
 {
+    static const char root[] = "bento-aiot";
+    static const char client_prefix[] =
+        "bento-farm-"; /* + TEAM + a clock number */
     farm_t farm;
     bento_status_t status;
 
@@ -1090,11 +1097,11 @@ int main(void)
     farm.buttons[BUTTON_SEND].index = 1U; /* SW5 */
     farm.buttons[BUTTON_CALL].index = 0U; /* SW6 */
     (void)snprintf(farm.names.client_id, sizeof(farm.names.client_id),
-                   "%s%s", CLIENT_ID, TEAM);
+                   "%s%s", client_prefix, TEAM);
     (void)snprintf(farm.names.topic, sizeof(farm.names.topic),
-                   "%s/%s/telemetry", ROOT, TEAM);
+                   "%s/%s/telemetry", root, TEAM);
     (void)snprintf(farm.names.topic_event,
-                   sizeof(farm.names.topic_event), "%s/%s/event", ROOT,
+                   sizeof(farm.names.topic_event), "%s/%s/event", root,
                    TEAM);
     status = start_farm(&farm);
     if (status == BENTO_OK) {

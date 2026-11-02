@@ -229,8 +229,9 @@ static uint32_t pct_color(int32_t pct)
     return color;
 }
 
-/* The temperature with its offset and the humidity; either unread is
- * unknown. The humidity follows the offset only when HUM_FIX. */
+/* The temperature with its offset, then the humidity; a value that
+ * cannot be read is unknown, and so is the humidity after a failed
+ * temperature. The humidity follows the offset only when HUM_FIX. */
 static void read_climate(maybe_t *t, maybe_t *h)
 {
     static const bool hum_fix = true; /* แปลงความชื้นเป็นของห้อง */
@@ -239,7 +240,8 @@ static void read_climate(maybe_t *t, maybe_t *h)
     float humidity = 0.0F;
 
     t->known = bento_sensors_sht40_temperature(&t_raw) == BENTO_OK;
-    h->known = bento_sensors_sht40_humidity(&humidity) == BENTO_OK;
+    h->known = t->known &&
+               (bento_sensors_sht40_humidity(&humidity) == BENTO_OK);
     t->value = (bento_real_t)t_raw + temp_offset;
     h->value = (bento_real_t)humidity;
     if (h->known && t->known && (temp_offset != (bento_real_t)0.0) &&
