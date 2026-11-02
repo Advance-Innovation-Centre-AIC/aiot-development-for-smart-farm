@@ -68,12 +68,8 @@ static const crop_t CROPS[] = {{"มะเขือเทศ", 20, 30, 60, 80},
                                {"ผักสลัด", 15, 25, 50, 70},
                                {"เห็ดนางฟ้า", 22, 28, 80, 95},
                                {"กล้วยไม้", 22, 32, 60, 80}};
-/* พืชตอนเริ่ม (เปลี่ยนด้วยวงล้อบนจอ) */
-static const char START_CROP[] = "มะเขือเทศ";
-/* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
-/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-static const bool HUM_FIX = true;
+/* START_CROP (พืชตอนเริ่ม) อยู่ใน main() ชื่อ start_crop */
+/* TEMP_OFFSET และ HUM_FIX อยู่ใน read_climate() ชื่อ temp_offset, hum_fix */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -108,8 +104,6 @@ enum { /* levels, sound, sensors, the matrix and the screen */
 
 static const uint32_t LEVEL_COLORS[LEVELS] = {COL_OK, COL_WARN,
                                               COL_BAD};
-static const char *const MOODS[LEVELS] = {"สบายดี :)", "เริ่มเครียด",
-                                          "แย่แล้ว!"};
 
 /* ---- 2) ฮาร์ดแวร์ ---- */
 typedef enum {
@@ -127,12 +121,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -146,7 +134,14 @@ static bento_status_t sleep_ms(uint32_t ms)
 
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    /* ui.tone, not ui.sfx: only a tone takes a loudness on this
+     * firmware */
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -195,6 +190,10 @@ typedef struct {
  * 3 misses there is no reading this round. */
 static bento_status_t read_climate(climate_t *climate)
 {
+    /* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
+    static const bento_real_t temp_offset = (bento_real_t)0.0;
+    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+    static const bool hum_fix = true;
     float t_raw = 0.0F;
     float h = 0.0F;
     uint32_t tries = 0U;
@@ -212,9 +211,9 @@ static bento_status_t read_climate(climate_t *climate)
         }
     }
     if (climate->known) {
-        climate->t = (bento_real_t)t_raw + TEMP_OFFSET;
+        climate->t = (bento_real_t)t_raw + temp_offset;
         climate->h = (bento_real_t)h;
-        if ((TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
+        if ((temp_offset != (bento_real_t)0) && hum_fix) {
             climate->h = room_humidity(climate->h, (bento_real_t)t_raw,
                                        climate->t);
         }
@@ -263,18 +262,6 @@ static bento_status_t show_led(const board_led_t *led, int32_t level,
     return status;
 }
 
-/* The crop's 8x8 face in the middle of the RGB matrix ('#' = lit). */
-static const char *const FACES[LEVELS][FACE_ROWS] = {
-    {"..####..", ".#....#.", "#.#..#.#", "#......#", "#.#..#.#",
-     "#..##..#", ".#....#.", "..####.."},
-    {"..####..", ".#....#.", "#.#..#.#", "#......#", "#......#",
-     "#.####.#", ".#....#.", "..####.."},
-    {"..####..", ".#....#.", "#.#..#.#", "#......#", "#..##..#",
-     "#.#..#.#", ".#....#.", "..####.."}};
-static const uint8_t FACE_COLORS[LEVELS] = {
-    (uint8_t)BENTO_RGBMATRIX_GREEN, (uint8_t)BENTO_RGBMATRIX_YELLOW,
-    (uint8_t)BENTO_RGBMATRIX_RED};
-
 /* Two pixels per byte: an even x in the low nibble, an odd x in the
  * high one. */
 static void draw_face_row(uint8_t *frame, int32_t y, const char *row,
@@ -286,7 +273,8 @@ static void draw_face_row(uint8_t *frame, int32_t y, const char *row,
         if (row[i] == '#') {
             const int32_t x = FACE_LEFT_X + i;
             const uint32_t at =
-                (uint32_t)((y * MATRIX_ROW_BYTES) + (x / 2));
+                ((uint32_t)y * (uint32_t)MATRIX_ROW_BYTES) +
+                ((uint32_t)x / 2U);
 
             frame[at] |= ((x % 2) != 0)
                              ? (uint8_t)(color << (uint8_t)NIBBLE_BITS)
@@ -295,14 +283,25 @@ static void draw_face_row(uint8_t *frame, int32_t y, const char *row,
     }
 }
 
+/* The crop's 8x8 face in the middle of the RGB matrix ('#' = lit). */
 static void draw_face(int32_t level)
 {
+    static const char *const faces[LEVELS][FACE_ROWS] = {
+        {"..####..", ".#....#.", "#.#..#.#", "#......#", "#.#..#.#",
+         "#..##..#", ".#....#.", "..####.."},
+        {"..####..", ".#....#.", "#.#..#.#", "#......#", "#......#",
+         "#.####.#", ".#....#.", "..####.."},
+        {"..####..", ".#....#.", "#.#..#.#", "#......#", "#..##..#",
+         "#.#..#.#", ".#....#.", "..####.."}};
+    static const uint8_t face_colors[LEVELS] = {
+        (uint8_t)BENTO_RGBMATRIX_GREEN, (uint8_t)BENTO_RGBMATRIX_YELLOW,
+        (uint8_t)BENTO_RGBMATRIX_RED};
     uint8_t frame[BENTO_RGBMATRIX_FRAME_LEN];
     int32_t y;
 
     (void)memset(frame, 0, sizeof(frame));
     for (y = 0; y < FACE_ROWS; y++) {
-        draw_face_row(frame, y, FACES[level][y], FACE_COLORS[level]);
+        draw_face_row(frame, y, faces[level][y], face_colors[level]);
     }
     /* the .py ignores an OSError of the matrix */
     (void)bento_rgbmatrix_blit(frame, BENTO_RGBMATRIX_FRAME_LEN);
@@ -785,7 +784,8 @@ static bento_status_t build_screen(comfort_screen_t *screen,
 static uint32_t picked_crop(const comfort_screen_t *screen,
                             uint32_t crop)
 {
-    const int32_t count = (int32_t)(sizeof(CROPS) / sizeof(CROPS[0]));
+    const uint32_t crops = (uint32_t)(sizeof(CROPS) / sizeof(CROPS[0]));
+    const int32_t count = (int32_t)crops;
     bento_ui_event_t events[BENTO_UI_POLL_EVENTS_MAX];
     uint32_t received = 0U;
     uint32_t picked = crop;
@@ -833,6 +833,8 @@ typedef struct {
 static void show(const comfort_screen_t *screen,
                  const comfort_view_t *view)
 {
+    static const char *const moods[LEVELS] = {"สบายดี :)", "เริ่มเครียด",
+                                              "แย่แล้ว!"};
     const bento_real_t t = view->climate->t;
     char text[TEXT_CHARS];
     int32_t i;
@@ -842,7 +844,7 @@ static void show(const comfort_screen_t *screen,
                  "%");
     (void)bento_ui_set_color(screen->ui, screen->mood,
                              LEVEL_COLORS[view->level]);
-    set_text(screen->ui, screen->mood, MOODS[view->level]);
+    set_text(screen->ui, screen->mood, moods[view->level]);
     set_text(screen->ui, screen->why, view->why);
     (void)bento_ui_set_value(screen->ui, screen->arc, view->score);
     (void)bento_ui_set_color(screen->ui, screen->arc,
@@ -1007,6 +1009,8 @@ static bento_status_t run_loop(const comfort_screen_t *screen,
 
 int main(void)
 {
+    /* พืชตอนเริ่ม (เปลี่ยนด้วยวงล้อบนจอ) */
+    static const char start_crop[] = "มะเขือเทศ";
     comfort_screen_t screen;
     comfort_t comfort;
     bento_status_t status;
@@ -1017,11 +1021,11 @@ int main(void)
     /* a build without a speaker volume refuses it, as hasattr() skips
      * it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
-    comfort.crop = find_crop(START_CROP);
-    if (strcmp(CROPS[comfort.crop].name, START_CROP) != 0) {
+    comfort.crop = find_crop(start_crop);
+    if (strcmp(CROPS[comfort.crop].name, start_crop) != 0) {
         (void)printf("ไม่รู้จักพืช %s - ใช้ %s แทน (สะกดให้ตรงกับใน "
                      "CROPS)\n",
-                     START_CROP, CROPS[comfort.crop].name);
+                     start_crop, CROPS[comfort.crop].name);
     }
     status = build_screen(&screen, comfort.crop);
     if (status == BENTO_OK) {

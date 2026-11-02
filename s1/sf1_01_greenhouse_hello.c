@@ -58,8 +58,7 @@ enum {
 
 /* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
 static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
-/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-static const bool HUM_FIX = true;
+/* HUM_FIX (แปลงความชื้นเป็นของห้อง) อยู่ใน read_climate() ชื่อ hum_fix */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -90,12 +89,6 @@ enum { /* heat levels, sound, sensors and the screen */
     TEXT_CHARS = 128
 };
 
-static const uint32_t LEVEL_COLORS[LEVELS] = {COL_OK, COL_WARN,
-                                              COL_BAD}; /* บนจอ */
-static const int32_t MATRIX_COLORS[LEVELS] = {
-    BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_YELLOW,
-    BENTO_RGBMATRIX_RED}; /* บนจอไฟ RGB */
-
 /* A sensor value, or none yet (the .py's None). */
 typedef struct {
     bool known;
@@ -118,12 +111,6 @@ typedef struct {
     uint8_t notes[TUNE_NOTES_MAX];
 } tune_notes_t;
 
-/* ui.tone, not ui.sfx: only a tone takes a loudness on this firmware */
-static const tune_notes_t TUNES[] = {
-    {1U, {76U, 0U, 0U}},   {2U, {72U, 79U, 0U}}, {2U, {79U, 72U, 0U}},
-    {3U, {72U, 79U, 84U}}, {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
-    {1U, {88U, 0U, 0U}}};
-
 /* Stop is a status: the chain of steps ends at once. */
 static bento_status_t sleep_ms(uint32_t ms)
 {
@@ -137,7 +124,14 @@ static bento_status_t sleep_ms(uint32_t ms)
 
 static bento_status_t beep(bento_ui_t *ui, tune_t name)
 {
-    const tune_notes_t *tune = &TUNES[name];
+    /* ui.tone, not ui.sfx: only a tone takes a loudness on this
+     * firmware */
+    static const tune_notes_t tunes[] = {
+        {1U, {76U, 0U, 0U}},  {2U, {72U, 79U, 0U}},
+        {2U, {79U, 72U, 0U}}, {3U, {72U, 79U, 84U}},
+        {2U, {84U, 76U, 0U}}, {3U, {84U, 76U, 69U}},
+        {1U, {88U, 0U, 0U}}};
+    const tune_notes_t *tune = &tunes[name];
     uint32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -308,6 +302,8 @@ static bento_status_t read_sht40(climate_t *climate)
 
 static bento_status_t read_climate(climate_t *climate)
 {
+    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+    static const bool hum_fix = true;
     float pressure = 0.0F;
     bento_status_t status;
 
@@ -322,7 +318,7 @@ static bento_status_t read_climate(climate_t *climate)
         climate->t.value = climate->t_raw.value + TEMP_OFFSET;
     }
     if (climate->h.known && climate->t.known &&
-        (TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
+        (TEMP_OFFSET != (bento_real_t)0) && hum_fix) {
         climate->h.value = room_humidity(
             climate->h.value, climate->t_raw.value, climate->t.value);
     }
@@ -386,13 +382,17 @@ typedef struct {
 
 static void matrix_show(bento_real_t t, matrix_shown_t *shown)
 {
+    /* on the RGB matrix */
+    static const int32_t matrix_colors[LEVELS] = {
+        BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_YELLOW,
+        BENTO_RGBMATRIX_RED};
     const int32_t degrees = (int32_t)(t + (bento_real_t)0.5);
     const int32_t level = heat_level(t);
 
     if (!shown->known || (degrees != shown->degrees) ||
         (level != shown->level)) {
         /* the .py ignores an OSError of the matrix */
-        (void)bento_rgbmatrix_score(degrees, MATRIX_COLORS[level]);
+        (void)bento_rgbmatrix_score(degrees, matrix_colors[level]);
     }
     shown->known = true;
     shown->degrees = degrees;
@@ -805,6 +805,9 @@ static bento_status_t build_screen(greenhouse_screen_t *screen)
 static void show_temp(const greenhouse_screen_t *screen,
                       const climate_t *climate, const min_max_t *record)
 {
+    /* on the screen */
+    static const uint32_t level_colors[LEVELS] = {COL_OK, COL_WARN,
+                                                  COL_BAD};
     const bento_real_t t = climate->t.value;
     char text[TEXT_CHARS];
     char digits[BENTO_FMT_BUF_SIZE];
@@ -813,7 +816,7 @@ static void show_temp(const greenhouse_screen_t *screen,
         format_reading(digits, sizeof(digits), &climate->t, 1);
         set_text(screen->ui, screen->seg_t, digits);
         (void)bento_ui_set_color(screen->ui, screen->seg_t,
-                                 LEVEL_COLORS[heat_level(t)]);
+                                 level_colors[heat_level(t)]);
         set_needle(
             screen->ui, screen->gauge,
             clamp(t, (bento_real_t)0, (bento_real_t)T_GAUGE_MAX));
