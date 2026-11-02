@@ -257,7 +257,7 @@ def send(topic, obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    return ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def show_link(w, ok):
@@ -271,30 +271,30 @@ def build_screen():
     ui.Label("ถาดไข่บนรถ นับแรงกระแทก", x=12, y=6, color=COL_TEXT, value=24)
     w = {}
     card(12, 44, 240, 150, "ไข่โดนกระแทก")
-    w["bumps"] = ui.Seg7(text="0", x=28, y=80, w=130, h=56, color=COL_INFO)
-    ui.Label("ครั้ง", x=120, y=96, color=COL_DIM, value=16)
-    w["risk"] = ui.Label("ไข่ปลอดภัย", x=28, y=154, color=COL_OK, value=20)
+    w["bumps"] = ui.Seg7(text="0", x=28, y=84, w=130, h=56, color=COL_INFO)
+    ui.Label("ครั้ง", x=120, y=100, color=COL_DIM, value=20)
+    w["risk"] = ui.Label("ไข่ปลอดภัย", x=28, y=158, color=COL_OK, value=20)
     card(262, 44, 250, 150, "เวลาเดินทาง")
-    w["trip"] = ui.Seg7(text="00:00", x=278, y=80, w=200, h=56, color=COL_TEXT)
-    ui.Label(BTN_NAMES[1] + " = เริ่มเที่ยวใหม่", x=278, y=156, color=COL_DIM, value=14)
+    w["trip"] = ui.Seg7(text="00:00", x=278, y=84, w=200, h=56, color=COL_TEXT)
+    ui.Label(BTN_NAMES[1] + " = เริ่มเที่ยวใหม่", x=278, y=158, color=COL_DIM, value=20)
     w["title"] = card(522, 44, 258, 150, "ไฟขับปกติ (คำสั่ง 0)")
-    w["led"] = ui.Led(x=536, y=78, w=36, h=36, color=COL_INFO)
-    w["pump"] = ui.Label("ดับ", x=584, y=82, color=COL_DIM, value=20)
-    w["speed"] = ui.Label("ความเร็ว (VR1) -- %", x=536, y=128, color=COL_TEXT, value=16)
-    w["tank"] = ui.Label("แบต (VR4) -- %", x=536, y=156, color=COL_TEXT, value=16)
+    w["led"] = ui.Led(x=536, y=84, w=36, h=36, color=COL_INFO)
+    w["pump"] = ui.Label("ดับ", x=584, y=88, color=COL_DIM, value=20)
+    w["speed"] = ui.Label("ความเร็ว (VR1) -- %", x=536, y=126, color=COL_TEXT, value=20)
+    w["tank"] = ui.Label("แบต (VR4) -- %", x=536, y=160, color=COL_TEXT, value=20)
     card(12, 204, 510, 140, "แรงกระแทก (เท่าของถนนปกติ x10)")
-    w["chart"] = ui.Chart(x=22, y=232, w=400, h=100, color=COL_INFO, min=0, max=CHART_MAX)
+    w["chart"] = ui.Chart(x=22, y=242, w=400, h=96, color=COL_INFO, min=0, max=CHART_MAX)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_lim"] = w["chart"].add_series(COL_BAD)
-    w["state"] = ui.Label("จอดนิ่ง\n5 วิ", x=432, y=240, color=COL_WARN, value=16)
+    w["state"] = ui.Label("จอดนิ่ง\n5 วิ", x=432, y=244, color=COL_WARN, value=20)
     card(532, 204, 248, 140, "ระดับครั้งล่าสุด")
     w["sev"] = []
     for i, c in enumerate((COL_WARN, COL_MID, COL_BAD)):
-        w["sev"].append(ui.Led(x=548 + i * 76, y=240, w=30, h=30, color=c, value=0))
-        ui.Label(("เบา", "กลาง", "แรง")[i], x=548 + i * 76, y=278, color=COL_DIM, value=14)
-    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+        w["sev"].append(ui.Led(x=548 + i * 76, y=246, w=30, h=30, color=c, value=0))
+        ui.Label(("เบา", "กลาง", "แรง")[i], x=548 + i * 76, y=282, color=COL_DIM, value=20)
+    w["note"] = ui.Label("ยังไม่มีคำสั่ง", x=12, y=352, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=590, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=616, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 

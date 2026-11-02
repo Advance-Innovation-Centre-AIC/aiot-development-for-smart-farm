@@ -1484,7 +1484,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1500,9 +1500,9 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
 static bento_status_t add_bumps(farm_t *farm)
 {
     const rect_t card = {12, 44, 240, 150};
-    const spec_t bumps = {28, 80, 130, 56, COL_INFO, 0, 0, 0};
-    const spec_t unit = {120, 96, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t risk = {28, 154, -1, -1, COL_OK, 0, 0, 20};
+    const spec_t bumps = {28, 84, 130, 56, COL_INFO, 0, 0, 0};
+    const spec_t unit = {120, 100, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t risk = {28, 158, -1, -1, COL_OK, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
         add_card(farm->ui, &card, "ไข่โดนกระแทก", &label);
@@ -1527,8 +1527,8 @@ static bento_status_t add_trip(farm_t *farm)
 {
     static const char trip_button_name[] = "SW6"; /* BTN_NAMES[1] */
     const rect_t card = {262, 44, 250, 150};
-    const spec_t clock = {278, 80, 200, 56, COL_TEXT, 0, 0, 0};
-    const spec_t hint = {278, 156, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t clock = {278, 84, 200, 56, COL_TEXT, 0, 0, 0};
+    const spec_t hint = {278, 158, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1551,10 +1551,10 @@ static bento_status_t add_trip(farm_t *farm)
 static bento_status_t add_light(farm_t *farm)
 {
     const rect_t card = {522, 44, 258, 150};
-    const spec_t lamp = {536, 78, 36, 36, COL_INFO, 0, 0, 0};
-    const spec_t pump = {584, 82, -1, -1, COL_DIM, 0, 0, 20};
-    const spec_t speed = {536, 128, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t tank = {536, 156, -1, -1, COL_TEXT, 0, 0, 16};
+    const spec_t lamp = {536, 84, 36, 36, COL_INFO, 0, 0, 0};
+    const spec_t pump = {584, 88, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t speed = {536, 126, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t tank = {536, 160, -1, -1, COL_TEXT, 0, 0, 20};
     bento_status_t status = add_card(
         farm->ui, &card, "ไฟขับปกติ (คำสั่ง 0)", &farm->screen.title);
 
@@ -1581,8 +1581,8 @@ static bento_status_t add_light(farm_t *farm)
 static bento_status_t add_force(farm_t *farm)
 {
     const rect_t card = {12, 204, 510, 140};
-    const spec_t chart = {22, 232, 400, 100, COL_INFO, 0, CHART_MAX, 0};
-    const spec_t state = {432, 240, -1, -1, COL_WARN, 0, 0, 16};
+    const spec_t chart = {22, 242, 400, 96, COL_INFO, 0, CHART_MAX, 0};
+    const spec_t state = {432, 244, -1, -1, COL_WARN, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status = add_card(
         farm->ui, &card, "แรงกระแทก (เท่าของถนนปกติ x10)", &label);
@@ -1625,8 +1625,8 @@ static bento_status_t add_levels(farm_t *farm)
 
     for (i = 0; (status == BENTO_OK) && (i < SEVERITY_MAX); i++) {
         const int16_t x = px(LEVEL_X + (i * LEVEL_STEP_X));
-        const spec_t lamp = {x, 240, 30, 30, colors[i], 0, 0, 0};
-        const spec_t name = {x, 278, -1, -1, COL_DIM, 0, 0, 14};
+        const spec_t lamp = {x, 246, 30, 30, colors[i], 0, 0, 0};
+        const spec_t name = {x, 282, -1, -1, COL_DIM, 0, 0, 20};
 
         status = add_widget(farm->ui, bento_ui_led_create, &lamp, NULL,
                             &farm->screen.levels[i]);
@@ -1640,9 +1640,9 @@ static bento_status_t add_levels(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
