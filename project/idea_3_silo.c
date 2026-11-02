@@ -158,7 +158,7 @@ enum {
     CARD_RADIUS = 16,
     CARD_TITLE_DX = 14,
     CARD_TITLE_DY = 6,
-    CARD_TITLE_PX = 16,
+    CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
 };
 
@@ -743,7 +743,7 @@ static bento_status_t add_humidity_card(screen_t *screen)
                                         0,
                                         0,
                                         24};
-    static const card_t card = {12, 44, 300, 300, "ความชื้นในไซโล"};
+    static const card_t card = {12, 44, 306, 300, "ความชื้นในไซโล"};
     static const widget_spec_t specs[] = {
         {UI_WIDGET_ARC, SLOT_ARC, NULL, 36, 78, 220, 220, 0U, 0,
          PERCENT, 0},
@@ -751,8 +751,8 @@ static bento_status_t add_humidity_card(screen_t *screen)
          0},
         {UI_WIDGET_LABEL, SLOT_NONE, "%RH", 128, 214, AUTO, AUTO,
          COL_DIM, 0, 0, 16},
-        {UI_WIDGET_LABEL, SLOT_CROP, "-", 26, 310, AUTO, AUTO, COL_DIM,
-         0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_CROP, "-", 20, 310, AUTO, AUTO, COL_DIM,
+         0, 0, 20},
     };
     bento_status_t status = add_widget(screen, &title);
 
@@ -770,16 +770,16 @@ static bento_status_t add_risk_card(screen_t *screen)
     static const card_t card = {322, 44, 458, 136,
                                 "เวลาเสี่ยงรา (นาที.วินาที)"};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_SEG7, SLOT_WET, "00.00", 336, 74, 180, 60, COL_GRAIN,
+        {UI_WIDGET_SEG7, SLOT_WET, "00.00", 336, 80, 180, 60, COL_GRAIN,
          0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 530, 78, AUTO, AUTO,
-         COL_WARN, 0, 0, 16},
-        {UI_WIDGET_LABEL, SLOT_RANGE, "ต่ำสุด -- สูงสุด -- %", 530, 108,
-         AUTO, AUTO, COL_DIM, 0, 0, 14},
+        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 530, 82, AUTO, AUTO,
+         COL_WARN, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_RANGE, "ต่ำสุด -- สูงสุด -- %", 530, 110,
+         AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_CLIMATE, "-- C  แดด +0", 336, 146, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+         AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NOTICE, "-", 530, 146, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_CHART, SLOT_CHART, NULL, 322, 190, 400, 110,
          COL_GRAIN, 0, PERCENT, 0},
     };
@@ -803,15 +803,15 @@ static bento_status_t add_footer(screen_t *screen)
 {
     static const widget_spec_t specs[] = {
         {UI_WIDGET_LABEL, SLOT_NONE, "เหลือง = ความชื้น  แดง = เกณฑ์ราขึ้น",
-         322, 306, AUTO, AUTO, COL_DIM, 0, 0, 14},
+         322, 306, AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NONE, "VR3 = แดดบนหลังคา  SW5 = รับทราบ",
-         322, 326, AUTO, AUTO, COL_DIM, 0, 0, 14},
+         322, 334, AUTO, AUTO, COL_DIM, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 352, AUTO, AUTO,
-         COL_DIM, 0, 0, 0},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 606, 12, 18, 18, COL_OK, 0,
          0, 0},
         {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_widgets(screen, specs, sizeof(specs) / sizeof(specs[0]));

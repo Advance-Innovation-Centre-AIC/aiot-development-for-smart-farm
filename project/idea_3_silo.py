@@ -136,7 +136,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=16, value=1)
-    ui.Label(title, x=x + 14, y=y + 6, color=COL_GRAIN, value=16)
+    ui.Label(title, x=x + 14, y=y + 6, color=COL_GRAIN, value=20)
 
 
 def show_link(w, ok):
@@ -149,26 +149,26 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("ไซโลข้าวเปลือก: ชื้นจนขึ้นราไหม", x=12, y=6, color=COL_TEXT, value=24)
     w = {"box": None}
-    card(12, 44, 300, 300, "ความชื้นในไซโล")
+    card(12, 44, 306, 300, "ความชื้นในไซโล")
     w["arc"] = ui.Arc(x=36, y=78, w=220, h=220, min=0, max=100, value=0)
     w["arc"].color(COL_OK)
     w["rh"] = ui.Seg7(text="--", x=106, y=150, w=80, h=56, color=COL_OK)
     ui.Label("%RH", x=128, y=214, color=COL_DIM, value=16)
-    w["crop"] = ui.Label("-", x=26, y=310, color=COL_DIM, value=14)
+    w["crop"] = ui.Label("-", x=20, y=310, color=COL_DIM, value=20)
     card(322, 44, 458, 136, "เวลาเสี่ยงรา (นาที.วินาที)")
-    w["wet"] = ui.Seg7(text="00.00", x=336, y=74, w=180, h=60, color=COL_GRAIN)
-    w["mood"] = ui.Label("...", x=530, y=78, color=COL_WARN, value=16)
-    w["mm"] = ui.Label("ต่ำสุด -- สูงสุด -- %", x=530, y=108, color=COL_DIM, value=14)
-    w["temp"] = ui.Label("-- C  แดด +0", x=336, y=146, color=COL_DIM, value=16)
-    w["ack"] = ui.Label("-", x=530, y=146, color=COL_DIM, value=14)
+    w["wet"] = ui.Seg7(text="00.00", x=336, y=80, w=180, h=60, color=COL_GRAIN)
+    w["mood"] = ui.Label("...", x=530, y=82, color=COL_WARN, value=20)
+    w["mm"] = ui.Label("ต่ำสุด -- สูงสุด -- %", x=530, y=110, color=COL_DIM, value=20)
+    w["temp"] = ui.Label("-- C  แดด +0", x=336, y=146, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=530, y=146, color=COL_DIM, value=20)
     w["chart"] = ui.Chart(x=322, y=190, w=400, h=110, color=COL_GRAIN, min=0, max=100)
     w["chart"].prop(ui.PROP_CHART_POINTS, 400)
     w["s_hi"] = w["chart"].add_series(COL_BAD)
-    ui.Label("เหลือง = ความชื้น  แดง = เกณฑ์ราขึ้น", x=322, y=306, color=COL_DIM, value=14)
-    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = รับทราบ", x=322, y=326, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    ui.Label("เหลือง = ความชื้น  แดง = เกณฑ์ราขึ้น", x=322, y=306, color=COL_DIM, value=20)
+    ui.Label("VR3 = แดดบนหลังคา  " + BTN_NAMES[1] + " = รับทราบ", x=322, y=334, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
