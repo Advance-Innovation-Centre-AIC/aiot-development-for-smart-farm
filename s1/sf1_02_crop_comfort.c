@@ -45,15 +45,27 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
-    VOLUME = 25,  /* ความดังเสียง 0-127 */
+    VOLUME = 25   /* ความดังเสียง 0-127 */
+};
+/* CROPS (ช่วงที่พืชชอบ) is the crop table just below the block. */
+/* พืชตอนเริ่ม (เปลี่ยนด้วยวงล้อบนจอ) */
+static const char START_CROP[] = "มะเขือเทศ";
+enum {
     RUN_MS = 120000,
-    TICK_MS = 1000,
+    TICK_MS = 1000
+};
+/* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+static const bool HUM_FIX = true;
+enum {
     CHART_MAX_C = 50,
     SOUND_GAP_MS = 3000 /* เสียงเตือนห่างกันอย่างน้อยเท่านี้ */
 };
+/* ---- end of settings ---- */
 
 /* ช่วงที่พืชชอบ (ตัวเลขเพื่อการเรียน): ชื่อ, T ต่ำ, T สูง, RH ต่ำ, RH สูง */
 typedef struct {
@@ -68,8 +80,6 @@ static const crop_t CROPS[] = {{"มะเขือเทศ", 20, 30, 60, 80},
                                {"ผักสลัด", 15, 25, 50, 70},
                                {"เห็ดนางฟ้า", 22, 28, 80, 95},
                                {"กล้วยไม้", 22, 32, 60, 80}};
-/* START_CROP (พืชตอนเริ่ม) อยู่ใน main() ชื่อ start_crop */
-/* TEMP_OFFSET และ HUM_FIX อยู่ใน read_climate() ชื่อ temp_offset, hum_fix */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -190,10 +200,6 @@ typedef struct {
  * 3 misses there is no reading this round. */
 static bento_status_t read_climate(climate_t *climate)
 {
-    /* ค่าชดเชย: เทียบเทอร์โมมิเตอร์ในห้อง เช่น -9.5 */
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
-    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-    static const bool hum_fix = true;
     float t_raw = 0.0F;
     float h = 0.0F;
     uint32_t tries = 0U;
@@ -211,9 +217,9 @@ static bento_status_t read_climate(climate_t *climate)
         }
     }
     if (climate->known) {
-        climate->t = (bento_real_t)t_raw + temp_offset;
+        climate->t = (bento_real_t)t_raw + TEMP_OFFSET;
         climate->h = (bento_real_t)h;
-        if ((temp_offset != (bento_real_t)0) && hum_fix) {
+        if ((TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
             climate->h = room_humidity(climate->h, (bento_real_t)t_raw,
                                        climate->t);
         }
@@ -1009,8 +1015,6 @@ static bento_status_t run_loop(const comfort_screen_t *screen,
 
 int main(void)
 {
-    /* พืชตอนเริ่ม (เปลี่ยนด้วยวงล้อบนจอ) */
-    static const char start_crop[] = "มะเขือเทศ";
     comfort_screen_t screen;
     comfort_t comfort;
     bento_status_t status;
@@ -1021,11 +1025,11 @@ int main(void)
     /* a build without a speaker volume refuses it, as hasattr() skips
      * it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
-    comfort.crop = find_crop(start_crop);
-    if (strcmp(CROPS[comfort.crop].name, start_crop) != 0) {
+    comfort.crop = find_crop(START_CROP);
+    if (strcmp(CROPS[comfort.crop].name, START_CROP) != 0) {
         (void)printf("ไม่รู้จักพืช %s - ใช้ %s แทน (สะกดให้ตรงกับใน "
                      "CROPS)\n",
-                     start_crop, CROPS[comfort.crop].name);
+                     START_CROP, CROPS[comfort.crop].name);
     }
     status = build_screen(&screen, comfort.crop);
     if (status == BENTO_OK) {
