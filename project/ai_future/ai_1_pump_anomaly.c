@@ -1017,17 +1017,17 @@ static bento_status_t build_screen(pump_t *pump)
         {KIND_LABEL, SLOT_NONE, "AI", 12, 90, 20, COLOR_INFO},
         {KIND_ARC, SLOT_ARC, "", 12, 120, 150, 0U},
         {KIND_LABEL, SLOT_AI, "-", 180, 130, 24, COLOR_TEXT},
-        {KIND_LABEL, SLOT_SECOND, " ", 180, 170, 16, COLOR_DIM},
-        {KIND_LABEL, SLOT_HISTORY, " ", 180, 200, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_SECOND, " ", 180, 170, 20, COLOR_DIM},
+        {KIND_LABEL, SLOT_HISTORY, " ", 180, 200, 20, COLOR_DIM},
         {KIND_LABEL, SLOT_NONE, "กฎ (IMU)", 420, 90, 20, COLOR_INFO},
         {KIND_LABEL, SLOT_RULE, "กำลังเรียนค่าปกติ: วางนิ่ง", 420, 130, 20,
          COLOR_TEXT},
-        {KIND_LABEL, SLOT_VERDICT, " ", 420, 170, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_VERDICT, " ", 420, 170, 20, COLOR_DIM},
         {KIND_LED, SLOT_LED, "", 12, 290, 36, COLOR_BAD},
         {KIND_LABEL, SLOT_AGREE, "-", 60, 296, 20, COLOR_TEXT},
         {KIND_LED, SLOT_MQTT, "", 12, 350, 24, COLOR_OK},
-        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 352, 16, COLOR_DIM},
-        {KIND_LABEL, SLOT_NOTE, " ", 12, 400, 16, COLOR_WARN}};
+        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 352, 20, COLOR_DIM},
+        {KIND_LABEL, SLOT_NOTE, " ", 12, 400, 20, COLOR_WARN}};
     const uint32_t count = (uint32_t)(sizeof(parts) / sizeof(parts[0]));
     bento_status_t status = bento_ui_screen_default(pump->ui);
     uint32_t i;

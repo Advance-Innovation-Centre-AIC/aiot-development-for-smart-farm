@@ -672,17 +672,17 @@ static bento_status_t build_screen(voice_t *voice)
          COLOR_TEXT},
         {KIND_LABEL, SLOT_MODEL, "หาโมเดล...", 12, 44, 20, COLOR_INFO},
         {KIND_LABEL, SLOT_NONE, "พูด go = เปิดปั๊ม   stop = ปิดปั๊ม", 12, 76,
-         16, COLOR_DIM},
+         20, COLOR_DIM},
         {KIND_ARC, SLOT_ARC, "", 12, 110, 150, 0U},
         {KIND_LABEL, SLOT_WORD, "-", 180, 120, 28, COLOR_TEXT},
-        {KIND_LABEL, SLOT_CONF, "มั่นใจ - %", 180, 164, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_CONF, "มั่นใจ - %", 180, 164, 20, COLOR_DIM},
         {KIND_LABEL, SLOT_ASK, " ", 180, 200, 20, COLOR_WARN},
         {KIND_LED, SLOT_PUMP, "", 12, 290, 40, COLOR_OK},
         {KIND_LABEL, SLOT_PUMP_TEXT, "ปั๊ม (จำลอง): ปิด", 64, 298, 20,
          COLOR_TEXT},
         {KIND_LED, SLOT_MQTT, "", 12, 350, 24, COLOR_OK},
-        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 352, 16, COLOR_DIM},
-        {KIND_LABEL, SLOT_NOTE, " ", 12, 400, 16, COLOR_WARN}};
+        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 352, 20, COLOR_DIM},
+        {KIND_LABEL, SLOT_NOTE, " ", 12, 400, 20, COLOR_WARN}};
     const uint32_t count = (uint32_t)(sizeof(parts) / sizeof(parts[0]));
     bento_status_t status = bento_ui_screen_default(voice->ui);
     uint32_t i;

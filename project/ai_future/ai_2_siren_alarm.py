@@ -142,13 +142,13 @@ def build_screen():
     w = {"model": label("หาโมเดล...", 12, 44, COL_INFO, 20)}
     w["arc"] = ui.Arc(x=12, y=84, w=180, h=180, min=0, max=100, value=0)
     w["conf"] = label("0 %", 70, 162, COL_TEXT, 24)
-    label("AI ได้ยิน", 220, 90)
+    label("AI ได้ยิน", 220, 90, COL_DIM, 20)
     w["label"] = label("-", 220, 116, COL_TEXT, 28)
     w["led"] = ui.Led(x=220, y=170, w=36, h=36, color=COL_BAD, value=0)
     w["state"] = label("ปกติ", 268, 178, COL_OK, 20)
-    w["hist"] = label(" ", 220, 230)
+    w["hist"] = label(" ", 220, 230, COL_DIM, 20)
     w["mqtt"] = ui.Led(x=12, y=300, w=24, h=24, color=COL_OK, value=0)
-    w["sent"] = label("ยังไม่ได้ส่ง", 44, 302)
+    w["sent"] = label("ยังไม่ได้ส่ง", 44, 302, COL_DIM, 20)
     w["note"] = label(" ", 12, 352, COL_WARN, 20)
     ui.poll()
     return w

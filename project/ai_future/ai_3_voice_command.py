@@ -153,16 +153,16 @@ def build_screen():
     time.sleep_ms(200)
     label("สั่งปั๊มด้วยเสียง (Edge AI)", 12, 6, COL_TEXT, 24)
     w = {"model": label("หาโมเดล...", 12, 44, COL_INFO, 20)}
-    label("พูด go = เปิดปั๊ม   stop = ปิดปั๊ม", 12, 76)
+    label("พูด go = เปิดปั๊ม   stop = ปิดปั๊ม", 12, 76, COL_DIM, 20)
     w["arc"] = ui.Arc(x=12, y=110, w=150, h=150, min=0, max=100, value=0)
     w["word"] = label("-", 180, 120, COL_TEXT, 28)
-    w["conf"] = label("มั่นใจ - %", 180, 164)
+    w["conf"] = label("มั่นใจ - %", 180, 164, COL_DIM, 20)
     w["ask"] = label(" ", 180, 200, COL_WARN, 20)
     w["pump"] = ui.Led(x=12, y=290, w=40, h=40, color=COL_OK, value=0)
     w["pump_txt"] = label("ปั๊ม (จำลอง): ปิด", 64, 298, COL_TEXT, 20)
     w["mqtt"] = ui.Led(x=12, y=350, w=24, h=24, color=COL_OK, value=0)
-    w["sent"] = label("ยังไม่ได้ส่ง", 44, 352)
-    w["note"] = label(" ", 12, 400, COL_WARN, 16)
+    w["sent"] = label("ยังไม่ได้ส่ง", 44, 352, COL_DIM, 20)
+    w["note"] = label(" ", 12, 400, COL_WARN, 20)
     ui.poll()
     return w
 

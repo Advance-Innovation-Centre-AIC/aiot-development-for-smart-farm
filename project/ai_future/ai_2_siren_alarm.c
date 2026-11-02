@@ -777,13 +777,13 @@ static bento_status_t build_screen(siren_t *siren)
         {KIND_LABEL, SLOT_MODEL, "หาโมเดล...", 12, 44, 20, COLOR_INFO},
         {KIND_ARC, SLOT_ARC, "", 12, 84, 180, 0U},
         {KIND_LABEL, SLOT_CONF, "0 %", 70, 162, 24, COLOR_TEXT},
-        {KIND_LABEL, SLOT_NONE, "AI ได้ยิน", 220, 90, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_NONE, "AI ได้ยิน", 220, 90, 20, COLOR_DIM},
         {KIND_LABEL, SLOT_LABEL, "-", 220, 116, 28, COLOR_TEXT},
         {KIND_LED, SLOT_LED, "", 220, 170, 36, COLOR_BAD},
         {KIND_LABEL, SLOT_STATE, "ปกติ", 268, 178, 20, COLOR_OK},
-        {KIND_LABEL, SLOT_HISTORY, " ", 220, 230, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_HISTORY, " ", 220, 230, 20, COLOR_DIM},
         {KIND_LED, SLOT_MQTT, "", 12, 300, 24, COLOR_OK},
-        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 302, 16, COLOR_DIM},
+        {KIND_LABEL, SLOT_SENT, "ยังไม่ได้ส่ง", 44, 302, 20, COLOR_DIM},
         {KIND_LABEL, SLOT_NOTE, " ", 12, 352, 20, COLOR_WARN}};
     const uint32_t count = (uint32_t)(sizeof(parts) / sizeof(parts[0]));
     bento_status_t status = bento_ui_screen_default(siren->ui);
