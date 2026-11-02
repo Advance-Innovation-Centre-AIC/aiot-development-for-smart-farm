@@ -1232,8 +1232,8 @@ static bento_status_t build_screen(alert_screen_t *screen)
 {
     static const spot_t heading = {12, 6, COLOR_TEXT, 24};
     static const spot_t status_line = {12, 352, COLOR_DIM, 20};
-    static const box_t link_led = {606, 12, 18, 18, COLOR_OK, 0, 0, 0};
-    static const spot_t link_text = {632, 10, COLOR_DIM, 20};
+    static const box_t link_led = {586, 12, 18, 18, COLOR_OK, 0, 0, 0};
+    static const spot_t link_text = {612, 10, COLOR_DIM, 20};
     bento_ui_id_t unused;
     bento_status_t status = bento_ui_screen_default(screen->ui);
 

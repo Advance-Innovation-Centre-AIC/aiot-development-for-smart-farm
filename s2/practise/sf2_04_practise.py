@@ -175,8 +175,8 @@ def build_screen():
     ui.Label("ส้ม = อุณหภูมิ  แดง = เกณฑ์ร้อน\nVR3 = แดด  " + BTN_NAMES[1] + " = รับทราบ",
              x=424, y=256, color=COL_DIM, value=20)
     w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM, value=20)
-    w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
+    w["mq"] = ui.Led(x=586, y=12, w=18, h=18, color=COL_OK, value=0)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=612, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
