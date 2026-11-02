@@ -163,7 +163,7 @@ enum {
     CARD_BORDER_PX = 2,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    CARD_TITLE_PX = 16,
+    CARD_TITLE_PX = 20,
     AUTO = -1 /* the factory's own size */
 };
 
@@ -754,7 +754,7 @@ static bento_status_t add_clock_card(screen_t *screen)
     static const card_t card = {12, 44, 372, 160,
                                 "นาฬิกาเที่ยวนี้ (นาที.วินาที)"};
     static const widget_spec_t clock = {
-        UI_WIDGET_SEG7, SLOT_CLOCK, "00.00", 24, 74, 240, 80,
+        UI_WIDGET_SEG7, SLOT_CLOCK, "00.00", 24, 80, 240, 80,
         COL_ROAD,       0,          0,       0};
     char eta_text[TEXT_BYTES];
     bento_status_t status = add_widget(screen, &title);
@@ -767,7 +767,7 @@ static bento_status_t add_clock_card(screen_t *screen)
     if (status == BENTO_OK) {
         const widget_spec_t eta = {
             UI_WIDGET_LABEL, SLOT_ETA, eta_text, 24, 166, AUTO, AUTO,
-            COL_DIM,         0,        0,        16};
+            COL_DIM,         0,        0,        20};
 
         status = add_widget(screen, &eta);
     }
@@ -778,14 +778,14 @@ static bento_status_t add_bed_card(screen_t *screen)
 {
     static const card_t card = {394, 44, 386, 160, "ท้ายกระบะ"};
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LABEL, SLOT_CROP, "-", 406, 70, AUTO, AUTO, COL_DIM,
-         0, 0, 14},
-        {UI_WIDGET_LABEL, SLOT_CLIMATE, "-- C  -- %", 406, 94, AUTO,
+        {UI_WIDGET_LABEL, SLOT_CROP, "-", 406, 80, AUTO, AUTO, COL_DIM,
+         0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_CLIMATE, "-- C  -- %", 406, 108, AUTO,
          AUTO, COL_TEXT, 0, 0, 24},
-        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 406, 130, AUTO, AUTO,
-         COL_WARN, 0, 0, 0},
-        {UI_WIDGET_LABEL, SLOT_HOT, "ร้อนมาแล้ว 0 วิ", 406, 166, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+        {UI_WIDGET_LABEL, SLOT_MOOD, "...", 406, 142, AUTO, AUTO,
+         COL_WARN, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_HOT, "ร้อนมาแล้ว 0 วิ", 406, 172, AUTO,
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_card_with(screen, &card, specs,
@@ -798,11 +798,11 @@ static bento_status_t add_route_card(screen_t *screen)
     static const card_t card = {12, 214, 768, 82, "เส้นทาง"};
     static const widget_spec_t specs[] = {
         {UI_WIDGET_LABEL, SLOT_NONE, "ฟาร์ม", 24, 252, AUTO, AUTO,
-         COL_DIM, 0, 0, 16},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_BAR, SLOT_ROAD, NULL, 80, 254, 470, 20, 0U, 0,
          PERCENT, 0},
         {UI_WIDGET_LABEL, SLOT_NONE, "ตลาด", 560, 252, AUTO, AUTO,
-         COL_DIM, 0, 0, 16},
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LED_OK, NULL, 620, 254, 18, 18, COL_OK, 0,
          0, 0},
         {UI_WIDGET_LED, SLOT_LED_WARM, NULL, 672, 254, 18, 18, COL_WARN,
@@ -819,19 +819,19 @@ static bento_status_t add_route_card(screen_t *screen)
 static bento_status_t add_footer(screen_t *screen)
 {
     static const widget_spec_t specs[] = {
-        {UI_WIDGET_LABEL, SLOT_TRIP, "กำลังขนส่ง", 12, 304, AUTO, AUTO,
-         COL_ROAD, 0, 0, 16},
+        {UI_WIDGET_LABEL, SLOT_TRIP, "กำลังขนส่ง", 12, 300, AUTO, AUTO,
+         COL_ROAD, 0, 0, 20},
         {UI_WIDGET_LABEL, SLOT_NONE,
-         "VR3 = แดดบนกระบะ  SW5 = ลูกค้ารับของ", 260, 304, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
-        {UI_WIDGET_LABEL, SLOT_NOTICE, "-", 260, 326, AUTO, AUTO,
-         COL_DIM, 0, 0, 14},
-        {UI_WIDGET_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 352, AUTO, AUTO,
-         COL_DIM, 0, 0, 0},
+         "VR3 = แดดบนกระบะ  SW5 = ลูกค้ารับของ", 260, 300, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_NOTICE, "-", 12, 328, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
+        {UI_WIDGET_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 356, AUTO, AUTO,
+         COL_DIM, 0, 0, 20},
         {UI_WIDGET_LED, SLOT_LINK_LED, NULL, 606, 12, 18, 18, COL_OK, 0,
          0, 0},
         {UI_WIDGET_LABEL, SLOT_LINK_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO,
-         AUTO, COL_DIM, 0, 0, 16},
+         AUTO, COL_DIM, 0, 0, 20},
     };
 
     return add_widgets(screen, specs, sizeof(specs) / sizeof(specs[0]));

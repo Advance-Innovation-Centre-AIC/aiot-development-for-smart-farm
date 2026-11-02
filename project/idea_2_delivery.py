@@ -138,7 +138,7 @@ def send(obj):
 # ---- 5) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_EDGE, max=6, value=2)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_ROAD, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_ROAD, value=20)
 
 
 def show_link(w, ok):
@@ -152,27 +152,27 @@ def build_screen():
     ui.Label("รถส่งผลผลิตถึงตลาด", x=12, y=6, color=COL_TEXT, value=24)
     w = {"box": None, "leds": []}
     card(12, 44, 372, 160, "นาฬิกาเที่ยวนี้ (นาที.วินาที)")
-    w["clock"] = ui.Seg7(text="00.00", x=24, y=74, w=240, h=80, color=COL_ROAD)
-    w["eta"] = ui.Label("ถึงตลาดอีกราว %d นาที" % ETA_MIN, x=24, y=166, color=COL_DIM, value=16)
+    w["clock"] = ui.Seg7(text="00.00", x=24, y=80, w=240, h=80, color=COL_ROAD)
+    w["eta"] = ui.Label("ถึงตลาดอีกราว %d นาที" % ETA_MIN, x=24, y=166, color=COL_DIM, value=20)
     card(394, 44, 386, 160, "ท้ายกระบะ")
-    w["crop"] = ui.Label("-", x=406, y=70, color=COL_DIM, value=14)
-    w["th"] = ui.Label("-- C  -- %", x=406, y=94, color=COL_TEXT, value=24)
-    w["mood"] = ui.Label("...", x=406, y=130, color=COL_WARN)
-    w["hot"] = ui.Label("ร้อนมาแล้ว 0 วิ", x=406, y=166, color=COL_DIM, value=16)
+    w["crop"] = ui.Label("-", x=406, y=80, color=COL_DIM, value=20)
+    w["th"] = ui.Label("-- C  -- %", x=406, y=108, color=COL_TEXT, value=24)
+    w["mood"] = ui.Label("...", x=406, y=142, color=COL_WARN, value=20)
+    w["hot"] = ui.Label("ร้อนมาแล้ว 0 วิ", x=406, y=172, color=COL_DIM, value=20)
     card(12, 214, 768, 82, "เส้นทาง")
-    ui.Label("ฟาร์ม", x=24, y=252, color=COL_DIM, value=16)
+    ui.Label("ฟาร์ม", x=24, y=252, color=COL_DIM, value=20)
     w["road"] = ui.Bar(x=80, y=254, w=470, h=20, min=0, max=100, value=0)
     w["road"].color(COL_ROAD)  # Bar: color() = สีส่วนที่เติม (แบบ sf1_03) ใน Emulator จะเห็นเป็นสีราง
-    ui.Label("ตลาด", x=560, y=252, color=COL_DIM, value=16)
+    ui.Label("ตลาด", x=560, y=252, color=COL_DIM, value=20)
     for i in range(3):
         lx = 620 + i * 52
         w["leds"].append(ui.Led(x=lx, y=254, w=18, h=18, color=LEVEL_COLORS[i]))
-    w["trip"] = ui.Label("กำลังขนส่ง", x=12, y=304, color=COL_ROAD, value=16)
-    ui.Label("VR3 = แดดบนกระบะ  " + BTN_NAMES[1] + " = ลูกค้ารับของ", x=260, y=304, color=COL_DIM, value=14)
-    w["ack"] = ui.Label("-", x=260, y=326, color=COL_DIM, value=14)
-    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=352, color=COL_DIM)
+    w["trip"] = ui.Label("กำลังขนส่ง", x=12, y=300, color=COL_ROAD, value=20)
+    ui.Label("VR3 = แดดบนกระบะ  " + BTN_NAMES[1] + " = ลูกค้ารับของ", x=260, y=300, color=COL_DIM, value=20)
+    w["ack"] = ui.Label("-", x=12, y=328, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังเริ่ม", x=12, y=356, color=COL_DIM, value=20)
     w["mq"] = ui.Led(x=606, y=12, w=18, h=18, color=COL_OK, value=0)
-    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=16)
+    w["mq_t"] = ui.Label("MQTT: ออฟไลน์", x=632, y=10, color=COL_DIM, value=20)
     ui.poll()
     return w
 
