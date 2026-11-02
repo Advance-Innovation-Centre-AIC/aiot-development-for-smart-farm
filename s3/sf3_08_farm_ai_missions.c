@@ -2329,30 +2329,30 @@ static bento_status_t add_parts(farm_t *farm, const part_t *parts,
 static bento_status_t add_upper_cards(farm_t *farm)
 {
     static const part_t parts[] = {
-        {KIND_LED, SLOT_MQTT, "", 606, 12, 18, 18, COLOR_OK, 0},
-        {KIND_LABEL, SLOT_MQTT_TEXT, "MQTT: ออฟไลน์", 632, 10, 0, 0,
-         COLOR_DIM, 16},
-        {KIND_PANEL, SLOT_NONE, "", 12, 64, 380, 172, COLOR_CARD, 1},
-        {KIND_LABEL, SLOT_NONE, "AI ตอบว่า", 24, 70, 0, 0, COLOR_INFO,
-         16},
-        {KIND_LABEL, SLOT_MODEL, "กำลังหาโมเดล...", 24, 88, 0, 0,
-         COLOR_DIM, 14},
-        {KIND_ARC, SLOT_ARC, "", 300, 92, 80, 80, 0U, 0},
-        {KIND_LABEL, SLOT_LABEL, "-", 24, 108, 0, 0, COLOR_TEXT, 28},
-        {KIND_LABEL, SLOT_MEANING, " ", 24, 146, 0, 0, COLOR_INFO, 16},
-        {KIND_LABEL, SLOT_CONF, " ", 24, 176, 0, 0, COLOR_DIM, 14},
-        {KIND_LABEL, SLOT_AI, " ", 24, 204, 0, 0, COLOR_DIM, 16},
-        {KIND_PANEL, SLOT_NONE, "", 402, 64, 378, 172, COLOR_CARD, 1},
-        {KIND_LABEL, SLOT_NONE, "กฎที่เขียนเอง", 414, 70, 0, 0, COLOR_INFO,
-         16},
-        {KIND_LABEL, SLOT_RULE_DESC, " ", 414, 88, 0, 0, COLOR_DIM, 14},
-        {KIND_LABEL, SLOT_RULE_VALUE, "-", 414, 108, 0, 0, COLOR_TEXT,
+        {KIND_LED, SLOT_MQTT, "", 566, 12, 18, 18, COLOR_OK, 0},
+        {KIND_LABEL, SLOT_MQTT_TEXT, "MQTT: ออฟไลน์", 590, 10, 0, 0,
+         COLOR_DIM, 20},
+        {KIND_PANEL, SLOT_NONE, "", 12, 66, 408, 176, COLOR_CARD, 1},
+        {KIND_LABEL, SLOT_NONE, "AI ตอบว่า", 24, 72, 0, 0, COLOR_INFO,
+         20},
+        {KIND_LABEL, SLOT_MODEL, "กำลังหาโมเดล...", 24, 98, 0, 0,
+         COLOR_DIM, 20},
+        {KIND_ARC, SLOT_ARC, "", 352, 126, 56, 56, 0U, 0},
+        {KIND_LABEL, SLOT_LABEL, "-", 24, 122, 0, 0, COLOR_TEXT, 28},
+        {KIND_LABEL, SLOT_MEANING, " ", 24, 160, 0, 0, COLOR_INFO, 20},
+        {KIND_LABEL, SLOT_CONF, " ", 24, 186, 0, 0, COLOR_DIM, 20},
+        {KIND_LABEL, SLOT_AI, " ", 24, 212, 0, 0, COLOR_DIM, 20},
+        {KIND_PANEL, SLOT_NONE, "", 428, 66, 360, 176, COLOR_CARD, 1},
+        {KIND_LABEL, SLOT_NONE, "กฎที่เขียนเอง", 440, 72, 0, 0, COLOR_INFO,
+         20},
+        {KIND_LABEL, SLOT_RULE_DESC, " ", 440, 98, 0, 0, COLOR_DIM, 20},
+        {KIND_LABEL, SLOT_RULE_VALUE, "-", 440, 122, 0, 0, COLOR_TEXT,
          28},
-        {KIND_BAR, SLOT_RULE_BAR, "", 414, 148, 354, 14, 0U, 0},
-        {KIND_LABEL, SLOT_RULE_STATE, " ", 414, 174, 0, 0, COLOR_DIM,
-         16},
-        {KIND_LABEL, SLOT_RULE_NOTE, " ", 414, 204, 0, 0, COLOR_DIM,
-         14}};
+        {KIND_BAR, SLOT_RULE_BAR, "", 440, 160, 336, 14, 0U, 0},
+        {KIND_LABEL, SLOT_RULE_STATE, " ", 440, 180, 0, 0, COLOR_DIM,
+         20},
+        {KIND_LABEL, SLOT_RULE_NOTE, " ", 440, 206, 0, 0, COLOR_DIM,
+         20}};
     return add_parts(farm, parts,
                      (uint32_t)(sizeof(parts) / sizeof(parts[0])));
 }
@@ -2361,32 +2361,32 @@ static bento_status_t add_upper_cards(farm_t *farm)
 static bento_status_t add_lower_cards(farm_t *farm)
 {
     static const part_t parts[] = {
-        {KIND_PANEL, SLOT_NONE, "", 12, 244, 380, 100, COLOR_CARD, 1},
-        {KIND_LABEL, SLOT_NONE, "AI กับกฎ เห็นตรงกันไหม", 24, 250, 0, 0,
-         COLOR_INFO, 16},
-        {KIND_LABEL, SLOT_NONE, "กฎ: ใช่", 130, 266, 0, 0, COLOR_DIM,
-         14},
-        {KIND_LABEL, SLOT_NONE, "กฎ: ไม่", 270, 266, 0, 0, COLOR_DIM,
-         14},
-        {KIND_LABEL, SLOT_NONE, "AI: ใช่", 24, 290, 0, 0, COLOR_DIM, 14},
-        {KIND_LABEL, SLOT_NONE, "AI: ไม่", 24, 316, 0, 0, COLOR_DIM, 14},
-        {KIND_LED, SLOT_CELL_BOTH, "", 130, 288, 18, 18, COLOR_BAD, 0},
-        {KIND_LABEL, SLOT_NONE, "both", 156, 288, 0, 0, COLOR_TEXT, 16},
-        {KIND_LED, SLOT_CELL_AI, "", 270, 288, 18, 18, COLOR_WARN, 0},
-        {KIND_LABEL, SLOT_NONE, "ai", 296, 288, 0, 0, COLOR_TEXT, 16},
-        {KIND_LED, SLOT_CELL_RULE, "", 130, 314, 18, 18, COLOR_WARN, 0},
-        {KIND_LABEL, SLOT_NONE, "rule", 156, 314, 0, 0, COLOR_TEXT, 16},
-        {KIND_LED, SLOT_CELL_NONE, "", 270, 314, 18, 18, COLOR_OK, 0},
-        {KIND_LABEL, SLOT_NONE, "none", 296, 314, 0, 0, COLOR_TEXT, 16},
-        {KIND_PANEL, SLOT_NONE, "", 402, 244, 378, 100, COLOR_CARD, 1},
-        {KIND_LABEL, SLOT_NONE, "ระดับและการเตือน", 414, 250, 0, 0,
-         COLOR_INFO, 16},
-        {KIND_LED, SLOT_LEVEL_LED, "", 414, 274, 34, 34, COLOR_OK, 1},
-        {KIND_LABEL, SLOT_LEVEL, " ", 460, 270, 0, 0, COLOR_TEXT, 20},
-        {KIND_LABEL, SLOT_ALARM, " ", 460, 298, 0, 0, COLOR_DIM, 16},
-        {KIND_LABEL, SLOT_NONE, NULL, 414, 322, 0, 0, COLOR_DIM, 14},
-        {KIND_LABEL, SLOT_NOTE, "กำลังเริ่ม...", 12, 352, 0, 0, COLOR_WARN,
-         16}};
+        {KIND_PANEL, SLOT_NONE, "", 12, 250, 330, 114, COLOR_CARD, 1},
+        {KIND_LABEL, SLOT_NONE, "AI กับกฎ เห็นตรงกันไหม", 24, 256, 0, 0,
+         COLOR_INFO, 20},
+        {KIND_LABEL, SLOT_NONE, "กฎ: ใช่", 130, 282, 0, 0, COLOR_DIM,
+         20},
+        {KIND_LABEL, SLOT_NONE, "กฎ: ไม่", 270, 282, 0, 0, COLOR_DIM,
+         20},
+        {KIND_LABEL, SLOT_NONE, "AI: ใช่", 24, 308, 0, 0, COLOR_DIM, 20},
+        {KIND_LABEL, SLOT_NONE, "AI: ไม่", 24, 334, 0, 0, COLOR_DIM, 20},
+        {KIND_LED, SLOT_CELL_BOTH, "", 130, 310, 18, 18, COLOR_BAD, 0},
+        {KIND_LABEL, SLOT_NONE, "both", 156, 310, 0, 0, COLOR_TEXT, 16},
+        {KIND_LED, SLOT_CELL_AI, "", 270, 310, 18, 18, COLOR_WARN, 0},
+        {KIND_LABEL, SLOT_NONE, "ai", 296, 310, 0, 0, COLOR_TEXT, 16},
+        {KIND_LED, SLOT_CELL_RULE, "", 130, 336, 18, 18, COLOR_WARN, 0},
+        {KIND_LABEL, SLOT_NONE, "rule", 156, 336, 0, 0, COLOR_TEXT, 16},
+        {KIND_LED, SLOT_CELL_NONE, "", 270, 336, 18, 18, COLOR_OK, 0},
+        {KIND_LABEL, SLOT_NONE, "none", 296, 336, 0, 0, COLOR_TEXT, 16},
+        {KIND_PANEL, SLOT_NONE, "", 350, 250, 438, 114, COLOR_CARD, 1},
+        {KIND_LABEL, SLOT_NONE, "ระดับและการเตือน", 362, 256, 0, 0,
+         COLOR_INFO, 20},
+        {KIND_LED, SLOT_LEVEL_LED, "", 362, 284, 34, 34, COLOR_OK, 1},
+        {KIND_LABEL, SLOT_LEVEL, " ", 408, 282, 0, 0, COLOR_TEXT, 20},
+        {KIND_LABEL, SLOT_ALARM, " ", 408, 308, 0, 0, COLOR_DIM, 20},
+        {KIND_LABEL, SLOT_NONE, NULL, 362, 334, 0, 0, COLOR_DIM, 20},
+        {KIND_LABEL, SLOT_NOTE, "กำลังเริ่ม...", 12, 370, 0, 0, COLOR_WARN,
+         20}};
     return add_parts(farm, parts,
                      (uint32_t)(sizeof(parts) / sizeof(parts[0])));
 }
@@ -2407,7 +2407,7 @@ static bento_status_t build_screen(farm_t *farm)
     static const part_t title = {KIND_LABEL, SLOT_NONE,  "", 12, 6, 0,
                                  0,          COLOR_TEXT, 24};
     static const part_t problem = {KIND_LABEL, SLOT_NONE, "", 12, 38, 0,
-                                   0,          COLOR_DIM, 16};
+                                   0,          COLOR_DIM, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t made = 0U;
     bento_status_t status = bento_ui_screen_default(farm->ui);
@@ -3570,7 +3570,7 @@ static bento_status_t unknown_mission(farm_t *farm)
     static const part_t problem = {
         KIND_LABEL, SLOT_NONE, "", 12, 120, 0, 0, COLOR_BAD, 24};
     static const part_t choices = {
-        KIND_LABEL, SLOT_NONE, "", 12, 170, 0, 0, COLOR_TEXT, 16};
+        KIND_LABEL, SLOT_NONE, "", 12, 170, 0, 0, COLOR_TEXT, 20};
     char name[ASCII_KEEP + 1];
     char text[TEXT_BYTES];
     bento_ui_id_t made = 0U;
