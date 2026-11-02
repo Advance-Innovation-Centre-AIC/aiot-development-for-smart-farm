@@ -44,7 +44,9 @@
  *   - Python's index -1 ("Not sure", no chip) is the row after the
  *     last label here: NOT_SURE in the dwell, -1 nowhere else.
  *   - In the BENTO Emulator, Edge AI from C is not available yet:
- *     the program says so and ends.
+ *     the program says so, then goes on as the .py does when it
+ *     cannot read the model list (the "not on this board" card), and
+ *     ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1364,34 +1366,44 @@ static bento_status_t watch_model(app_t *app)
     return status;
 }
 
-/* The BENTO Emulator's C runtime has no Edge AI yet (every
- * bento_edgeai_* call answers BENTO_E_UNSUPPORTED): say so on the
- * screen and the console, and end normally. */
-static bento_status_t show_emulator_gap(app_t *app)
-{
-    static const char gap_text[] =
-        "Edge AI จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ "
-        "Eva Kit";
-    static const widget_spec_t gap = {
-        UI_WIDGET_LABEL, SLOT_STATUS, gap_text, 12, 186, AUTO, AUTO,
-        COLOR_WARN,      0,           0,        20};
-    bento_status_t status;
+/* The BENTO Emulator's C runtime has no Edge AI yet: every
+ * bento_edgeai_* call answers BENTO_E_UNSUPPORTED. */
+static const char EMULATOR_GAP[] =
+    "Edge AI จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ "
+    "Eva Kit";
 
+static void say_emulator_gap(void)
+{
     (void)printf(
         "%s / Edge AI from C is not in the BENTO Emulator yet: "
         "run it on a Dev Kit or Eva Kit.\n",
-        gap_text);
-    status = clear_screen(app);
-    if (status == BENTO_OK) {
-        status = add_widget(app, &gap);
-    }
-    return status;
+        EMULATOR_GAP);
+}
+
+/* The label, under the "not on this board" card. */
+static bento_status_t show_emulator_gap(app_t *app)
+{
+    static const widget_spec_t gap = {UI_WIDGET_LABEL,
+                                      SLOT_NONE,
+                                      EMULATOR_GAP,
+                                      12,
+                                      300,
+                                      AUTO,
+                                      AUTO,
+                                      COLOR_WARN,
+                                      0,
+                                      0,
+                                      20};
+
+    return add_widget(app, &gap);
 }
 
 int main(void)
 {
     app_t *app = &g_app;
     bool supported = false;
+    bool emulator = false;
+    bool found = false;
     bento_status_t status;
 
     (void)memset(app, 0, sizeof(*app));
@@ -1399,16 +1411,20 @@ int main(void)
     app->has_buttons = bento_buttons_count() > 0U;
     status = bento_edgeai_supported(&supported);
     if (status == BENTO_E_UNSUPPORTED) {
-        status = show_emulator_gap(app); /* no Edge AI from C there */
-        supported = false;
+        say_emulator_gap();
+        emulator = true; /* go on as the .py: no model list to read */
+        status = BENTO_OK;
     } else if ((status == BENTO_OK) && !supported) {
         status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
     } else {
         /* a board with the model link, or a link error that ends it */
     }
-    if ((status == BENTO_OK) && supported) {
-        status =
-            find_model(app) ? watch_model(app) : show_not_deployed(app);
+    if (status == BENTO_OK) {
+        found = find_model(app);
+        status = found ? watch_model(app) : show_not_deployed(app);
+    }
+    if ((status == BENTO_OK) && emulator && !found) {
+        status = show_emulator_gap(app);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }
