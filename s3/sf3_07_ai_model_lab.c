@@ -52,9 +52,11 @@
  *   - `import buttons` fails on the Eva Kit; here a board with no
  *     buttons (bento_buttons_count() 0) is that board.
  *   - In the BENTO Emulator, Edge AI from C is not available yet
- *     (bento_edgeai_supported() answers BENTO_E_UNSUPPORTED or
- *     false): the program says so and goes on as the original does
- *     when no model can be read ("No models on this board").
+ *     (bento_edgeai_supported() answers BENTO_E_UNSUPPORTED): the
+ *     program says so and goes on as the original does when no
+ *     model can be read ("No models on this board"). A board with
+ *     no model link (the reTerminal: supported() false) takes that
+ *     same path without the Emulator line.
  *   - Repr of a name in the listing escapes as the PSoC Edge's
  *     MicroPython does (no unicode str there).
  *   - Stop ends the program after the same finally (the model is
@@ -1758,9 +1760,10 @@ int main(void)
     lab->has_buttons = bento_buttons_count() > 0U;
     lab->next_button.index = 1U;
     lab->go_button.index = 0U;
+    /* no link (supported false): list_models() finds none, and the
+     * original's "no models" path follows */
     status = bento_edgeai_supported(&supported);
-    gap = (status == BENTO_E_UNSUPPORTED) ||
-          ((status == BENTO_OK) && !supported);
+    gap = status == BENTO_E_UNSUPPORTED;
     if (gap) {
         print_emulator_gap();
         status = BENTO_OK; /* then the original's "no models" path */
