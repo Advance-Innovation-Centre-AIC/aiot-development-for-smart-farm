@@ -41,9 +41,9 @@
  *     nothing. An SSID or password the radio cannot take counts as a
  *     failed join, as it does there. A failed sensor read gives the
  *     same None as the original's except.
- *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet:
- *     the program says so and ends (its status line carries the
- *     message).
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet
+ *     (here the TESAIoT link): the program says so and ends (its
+ *     status line carries the message).
  *   - The lesson's Stop exception travels as BENTO_E_CANCELLED, which
  *     main() turns into 0 as it does the IDE's Stop button.
  */
@@ -857,14 +857,14 @@ static bento_status_t send_all(const cloud_screen_t *screen,
 static bento_status_t emulator_gap(const cloud_screen_t *screen,
                                    bento_status_t status)
 {
-    static const char gap[] =
-        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    static const char gap[] = "TESAIoT จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
     bento_status_t result = status;
 
     if (status == BENTO_E_UNSUPPORTED) {
         show_status(screen, gap, COLOR_WARN);
         (void)printf(
-            "%s / MQTT from C is not in the BENTO Emulator yet: "
+            "%s / TESAIoT from C is not in the BENTO Emulator yet: "
             "run it on a Dev Kit or Eva Kit.\n",
             gap);
         result = BENTO_E_CANCELLED; /* main() answers 0 */
