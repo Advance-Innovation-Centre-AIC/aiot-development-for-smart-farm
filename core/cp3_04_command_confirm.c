@@ -156,7 +156,9 @@ enum {
     FONT_THAI = 20,  /* Thai is 20 px or larger on the board */
     FONT_TITLE = 24,
     SETTLE_MS = 200, /* let the cleared screen settle */
-    TEXT_BYTES = 128,
+    /* the pump line with two VALUE_BYTES values (131 with its NUL);
+     * a label shows at most 126 of it */
+    TEXT_BYTES = 132,
     VALUE_BYTES = 48
 };
 
