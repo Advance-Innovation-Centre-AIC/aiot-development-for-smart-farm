@@ -47,11 +47,11 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    LIMIT = 50, /* the warning line, % */
-    HYST = 5,   /* rule 2: on above LIMIT + HYST, off below - */
-    HOLD_S = 3, /* rules 3 and 4: seen this many seconds in a row */
+    LIMIT = 50,      /* the warning line, % */
+    HYST = 5,        /* rule 2: on above LIMIT + HYST, off below - */
+    HOLD_S = 3,      /* rules 3 and 4: seen this many seconds */
     COOLDOWN_S = 10, /* rule 4: rest this long after SW5 */
     NOISE = 2,       /* simulated jitter of +- this many % */
     DECIDE_MS = 100, /* judge this often (all four see one value) */
@@ -59,11 +59,9 @@ enum {
     TICK_MS = 500,   /* refresh the screen this often */
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
-    VOLUME = 25,     /* tone loudness 0-127 (about 20 %) */
-    MS_PER_S = 1000,
-    HOLD_MS = HOLD_S * MS_PER_S, /* in the same enum: one type */
-    COOLDOWN_MS = COOLDOWN_S * MS_PER_S
+    VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -123,7 +121,8 @@ enum {
     STATES = 4,
     BUTTON_SW5 = 1, /* the lower button is pressed(1) */
     RAW_MAX = 4095, /* a 12-bit ADC */
-    PERCENT = 100
+    PERCENT = 100,
+    MS_PER_S = 1000
 };
 
 /* Sound, text and timing that are not settings. */
@@ -260,6 +259,11 @@ static bool hysteresis(bool on, int32_t value)
     return answer;
 }
 
+static int32_t seconds_to_ms(int32_t seconds)
+{
+    return seconds * MS_PER_S;
+}
+
 /* Rule 3: *since_ms = when `over` began to differ from `on`; the
  * answer changes once it has differed for HOLD_S seconds. */
 static bool hold(bool on, bool over, uint32_t *since_ms,
@@ -269,7 +273,8 @@ static bool hold(bool on, bool over, uint32_t *since_ms,
 
     if (over == on) {
         *since_ms = now_ms;
-    } else if (bento_time_ticks_diff(now_ms, *since_ms) >= HOLD_MS) {
+    } else if (bento_time_ticks_diff(now_ms, *since_ms) >=
+               seconds_to_ms(HOLD_S)) {
         answer = over;
         *since_ms = now_ms;
     } else {
@@ -292,7 +297,7 @@ static int32_t next_state(int32_t state, bool over, bool acknowledged,
     case STATE_WATCH:
         if (!over) {
             next = STATE_OK;
-        } else if (in_state_ms >= HOLD_MS) {
+        } else if (in_state_ms >= seconds_to_ms(HOLD_S)) {
             next = STATE_ALARM;
         } else {
             next = STATE_WATCH;
@@ -303,7 +308,9 @@ static int32_t next_state(int32_t state, bool over, bool acknowledged,
         next = acknowledged ? STATE_COOLDOWN : STATE_ALARM;
         break;
     default:
-        next = (in_state_ms >= COOLDOWN_MS) ? STATE_OK : STATE_COOLDOWN;
+        next = (in_state_ms >= seconds_to_ms(COOLDOWN_S))
+                   ? STATE_OK
+                   : STATE_COOLDOWN;
         break;
     }
     return next;
