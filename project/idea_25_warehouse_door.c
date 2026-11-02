@@ -29,8 +29,9 @@
  *
  * Twin of idea_25_warehouse_door.py (aiot-development-for-smart-farm/project/idea_25_warehouse_door.py). Style: CLEAN_C.md.
  * Where C differs:
- *   - CLIENT_ID and the topics are "%s" texts filled with TEAM where
- *     the .py adds TEAM to them ("bento-aiot/" + TEAM + "/cmd").
+ *   - CLIENT_ID and the topics are built in code from ROOT and TEAM
+ *     with snprintf, where the .py adds the texts together; ROOT is
+ *     the "bento-aiot" the .py writes inside its topics.
  *   - json.loads in is_acknowledge(): a small reader of one JSON object
  *     finds "cmd" at its top level and compares its text with "ack";
  *     a nested list or object is skipped by its brackets; text that
@@ -81,10 +82,10 @@ static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>
 static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
 static const char BROKER[] = "broker.hivemq.com";
-/* %s = TEAM; every connect adds "-" and 4 hex digits of the clock */
-static const char CLIENT_ID[] = "bento-farm-%s";
-static const char TOPIC_EVENT[] = "bento-aiot/%s/event"; /* %s = TEAM */
-static const char TOPIC_CMD[] = "bento-aiot/%s/cmd";     /* %s = TEAM */
+/* CLIENT_ID = "bento-farm-" + TEAM, built in open_broker() */
+static const char ROOT[] = "bento-aiot"; /* the topics start with it */
+/* TOPIC_EVENT = ROOT/TEAM/event, built in make_topics() */
+/* TOPIC_CMD = ROOT/TEAM/cmd, built in make_topics() */
 enum {
     BEEP_MS = 5000, /* the siren again this often until acknowledged */
     MIN_CM = 30,    /* VR3: the door zone 30-150 cm, the yard twice */
@@ -149,13 +150,12 @@ enum {
 
 /* Buffer sizes, in bytes. */
 enum {
-    TEXT_BYTES = 128,        /* a label text: 126 at most */
-    NAME_BYTES = 48,         /* a topic */
-    CLIENT_ID_BYTES = 32,    /* the broker takes 23 */
-    CLIENT_SUFFIX_BYTES = 8, /* "-" and 4 hex digits */
-    PAYLOAD_KEEP = 255,      /* what the MicroPython binding keeps */
-    WORD_BYTES = 8,          /* "ack", and room to see a longer word */
-    NUMBER_BYTES = 12,       /* any int32_t and its NUL */
+    TEXT_BYTES = 128,     /* a label text: 126 at most */
+    NAME_BYTES = 48,      /* a topic */
+    CLIENT_ID_BYTES = 32, /* the broker takes 23 */
+    PAYLOAD_KEEP = 255,   /* what the MicroPython binding keeps */
+    WORD_BYTES = 8,       /* "ack", and room to see a longer word */
+    NUMBER_BYTES = 12,    /* any int32_t and its NUL */
     /* an event with every int32_t at its widest */
     EVENT_BYTES = 128
 };
@@ -1369,15 +1369,13 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(door_app_t *app, bool *linked)
 {
-    char base_id[CLIENT_ID_BYTES];
-    char client_id[CLIENT_ID_BYTES + CLIENT_SUFFIX_BYTES];
+    char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
-    /* + a number from the board's clock: never an old id */
-    (void)snprintf(base_id, sizeof(base_id), CLIENT_ID, TEAM);
+    /* CLIENT_ID + a number from the board's clock: never an old id */
     (void)snprintf(
-        client_id, sizeof(client_id), "%s-%04" PRIx32, base_id,
+        client_id, sizeof(client_id), "bento-farm-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
     config.host = BROKER;
@@ -1932,6 +1930,16 @@ static bento_status_t run_door(door_app_t *app)
     return status;
 }
 
+/* TOPIC_EVENT and TOPIC_CMD of the .py: ROOT/TEAM/event and
+ * ROOT/TEAM/cmd. */
+static void make_topics(door_app_t *app)
+{
+    (void)snprintf(app->topic_event, sizeof(app->topic_event),
+                   "%s/%s/event", ROOT, TEAM);
+    (void)snprintf(app->topic_cmd, sizeof(app->topic_cmd), "%s/%s/cmd",
+                   ROOT, TEAM);
+}
+
 int main(void)
 {
     door_app_t app;
@@ -1946,10 +1954,7 @@ int main(void)
     app.guard.acknowledged = true;
     app.guard.exit_running = true;
     app.guard.arm_ms = bento_time_ticks_ms();
-    (void)snprintf(app.topic_event, sizeof(app.topic_event),
-                   TOPIC_EVENT, TEAM);
-    (void)snprintf(app.topic_cmd, sizeof(app.topic_cmd), TOPIC_CMD,
-                   TEAM);
+    make_topics(&app);
     status = run_door(&app);
     if (app.has_broker) {
         (void)bento_mqtt_close(app.broker); /* the .py ignores it */
