@@ -1424,7 +1424,7 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
                           COL_CARD, COL_DIM,  12,       1};
     const int16_t title_x = px(place->x + 12);
     const int16_t title_y = px(place->y + 6);
-    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 16};
+    const spec_t label = {title_x, title_y, -1, -1, COL_INFO, 0, 0, 20};
     bento_ui_id_t panel_id = 0U;
     bento_status_t status =
         add_widget(ui, bento_ui_panel_create, &panel, NULL, &panel_id);
@@ -1440,9 +1440,9 @@ static bento_status_t add_card(bento_ui_t *ui, const rect_t *place,
 static bento_status_t add_health(farm_t *farm)
 {
     const rect_t card = {12, 44, 290, 300};
-    const spec_t ring = {46, 78, 180, 180, 0U, 0, PERCENT, PERCENT};
-    const spec_t percent = {98, 152, -1, -1, COL_TEXT, 0, 0, 28};
-    const spec_t wear = {24, 268, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t ring = {46, 82, 180, 180, 0U, 0, PERCENT, PERCENT};
+    const spec_t percent = {98, 156, -1, -1, COL_TEXT, 0, 0, 28};
+    const spec_t wear = {24, 266, -1, -1, COL_DIM, 0, 0, 20};
     const spec_t verdict = {24, 298, -1, -1, COL_WARN, 0, 0, 20};
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1472,9 +1472,9 @@ static bento_status_t add_health(farm_t *farm)
 static bento_status_t add_hopper(farm_t *farm)
 {
     const rect_t card = {312, 44, 130, 300};
-    const spec_t bar = {332, 80, 50, 210, 0U, 0, PERCENT, 0};
-    const spec_t full = {392, 80, -1, -1, COL_DIM, 0, 0, 14};
-    const spec_t low = {392, 262, -1, -1, COL_BAD, 0, 0, 14};
+    const spec_t bar = {332, 84, 50, 210, 0U, 0, PERCENT, 0};
+    const spec_t full = {392, 84, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t low = {392, 262, -1, -1, COL_BAD, 0, 0, 20};
     const spec_t tank = {332, 304, -1, -1, COL_TEXT, 0, 0, 16};
     bento_ui_id_t label = 0U;
     bento_status_t status =
@@ -1502,11 +1502,11 @@ static bento_status_t add_hopper(farm_t *farm)
 /* The batch counter and the milled rice under the mill. */
 static bento_status_t add_batches(farm_t *farm)
 {
-    const spec_t caption = {466, 160, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t batches = {466, 186, 120, 50, COL_INFO, 0, 0, 0};
-    const spec_t unit = {530, 200, -1, -1, COL_DIM, 0, 0, 16};
-    const spec_t rice = {466, 254, -1, -1, COL_TEXT, 0, 0, 16};
-    const spec_t hint = {466, 290, -1, -1, COL_DIM, 0, 0, 14};
+    const spec_t caption = {466, 164, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t batches = {466, 196, 120, 50, COL_INFO, 0, 0, 0};
+    const spec_t unit = {530, 210, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t rice = {466, 256, -1, -1, COL_TEXT, 0, 0, 20};
+    const spec_t hint = {466, 294, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
     bento_ui_id_t label = 0U;
     bento_status_t status = add_widget(farm->ui, bento_ui_label_create,
@@ -1537,9 +1537,9 @@ static bento_status_t add_batches(farm_t *farm)
 static bento_status_t add_mill(farm_t *farm)
 {
     const rect_t card = {452, 44, 328, 300};
-    const spec_t lamp = {466, 80, 40, 40, COL_INFO, 0, 0, 0};
-    const spec_t mill = {518, 86, -1, -1, COL_DIM, 0, 0, 24};
-    const spec_t left = {466, 132, 300, 14, 0U, 0, PUMP_MAX_S, 0};
+    const spec_t lamp = {466, 84, 40, 40, COL_INFO, 0, 0, 0};
+    const spec_t mill = {518, 90, -1, -1, COL_DIM, 0, 0, 24};
+    const spec_t left = {466, 136, 300, 14, 0U, 0, PUMP_MAX_S, 0};
     bento_status_t status =
         add_card(farm->ui, &card, "เครื่องสี = ไฟสีฟ้า (คำสั่ง 0)",
                  &farm->screen.title);
@@ -1564,9 +1564,9 @@ static bento_status_t add_mill(farm_t *farm)
 
 static bento_status_t add_status_line(farm_t *farm)
 {
-    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 0};
-    const spec_t lamp = {606, 12, 18, 18, COL_OK, 0, 0, 0};
-    const spec_t link = {632, 10, -1, -1, COL_DIM, 0, 0, 16};
+    const spec_t note = {12, 352, -1, -1, COL_DIM, 0, 0, 20};
+    const spec_t lamp = {590, 12, 18, 18, COL_OK, 0, 0, 0};
+    const spec_t link = {616, 10, -1, -1, COL_DIM, 0, 0, 20};
     bento_status_t status =
         add_widget(farm->ui, bento_ui_label_create, &note, "ยังไม่มีคำสั่ง",
                    &farm->screen.note);
