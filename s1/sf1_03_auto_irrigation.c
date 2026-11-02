@@ -44,24 +44,27 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    SPEAKER = 40,  /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
-    VOLUME = 25,   /* ความดังเสียง 0-127 */
-    HYST = 5,      /* ช่องกันกระพือ: ปิดเมื่อชื้นเกิน เกณฑ์ + HYST */
-    TANK_MIN = 10, /* ถังต่ำกว่านี้ (%) ห้ามเดินปั๊ม */
-    MANUAL_S = 10, /* กด SW5 = รดเองกี่วินาที */
+    SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
+    VOLUME = 25,  /* ความดังเสียง 0-127 */
+    HYST = 5,     /* ช่องกันกระพือ: ปิดเมื่อชื้นเกิน เกณฑ์ + HYST */
+    TANK_MIN = 10 /* ถังต่ำกว่านี้ (%) ห้ามเดินปั๊ม */
+};
+/* ปั๊มไหลกี่ลิตรต่อวินาที */
+static const bento_real_t FLOW_L_PER_S = (bento_real_t)0.5;
+static const bool AUTO_AT_START = true;
+enum {
+    MANUAL_S = 10 /* กด SW5 = รดเองกี่วินาที */
+};
+/* .py: BTN_NAMES. ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+enum {
     RUN_MS = 180000,
     TICK_MS = 500,
     CHART_EVERY = 1
 };
-
-/* FLOW_L_PER_S: edit it at the top of count_water() (flow_l_per_s). */
-static const bool AUTO_AT_START = true;
-
-/* BTN_NAMES: now BUTTON_NAMES (the lint refuses "btn").
- * ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
-static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+/* ---- end of settings ---- */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -899,8 +902,6 @@ static bento_status_t switch_pump(const farm_screen_t *screen,
 static bento_status_t count_water(const farm_screen_t *screen,
                                   irrigation_t *farm)
 {
-    /* ปั๊มไหลกี่ลิตรต่อวินาที (แก้ได้) */
-    const bento_real_t flow_l_per_s = (bento_real_t)0.5;
     bento_status_t status = BENTO_OK;
 
     if (pressed_now(&farm->sw6)) {
@@ -909,7 +910,7 @@ static bento_status_t count_water(const farm_screen_t *screen,
         status = beep(screen->ui, TUNE_TAP);
     }
     if (farm->running) {
-        bento_real_t litres = flow_l_per_s * (bento_real_t)TICK_MS;
+        bento_real_t litres = FLOW_L_PER_S * (bento_real_t)TICK_MS;
 
         litres = litres / (bento_real_t)MS_PER_S;
         farm->water_l = farm->water_l + litres;
