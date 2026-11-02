@@ -8,8 +8,8 @@
  * ไฟ PLC บนจอกับ RGB_BLUE ตาม plc/state ที่ PLC รายงาน ไม่ใช่ที่เราสั่ง
  * PLC เงียบเกิน 15 วินาที = "PLC หลุด!" SW5 สั่งรดน้ำ SW6 สลับออโต้
  * ลองเล่นกับ PLC Simulator ใน app/farm_web.html หรืออีกกลุ่มรัน
- * sf2_07_field_station.py (TEAM เดียวกัน) แก้ wifi_ssid, wifi_pass
- * (ใน join_wifi) และ TEAM ก่อนรัน
+ * sf2_07_field_station.py (TEAM เดียวกัน) แก้ WIFI_SSID, WIFI_PASS
+ * และ TEAM ที่หัวไฟล์ก่อนรัน
  *
  * The smart IoT gateway listens to three topics of the team: field/+
  * (field nodes send the soil and the tank), plc/state (the PLC
@@ -21,8 +21,8 @@
  * what the PLC reports, not what was ordered; a PLC silent for 15 s
  * is "PLC หลุด!". SW5 waters, SW6 switches the auto mode. Play with
  * the PLC Simulator in app/farm_web.html, or another team running
- * sf2_07_field_station.py with the same TEAM. Edit wifi_ssid,
- * wifi_pass (in join_wifi) and TEAM before running.
+ * sf2_07_field_station.py with the same TEAM. Edit WIFI_SSID,
+ * WIFI_PASS and TEAM at the top before running.
  *
  * Twin of sf2_06_smart_gateway.py (aiot-development-for-smart-farm/s2/sf2_06_smart_gateway.py). Style: CLEAN_C.md.
  * Where C differs:
@@ -87,14 +87,19 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 /* ---- 1) ตั้งค่า (แก้ได้) ---- */
-/* WIFI_SSID (wifi_ssid) และ WIFI_PASS (wifi_pass) อยู่ใน
- * join_wifi() ด้านล่าง แก้ที่นั่น */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX"; /* เลขกลุ่มที่ผู้สอนแจก */
-/* BROKER (broker_name) and CLIENT_PREFIX (client_prefix) live in
- * open_broker(), TOPIC_ROOT (topic_root) in
- * main(), the SW6 name in add_history(): each is read there only. */
-static const char WATER_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
+
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-gw-TEAM, built in open_broker() */
+/* BASE = bento-aiot/TEAM/, built in main() */
+/* .py: BTN_NAMES */
+static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
 
 /* The rules and the times. */
 enum {
@@ -111,6 +116,7 @@ enum {
     SPEAKER = 40, /* speaker volume, percent */
     VOLUME = 25   /* a tone's velocity */
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -1409,7 +1415,6 @@ static bento_status_t add_plc(farm_t *farm)
 /* Bottom: the soil and the pump over time, and the buttons. */
 static bento_status_t add_history(farm_t *farm)
 {
-    static const char auto_button_name[] = "SW6"; /* BTN_NAMES[1] */
     const spec_t chart = {12, 252, 400, 86, COL_OK, 0, PERCENT, 0};
     const spec_t hint = {424, 290, -1, -1, COL_DIM, 0, 0, 20};
     char text[TEXT_BYTES];
@@ -1424,7 +1429,7 @@ static bento_status_t add_history(farm_t *farm)
     }
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "%s=รดน้ำ %s=ออโต้",
-                       WATER_BUTTON_NAME, auto_button_name);
+                       BUTTON_NAMES[0], BUTTON_NAMES[1]);
         status = add_widget(farm->ui, bento_ui_label_create, &hint,
                             text, &label);
     }
@@ -1546,18 +1551,14 @@ static void show_farm(const farm_t *farm, maybe_t soil, maybe_t tank)
  * timed-out join is False; any other failure ends the program. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    /* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -1604,20 +1605,18 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
-    static const char broker_name[] = "broker.hivemq.com";
-    /* + a number from the board's clock on every connect: never an
-     * old id */
-    static const char client_prefix[] = "bento-gw-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
+    /* + a number from the board's clock on every connect: never an
+     * old id */
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "bento-gw-%s-%04" PRIx32, TEAM,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_name;
-    config.host_len = (uint32_t)strlen(broker_name);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -2050,7 +2049,7 @@ static void decide(farm_t *farm, maybe_t soil, maybe_t tank,
 
     if (water) {
         water_request(tank, order, note);
-        (void)snprintf(text, sizeof(text), "%s: %s", WATER_BUTTON_NAME,
+        (void)snprintf(text, sizeof(text), "%s: %s", BUTTON_NAMES[0],
                        note);
         show_note(farm, text, COL_INFO);
     } else if (!order->wanted &&
@@ -2279,7 +2278,6 @@ static bento_status_t run_gateway(farm_t *farm)
 
 int main(void)
 {
-    static const char topic_root[] = "bento-aiot";
     farm_t farm = {0};
     bento_status_t status;
 
@@ -2288,7 +2286,7 @@ int main(void)
     farm.auto_button.index = AUTO_BUTTON;
     farm.has_matrix = bento_rgbmatrix_available();
     farm.auto_mode = true;
-    (void)snprintf(farm.base, sizeof(farm.base), "%s/%s/", topic_root,
+    (void)snprintf(farm.base, sizeof(farm.base), "bento-aiot/%s/",
                    TEAM);
     status = run_gateway(&farm);
     if (farm.has_broker) {
