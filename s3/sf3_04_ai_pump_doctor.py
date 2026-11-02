@@ -179,7 +179,7 @@ def score_frame(scores, top, alerting):
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color):
@@ -191,20 +191,20 @@ def line_chart(x, y, w, h, lo, hi, color):
 
 def build_answer(w):
     card(12, 64, 380, 172, "AI ตอบว่า")
-    w["arc"] = ui.Arc(x=24, y=92, w=132, h=132, min=0, max=100, value=0)
+    w["arc"] = ui.Arc(x=24, y=98, w=132, h=132, min=0, max=100, value=0)
     w["arc"].color(COL_DIM)
     w["verdict"] = ui.Label("-", x=170, y=94, color=COL_TEXT, value=28)
     w["led"] = ui.Led(x=340, y=96, w=36, h=36, color=COL_BAD, value=0)
-    w["meaning"] = ui.Label("-", x=170, y=140, color=COL_INFO, value=16)
-    w["conf"] = ui.Label("มั่นใจ - %", x=170, y=176, color=COL_DIM, value=16)
+    w["meaning"] = ui.Label("-", x=170, y=140, color=COL_INFO, value=20)
+    w["conf"] = ui.Label("มั่นใจ - %", x=170, y=176, color=COL_DIM, value=20)
 
 
 def build_scores(w):
     card(402, 64, 378, 172, "คะแนนทุกคลาส (%)")
     w["names"], w["bars"] = [], []
     for i in range(ROWS):
-        w["names"].append(ui.Label(" ", x=414, y=96 + i * 34, color=COL_TEXT, value=16))
-        bar = ui.Bar(x=512, y=98 + i * 34, w=256, h=18, min=0, max=100, value=0)
+        w["names"].append(ui.Label(" ", x=414, y=102 + i * 34, color=COL_TEXT, value=16))
+        bar = ui.Bar(x=512, y=104 + i * 34, w=256, h=18, min=0, max=100, value=0)
         bar.color(COL_DIM)
         w["bars"].append(bar)
 
@@ -213,16 +213,16 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("AI หมอเครื่องจักร (Edge AI)", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"model": ui.Label("โมเดล: -", x=12, y=38, color=COL_DIM, value=16)}
+    w = {"model": ui.Label("โมเดล: -", x=12, y=38, color=COL_DIM, value=20)}
     build_answer(w)
     build_scores(w)
-    ui.Label("ฟ้า = มั่นใจ %   แดง = เกณฑ์", x=12, y=242, color=COL_DIM, value=14)
-    w["chart"] = line_chart(12, 262, 400, 76, 0, 100, COL_INFO)
+    ui.Label("ฟ้า = มั่นใจ %   แดง = เกณฑ์", x=12, y=242, color=COL_DIM, value=20)
+    w["chart"] = line_chart(12, 270, 400, 76, 0, 100, COL_INFO)
     w["s_min"] = w["chart"].add_series(COL_BAD)
     card(422, 244, 358, 94, "สมองของ AI")
-    w["lat"] = ui.Label("ใช้เวลาคิด - ms", x=434, y=274, color=COL_DIM, value=16)
-    w["streak"] = ui.Label(" ", x=434, y=304, color=COL_DIM, value=16)
-    w["status"] = ui.Label("กำลังหาโมเดล...", x=12, y=352, color=COL_WARN, value=16)
+    w["lat"] = ui.Label("ใช้เวลาคิด - ms", x=434, y=278, color=COL_DIM, value=20)
+    w["streak"] = ui.Label(" ", x=434, y=308, color=COL_DIM, value=20)
+    w["status"] = ui.Label("กำลังหาโมเดล...", x=12, y=352, color=COL_WARN, value=20)
     ui.poll()
     return w
 
