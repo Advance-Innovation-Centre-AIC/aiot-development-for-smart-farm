@@ -168,8 +168,10 @@ enum { /* layout, in px */
     CARD_TITLE_DY = 6,
     TITLE_PX = 20
 };
-enum {                      /* buffers, in bytes */
-    TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
+enum {                /* buffers, in bytes */
+    TEXT_BYTES = 128, /* a SET_TEXT carries at most 126 */
+    CLOCK_BYTES =
+        24, /* "mm:ss" of any two int32_t, the colon, the NUL */
     WHY_THAI_BYTES = 64,    /* two Thai problems and " + " */
     WHY_ENGLISH_BYTES = 16, /* "cold+dry" */
     TOPIC_BYTES = 40,
@@ -1360,7 +1362,7 @@ static void show_log(const screen_t *screen, const watch_t *watch,
                      const reading_t *reading)
 {
     char real[BENTO_FMT_BUF_SIZE];
-    char clock[TEXT_BYTES];
+    char clock[CLOCK_BYTES];
     char line[TEXT_BYTES];
     uint32_t length = 0U;
 
@@ -1698,7 +1700,7 @@ static bento_status_t watch_house(farm_t *farm)
         status = run_round(farm, &timers);
     }
     if (going_on(status, farm)) {
-        char clock[TEXT_BYTES];
+        char clock[CLOCK_BYTES];
         char line[TEXT_BYTES];
 
         format_mmss(clock, sizeof(clock), farm->watch.bake_s);
