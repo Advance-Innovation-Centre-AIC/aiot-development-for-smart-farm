@@ -50,10 +50,11 @@
  *     dict: with both waiting, the one first moved second is sent
  *     first (both keys hash to one slot of a two-slot table).
  *   - `import buttons` fails on the Eva Kit; here a board with no
- *     buttons (bento_buttons_count() 0) is that board. `import
- *     edge_ai` fails where there is no model link; here
- *     bento_edgeai_supported() false ends the program with
- *     BENTO_E_UNSUPPORTED.
+ *     buttons (bento_buttons_count() 0) is that board.
+ *   - In the BENTO Emulator, Edge AI from C is not available yet
+ *     (bento_edgeai_supported() answers BENTO_E_UNSUPPORTED or
+ *     false): the program says so and goes on as the original does
+ *     when no model can be read ("No models on this board").
  *   - Repr of a name in the listing escapes as the PSoC Edge's
  *     MicroPython does (no unicode str there).
  *   - Stop ends the program after the same finally (the model is
@@ -225,6 +226,7 @@ typedef struct {
 /* Layout on the 792 x 398 canvas. */
 enum {
     TITLE_X = 12,
+    GAP_Y = 48, /* the Emulator line, under "No models on this board" */
     TITLE_Y = 4,
     LED_X = 752,
     LED_Y = 6,
@@ -284,6 +286,7 @@ enum {
     ROWS_PX = 250, /* the height the rows share */
     STATUS_Y = 350,
     TITLE_PX = 24,
+    THAI_PX = 20, /* Thai is 20 px or larger on the board */
     BIG_PX = 28,
     TEXT_PX = 16
 };
@@ -1191,6 +1194,10 @@ static bento_status_t show_no_models(bento_ui_t *ui)
 /* After "Model list changed" no note replaces it until it runs. */
 static const char LIST_CHANGED_MARK[] = "x";
 
+/* What the BENTO Emulator line says: no Edge AI from C there yet. */
+static const char EMULATOR_GAP_TEXT[] =
+    "Edge AI จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+
 /* The models, the list being read, and the program's state: too
  * big for the 8 KB program stack, so at file scope, zeroed by the
  * loader on every load and set again at the start of main()
@@ -1699,10 +1706,49 @@ static bento_status_t run_lab(lab_t *lab)
     return status;
 }
 
+/* The BENTO Emulator has no Edge AI from C yet: one line on the
+ * Console now, and on the screen once there is one. */
+static void print_emulator_gap(void)
+{
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        EMULATOR_GAP_TEXT);
+}
+
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    bento_ui_widget_args_t args;
+    bento_ui_id_t unused;
+
+    bento_ui_widget_args_init(&args);
+    args.text = EMULATOR_GAP_TEXT;
+    args.text_len = (uint32_t)strlen(args.text);
+    args.x = TITLE_X;
+    args.y = GAP_Y;
+    args.color = COLOR_WARN;
+    args.font_px = THAI_PX;
+    return bento_ui_label_create(ui, &args, &unused);
+}
+
+/* No model: the original's one line on a clean screen, and the
+ * Emulator's line under it when Edge AI is missing there. */
+static bento_status_t show_no_models_screen(bento_ui_t *ui,
+                                            bool emulator_gap)
+{
+    bento_status_t status = show_no_models(ui);
+
+    if ((status == BENTO_OK) && emulator_gap) {
+        status = show_emulator_gap(ui);
+    }
+    return status;
+}
+
 int main(void)
 {
     lab_t *lab = &g_lab;
     bool supported = false;
+    bool gap;
     bento_status_t status;
 
     (void)memset(g_models, 0, sizeof(g_models));
@@ -1713,13 +1759,16 @@ int main(void)
     lab->next_button.index = 1U;
     lab->go_button.index = 0U;
     status = bento_edgeai_supported(&supported);
-    if ((status == BENTO_OK) && !supported) {
-        status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
+    gap = (status == BENTO_E_UNSUPPORTED) ||
+          ((status == BENTO_OK) && !supported);
+    if (gap) {
+        print_emulator_gap();
+        status = BENTO_OK; /* then the original's "no models" path */
     }
     if (status == BENTO_OK) {
         list_models(lab);
         if (lab->model_count == 0U) {
-            status = show_no_models(lab->screen.ui);
+            status = show_no_models_screen(lab->screen.ui, gap);
         } else {
             status = run_lab(lab);
         }
