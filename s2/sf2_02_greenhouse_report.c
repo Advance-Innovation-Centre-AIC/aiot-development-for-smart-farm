@@ -847,7 +847,8 @@ static bento_status_t emulator_gap(bento_ui_t *ui,
 {
     static const char gap[] =
         "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
-    static const box_t place = {316,        340, 470, 52,
+    /* bottom right, ending before the firmware's Console button */
+    static const box_t place = {316,        340, 370, 52,
                                 COLOR_WARN, 0,   0,   20};
     bento_ui_id_t label;
     bento_status_t result = status;
