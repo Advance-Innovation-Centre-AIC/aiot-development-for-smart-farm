@@ -696,13 +696,18 @@ static bento_status_t show_emulator_gap(bento_ui_t *ui)
 {
     static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    /* the Emulator does not wrap a label: explicit breaks, two lines
+     * of 348/241 px; the printf keeps the one-line text */
+    static const char gap_lines[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator\n"
+        "ให้รันบน Dev Kit หรือ Eva Kit";
     bento_ui_widget_args_t args;
     bento_ui_id_t label;
     bento_status_t status;
 
     bento_ui_widget_args_init(&args);
-    args.text = gap;
-    args.text_len = (uint32_t)strlen(gap);
+    args.text = gap_lines;
+    args.text_len = (uint32_t)strlen(gap_lines);
     args.x = GAP_X;
     args.y = GAP_Y;
     args.w = GAP_W;
