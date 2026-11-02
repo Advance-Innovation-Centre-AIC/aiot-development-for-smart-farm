@@ -145,7 +145,13 @@ enum {
     NOTE_GAP_MS = 100, /* one note to the next */
     TUNE_NOTES = 3,    /* the longest tune */
     TEXT_BYTES = 128,  /* a SET_TEXT carries at most 126 bytes */
-    REAL_CHARS = 40    /* a number's text, its sign and the NUL */
+    REAL_CHARS = 37,   /* a sign, a number's 35 chars and the NUL */
+    UNIT_BYTES = 3,    /* " %" or " C" */
+    SCALE_BYTES = 52,  /* "กลาง " (13), a number (36), " C", NUL */
+    /* "ต่ำ " (10), "  สูง " (12), "  ชัน " (12), "/นาที" (13), three
+     * numbers of 36 and the NUL; the label shows the first 126 bytes,
+     * cut on a whole letter, as MicroPython does */
+    RANGE_BYTES = 156
 };
 
 /* The tunes every course file shares. */
@@ -616,7 +622,7 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static void show_source(const app_t *app)
 {
     char base[REAL_CHARS];
-    char scale[TEXT_BYTES];
+    char scale[SCALE_BYTES];
     char text[TEXT_BYTES];
 
     if (app->source == (uint32_t)SOURCE_KNOB) {
@@ -638,7 +644,7 @@ static void show_window(const app_t *app, const stats_t *stats,
     char first[REAL_CHARS];
     char second[REAL_CHARS];
     char slope[REAL_CHARS];
-    char text[TEXT_BYTES];
+    char text[RANGE_BYTES];
     float lowest = app->window[0];
     float highest = app->window[0];
     uint32_t i;
@@ -668,7 +674,7 @@ static void show_stats(const app_t *app, float value,
     /* VR1 with one decimal, the temperature with two */
     const int32_t digits =
         (app->source == (uint32_t)SOURCE_KNOB) ? 1 : 2;
-    char unit[REAL_CHARS];
+    char unit[UNIT_BYTES];
     char number[REAL_CHARS];
     char text[TEXT_BYTES];
 
