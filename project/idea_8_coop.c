@@ -168,7 +168,7 @@ enum { /* layout, in px */
 enum { /* the BENTO Emulator note, in px: two lines under the cards */
     GAP_X = 316,
     GAP_Y = 346,
-    GAP_W = 470,
+    GAP_W = 374, /* ends at x 690, left of the Console button */
     GAP_FONT_PX = 20
 };
 enum {                      /* buffers, in bytes */
