@@ -63,9 +63,7 @@ enum {
 
 /* |z| above this = unusual, the screen LED lights. */
 static const float Z_MAX = 2.5F;
-/* The board warms itself: compare with a room thermometer and put the
- * difference here, such as -9.5. */
-static const float TEMP_OFFSET = 0.0F;
+/* TEMP_OFFSET (the board's own warmth) is set in read_temperature(). */
 /* The smallest SD divided by (VR1 in %, the temperature in C): a still
  * value has an SD near 0, which would make z shoot up. */
 static const float SD_MIN[2] = {1.0F, 0.1F};
@@ -158,7 +156,6 @@ enum {
 /* Source 0 = the knob (the default, easy in class), 1 = the
  * temperature. */
 static const char *const SOURCES[2] = {"VR1", "SHT40"};
-static const char *const UNITS[2] = {"%", "C"};
 
 typedef struct {
     int32_t x;
@@ -226,8 +223,9 @@ static bento_status_t pause_ms(uint32_t delay_ms)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -264,6 +262,9 @@ static int32_t round_even(float value)
  * tried three times; still nothing = not known. */
 static bento_status_t read_temperature(reading_t *reading)
 {
+    /* The board warms itself: compare with a room thermometer and put
+     * the difference here, such as -9.5. */
+    static const float temp_offset = 0.0F;
     bento_status_t status = BENTO_OK;
     int32_t tries;
 
@@ -274,7 +275,7 @@ static bento_status_t read_temperature(reading_t *reading)
         float celsius = 0.0F;
 
         if (bento_sensors_sht40_temperature(&celsius) == BENTO_OK) {
-            reading->value = celsius + TEMP_OFFSET;
+            reading->value = celsius + temp_offset;
             reading->known = true;
         } else {
             status = pause_ms((uint32_t)RETRY_MS);
@@ -290,10 +291,11 @@ static bento_status_t read_value(uint32_t source, reading_t *reading)
 
     if (source == (uint32_t)SOURCE_KNOB) {
         uint16_t raw = 0U;
+        int32_t scaled;
 
         status = bento_pots_read(0U, &raw);
-        reading->value =
-            (float)((int32_t)raw * PERCENT) / (float)RAW_MAX;
+        scaled = (int32_t)raw * PERCENT;
+        reading->value = (float)scaled / (float)RAW_MAX;
         reading->known = true;
     } else {
         status = read_temperature(reading);
@@ -337,13 +339,19 @@ static void mean_sd(const float *window, uint32_t count, float *mean,
     uint32_t i;
 
     for (i = 0U; i < count; i++) {
+        const uint32_t seen = i + 1U;
         const float delta = window[i] - running;
 
-        running += delta / (float)(i + 1U);
+        running += delta / (float)seen;
         squares += delta * (window[i] - running);
     }
     *mean = running;
-    *sd = (count > 1U) ? sqrtf(squares / (float)(count - 1U)) : 0.0F;
+    *sd = 0.0F;
+    if (count > 1U) {
+        const uint32_t degrees = count - 1U;
+
+        *sd = sqrtf(squares / (float)degrees);
+    }
 }
 
 /* The slope: (mean of the second half - mean of the first half) over
@@ -352,6 +360,7 @@ static void mean_sd(const float *window, uint32_t count, float *mean,
 static float slope_per_min(const float *window, uint32_t count)
 {
     const uint32_t half = count / 2U;
+    const uint32_t rest = count - half;
     float first = 0.0F;
     float second = 0.0F;
     uint32_t i;
@@ -360,7 +369,7 @@ static float slope_per_min(const float *window, uint32_t count)
         second += window[(count - half) + i];
         first += window[i];
     }
-    return ((((second - first) / (float)half) / (float)(count - half)) *
+    return ((((second - first) / (float)half) / (float)rest) *
             (float)MS_PER_MINUTE) /
            (float)TICK_MS;
 }
@@ -651,6 +660,7 @@ static void show_window(const app_t *app, const stats_t *stats,
 static void show_stats(const app_t *app, float value,
                        const stats_t *stats)
 {
+    static const char *const units[2] = {"%", "C"};
     /* VR1 with one decimal, the temperature with two */
     const int32_t digits =
         (app->source == (uint32_t)SOURCE_KNOB) ? 1 : 2;
@@ -658,7 +668,7 @@ static void show_stats(const app_t *app, float value,
     char number[REAL_CHARS];
     char text[TEXT_BYTES];
 
-    (void)snprintf(unit, sizeof(unit), " %s", UNITS[app->source]);
+    (void)snprintf(unit, sizeof(unit), " %s", units[app->source]);
     format_real(number, sizeof(number), value, digits, false);
     (void)snprintf(text, sizeof(text), "%s %s%s", SOURCES[app->source],
                    number, unit);

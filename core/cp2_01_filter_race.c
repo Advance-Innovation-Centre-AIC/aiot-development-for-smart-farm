@@ -61,10 +61,7 @@ enum {
     VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
 };
 
-/* Kalman1D: how fast the truth may change (more = follows faster) and
- * how much the sensor shakes (more = trusts a new value less). */
-static const float KAL_Q = 0.1F;
-static const float KAL_R = 4.0F;
+/* KAL_Q and KAL_R (Kalman1D) are set inside start_filters(). */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -203,8 +200,9 @@ static bento_status_t pause_ms(uint32_t delay_ms)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -255,8 +253,8 @@ static bento_status_t read_alpha_step(int32_t old, int32_t *step)
     const float band = 0.7F;
     uint16_t raw = 0U;
     const bento_status_t status = bento_pots_read(KNOB_ALPHA, &raw);
-    const float wanted =
-        1.0F + ((float)((int32_t)raw * ALPHA_STEPS) / (float)RAW_MAX);
+    const int32_t scaled = (int32_t)raw * ALPHA_STEPS;
+    const float wanted = 1.0F + ((float)scaled / (float)RAW_MAX);
     const float away = wanted - (float)old;
 
     *step =
@@ -319,6 +317,10 @@ static bento_status_t make_ema(app_t *app, int32_t step)
 /* The Median and the Kalman filter, set up once. */
 static bento_status_t start_filters(app_t *app)
 {
+    /* Kalman1D: how fast the truth may change (more = follows faster)
+     * and how much the sensor shakes (more = trusts a new value less) */
+    static const float kal_q = 0.1F;
+    static const float kal_r = 4.0F;
     bento_dsp_median_config_t median;
     bento_dsp_kalman1d_config_t kalman;
     bento_status_t status = bento_random_init(&app->random);
@@ -334,8 +336,8 @@ static bento_status_t start_filters(app_t *app)
         status = bento_dsp_kalman1d_config_init(&kalman);
     }
     if (status == BENTO_OK) {
-        kalman.q = KAL_Q;
-        kalman.r = KAL_R;
+        kalman.q = kal_q;
+        kalman.r = kal_r;
         status = bento_dsp_kalman1d_state_init(&app->kalman, &kalman);
     }
     return status;
@@ -566,13 +568,13 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static void ema_name(int32_t step, char *name, uint32_t cap)
 {
     const float alpha_per_step = 0.05F;
+    const float value = (float)step * alpha_per_step;
     char alpha[BENTO_FMT_BUF_SIZE];
     uint32_t length = 0U;
 
-    if (bento_fmt_real_precision(
-            alpha, sizeof(alpha),
-            (bento_real_t)((float)step * alpha_per_step), 2,
-            &length) != BENTO_OK) {
+    if (bento_fmt_real_precision(alpha, sizeof(alpha),
+                                 (bento_real_t)value, 2,
+                                 &length) != BENTO_OK) {
         alpha[0] = '\0'; /* cannot happen with this buffer */
     }
     (void)snprintf(name, cap, "EMA a=%s", alpha);

@@ -59,7 +59,10 @@ enum {
     TICK_MS = 500,   /* refresh the screen this often */
     RUN_MS = 180000, /* play for three minutes, then end */
     SPEAKER = 40,    /* speaker level 0-100 % (firmware 2.4.2+) */
-    VOLUME = 25      /* tone loudness 0-127 (about 20 %) */
+    VOLUME = 25,     /* tone loudness 0-127 (about 20 %) */
+    MS_PER_S = 1000,
+    HOLD_MS = HOLD_S * MS_PER_S, /* in the same enum: one type */
+    COOLDOWN_MS = COOLDOWN_S * MS_PER_S
 };
 
 /* The course palette, 0xRRGGBB. */
@@ -120,8 +123,7 @@ enum {
     STATES = 4,
     BUTTON_SW5 = 1, /* the lower button is pressed(1) */
     RAW_MAX = 4095, /* a 12-bit ADC */
-    PERCENT = 100,
-    MS_PER_S = 1000
+    PERCENT = 100
 };
 
 /* Sound, text and timing that are not settings. */
@@ -210,8 +212,9 @@ static bento_status_t pause_ms(uint32_t delay_ms)
 static bento_status_t beep(bento_ui_t *ui, int32_t tune)
 {
     static const uint8_t notes[TUNE_KINDS][TUNE_NOTES] = {
-        {76U},      {72U, 79U},      {79U, 72U}, {72U, 79U, 84U},
-        {84U, 76U}, {84U, 76U, 69U}, {88U}};
+        {76U, 0U, 0U},   {72U, 79U, 0U}, {79U, 72U, 0U},
+        {72U, 79U, 84U}, {84U, 76U, 0U}, {84U, 76U, 69U},
+        {88U, 0U, 0U}};
     static const uint8_t lengths[TUNE_KINDS] = {1U, 2U, 2U, 3U,
                                                 2U, 3U, 1U};
     bento_status_t status = BENTO_OK;
@@ -266,8 +269,7 @@ static bool hold(bool on, bool over, uint32_t *since_ms,
 
     if (over == on) {
         *since_ms = now_ms;
-    } else if (bento_time_ticks_diff(now_ms, *since_ms) >=
-               (HOLD_S * MS_PER_S)) {
+    } else if (bento_time_ticks_diff(now_ms, *since_ms) >= HOLD_MS) {
         answer = over;
         *since_ms = now_ms;
     } else {
@@ -290,7 +292,7 @@ static int32_t next_state(int32_t state, bool over, bool acknowledged,
     case STATE_WATCH:
         if (!over) {
             next = STATE_OK;
-        } else if (in_state_ms >= (HOLD_S * MS_PER_S)) {
+        } else if (in_state_ms >= HOLD_MS) {
             next = STATE_ALARM;
         } else {
             next = STATE_WATCH;
@@ -301,9 +303,7 @@ static int32_t next_state(int32_t state, bool over, bool acknowledged,
         next = acknowledged ? STATE_COOLDOWN : STATE_ALARM;
         break;
     default:
-        next = (in_state_ms >= (COOLDOWN_S * MS_PER_S))
-                   ? STATE_OK
-                   : STATE_COOLDOWN;
+        next = (in_state_ms >= COOLDOWN_MS) ? STATE_OK : STATE_COOLDOWN;
         break;
     }
     return next;
