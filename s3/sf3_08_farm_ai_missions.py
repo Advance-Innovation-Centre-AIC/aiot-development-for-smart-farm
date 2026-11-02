@@ -841,11 +841,11 @@ def build_screen(thai, problem):
                             ("rule", 130, 336, COL_WARN), ("none", 270, 336, COL_OK)):
         w["c_" + name] = ui.Led(x=x, y=y, w=18, h=18, color=col, value=0)
         label(name, x + 26, y, COL_TEXT, 16)
-    card(350, 250, 438, 114, "ระดับและการเตือน")
+    card(350, 250, 438, 88, "ระดับและการเตือน")
     w["lvl_led"] = ui.Led(x=362, y=284, w=34, h=34, color=COL_OK, value=1)
     w["lvl"] = label(" ", 408, 282, COL_TEXT, 20)
     w["alarm"] = label(" ", 408, 308, COL_DIM, 20)
-    label(hint_text(), 362, 334, COL_DIM, 20)
+    label(hint_text(), 340, 38, COL_DIM, 20)
     w["note"] = label("กำลังเริ่ม...", 12, 370, COL_WARN, 20)
     ui.poll()
     return w
