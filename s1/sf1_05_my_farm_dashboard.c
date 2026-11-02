@@ -48,27 +48,35 @@
 #include "bento_sensors.h"
 #include "bento_time.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
-/* TODO: ชื่อฟาร์ม (farm_name) และพืชหรือสัตว์ที่ดูแล (crop) อยู่ใน
- * build_screen(); TEMP_OFFSET และ HUM_FIX (temp_offset, hum_fix) อยู่ใน
- * read_climate(): อ่านที่เดียว จึงอยู่ในฟังก์ชันนั้น (MISRA 8.9) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     SPEAKER = 40, /* ความดังลำโพงรวม 0-100% (fw 2.4.2+) */
-    VOLUME = 25,  /* ความดังเสียง 0-127 */
-    T_LO = 20,    /* TODO: ช่วงอุณหภูมิที่เหมาะ (C) */
+    VOLUME = 25   /* ความดังเสียง 0-127 */
+};
+static const char FARM_NAME[] = "ฟาร์มกลุ่มที่ ?"; /* TODO: ตั้งชื่อฟาร์มของกลุ่ม */
+static const char CROP[] = "มะเขือเทศ";        /* TODO: พืชหรือสัตว์ที่ดูแล */
+enum {
+    T_LO = 20, /* TODO: ช่วงอุณหภูมิที่เหมาะ (C) */
     T_HI = 30,
     H_LO = 60, /* TODO: ช่วงความชื้นอากาศที่เหมาะ (%) */
     H_HI = 80,
     SOIL_MIN = 40, /* TODO: ดินแห้งกว่านี้ให้รดน้ำ (%) */
     MANUAL_S = 10, /* กด SW5 = รดเองกี่วินาที */
-    SOIL_HYST = 5, /* ช่องกันกระพือของปั๊ม (%) เหมือน sf1_03 */
+    SOIL_HYST = 5  /* ช่องกันกระพือของปั๊ม (%) เหมือน sf1_03 */
+};
+/* TODO: ค่าชดเชยเดียวกับที่กลุ่มหาได้ใน sf1_01 เช่น -9.5 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+/* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
+static const bool HUM_FIX = true;
+enum {
     RUN_MS = 300000,
     TICK_MS = 500,
     TAB_BAR_H = 44,
     ALERT_GAP_MS = 3000
 };
-/* The button names (SW5 = ปุ่มล่าง, SW6 = ปุ่มบน) live in
- * build_overview_tab(), the one function that reads them. */
+/* .py: BTN_NAMES. ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
+/* ---- end of settings ---- */
 
 enum { /* colours, 0xRRGGBB */
     COL_TEXT = 0xE8EAED,
@@ -191,10 +199,6 @@ typedef struct {
  * 3 misses there is no reading this round. */
 static bento_status_t read_climate(climate_t *climate)
 {
-    /* TODO: ค่าชดเชยเดียวกับที่กลุ่มหาได้ใน sf1_01 เช่น -9.5 */
-    const bento_real_t temp_offset = (bento_real_t)0.0;
-    /* แปลงความชื้นเป็นของห้อง (สูงเกินจริง = false) */
-    const bool hum_fix = true;
     float t_raw = 0.0F;
     float h = 0.0F;
     uint32_t tries = 0U;
@@ -214,9 +218,9 @@ static bento_status_t read_climate(climate_t *climate)
         }
     }
     if (climate->known) {
-        climate->t = (bento_real_t)t_raw + temp_offset;
+        climate->t = (bento_real_t)t_raw + TEMP_OFFSET;
         climate->h = (bento_real_t)h;
-        if ((temp_offset != (bento_real_t)0) && hum_fix) {
+        if ((TEMP_OFFSET != (bento_real_t)0) && HUM_FIX) {
             climate->h = room_humidity(climate->h, (bento_real_t)t_raw,
                                        climate->t);
         }
@@ -531,8 +535,6 @@ static void refresh(bento_ui_t *ui)
 static bento_status_t build_overview_tab(farm_screen_t *screen,
                                          bento_ui_id_t tab)
 {
-    /* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
-    static const char *const button_names[] = {"SW5", "SW6"};
     static const widget_spec_t specs[] = {
         {bento_ui_arc_create, NULL, 0, 0, 150, 150, 0, 0, 100, 0},
         {bento_ui_label_create, "0", 50, 54, 0, 0, COL_TEXT, 0, 0, 28},
@@ -567,7 +569,7 @@ static bento_status_t build_overview_tab(farm_screen_t *screen,
     }
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "%s (บน) = สลับจอไฟ RGB",
-                       button_names[1]);
+                       BUTTON_NAMES[1]);
         status =
             add_child(screen->ui, &event, text, tab, &screen->event);
     }
@@ -657,10 +659,6 @@ static bento_status_t build_tabs(farm_screen_t *screen)
 
 static bento_status_t build_screen(farm_screen_t *screen)
 {
-    /* TODO: ตั้งชื่อฟาร์ม */
-    static const char farm_name[] = "ฟาร์มกลุ่มที่ ?";
-    /* TODO: พืชหรือสัตว์ที่ดูแล */
-    static const char crop[] = "มะเขือเทศ";
     static const widget_spec_t title = {
         bento_ui_label_create, NULL, 12, 6, 0, 0, COL_TEXT, 0, 0, 24};
     static const widget_spec_t advice = {
@@ -673,7 +671,7 @@ static bento_status_t build_screen(farm_screen_t *screen)
         status = sleep_ms(SETTLE_MS);
     }
     if (status == BENTO_OK) {
-        (void)snprintf(text, sizeof(text), "%s - %s", farm_name, crop);
+        (void)snprintf(text, sizeof(text), "%s - %s", FARM_NAME, CROP);
         status = add_child(screen->ui, &title, text, 0U, &widget);
     }
     if (status == BENTO_OK) {
