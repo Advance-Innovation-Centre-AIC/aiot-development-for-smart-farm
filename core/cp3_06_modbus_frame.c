@@ -178,7 +178,9 @@ enum {
     BYTE_TEXT_BYTES = 4, /* "%02X" of one byte */
     REGISTER_BYTES = 12, /* "--" or any int32_t */
     TEXT_BYTES = 128,
-    VALUE_BYTES = 64
+    VALUE_BYTES = 64,
+    /* "PLC ปฏิเสธ " and a whole value (87 with its NUL) */
+    ANSWER_BYTES = 88
 };
 
 /* Colours, 0xRRGGBB. */
@@ -264,7 +266,7 @@ typedef struct {
 /* An answer, from the gateway or from the timeout, ready to show. */
 typedef struct {
     bool ok;
-    char text[VALUE_BYTES];
+    char text[ANSWER_BYTES];
     char hex[VALUE_BYTES];
 } answer_t;
 
