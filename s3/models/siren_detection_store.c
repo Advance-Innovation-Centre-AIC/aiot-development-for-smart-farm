@@ -106,7 +106,6 @@ enum {
     SILENT_MS = 3000, /* result() failing this long = Stop */
     MS_PER_S = 1000,
     MAX_CLASSES = BENTO_EDGEAI_MAX_CLASSES,
-    SIDES = 2, /* A and B */
     SIDE_A = 0,
     SIDE_B = 1,
     TEXT_CHARS = 128, /* a SET_TEXT carries at most 126 bytes */
@@ -132,6 +131,7 @@ enum {
 /* Every widget the program changes later has a slot; each card has
  * SIDE_SLOTS of them. */
 enum {
+    SIDES = 2, /* A and B */
     SIDE_DISC = 0,
     SIDE_WORD = 1,
     SIDE_NOW = 2,

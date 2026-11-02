@@ -58,7 +58,7 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "Baby Cry Detection"; /* exact name */
-static const bool BUILTIN = true; /* false = deployed from the Store */
+/* BUILTIN (false = deployed from the Store): in source_matches() */
 
 enum {
     VOTE_NEED = 3,        /* an event = 3 of ... */
@@ -105,9 +105,7 @@ enum {
     HEALTH_MS = 2000,
     MS_PER_S = 1000,
     MAX_CLASSES = BENTO_EDGEAI_MAX_CLASSES,
-    METER_LEDS = 10,
     PERCENT_PER_LED = 10,
-    LOG_LINES = 4,
     TEXT_CHARS = 128, /* a SET_TEXT carries at most 126 bytes */
     CLOCK_CHARS = 36, /* "HH:MM:SS" of any three int32_t */
     PAUSE_BUTTON = 1, /* SW5, the lower button */
@@ -130,6 +128,8 @@ enum {
 
 /* Every widget the program changes later has a slot. */
 enum {
+    LOG_LINES = 4,
+    METER_LEDS = 10,
     SLOT_HEARTBEAT = 0,
     SLOT_DISC = 1,
     SLOT_VERDICT = 2,
@@ -339,9 +339,10 @@ static int32_t compiled_count(void)
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin = true; /* BUILTIN */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -639,6 +640,13 @@ static void event_of(const bento_edgeai_result_t *result,
 }
 
 /* ---- 3) Screen helpers ---- */
+
+/* Compares an event's kind through a uint8_t, so both sides have one
+ * type (CLEAN_C.md C5). */
+static bool is_kind(const bento_ui_event_t *event, uint8_t kind)
+{
+    return event->type == kind;
+}
 
 /* The widget setters ignore a refusal in MicroPython (modui.c), so
  * they do here too. */
@@ -1194,7 +1202,8 @@ static bool read_taps(app_t *app, run_t *run)
         count = 0U;
     }
     for (i = 0U; i < count; i++) {
-        const bool clicked = events[i].type == BENTO_UI_EVENT_CLICKED;
+        const bool clicked =
+            is_kind(&events[i], BENTO_UI_EVENT_CLICKED);
 
         if (clicked && (events[i].id == app->ids[SLOT_ACKNOWLEDGE])) {
             tapped = true;
