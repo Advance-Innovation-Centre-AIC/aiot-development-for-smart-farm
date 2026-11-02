@@ -29,8 +29,6 @@
  * (aiot-development-for-smart-farm/s3/sf3_05_farm_all_in_one.py).
  * Style: CLEAN_C.md.
  * Differs from the original:
- *   - TEMP_OFFSET is TEMP_OFFSET_TENTHS (tenths of a degree): an enum
- *     holds no real number.
  *   - json.dumps writes the keys in the slot order of the board's
  *     MicroPython dict (py/map.c, 1-byte qstr hash on the PSoC Edge,
  *     2-byte on the reTerminal); the text is built with snprintf in
@@ -49,7 +47,7 @@
  *     call's status is checked and the same fallback is taken.
  *   - The room humidity uses exp() in double, then the board's float:
  *     it may differ from MicroPython's math.exp in the last bit (only
- *     when TEMP_OFFSET_TENTHS is not 0).
+ *     when TEMP_OFFSET is not 0).
  *   - The Button and Farm classes and the widget dict are structs
  *     kept in main() and passed by pointer; the incoming payload and
  *     the JSON line are file-scope buffers (CLEAN_C.md C9).
@@ -75,17 +73,22 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* Edit these before running. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";  /* no spaces */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>"; /* 8+ chars */
 static const char TEAM[] = "teamXX"; /* team01-team99, as in the app */
-/* WIFI_SSID and WIFI_PASS are wifi_ssid and wifi_pass in
- * join_wifi(), BROKER is broker in open_broker(): each is read there
- * only. */
 
-static const char OFFLINE[] = "ออฟไลน์ (ทำงานต่อ)";
+static const char BROKER[] =
+    "broker.hivemq.com"; /* or test.mosquitto.org */
+/* CLIENT_ID = bento-farm-TEAM-xxxx (a random tail), built in main() */
+/* BASE = bento-aiot/TEAM/, the MQTT topics, built in make_topic() */
+/* lower, upper */
+static const char *const BUTTON_NAMES[] = {"SW5",
+                                           "SW6"}; /* .py: BTN_NAMES */
+/* temperature fix in C, e.g. -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 
-/* Settings: change them and run again. */
 enum {
-    TEMP_OFFSET_TENTHS = 0, /* temperature fix in 0.1 C, -70 = -7.0 C */
     FAN_LO = 25,
     FAN_SPAN = 20, /* fan threshold 25-45 C (VR3) */
     PUMP_ON = 35,
@@ -98,6 +101,9 @@ enum {
     VOLUME = 25, /* 0-127 (about 20 %) */
     SPEAKER = 40 /* speaker 0-100 % (2.4.2+) */
 };
+/* ---- end of settings ---- */
+
+static const char OFFLINE[] = "ออฟไลน์ (ทำงานต่อ)";
 
 /* Hardware, network and timing. */
 enum {
@@ -545,8 +551,6 @@ static bento_real_t room_humidity(bento_real_t raw_humidity,
 /* One try at the SHT40: both values, or none. */
 static bool read_sht40(farm_t *farm)
 {
-    const bento_real_t offset =
-        (bento_real_t)TEMP_OFFSET_TENTHS / (bento_real_t)TENTHS;
     float raw_c = 0.0F;
     float raw_humidity = 0.0F;
     const bool answered =
@@ -555,9 +559,9 @@ static bool read_sht40(farm_t *farm)
 
     if (answered) {
         bento_real_t humidity = (bento_real_t)raw_humidity;
-        const bento_real_t room_c = (bento_real_t)raw_c + offset;
+        const bento_real_t room_c = (bento_real_t)raw_c + TEMP_OFFSET;
 
-        if (TEMP_OFFSET_TENTHS != 0) {
+        if (TEMP_OFFSET != (bento_real_t)0.0) {
             humidity =
                 room_humidity(humidity, (bento_real_t)raw_c, room_c);
         }
@@ -755,18 +759,15 @@ static bento_status_t wait_wifi(void)
 /* wifi.connect(), then an address that is not 0.0.0.0. */
 static bento_status_t join_wifi(void)
 {
-    static const char wifi_ssid[] =
-        "<ชื่อ Hotspot ของกลุ่ม>"; /* no spaces */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>"; /* 8+ */
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -785,15 +786,13 @@ static bento_status_t join_wifi(void)
  * connect that fails gives its client back at once. */
 static bento_status_t open_broker(farm_t *farm)
 {
-    /* or test.mosquitto.org */
-    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     bento_status_t status;
     bool waiting;
 
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)MQTT_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = farm->client_id;
@@ -1488,7 +1487,6 @@ static void show_crops(const farm_screen_t *screen, const farm_t *farm)
 /* The pen on the screen. */
 static void show_pen(const farm_screen_t *screen, const farm_t *farm)
 {
-    static const char *const button_names[] = {"SW5", "SW6"};
     bento_ui_t *ui = screen->ui;
     const bool siren = farm->inside && !farm->silenced;
     char text[TEXT_BYTES];
@@ -1502,7 +1500,7 @@ static void show_pen(const farm_screen_t *screen, const farm_t *farm)
     (void)bento_ui_set_value(ui, screen->siren, siren ? 1 : 0);
     if (siren) {
         (void)snprintf(text, sizeof(text), "ไซเรน! กด %s",
-                       button_names[1]);
+                       BUTTON_NAMES[1]);
     } else {
         (void)snprintf(text, sizeof(text), "บุกรุก %" PRId32 " ครั้ง",
                        farm->count);
