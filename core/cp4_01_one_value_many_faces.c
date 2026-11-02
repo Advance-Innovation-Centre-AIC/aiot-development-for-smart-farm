@@ -40,7 +40,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
-/* Settings a student may change. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     DEAD_BAND = 1,  /* send to the screen when the value moved this % */
     DRY_BELOW = 25, /* below this: dry soil, brightest status light */
@@ -51,6 +51,8 @@ enum {
     SPEAKER = 40,    /* speaker volume, 0-100 % */
     VOLUME = 25      /* tone velocity, 0-127 (about 20 %) */
 };
+/* .py: BTN_NAMES = ("SW5", "SW6"): this file reads no board button */
+/* ---- end of settings ---- */
 
 /* The knob, the zones and the needle. */
 enum {
