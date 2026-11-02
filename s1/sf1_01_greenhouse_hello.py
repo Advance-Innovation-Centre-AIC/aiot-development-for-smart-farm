@@ -160,7 +160,7 @@ class MinMax:
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def calibration_hint():
@@ -182,33 +182,33 @@ def set_needle(scale, value):
 
 def build_temp_card(w):
     card(12, 64, 252, 208, "อุณหภูมิ (C)")
-    gauge = ui.Scale(x=24, y=92, w=120, h=120, color=COL_TEXT, min=0, max=T_GAUGE_MAX)
+    gauge = ui.Scale(x=24, y=100, w=120, h=120, color=COL_TEXT, min=0, max=T_GAUGE_MAX)
     gauge.prop(ui.PROP_SCALE_MODE, ui.SCALE_ROUND_IN)
     gauge.ticks(11, 2)
     gauge.prop(ui.PROP_SCALE_NEEDLE_COLOR, COL_WARN)
     w["gauge"] = gauge
     w["seg_t"] = ui.Seg7(text="--", x=156, y=104, w=100, h=40, color=COL_OK)
-    w["raw_t"] = ui.Label("ดิบ --", x=156, y=156, color=COL_DIM, value=14)
-    ui.Label("ชดเชย " + ("%.1f" % TEMP_OFFSET), x=156, y=178, color=COL_DIM, value=14)
-    w["mm_t"] = ui.Label("ต่ำสุด --  สูงสุด --", x=24, y=240, color=COL_DIM, value=14)
+    w["raw_t"] = ui.Label("ดิบ --", x=156, y=156, color=COL_DIM, value=20)
+    ui.Label("ชดเชย " + ("%.1f" % TEMP_OFFSET), x=156, y=184, color=COL_DIM, value=20)
+    w["mm_t"] = ui.Label("ต่ำสุด --  สูงสุด --", x=24, y=240, color=COL_DIM, value=20)
 
 
 def build_humid_card(w):
     card(272, 64, 252, 208, "ความชื้นอากาศ (%)")
-    w["arc_h"] = ui.Arc(x=284, y=92, w=120, h=120, min=0, max=100, value=0)
+    w["arc_h"] = ui.Arc(x=284, y=100, w=120, h=120, min=0, max=100, value=0)
     w["arc_h"].color(COL_INFO)
     w["seg_h"] = ui.Seg7(text="--", x=416, y=104, w=100, h=40, color=COL_INFO)
-    ui.Label("เป่าลม = พุ่ง", x=416, y=156, color=COL_DIM, value=14)
-    w["mm_h"] = ui.Label("ต่ำสุด --  สูงสุด --", x=284, y=240, color=COL_DIM, value=14)
+    ui.Label("เป่าลม = พุ่ง", x=416, y=156, color=COL_DIM, value=20)
+    w["mm_h"] = ui.Label("ต่ำสุด --  สูงสุด --", x=284, y=240, color=COL_DIM, value=20)
 
 
 def build_pressure_card(w):
     card(532, 64, 248, 208, "ความกดอากาศ (hPa)")
     w["seg_p"] = ui.Seg7(text="--", x=544, y=100, w=200, h=40, color=COL_WARN)
-    w["trend_p"] = ui.Label("เทียบตอนเริ่ม --", x=544, y=152, color=COL_TEXT, value=14)
-    ui.Label("ลดเรื่อย ๆ = ฝนอาจมา", x=544, y=176, color=COL_DIM, value=14)
+    w["trend_p"] = ui.Label("เทียบตอนเริ่ม --", x=544, y=152, color=COL_TEXT, value=20)
+    ui.Label("ลดเรื่อย ๆ = ฝนอาจมา", x=544, y=184, color=COL_DIM, value=20)
     w["live"] = ui.Led(x=546, y=236, w=20, h=20, color=COL_OK, value=0)
-    ui.Label("ไฟกะพริบ = กำลังอ่านสด", x=576, y=236, color=COL_DIM, value=14)
+    ui.Label("ไฟกะพริบ = กำลังอ่านสด", x=576, y=236, color=COL_DIM, value=20)
 
 
 def build_trend(w):
@@ -216,8 +216,8 @@ def build_trend(w):
     w["chart"] = line_chart(12, 280, 400, 62, 0, 100, COL_INFO)
     w["s_hum"] = 0
     w["s_temp"] = w["chart"].add_series(COL_WARN)
-    ui.Label("เส้นฟ้า = ความชื้น %", x=428, y=284, color=COL_INFO, value=14)
-    ui.Label("เส้นส้ม = อุณหภูมิ C", x=428, y=306, color=COL_WARN, value=14)
+    ui.Label("เส้นฟ้า = ความชื้น %", x=428, y=282, color=COL_INFO, value=20)
+    ui.Label("เส้นส้ม = อุณหภูมิ C", x=428, y=310, color=COL_WARN, value=20)
 
 
 def build_screen():
@@ -225,13 +225,13 @@ def build_screen():
     time.sleep_ms(200)
     ui.Label("โรงเรือนของเราตอนนี้", x=12, y=6, color=COL_TEXT, value=24)
     hint, hint_color = calibration_hint()
-    ui.Label(hint, x=12, y=38, color=hint_color, value=16)
+    ui.Label(hint, x=12, y=38, color=hint_color, value=20)
     w = {}
     build_temp_card(w)
     build_humid_card(w)
     build_pressure_card(w)
     build_trend(w)
-    w["status"] = ui.Label("กำลังอ่านเซนเซอร์...", x=12, y=356, color=COL_WARN, value=16)
+    w["status"] = ui.Label("กำลังอ่านเซนเซอร์...", x=12, y=356, color=COL_WARN, value=20)
     ui.poll()
     return w
 

@@ -477,7 +477,7 @@ static bento_status_t add_card(bento_ui_t *ui, const widget_spec_t *box,
     const int16_t title_dx = 12;
     const int16_t title_dy = 6;
     static const widget_spec_t label = {
-        bento_ui_label_create, NULL, 0, 0, 0, 0, COL_INFO, 0, 0, 16};
+        bento_ui_label_create, NULL, 0, 0, 0, 0, COL_INFO, 0, 0, 20};
     widget_spec_t place = label;
     bento_ui_id_t widget;
     bento_status_t status = add_widget(ui, box, &widget);
@@ -558,7 +558,7 @@ static bento_status_t style_gauge(bento_ui_t *ui, bento_ui_id_t gauge)
 static bento_status_t add_offset_label(bento_ui_t *ui)
 {
     static const widget_spec_t place = {
-        bento_ui_label_create, NULL, 156, 178, 0, 0, COL_DIM, 0, 0, 14};
+        bento_ui_label_create, NULL, 156, 184, 0, 0, COL_DIM, 0, 0, 20};
     const reading_t offset = {true, TEMP_OFFSET};
     char digits[BENTO_FMT_BUF_SIZE];
     char text[TEXT_CHARS];
@@ -582,12 +582,12 @@ static bento_status_t build_temp_card(greenhouse_screen_t *screen)
                                       12,
                                       1};
     static const widget_spec_t specs[] = {
-        {bento_ui_scale_create, NULL, 24, 92, 120, 120, COL_TEXT, 0,
+        {bento_ui_scale_create, NULL, 24, 100, 120, 120, COL_TEXT, 0,
          T_GAUGE_MAX, 0},
         {bento_ui_seg7_create, "--", 156, 104, 100, 40, COL_OK, 0, 0,
          0},
         {bento_ui_label_create, "ดิบ --", 156, 156, 0, 0, COL_DIM, 0, 0,
-         14}};
+         20}};
     static const widget_spec_t record = {bento_ui_label_create,
                                          "ต่ำสุด --  สูงสุด --",
                                          24,
@@ -597,7 +597,7 @@ static bento_status_t build_temp_card(greenhouse_screen_t *screen)
                                          COL_DIM,
                                          0,
                                          0,
-                                         14};
+                                         20};
     bento_ui_id_t *const outs[] = {&screen->gauge, &screen->seg_t,
                                    &screen->raw_t};
     bento_status_t status = add_card(screen->ui, &box, "อุณหภูมิ (C)");
@@ -633,14 +633,14 @@ static bento_status_t build_humid_card(greenhouse_screen_t *screen)
                                       12,
                                       1};
     static const widget_spec_t arc = {
-        bento_ui_arc_create, NULL, 284, 92, 120, 120, 0, 0, 100, 0};
+        bento_ui_arc_create, NULL, 284, 100, 120, 120, 0, 0, 100, 0};
     static const widget_spec_t specs[] = {
         {bento_ui_seg7_create, "--", 416, 104, 100, 40, COL_INFO, 0, 0,
          0},
         {bento_ui_label_create, "เป่าลม = พุ่ง", 416, 156, 0, 0, COL_DIM,
-         0, 0, 14},
+         0, 0, 20},
         {bento_ui_label_create, "ต่ำสุด --  สูงสุด --", 284, 240, 0, 0,
-         COL_DIM, 0, 0, 14}};
+         COL_DIM, 0, 0, 20}};
     bento_ui_id_t *const outs[] = {&screen->seg_h, NULL, &screen->mm_h};
     bento_status_t status =
         add_card(screen->ui, &box, "ความชื้นอากาศ (%)");
@@ -674,12 +674,12 @@ static bento_status_t build_pressure_card(greenhouse_screen_t *screen)
         {bento_ui_seg7_create, "--", 544, 100, 200, 40, COL_WARN, 0, 0,
          0},
         {bento_ui_label_create, "เทียบตอนเริ่ม --", 544, 152, 0, 0,
-         COL_TEXT, 0, 0, 14},
-        {bento_ui_label_create, "ลดเรื่อย ๆ = ฝนอาจมา", 544, 176, 0, 0,
-         COL_DIM, 0, 0, 14},
+         COL_TEXT, 0, 0, 20},
+        {bento_ui_label_create, "ลดเรื่อย ๆ = ฝนอาจมา", 544, 184, 0, 0,
+         COL_DIM, 0, 0, 20},
         {bento_ui_led_create, NULL, 546, 236, 20, 20, COL_OK, 0, 0, 0},
         {bento_ui_label_create, "ไฟกะพริบ = กำลังอ่านสด", 576, 236, 0, 0,
-         COL_DIM, 0, 0, 14}};
+         COL_DIM, 0, 0, 20}};
     bento_ui_id_t *const outs[] = {&screen->seg_p, &screen->trend_p,
                                    NULL, &screen->live, NULL};
     bento_status_t status =
@@ -707,10 +707,10 @@ static bento_status_t build_trend(greenhouse_screen_t *screen)
                                         100,
                                         0};
     static const widget_spec_t legends[] = {
-        {bento_ui_label_create, "เส้นฟ้า = ความชื้น %", 428, 284, 0, 0,
-         COL_INFO, 0, 0, 14},
-        {bento_ui_label_create, "เส้นส้ม = อุณหภูมิ C", 428, 306, 0, 0,
-         COL_WARN, 0, 0, 14}};
+        {bento_ui_label_create, "เส้นฟ้า = ความชื้น %", 428, 282, 0, 0,
+         COL_INFO, 0, 0, 20},
+        {bento_ui_label_create, "เส้นส้ม = อุณหภูมิ C", 428, 310, 0, 0,
+         COL_WARN, 0, 0, 20}};
     bento_ui_id_t *const outs[] = {NULL, NULL};
     bento_status_t status =
         add_widget(screen->ui, &chart, &screen->chart);
@@ -744,7 +744,7 @@ static bento_status_t build_title(bento_ui_t *ui)
                                         0,
                                         24};
     static const widget_spec_t hint = {
-        bento_ui_label_create, NULL, 12, 38, 0, 0, 0, 0, 0, 16};
+        bento_ui_label_create, NULL, 12, 38, 0, 0, 0, 0, 0, 20};
     widget_spec_t place = hint;
     const char *text = "ชดเชยแล้ว - ลองเป่าลมใส่บอร์ดดูสิ";
     bento_ui_id_t widget;
@@ -772,7 +772,7 @@ static bento_status_t build_screen(greenhouse_screen_t *screen)
                                        COL_WARN,
                                        0,
                                        0,
-                                       16};
+                                       20};
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
     if (status == BENTO_OK) {
