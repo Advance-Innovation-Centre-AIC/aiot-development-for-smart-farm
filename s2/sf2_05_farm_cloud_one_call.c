@@ -62,25 +62,30 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
-/* WIFI_SSID, WIFI_PASS: ตั้งใน join_wifi() (set them in join_wifi()) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char DEVICE_ID[] = "<device_id ที่ผู้สอนแจก>";
 /* ห้ามใส่ broker.hivemq.com: จะถูกเขียนลงแฟลชแล้วรอจนหมดเวลาเปล่า ๆ */
 static const char PLATFORM_BROKER[] = "";
-/* TEMP_OFFSET (ชดเชยความอุ่นจากชิป เช่น -7.0) และ HUM_FIX: ตั้งใน
- * read_climate() */
+/* ชดเชยความอุ่นจากชิป เช่น -7.0 */
+static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
+static const bool HUM_FIX = true; /* แปลงความชื้นเป็นของห้อง */
 
 enum {
     WAIT_MS = 15000, /* รอต่อติดนานสุด 15 วิ แล้วเลิกรอ */
     POLL_MS = 250,
-    SENDS = 6, /* ส่ง 6 ใบ ห่างกันใบละ 5 วิ */
+    SENDS = 6, /* .py: N, ส่ง 6 ใบ ห่างกันใบละ 5 วิ */
     GAP_MS = 5000
 };
 
 enum {
-    SPEAKER = 40, /* the speaker, 0-100 % */
-    VOLUME = 25   /* each tone, 0-127 */
+    SPEAKER = 40, /* ลำโพงรวม 0-100% (firmware 2.4.2 ขึ้นไป) */
+    VOLUME = 25   /* ความดังเสียง 0-127 */
 };
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -224,18 +229,16 @@ static bento_real_t room_humidity(bento_real_t h_raw,
  * temperature. The humidity follows the offset only when HUM_FIX. */
 static void read_climate(maybe_t *t, maybe_t *h)
 {
-    static const bool hum_fix = true; /* แปลงความชื้นเป็นของห้อง */
-    static const bento_real_t temp_offset = (bento_real_t)0.0;
     float t_raw = 0.0F;
     float humidity = 0.0F;
 
     t->known = bento_sensors_sht40_temperature(&t_raw) == BENTO_OK;
     h->known = t->known &&
                (bento_sensors_sht40_humidity(&humidity) == BENTO_OK);
-    t->value = (bento_real_t)t_raw + temp_offset;
+    t->value = (bento_real_t)t_raw + TEMP_OFFSET;
     h->value = (bento_real_t)humidity;
-    if (h->known && t->known && (temp_offset != (bento_real_t)0.0) &&
-        hum_fix) {
+    if (h->known && t->known && (TEMP_OFFSET != (bento_real_t)0.0) &&
+        HUM_FIX) {
         h->value =
             room_humidity(h->value, (bento_real_t)t_raw, t->value);
     }
@@ -486,19 +489,15 @@ static bool has_ip(void)
  * run, as an OSError there does. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char wifi_pass[] =
-        "<รหัส Hotspot ของกลุ่ม>"; /* อย่างน้อย 8 ตัว */
-    static const char wifi_ssid[] =
-        "<ชื่อ Hotspot ของกลุ่ม>"; /* อังกฤษ/ตัวเลขสั้น ๆ */
     bento_wifi_connect_params_t params;
     bool waiting;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding does */
     status = bento_wifi_connect_start(&params);
     waiting = status == BENTO_OK;
