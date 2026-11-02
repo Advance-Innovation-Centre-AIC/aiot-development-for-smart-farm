@@ -467,6 +467,17 @@ static bento_status_t show_emulator_gap(bento_ui_t *ui)
                      &unused);
 }
 
+/* BENTO_E_UNSUPPORTED from a first Edge AI call means the BENTO
+ * Emulator only when the link check refuses too; a reTerminal
+ * answers that check (no link) and takes the original's path
+ * quietly. */
+static bool in_emulator(void)
+{
+    bool has_link = false;
+
+    return bento_edgeai_supported(&has_link) == BENTO_E_UNSUPPORTED;
+}
+
 /* The first model in MODEL_KEYS order that can be selected. The
  * AI core not answering is the original's empty list. */
 static bento_status_t pick_model(const link_screen_t *screen,
@@ -480,7 +491,7 @@ static bento_status_t pick_model(const link_screen_t *screen,
     bento_status_t status = BENTO_OK;
 
     *selected = false;
-    if (count_status == BENTO_E_UNSUPPORTED) {
+    if ((count_status == BENTO_E_UNSUPPORTED) && in_emulator()) {
         status = show_emulator_gap(screen->ui);
     }
     if (count_status != BENTO_OK) {
