@@ -352,8 +352,15 @@ static void find_models(doctor_t *doctor, bool *linked)
     const bento_status_t status = bento_edgeai_init();
     int32_t count = 0;
     uint32_t i;
+    bool has_link = false;
 
-    *linked = status != BENTO_E_UNSUPPORTED;
+    /* a reTerminal answers init the same way but says "no link" to
+     * the query; only the BENTO Emulator's C runtime refuses both */
+    *linked = true;
+    if (status == BENTO_E_UNSUPPORTED) {
+        *linked =
+            bento_edgeai_supported(&has_link) != BENTO_E_UNSUPPORTED;
+    }
     if ((status != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0;
