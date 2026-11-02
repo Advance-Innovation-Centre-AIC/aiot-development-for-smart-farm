@@ -199,7 +199,7 @@ enum {
 enum {
     GAP_X = 104, /* right of the empty result "-" / "ยังไม่มีผล" */
     GAP_Y = 126,
-    GAP_W = 240, /* ends at x 344, left of the arc */
+    GAP_W = 244, /* ends at x 348, left of the arc at x 352 */
     GAP_PX = 20
 };
 
@@ -3529,6 +3529,11 @@ static bento_status_t watch(farm_t *farm)
  * run goes on rule-only, as the .py does with no model. */
 static bento_status_t show_ai_gap(const farm_t *farm)
 {
+    /* the Emulator does not wrap a label to its width: the breaks
+     * are in the text (126, 233 and 241 px wide) */
+    static const char lines[] =
+        "Edge AI จาก C\nยังไม่มีใน BENTO Emulator\n"
+        "ให้รันบน Dev Kit หรือ Eva Kit";
     static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
                               "ให้รันบน Dev Kit หรือ Eva Kit";
     bento_ui_widget_args_t args;
@@ -3536,11 +3541,11 @@ static bento_status_t show_ai_gap(const farm_t *farm)
     bento_status_t status;
 
     bento_ui_widget_args_init(&args);
-    args.text = gap;
-    args.text_len = (uint32_t)strlen(gap);
+    args.text = lines;
+    args.text_len = (uint32_t)strlen(lines);
     args.x = GAP_X;
     args.y = GAP_Y;
-    args.w = GAP_W; /* wraps to three lines left of the arc */
+    args.w = GAP_W; /* three lines left of the arc */
     args.color = COLOR_WARN;
     args.font_px = GAP_PX;
     status = bento_ui_label_create(farm->ui, &args, &made);
