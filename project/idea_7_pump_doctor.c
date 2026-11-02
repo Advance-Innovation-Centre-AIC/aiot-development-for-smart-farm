@@ -1916,6 +1916,10 @@ static bento_status_t show_emulator_gap(const farm_t *farm)
 {
     static const char gap_text[] =
         "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    /* the BENTO Emulator does not wrap a label to its width, so the
+     * label breaks its lines itself (a new line for a space) */
+    static const char lines[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator\n"
+                                "ให้รันบน Dev Kit หรือ Eva Kit";
     /* two lines of 26 px under the cards, ending at x 690, left
      * of the firmware's Console button */
     const spec_t gap = {320, 346, 370, -1, COL_WARN, 0, 0, 20};
@@ -1925,7 +1929,7 @@ static bento_status_t show_emulator_gap(const farm_t *farm)
         "%s / MQTT from C is not in the BENTO Emulator yet: run "
         "it on a Dev Kit or Eva Kit.\n",
         gap_text);
-    return add_widget(farm->ui, bento_ui_label_create, &gap, gap_text,
+    return add_widget(farm->ui, bento_ui_label_create, &gap, lines,
                       &label);
 }
 
