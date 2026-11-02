@@ -54,6 +54,8 @@
  *     worked out one rounding per step in the board's float.
  *   - The stress label's first text "0 วิ จาก %d" is formatted from
  *     STRESS_MAX_S when the screen is built, as the .py does.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -162,6 +164,12 @@ enum { /* layout, in px */
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
     TITLE_PX = 20 /* Thai on the board is 20 px or more */
+};
+enum { /* the BENTO Emulator note, in px: two lines under the cards */
+    GAP_X = 316,
+    GAP_Y = 346,
+    GAP_W = 470,
+    GAP_FONT_PX = 20
 };
 enum {                      /* buffers, in bytes */
     TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
@@ -949,7 +957,35 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
     } else {
         /* no client started */
     }
-    return (status == BENTO_E_CANCELLED) ? status : BENTO_OK;
+    /* E_UNSUPPORTED: the BENTO Emulator, where no try can link */
+    return ((status == BENTO_E_CANCELLED) ||
+            (status == BENTO_E_UNSUPPORTED))
+               ? status
+               : BENTO_OK;
+}
+
+/* The BENTO Emulator has no MQTT from C yet (every bento_mqtt_* call
+ * answers BENTO_E_UNSUPPORTED): one note on the screen, under the
+ * cards where it hides nothing, and the same on the console. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char note[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t id = 0U;
+
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\r\n",
+                 note);
+    bento_ui_widget_args_init(&args);
+    args.text = note;
+    args.text_len = (uint32_t)strlen(note);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W; /* wraps into two lines */
+    args.color = COL_WARN;
+    args.font_px = GAP_FONT_PX;
+    return bento_ui_label_create(ui, &args, &id);
 }
 
 static void show_status(const screen_t *screen, const char *text,
@@ -977,6 +1013,10 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
             drain_events(&farm->screen);
         }
         status = open_broker(farm, linked);
+    }
+    if (status == BENTO_E_UNSUPPORTED) {
+        /* then the .py's own path: "broker ไม่ตอบ" and the end */
+        status = show_emulator_gap(farm->screen.ui);
     }
     return status;
 }
