@@ -68,7 +68,7 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "Push Detection"; /* exact name */
-static const bool BUILTIN = true; /* false = deployed from the Store */
+/* BUILTIN (false = deployed from the Store) lives in source_matches() */
 
 enum {
     VOTE_NEED = 3,        /* an event = 3 of ... */
@@ -149,14 +149,14 @@ enum {
     SLOT_VERDICT = 2,
     SLOT_STATE = 3,
     SLOT_METER = 4, /* METER_LEDS slots */
-    SLOT_TICK_HEARING = SLOT_METER + METER_LEDS,
+    SLOT_TICK_HEARING = SLOT_METER + (int32_t)METER_LEDS,
     SLOT_TICK_CONFIRM = SLOT_TICK_HEARING + 1,
     SLOT_LEGEND = SLOT_TICK_CONFIRM + 1,
     SLOT_PUSHES = SLOT_LEGEND + 1,
     SLOT_LAST = SLOT_PUSHES + 1,
     SLOT_NEAR = SLOT_LAST + 1,
     SLOT_LINES = SLOT_NEAR + 1, /* LOG_LINES slots */
-    SLOT_REFRACTORY = SLOT_LINES + LOG_LINES,
+    SLOT_REFRACTORY = SLOT_LINES + (int32_t)LOG_LINES,
     SLOT_STATUS = SLOT_REFRACTORY + 1,
     SLOT_COUNT = SLOT_STATUS + 1,
     SLOT_NONE = SLOT_COUNT /* a widget nobody changes again */
@@ -347,13 +347,15 @@ static int32_t compiled_count(void)
     return count;
 }
 
-/* Built in or Store as BUILTIN asks; a row the board cannot place
+/* Built in or Store as builtin asks; a row the board cannot place
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin =
+        true; /* false = deployed from the Store */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -861,11 +863,13 @@ static void show_ticks(app_t *app, const bento_edgeai_thresholds_t *th)
     /* a setter's refusal was ignored before too (modui.c) */
     (void)bento_ui_set_pos(
         app->ui, app->ids[SLOT_TICK_HEARING],
-        (int16_t)(TICK_X + ((hearing * TICK_SPAN_PX) / PERCENT)),
+        (int16_t)((int32_t)TICK_X + ((hearing * (int32_t)TICK_SPAN_PX) /
+                                     (int32_t)PERCENT)),
         (int16_t)TICK_Y);
     (void)bento_ui_set_pos(
         app->ui, app->ids[SLOT_TICK_CONFIRM],
-        (int16_t)(TICK_X + ((confirm * TICK_SPAN_PX) / PERCENT)),
+        (int16_t)((int32_t)TICK_X + ((confirm * (int32_t)TICK_SPAN_PX) /
+                                     (int32_t)PERCENT)),
         (int16_t)TICK_Y);
     (void)snprintf(text, sizeof(text),
                    "Hearing at %" PRId32 "%% | Confirm at %" PRId32

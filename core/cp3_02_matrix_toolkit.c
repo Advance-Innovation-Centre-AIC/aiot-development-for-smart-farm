@@ -132,13 +132,6 @@ enum {
     COL_INFO = 0x4A9EFF
 };
 
-static const char *const MODES[MODE_COUNT] = {
-    "กราฟเส้น (blit)", "หลอด (bar)", "ตัวเลข (score)", "ตัววิ่ง (scroll)"};
-/* The screen colour per matrix colour number: 1 red, 2 green, 3
- * yellow. */
-static const uint32_t ON_SCREEN[] = {COL_DIM, COL_BAD, COL_OK,
-                                     COL_WARN};
-
 typedef struct {
     int16_t x;
     int16_t y;
@@ -227,7 +220,7 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {76U}, {72U, 79U}, {72U, 79U, 84U}};
+        {76U, 0U, 0U}, {72U, 79U, 0U}, {72U, 79U, 84U}};
     static const uint32_t note_count[] = {1U, 2U, 3U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -376,6 +369,9 @@ static bento_status_t add_card(bento_ui_t *ui, rect_t box,
 
 static bento_status_t add_modes_card(matrix_screen_t *screen)
 {
+    static const char *const modes[MODE_COUNT] = {
+        "กราฟเส้น (blit)", "หลอด (bar)", "ตัวเลข (score)",
+        "ตัววิ่ง (scroll)"};
     const rect_t box = {MARGIN_X, CARD_Y, MODES_W, CARD_H};
     bento_status_t status = add_card(screen->ui, box, "แบบ");
     int32_t i;
@@ -383,7 +379,7 @@ static bento_status_t add_modes_card(matrix_screen_t *screen)
     for (i = 0; (i < MODE_COUNT) && (status == BENTO_OK); i++) {
         const point_t at = {MODE_X, px(MODE_Y + (i * MODE_STEP))};
 
-        status = add_label(screen->ui, MODES[i], at, COL_DIM,
+        status = add_label(screen->ui, modes[i], at, COL_DIM,
                            FONT_DEFAULT, &screen->modes[i]);
     }
     return status;
@@ -494,7 +490,7 @@ static bento_status_t read_buttons(toolkit_t *toolkit,
     for (i = 0; (i < BUTTON_COUNT) && (status == BENTO_OK); i++) {
         bool down = false;
 
-        status = bento_buttons_pressed((uint32_t)(1 - i), &down);
+        status = bento_buttons_pressed(1U - (uint32_t)i, &down);
         if ((status == BENTO_OK) && down && !toolkit->down[i]) {
             status = press(toolkit, i, send_scroll);
         }
@@ -564,6 +560,10 @@ static void remember(toolkit_t *toolkit, int32_t value)
 /* The value and the counts on screen. */
 static void show_value(const toolkit_t *toolkit, int32_t value)
 {
+    /* the screen colour per matrix colour number: 1 red, 2 green,
+     * 3 yellow */
+    static const uint32_t on_screen[] = {COL_DIM, COL_BAD, COL_OK,
+                                         COL_WARN};
     const matrix_screen_t *screen = &toolkit->screen;
     char text[TEXT_BYTES];
 
@@ -571,7 +571,7 @@ static void show_value(const toolkit_t *toolkit, int32_t value)
     set_text(screen->ui, screen->seg, text);
     /* the number on screen has the matrix's colour */
     (void)bento_ui_set_color(screen->ui, screen->seg,
-                             ON_SCREEN[level_color(value)]);
+                             on_screen[level_color(value)]);
     (void)snprintf(text, sizeof(text),
                    "เขียนจอไฟ %" PRId32 " ครั้ง / ตัดสิน %" PRId32 " รอบ",
                    toolkit->writes, toolkit->ticks);

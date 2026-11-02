@@ -60,7 +60,7 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "HumanActivity"; /* exact name */
-static const bool BUILTIN = false; /* false = deployed from the Store */
+/* BUILTIN (false = deployed from the Store) lives in source_matches() */
 
 enum {
     DEFAULT_CONFIRM = 65, /* Confirm at, when the board cannot say */
@@ -128,12 +128,12 @@ enum {
     SLOT_HEARTBEAT = 0,
     SLOT_VERDICT = 1,
     SLOT_CHIP_PANELS = 2, /* CHIP_COUNT slots */
-    SLOT_CHIP_TEXTS = SLOT_CHIP_PANELS + CHIP_COUNT,
-    SLOT_BAR = SLOT_CHIP_TEXTS + CHIP_COUNT,
+    SLOT_CHIP_TEXTS = SLOT_CHIP_PANELS + (int32_t)CHIP_COUNT,
+    SLOT_BAR = SLOT_CHIP_TEXTS + (int32_t)CHIP_COUNT,
     SLOT_CANDIDATE = SLOT_BAR + 1,
     SLOT_ROWS = SLOT_CANDIDATE + 1, /* CHIP_COUNT slots */
-    SLOT_ROW_BARS = SLOT_ROWS + CHIP_COUNT,
-    SLOT_DWELL = SLOT_ROW_BARS + CHIP_COUNT,
+    SLOT_ROW_BARS = SLOT_ROWS + (int32_t)CHIP_COUNT,
+    SLOT_DWELL = SLOT_ROW_BARS + (int32_t)CHIP_COUNT,
     SLOT_STATUS = SLOT_DWELL + 1,
     SLOT_COUNT = SLOT_STATUS + 1,
     SLOT_NONE = SLOT_COUNT /* a widget nobody changes again */
@@ -314,13 +314,15 @@ static int32_t compiled_count(void)
     return count;
 }
 
-/* Built in or Store as BUILTIN asks; a row the board cannot place
+/* Built in or Store as builtin asks; a row the board cannot place
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin =
+        false; /* false = deployed from the Store */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -914,9 +916,15 @@ static void draw_chips(app_t *app, const dwell_t *dwell)
     int32_t j;
 
     for (j = 0; j < CHIP_COUNT; j++) {
-        const uint32_t look = (j == accepted)    ? 1U
-                              : (j == candidate) ? 2U
-                                                 : 0U;
+        uint32_t look = 0U;
+
+        if (j == accepted) {
+            look = 1U;
+        } else if (j == candidate) {
+            look = 2U;
+        } else {
+            /* neither: the plain look */
+        }
 
         put_color(app, (uint32_t)SLOT_CHIP_PANELS + (uint32_t)j,
                   panel_colors[look]);
@@ -1144,7 +1152,7 @@ static bool read_taps(const app_t *app)
         count = 0U;
     }
     for (i = 0U; i < count; i++) {
-        if ((events[i].type == BENTO_UI_EVENT_CLICKED) &&
+        if ((events[i].type == (uint8_t)BENTO_UI_EVENT_CLICKED) &&
             (events[i].id == app->ids[SLOT_DWELL])) {
             tapped = true;
         }

@@ -127,21 +127,12 @@ enum {
 };
 
 /* The status language: one row per status, read by several
- * functions. */
+ * functions; a row only one function reads lives in it. */
 static const char *const NAMES[STATE_COUNT] = {"ปกติ", "เฝ้าดู", "เตือน",
                                                "อันตราย"};
 /* "" fills the light matrix; a word scrolls (Latin letters and
  * digits only) */
 static const char *const WORDS[STATE_COUNT] = {"", "", "WARN", "ALARM"};
-static const char *const HOW[STATE_COUNT] = {
-    "เขียว ติดนิ่ง - เงียบ", "ฟ้า ติดนิ่ง - ติ๊ด", "เหลือง กะพริบช้า - เตือน",
-    "แดง กะพริบเร็ว - เตือนซ้ำ"};
-/* 0 = steady; else on/off every so many ms (500 or more, so the
- * screen keeps up) */
-static const int32_t BLINK_MS[STATE_COUNT] = {0, 0, 1000, 500};
-static const int32_t MATRIX[STATE_COUNT] = {
-    BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_BLUE, BENTO_RGBMATRIX_YELLOW,
-    BENTO_RGBMATRIX_RED};
 static const uint32_t COLS[STATE_COUNT] = {COL_OK, COL_INFO, COL_WARN,
                                            COL_BAD};
 /* Which of RGB_RED, RGB_GREEN, RGB_BLUE light per status: red and
@@ -151,8 +142,6 @@ static const bool LIT[STATE_COUNT][LIGHT_COUNT] = {
     {false, false, true},
     {true, true, false},
     {true, false, false}};
-static const char *const LIGHT_NAMES[LIGHT_COUNT] = {
-    "RGB_RED", "RGB_GREEN", "RGB_BLUE"};
 
 typedef struct {
     int16_t x;
@@ -237,7 +226,7 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {0U}, {76U}, {72U, 79U, 84U}, {84U, 76U}};
+        {0U, 0U, 0U}, {76U, 0U, 0U}, {72U, 79U, 84U}, {84U, 76U, 0U}};
     static const uint32_t note_count[] = {0U, 1U, 3U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -273,11 +262,13 @@ static bool find_light(const char *wanted, uint32_t *led)
 
 static void find_lights(lights_t *lights)
 {
+    static const char *const light_names[LIGHT_COUNT] = {
+        "RGB_RED", "RGB_GREEN", "RGB_BLUE"};
     uint32_t i;
 
     for (i = 0U; i < (uint32_t)LIGHT_COUNT; i++) {
         lights->present[i] =
-            find_light(LIGHT_NAMES[i], &lights->led[i]);
+            find_light(light_names[i], &lights->led[i]);
     }
 }
 
@@ -303,6 +294,10 @@ static bento_status_t show_light(const lights_t *lights,
  * still running. STATE_NONE clears (fill() takes colours 1-7). */
 static void show_matrix(int32_t state)
 {
+    static const int32_t matrix_colors[STATE_COUNT] = {
+        BENTO_RGBMATRIX_GREEN, BENTO_RGBMATRIX_BLUE,
+        BENTO_RGBMATRIX_YELLOW, BENTO_RGBMATRIX_RED};
+
     /* the light matrix is on the display core's bus; a draw that
      * does not get through is skipped, as the .py's except OSError
      * does */
@@ -311,9 +306,9 @@ static void show_matrix(int32_t state)
     } else if (WORDS[state][0] != '\0') {
         (void)bento_rgbmatrix_scroll(WORDS[state],
                                      (uint32_t)strlen(WORDS[state]),
-                                     MATRIX[state], SCROLL_MS);
+                                     matrix_colors[state], SCROLL_MS);
     } else {
-        (void)bento_rgbmatrix_fill(MATRIX[state]);
+        (void)bento_rgbmatrix_fill(matrix_colors[state]);
     }
 }
 
@@ -323,7 +318,7 @@ static int32_t pick_state(int32_t percent, int32_t now)
 {
     int32_t state = percent / STATE_BAND;
 
-    if (((now * STATE_BAND) - HYST <= percent) &&
+    if ((((now * STATE_BAND) - HYST) <= percent) &&
         (percent < (((now + 1) * STATE_BAND) + HYST))) {
         state = now;
     } else if (state > STATE_DANGER) {
@@ -405,6 +400,9 @@ static bento_status_t add_card(bento_ui_t *ui, rect_t box,
  * pattern. */
 static bento_status_t add_row(bento_ui_t *ui, int32_t state)
 {
+    static const char *const how[STATE_COUNT] = {
+        "เขียว ติดนิ่ง - เงียบ", "ฟ้า ติดนิ่ง - ติ๊ด", "เหลือง กะพริบช้า - เตือน",
+        "แดง กะพริบเร็ว - เตือนซ้ำ"};
     char text[TEXT_BYTES];
     bento_ui_id_t unused;
     const point_t name_at = {ROW_X, px(ROW_Y + (state * ROW_STEP))};
@@ -416,7 +414,7 @@ static bento_status_t add_row(bento_ui_t *ui, int32_t state)
     status =
         add_label(ui, text, name_at, COLS[state], FONT_TEXT, &unused);
     if (status == BENTO_OK) {
-        status = add_label(ui, HOW[state], how_at, COL_DIM, FONT_TEXT,
+        status = add_label(ui, how[state], how_at, COL_DIM, FONT_TEXT,
                            &unused);
     }
     return status;
@@ -536,7 +534,11 @@ static bento_status_t change_state(alarm_t *alarm, int32_t next,
 /* The RGB light and the Led on screen blink together. */
 static bento_status_t blink(alarm_t *alarm, uint32_t now)
 {
-    const int32_t period_ms = BLINK_MS[alarm->state];
+    /* 0 = steady; else on/off every so many ms (500 or more, so the
+     * screen keeps up) */
+    static const int32_t blink_period_ms[STATE_COUNT] = {0, 0, 1000,
+                                                         500};
+    const int32_t period_ms = blink_period_ms[alarm->state];
     bento_status_t status = BENTO_OK;
 
     if ((period_ms != 0) &&

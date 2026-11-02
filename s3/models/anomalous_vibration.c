@@ -66,7 +66,7 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "AnomalousVibration"; /* exact name */
-static const bool BUILTIN = false; /* false = deployed from the Store */
+/* BUILTIN (false = deployed from the Store) lives in source_matches() */
 
 enum {
     VOTE_NEED = 3,        /* an event = 3 of ... */
@@ -342,13 +342,15 @@ static int32_t compiled_count(void)
     return count;
 }
 
-/* Built in or Store as BUILTIN asks; a row the board cannot place
+/* Built in or Store as builtin asks; a row the board cannot place
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin =
+        false; /* false = deployed from the Store */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -973,10 +975,14 @@ static void draw_gauge(app_t *app, const run_t *run, int32_t percent)
     const int32_t confirm = run->thresholds.confirm[ANOMALY_CLASS];
 
     if (app->needle != percent) {
+        const uint32_t needle =
+            ((uint32_t)NEEDLE_PX << (uint32_t)NEEDLE_SHIFT) |
+            (uint32_t)percent;
+
         app->needle = percent;
         (void)bento_ui_set_prop(app->ui, app->ids[SLOT_GAUGE],
                                 BENTO_UI_PROP_SCALE_NEEDLE,
-                                (NEEDLE_PX << NEEDLE_SHIFT) | percent);
+                                (int32_t)needle);
     }
     if (app->shown_readback != run->readback) {
         app->shown_readback = run->readback;
@@ -1219,7 +1225,7 @@ static bool read_taps(const app_t *app, run_t *run)
         if (widget == app->ids[SLOT_ACKNOWLEDGE]) {
             tapped = true;
         }
-        if (events[i].type == BENTO_UI_EVENT_VALUE_CHANGED) {
+        if (events[i].type == (uint8_t)BENTO_UI_EVENT_VALUE_CHANGED) {
             add_pending(&run->pending,
                         (widget == app->ids[SLOT_HEARING])
                             ? BENTO_EDGEAI_TH_ENTER

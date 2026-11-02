@@ -63,7 +63,7 @@
 
 /* ---- 1) Settings: edit before running ---- */
 static const char MODEL_NAME[] = "Motion Detection"; /* exact name */
-static const bool BUILTIN = true; /* false = deployed from the Store */
+/* BUILTIN (false = deployed from the Store) lives in source_matches() */
 
 enum {
     DEFAULT_CONFIRM = 65, /* Confirm at, when the board cannot say */
@@ -126,8 +126,9 @@ enum {
     SLOT_HEARTBEAT = 0,
     SLOT_VERDICT = 1,
     SLOT_CHIP_PANEL = 2, /* CHIP_COUNT slots */
-    SLOT_CHIP_TEXT = SLOT_CHIP_PANEL + CHIP_COUNT, /* CHIP_COUNT */
-    SLOT_BAR = SLOT_CHIP_TEXT + CHIP_COUNT,
+    SLOT_CHIP_TEXT =
+        SLOT_CHIP_PANEL + (int32_t)CHIP_COUNT, /* CHIP_COUNT */
+    SLOT_BAR = SLOT_CHIP_TEXT + (int32_t)CHIP_COUNT,
     SLOT_CANDIDATE = SLOT_BAR + 1,
     SLOT_LAMP = SLOT_CANDIDATE + 1,
     SLOT_TOGGLES = SLOT_LAMP + 1,
@@ -311,13 +312,15 @@ static int32_t compiled_count(void)
     return count;
 }
 
-/* Built in or Store as BUILTIN asks; a row the board cannot place
+/* Built in or Store as builtin asks; a row the board cannot place
  * (None on the emulator) counts as built in. */
 static bool source_matches(int32_t row, int32_t compiled)
 {
+    static const bool builtin =
+        true; /* false = deployed from the Store */
     bool matches;
 
-    if (BUILTIN) {
+    if (builtin) {
         matches = (compiled < 0) || (row < compiled);
     } else {
         matches = (compiled >= 0) && (row >= compiled);
@@ -655,7 +658,7 @@ static int32_t class_named(const app_t *app, const char *name)
 
     for (i = app->label_count; i > 0U; i--) {
         if (strcmp(app->labels[i - 1U], name) == 0) {
-            found = (int32_t)(i - 1U);
+            found = (int32_t)i - 1;
         }
     }
     return found;
@@ -665,11 +668,13 @@ static int32_t class_named(const app_t *app, const char *name)
  * says so on the card, never guesses. *odd: classes are missing. */
 static bento_status_t check_classes(app_t *app, bool *odd)
 {
-    char names[TEXT_CHARS] = "";
+    char names[TEXT_CHARS];
     char text[TEXT_CHARS];
     size_t used = 0U;
     uint32_t i;
     bento_status_t status = BENTO_OK;
+
+    names[0] = '\0';
 
     for (i = 0U; i < (uint32_t)CHIP_COUNT; i++) {
         if ((class_named(app, CHIPS[i]) < 0) &&
@@ -1116,7 +1121,7 @@ static bool dwell_tapped(const app_t *app)
         count = 0U;
     }
     for (i = 0U; i < count; i++) {
-        if ((events[i].type == BENTO_UI_EVENT_CLICKED) &&
+        if ((events[i].type == (uint8_t)BENTO_UI_EVENT_CLICKED) &&
             (events[i].id == app->ids[SLOT_DWELL])) {
             tapped = true;
         }

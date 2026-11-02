@@ -55,12 +55,12 @@
 
 /* Set these three before running. TEAM is the group number the
  * teacher hands out, e.g. team05, and no two groups share it. */
-static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
-static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
+/* WIFI_SSID lives in connect_wifi() */
+/* WIFI_PASS lives in connect_wifi() */
 static const char TEAM[] = "teamXX";
 
 /* The spare broker is test.mosquitto.org, if the teacher says so. */
-static const char BROKER[] = "broker.hivemq.com";
+/* BROKER lives in try_broker() */
 static const char UNIT[] = "%";
 
 /* Settings a student may change. */
@@ -249,7 +249,7 @@ static void set_text(bento_ui_t *ui, bento_ui_id_t widget,
 static bento_status_t beep(bento_ui_t *ui, tune_t tune)
 {
     static const uint8_t notes[][TUNE_NOTES_MAX] = {
-        {72U, 79U}, {72U, 79U, 84U}, {84U, 76U}};
+        {72U, 79U, 0U}, {72U, 79U, 84U}, {84U, 76U, 0U}};
     static const uint32_t note_count[] = {2U, 3U, 2U};
     const uint32_t count = note_count[tune];
     bento_status_t status = BENTO_OK;
@@ -289,7 +289,7 @@ static const char *why_send(int32_t value, const counter_t *counter,
     }
     if (!counter->has_last || (moved > DEADBAND)) {
         why = "change";
-    } else if (quiet_ms >= (HEARTBEAT_S * MS_PER_S)) {
+    } else if (quiet_ms >= ((int32_t)HEARTBEAT_S * (int32_t)MS_PER_S)) {
         why = "heartbeat";
     } else {
         /* steady and not yet due: stay quiet */
@@ -543,14 +543,16 @@ static bool has_address(void)
  * too. */
 static bento_status_t connect_wifi(bool *joined)
 {
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS;
     (void)printf("[WiFi] Connecting...\n");
     status = bento_wifi_connect_start(&params);
@@ -584,6 +586,7 @@ static bento_status_t wait_broker(uint32_t broker)
  * so it never clashes with an old one. Only Stop is an error. */
 static bento_status_t try_broker(link_t *link, bool *linked)
 {
+    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     bento_status_t status;
 
@@ -591,20 +594,20 @@ static bento_status_t try_broker(link_t *link, bool *linked)
                    "%s-%04" PRIx32, link->client_base,
                    bento_time_ticks_ms() & (uint32_t)CLOCK_MASK);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = link->client_id;
     config.client_id_len = (uint32_t)strlen(link->client_id);
-    (void)printf("[MQTT] Connecting to %s:%d ...\n", BROKER, PORT);
+    (void)printf("[MQTT] Connecting to %s:%d ...\n", broker, PORT);
     status = bento_mqtt_open_start(&config, &link->broker);
     if (status == BENTO_OK) {
         status = wait_broker(link->broker);
     }
     *linked = status == BENTO_OK;
     if (*linked) {
-        (void)printf("[MQTT] Connected to %s:%d as '%s'\n", BROKER,
+        (void)printf("[MQTT] Connected to %s:%d as '%s'\n", broker,
                      PORT, link->client_id);
     } else if ((status != BENTO_E_CANCELLED) && (link->broker != 0U)) {
         (void)bento_mqtt_close(link->broker); /* frees it, any state */
