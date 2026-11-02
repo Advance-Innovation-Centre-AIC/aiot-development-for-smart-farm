@@ -63,15 +63,12 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 /* Set these before running. TEAM must match the team opened in
  * farm_web.html. */
-/* WIFI_SSID lives in connect_wifi() */
-/* WIFI_PASS lives in connect_wifi() */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-/* the same broker farm_web.html connects to (HiveMQ) */
-/* BROKER lives in open_broker() as broker_host */
-
-/* Settings a student may change. */
 enum {
     PUMP_SEC = 10, /* SW5 asks for this many seconds (PLC cuts at 30) */
     TIMEOUT_MS = 3000, /* wait this long for a confirmation, per send */
@@ -81,6 +78,12 @@ enum {
     SPEAKER = 40,      /* speaker volume, 0-100 % */
     VOLUME = 25        /* tone velocity, 0-127 */
 };
+/* the same broker farm_web.html connects to (HiveMQ) */
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = bento-cmd-TEAM (+ the clock), built in open_broker() */
+/* T_CMD = bento-aiot/TEAM/plc/cmd, built in main() */
+/* T_STATE = bento-aiot/TEAM/plc/state, built in main() */
+/* ---- end of settings ---- */
 
 /* The network. */
 enum {
@@ -704,17 +707,15 @@ static bento_status_t wait_connect(void)
  * the run, as its OSError does. */
 static bento_status_t connect_wifi(bool *joined)
 {
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS;
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -751,7 +752,6 @@ static bento_status_t wait_broker(uint32_t broker)
 static bento_status_t open_broker(uint32_t *broker, bool *linked,
                                   bool *no_mqtt)
 {
-    static const char broker_host[] = "broker.hivemq.com";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
@@ -761,8 +761,8 @@ static bento_status_t open_broker(uint32_t *broker, bool *linked,
                    "bento-cmd-%s-%04" PRIx32, TEAM,
                    bento_time_ticks_ms() & (uint32_t)CLIENT_TAIL_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
