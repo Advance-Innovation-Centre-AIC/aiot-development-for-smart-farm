@@ -96,7 +96,7 @@ def pct(x):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -111,24 +111,24 @@ def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("AI แน่ใจก่อนทำ", x=12, y=6, color=COL_TEXT, value=24)
-    w = {"model": ui.Label("โหลดโมเดล...", x=12, y=38, color=COL_DIM, value=16)}
+    w = {"model": ui.Label("โหลดโมเดล...", x=12, y=38, color=COL_DIM, value=20)}
     card(12, 64, 380, 150, "AI ตอบดิบ")
-    w["raw"] = ui.Label("-", x=24, y=92, color=COL_TEXT, value=28)
+    w["raw"] = ui.Label("-", x=24, y=98, color=COL_TEXT, value=28)
     w["bar"] = ui.Bar(x=24, y=138, w=356, h=20, min=0, max=100, value=0)
-    w["conf"] = ui.Label(" ", x=24, y=172, color=COL_DIM, value=16)
+    w["conf"] = ui.Label(" ", x=24, y=172, color=COL_DIM, value=20)
     card(402, 64, 378, 150, "คะแนน")
     w["names"], w["bars"] = [], []
     for i in range(MAX_CLASSES):
-        w["names"].append(ui.Label(" ", x=414, y=92 + i * 28, color=COL_TEXT, value=16))
-        w["bars"].append(ui.Bar(x=530, y=94 + i * 28, w=238, h=16, min=0, max=100, value=0))
+        w["names"].append(ui.Label(" ", x=414, y=100 + i * 28, color=COL_TEXT, value=16))
+        w["bars"].append(ui.Bar(x=530, y=102 + i * 28, w=238, h=16, min=0, max=100, value=0))
     card(12, 224, 380, 114, "ประตูตัดสิน")
-    w["led"] = ui.Led(x=24, y=254, w=40, h=40, color=COL_OK, value=0)
-    w["dec"] = ui.Label("ไม่แน่ใจ", x=78, y=258, color=COL_WARN, value=28)
-    w["cnt"] = ui.Label(" ", x=24, y=306, color=COL_TEXT, value=16)
-    ui.Label("ฟ้า มั่นใจ แดง เกณฑ์", x=422, y=224, color=COL_DIM, value=14)
-    w["chart"] = line_chart(422, 246, 358, 92, 0, 100, COL_INFO)
+    w["led"] = ui.Led(x=24, y=262, w=40, h=40, color=COL_OK, value=0)
+    w["dec"] = ui.Label("ไม่แน่ใจ", x=78, y=266, color=COL_WARN, value=28)
+    w["cnt"] = ui.Label(" ", x=24, y=308, color=COL_TEXT, value=20)
+    ui.Label("ฟ้า มั่นใจ แดง เกณฑ์", x=422, y=224, color=COL_DIM, value=20)
+    w["chart"] = line_chart(422, 252, 358, 86, 0, 100, COL_INFO)
     w["s_min"] = w["chart"].add_series(COL_BAD)
-    w["help"] = ui.Label("นิ่ง วงกลม เขย่า  VR1 = เกณฑ์", x=12, y=352, color=COL_DIM, value=16)
+    w["help"] = ui.Label("นิ่ง วงกลม เขย่า  VR1 = เกณฑ์", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
