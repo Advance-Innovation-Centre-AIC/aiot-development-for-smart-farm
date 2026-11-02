@@ -32,9 +32,9 @@
  *   - class Stop is a text kept in the program's state and a failed
  *     status; main() shows and prints it as the except does.
  *   - `import buttons` fails on the Eva Kit: here that board has
- *     bento_buttons_count() 0. `import edge_ai` fails where there is
- *     no model link: here bento_edgeai_supported() false ends the
- *     program with BENTO_E_UNSUPPORTED.
+ *     bento_buttons_count() 0. A board without the model link
+ *     (reTerminal) cannot read the model list, so it shows the "not
+ *     on this board" card, as the .py does there.
  *   - gc.collect() and gc.mem_free(): C has no garbage collector, so
  *     the "free heap:" line is not printed.
  *   - The dict of texts and colours already sent is one entry per
@@ -1414,10 +1414,11 @@ int main(void)
         say_emulator_gap();
         emulator = true; /* go on as the .py: no model list to read */
         status = BENTO_OK;
-    } else if ((status == BENTO_OK) && !supported) {
-        status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
     } else {
-        /* a board with the model link, or a link error that ends it */
+        /* a board with the model link; a board without it
+         * (reTerminal, supported false), whose model list cannot be
+         * read either, so the same card follows with no Emulator
+         * text; or a link error that ends it */
     }
     if (status == BENTO_OK) {
         found = find_model(app);
