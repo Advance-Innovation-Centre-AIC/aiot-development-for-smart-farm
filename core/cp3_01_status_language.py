@@ -116,23 +116,23 @@ def sound_for(old, new):
 def card(x, y, w, h, title):
     # การ์ด = กล่องพื้นเข้มขอบเทา + หัวเรื่องสีฟ้า
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
     ui.Label("สถานะหนึ่ง ภาษาเดียว", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("หมุน VR1 เลือกสถานะ - SW5 = รับทราบ", x=12, y=38, color=COL_DIM, value=16)
+    ui.Label("หมุน VR1 เลือกสถานะ - SW5 = รับทราบ", x=12, y=38, color=COL_DIM, value=20)
     card(12, 64, 300, 274, "ตอนนี้")
     w = {"led": ui.Led(x=28, y=96, w=80, h=80, color=COL_OK)}
     w["name"] = ui.Label(" ", x=124, y=116, color=COL_TEXT, value=28)
-    w["msg"] = ui.Label(" ", x=28, y=204, color=COL_TEXT, value=16)   # นับถอยหลังเสียงซ้ำ / รับทราบแล้ว
+    w["msg"] = ui.Label(" ", x=28, y=204, color=COL_TEXT, value=20)   # นับถอยหลังเสียงซ้ำ / รับทราบแล้ว
     card(322, 64, 458, 274, "สถานะ - สี - รูปแบบ - เสียง")
     for i in range(4):                               # แถวละสถานะ: ชื่อ + คำบนจอไฟ (สีของสถานะ) แล้วบรรทัดรูปแบบ
-        ui.Label(NAMES[i] + "  " + WORDS[i], x=338, y=94 + i * 58, color=COLS[i], value=20)
-        ui.Label(HOW[i], x=338, y=122 + i * 58, color=COL_DIM, value=16)
-    w["help"] = ui.Label("แย่ลง/กลับมาปกติ = ดัง - ดีขึ้นเฉย ๆ = เงียบ", x=12, y=352, color=COL_DIM, value=16)
+        ui.Label(NAMES[i] + "  " + WORDS[i], x=338, y=98 + i * 58, color=COLS[i], value=20)
+        ui.Label(HOW[i], x=338, y=126 + i * 58, color=COL_DIM, value=20)
+    w["help"] = ui.Label("แย่ลง/กลับมาปกติ = ดัง - ดีขึ้นเฉย ๆ = เงียบ", x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 
