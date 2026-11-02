@@ -85,11 +85,11 @@ static const char CROP[] = "ไก่ไข่";
 static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 
 static const char BROKER[] = "broker.hivemq.com";
-/* .py: TOPIC_EVENT = this/TEAM/event, TOPIC_CMD = this/TEAM/cmd */
 static const char ROOT[] = "bento-aiot";
-/* .py: CLIENT_ID = this + TEAM, and a number from the board's clock
- * on every connect: never an old id */
-static const char CLIENT_ID[] = "bento-farm-";
+/* CLIENT_ID = "bento-farm-" + TEAM, + a number from the board's clock
+ * on every connect (never an old id), built in open_broker() */
+/* TOPIC_EVENT = ROOT + "/" + TEAM + "/event", built in main() */
+/* TOPIC_CMD = ROOT + "/" + TEAM + "/cmd", built in main() */
 /* ---- end of settings ---- */
 
 enum { /* timing, in ms */
@@ -929,8 +929,8 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
     bento_status_t status;
 
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, CLIENT_ID,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "bento-farm-%s-%04" PRIx32, TEAM,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
     config.host = BROKER;
     config.host_len = (uint32_t)strlen(BROKER);
