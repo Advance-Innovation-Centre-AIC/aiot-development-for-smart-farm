@@ -48,6 +48,9 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
+/* PEAK_FULL: not used in C because the .py never reads it (32768,
+ * the full scale of a 16-bit sample). */
+
 /* Settings: change them and run again. */
 enum {
     VOLUME = 25,
