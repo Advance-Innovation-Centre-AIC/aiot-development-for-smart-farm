@@ -105,6 +105,7 @@ enum {
     LOG_LINES = 3,    /* the log label's lines */
     TEXT_CHARS = 128, /* a SET_TEXT carries at most 126 bytes */
     CLOCK_CHARS = 36, /* "HH:MM:SS" of any three int32_t */
+    TAIL_CHARS = 20,  /* "ignored " and any int32_t */
     PAUSE_BUTTON = 1, /* SW5, the lower button */
     ASK_BUTTON = 0    /* SW6, the upper button: Ask */
 };
@@ -1047,7 +1048,7 @@ static void count_word(app_t *app, run_t *run, uint32_t klass)
 {
     char stamp[CLOCK_CHARS];
     char line[TEXT_CHARS];
-    char tail[TEXT_CHARS];
+    char tail[TAIL_CHARS];
 
     run->held = klass;
     clock_text(stamp, sizeof(stamp));
