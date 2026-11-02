@@ -140,6 +140,8 @@ enum {
 enum {
     TEXT_BYTES = 128,
     NAME_BYTES = 64,
+    BASE_BYTES = 32,          /* "bento-aiot/teamXX/" and room */
+    CLIENT_PREFIX_BYTES = 24, /* MQTT's 23-byte client id and a NUL */
     KEY_BYTES = 16,
     PAYLOAD_BYTES = 128
 };
@@ -980,8 +982,8 @@ static int32_t seconds_left(int32_t left_ms)
 /* ---- 4) เครือข่าย ---- */
 
 typedef struct {
-    char client_id[NAME_BYTES]; /* without the clock number */
-    char base[NAME_BYTES];      /* bento-aiot/<TEAM>/ */
+    char client_id[CLIENT_PREFIX_BYTES]; /* no clock number yet */
+    char base[BASE_BYTES];               /* bento-aiot/<TEAM>/ */
     char topic_cmd[NAME_BYTES];
 } names_t;
 
