@@ -68,6 +68,8 @@
  *     MicroPython; the C library prints none.
  *   - Stop ends the program quietly at the next sleep, where
  *     MicroPython raises KeyboardInterrupt.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
+ *     yet: the program says so and ends.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -217,6 +219,7 @@ typedef struct {
     bool has_led;
     bool has_matrix;
     bool stopped; /* the original's raise Stop */
+    bool no_mqtt; /* the BENTO Emulator: no MQTT from C yet */
     field_t soil_node;
     field_t tank_node;
     maybe_t pump; /* what the PLC reports: None, 0 or 1 */
@@ -1621,6 +1624,7 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
     config.client_id_len = (uint32_t)strlen(client_id);
     *linked = false;
     status = bento_mqtt_open_start(&config, &farm->broker);
+    farm->no_mqtt = status == BENTO_E_UNSUPPORTED;
     farm->has_broker = status == BENTO_OK;
     if (farm->has_broker) {
         status = wait_for_broker(farm->broker);
@@ -1644,8 +1648,8 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
     int32_t attempt;
 
     *linked = false;
-    for (attempt = 1;
-         (status == BENTO_OK) && !*linked && (attempt <= BROKER_TRIES);
+    for (attempt = 1; (status == BENTO_OK) && !*linked &&
+                      !farm->no_mqtt && (attempt <= BROKER_TRIES);
          attempt++) {
         if (attempt > 1) {
             (void)snprintf(text, sizeof(text),
@@ -1692,7 +1696,8 @@ static bento_status_t connect_gateway(farm_t *farm,
                                   (uint32_t)strlen(topic), 0U,
                                   &granted_qos) == BENTO_OK;
     }
-    if ((status == BENTO_OK) && (*problem == NULL) && !ok) {
+    if ((status == BENTO_OK) && (*problem == NULL) && !farm->no_mqtt &&
+        !ok) {
         *problem = "broker ไม่ตอบ: รอ 1 นาทีแล้วรันใหม่";
     }
     return status;
@@ -2222,6 +2227,20 @@ static bool team_is_set(const char *team)
     return set;
 }
 
+/* The BENTO Emulator answers every MQTT call with E_UNSUPPORTED: say
+ * so on the note line and in the console, then end (the .py has no
+ * offline path). */
+static bento_status_t show_emulator_gap(farm_t *farm)
+{
+    static const char gap_text[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\r\n",
+                 gap_text);
+    return stop_here(farm, gap_text);
+}
+
 static bento_status_t run_gateway(farm_t *farm)
 {
     const char *problem = NULL;
@@ -2242,6 +2261,9 @@ static bento_status_t run_gateway(farm_t *farm)
     }
     if (going_on(status, farm)) {
         status = connect_gateway(farm, &problem);
+    }
+    if (going_on(status, farm) && farm->no_mqtt) {
+        status = show_emulator_gap(farm);
     }
     if (going_on(status, farm) && (problem != NULL)) {
         status = stop_here(farm, problem);
