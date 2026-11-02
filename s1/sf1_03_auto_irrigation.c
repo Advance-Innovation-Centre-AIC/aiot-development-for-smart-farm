@@ -56,11 +56,11 @@ enum {
     CHART_EVERY = 1
 };
 
-/* The flow (ปั๊มไหลกี่ลิตรต่อวินาที, 0.5) lives in count_water():
- * one function reads it (MISRA 8.9). */
+/* FLOW_L_PER_S: edit it at the top of count_water() (flow_l_per_s). */
 static const bool AUTO_AT_START = true;
 
-/* ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
+/* BTN_NAMES: now BUTTON_NAMES (the lint refuses "btn").
+ * ชื่อบนบอร์ด: SW5 = ปุ่มล่าง, SW6 = ปุ่มบน */
 static const char *const BUTTON_NAMES[] = {"SW5", "SW6"};
 
 enum { /* colours, 0xRRGGBB */
