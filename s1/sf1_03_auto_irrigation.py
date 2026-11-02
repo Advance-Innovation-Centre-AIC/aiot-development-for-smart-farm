@@ -162,7 +162,7 @@ def should_run(auto_wants, manual, tank_ok):
 # ---- 4) หน้าจอ ----
 def card(x, y, w, h, title):
     ui.Panel(x=x, y=y, w=w, h=h, color=COL_CARD, min=COL_DIM, max=12, value=1)
-    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=16)
+    ui.Label(title, x=x + 12, y=y + 6, color=COL_INFO, value=20)
 
 
 def line_chart(x, y, w, h, lo, hi, color, parent=None):
@@ -173,52 +173,52 @@ def line_chart(x, y, w, h, lo, hi, color, parent=None):
 
 def build_soil_card(w):
     card(12, 64, 470, 166, "ความชื้นดิน (VR1 = โหนดไร้สาย)")
-    w["bar_soil"] = ui.Bar(x=24, y=94, w=446, h=26, min=0, max=100, value=0)
+    w["bar_soil"] = ui.Bar(x=24, y=100, w=446, h=26, min=0, max=100, value=0)
     w["bar_soil"].color(COL_INFO)
-    ruler = ui.Scale(x=24, y=122, w=446, h=34, color=COL_DIM, min=0, max=100)
+    ruler = ui.Scale(x=24, y=128, w=446, h=34, color=COL_DIM, min=0, max=100)
     ruler.ticks(11, 2)
-    w["lbl_soil"] = ui.Label("-- %", x=24, y=160, color=COL_TEXT, value=20)
-    w["lbl_rule"] = ui.Label("", x=24, y=192, color=COL_WARN, value=16)
+    w["lbl_soil"] = ui.Label("-- %", x=24, y=164, color=COL_TEXT, value=20)
+    w["lbl_rule"] = ui.Label("", x=24, y=196, color=COL_WARN, value=20)
 
 
 def build_pump_card(w):
     card(492, 64, 288, 166, "ปั๊มน้ำ (PLC ต่อ Wi-Fi)")
-    w["led"] = ui.Led(x=504, y=94, w=36, h=36, color=COL_INFO, value=0)
-    w["pump_lbl"] = ui.Label("ปิด", x=552, y=96, color=COL_DIM, value=28)
-    w["switch"] = ui.Switch(x=504, y=142, w=64, h=32, value=1 if AUTO_AT_START else 0)
-    w["mode"] = ui.Label("", x=578, y=146, color=COL_TEXT, value=16)
-    w["stats"] = ui.Label("เปิด 0 ครั้ง  น้ำ 0.0 ลิตร", x=504, y=190, color=COL_DIM, value=16)
+    w["led"] = ui.Led(x=504, y=100, w=36, h=36, color=COL_INFO, value=0)
+    w["pump_lbl"] = ui.Label("ปิด", x=552, y=102, color=COL_DIM, value=28)
+    w["switch"] = ui.Switch(x=504, y=146, w=64, h=32, value=1 if AUTO_AT_START else 0)
+    w["mode"] = ui.Label("", x=578, y=150, color=COL_TEXT, value=20)
+    w["stats"] = ui.Label("เปิด 0 ครั้ง  น้ำ 0.0 ลิตร", x=504, y=194, color=COL_DIM, value=20)
 
 
 def build_chart(w):
     # กราฟ: ฟ้า = ดิน, แดง = เกณฑ์เปิด, เขียว = เกณฑ์ปิด
-    ui.Label("ฟ้า = ดิน   แดง = เกณฑ์เปิด   เขียว = เกณฑ์ปิด", x=12, y=236,
-             color=COL_DIM, value=14)
-    w["chart"] = line_chart(12, 258, 400, 80, 0, 100, COL_INFO)
+    ui.Label("ฟ้า = ดิน   แดง = เกณฑ์เปิด   เขียว = เกณฑ์ปิด", x=12, y=232,
+             color=COL_DIM, value=20)
+    w["chart"] = line_chart(12, 262, 400, 76, 0, 100, COL_INFO)
     w["s_soil"] = 0
     w["s_on"] = w["chart"].add_series(COL_BAD)
     w["s_off"] = w["chart"].add_series(COL_OK)
 
 
 def build_tank_card(w):
-    card(422, 240, 358, 98, "น้ำในถัง (VR3 = เซนเซอร์ระดับน้ำไร้สาย)")
-    w["bar_tank"] = ui.Bar(x=434, y=272, w=334, h=20, min=0, max=100, value=0)
-    w["lbl_tank"] = ui.Label("-- %", x=434, y=300, color=COL_INFO, value=16)
+    card(422, 262, 358, 86, "น้ำในถัง (VR3 = เซนเซอร์ระดับน้ำไร้สาย)")
+    w["bar_tank"] = ui.Bar(x=434, y=298, w=334, h=14, min=0, max=100, value=0)
+    w["lbl_tank"] = ui.Label("-- %", x=434, y=316, color=COL_INFO, value=20)
 
 
 def build_screen():
     ui.screen()
     time.sleep_ms(200)
-    ui.Label("ระบบรดน้ำอัตโนมัติ", x=12, y=6, color=COL_TEXT, value=24)
-    ui.Label("งานจริง: VR1, VR3 = เซนเซอร์ไร้สาย  ไฟปั๊ม = PLC (MQTT)", x=12, y=38,
-             color=COL_DIM, value=16)
+    ui.Label("ระบบรดน้ำอัตโนมัติ", x=12, y=4, color=COL_TEXT, value=24)
+    ui.Label("งานจริง: VR1, VR3 = เซนเซอร์ไร้สาย  ไฟปั๊ม = PLC (MQTT)", x=12, y=34,
+             color=COL_DIM, value=20)
     w = {}
     build_soil_card(w)
     build_pump_card(w)
     build_chart(w)
     build_tank_card(w)
     w["help"] = ui.Label(BTN_NAMES[0] + " (ล่าง) = รดเอง/หยุด   " + BTN_NAMES[1] + " (บน) = ล้างตัวนับ",
-                         x=12, y=352, color=COL_DIM, value=16)
+                         x=12, y=352, color=COL_DIM, value=20)
     ui.poll()
     return w
 

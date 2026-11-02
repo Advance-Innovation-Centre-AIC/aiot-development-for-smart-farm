@@ -116,7 +116,7 @@ enum { /* screen */
     CARD_RADIUS = 12,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    FONT_CARD_TITLE = 16,
+    FONT_CARD_TITLE = 20,
     CHART_POINTS = 400,
     RULER_TICKS = 11,
     TEXT_CHARS = 128,
@@ -591,10 +591,10 @@ static void refresh(bento_ui_t *ui)
 static bento_status_t build_soil_card(farm_screen_t *screen)
 {
     static const box_t card = {12, 64, 470, 166};
-    static const box_t bar = {24, 94, 446, 26};
-    static const box_t ruler = {24, 122, 446, 34};
-    static const label_spec_t value = {"-- %", 24, 160, COL_TEXT, 20};
-    static const label_spec_t rule = {"", 24, 192, COL_WARN, 16};
+    static const box_t bar = {24, 100, 446, 26};
+    static const box_t ruler = {24, 128, 446, 34};
+    static const label_spec_t value = {"-- %", 24, 164, COL_TEXT, 20};
+    static const label_spec_t rule = {"", 24, 196, COL_WARN, 20};
     bento_ui_widget_args_t args;
     bento_ui_id_t scale;
     bento_status_t status =
@@ -624,8 +624,8 @@ static bento_status_t build_soil_card(farm_screen_t *screen)
 
 static bento_status_t add_pump_led_and_label(farm_screen_t *screen)
 {
-    static const box_t led = {504, 94, 36, 36};
-    static const label_spec_t state = {"ปิด", 552, 96, COL_DIM, 28};
+    static const box_t led = {504, 100, 36, 36};
+    static const label_spec_t state = {"ปิด", 552, 102, COL_DIM, 28};
     bento_ui_widget_args_t args;
     bento_status_t status;
 
@@ -641,10 +641,10 @@ static bento_status_t add_pump_led_and_label(farm_screen_t *screen)
 static bento_status_t build_pump_card(farm_screen_t *screen)
 {
     static const box_t card = {492, 64, 288, 166};
-    static const box_t mode_switch = {504, 142, 64, 32};
-    static const label_spec_t mode = {"", 578, 146, COL_TEXT, 16};
+    static const box_t mode_switch = {504, 146, 64, 32};
+    static const label_spec_t mode = {"", 578, 150, COL_TEXT, 20};
     static const label_spec_t stats = {"เปิด 0 ครั้ง  น้ำ 0.0 ลิตร", 504,
-                                       190, COL_DIM, 16};
+                                       194, COL_DIM, 20};
     bento_ui_widget_args_t args;
     bento_status_t status =
         add_card(screen->ui, &card, "ปั๊มน้ำ (PLC ต่อ Wi-Fi)");
@@ -671,9 +671,9 @@ static bento_status_t build_pump_card(farm_screen_t *screen)
 static bento_status_t build_chart(farm_screen_t *screen)
 {
     static const label_spec_t legend = {
-        "ฟ้า = ดิน   แดง = เกณฑ์เปิด   เขียว = เกณฑ์ปิด", 12, 236, COL_DIM,
-        14};
-    static const box_t chart = {12, 258, 400, 80};
+        "ฟ้า = ดิน   แดง = เกณฑ์เปิด   เขียว = เกณฑ์ปิด", 12, 232, COL_DIM,
+        20};
+    static const box_t chart = {12, 262, 400, 76};
     bento_ui_widget_args_t args;
     bento_ui_id_t widget;
     bento_status_t status = add_label(screen->ui, &legend, &widget);
@@ -704,9 +704,9 @@ static bento_status_t build_chart(farm_screen_t *screen)
 
 static bento_status_t build_tank_card(farm_screen_t *screen)
 {
-    static const box_t card = {422, 240, 358, 98};
-    static const box_t bar = {434, 272, 334, 20};
-    static const label_spec_t level = {"-- %", 434, 300, COL_INFO, 16};
+    static const box_t card = {422, 262, 358, 86};
+    static const box_t bar = {434, 298, 334, 14};
+    static const label_spec_t level = {"-- %", 434, 316, COL_INFO, 20};
     bento_status_t status = add_card(
         screen->ui, &card, "น้ำในถัง (VR3 = เซนเซอร์ระดับน้ำไร้สาย)");
 
@@ -721,11 +721,11 @@ static bento_status_t build_tank_card(farm_screen_t *screen)
 
 static bento_status_t add_titles(farm_screen_t *screen)
 {
-    static const label_spec_t title = {"ระบบรดน้ำอัตโนมัติ", 12, 6,
+    static const label_spec_t title = {"ระบบรดน้ำอัตโนมัติ", 12, 4,
                                        COL_TEXT, 24};
     static const label_spec_t subtitle = {
-        "งานจริง: VR1, VR3 = เซนเซอร์ไร้สาย  ไฟปั๊ม = PLC (MQTT)", 12, 38,
-        COL_DIM, 16};
+        "งานจริง: VR1, VR3 = เซนเซอร์ไร้สาย  ไฟปั๊ม = PLC (MQTT)", 12, 34,
+        COL_DIM, 20};
     bento_ui_id_t widget;
     bento_status_t status = add_label(screen->ui, &title, &widget);
 
@@ -738,7 +738,7 @@ static bento_status_t add_titles(farm_screen_t *screen)
 static bento_status_t build_screen(farm_screen_t *screen)
 {
     char text[TEXT_CHARS];
-    const label_spec_t help = {text, 12, 352, COL_DIM, 16};
+    const label_spec_t help = {text, 12, 352, COL_DIM, 20};
     bento_status_t status = bento_ui_screen_default(screen->ui);
 
     if (status == BENTO_OK) {
