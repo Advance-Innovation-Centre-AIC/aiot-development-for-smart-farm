@@ -1022,11 +1022,14 @@ static bento_status_t subscribe_cmd(const farm_t *farm,
 }
 
 /* The BENTO Emulator answers MQTT from C with E_UNSUPPORTED: one
- * label and one console line say so, then the run stops as for a
- * broker that does not answer. */
+ * label (two lines, as the Emulator does not wrap) and one console
+ * line say so, then the run stops as for a broker that does not
+ * answer. */
 static bento_status_t show_emulator_gap(const screen_t *screen)
 {
     static const char notice[] =
+        "MQTT จาก C ยังไม่มีใน BENTO Emulator\nให้รันบน Dev Kit หรือ Eva Kit";
+    static const char console_line[] =
         "MQTT จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva Kit";
     bento_ui_widget_args_t args;
     bento_ui_id_t label = 0U;
@@ -1045,7 +1048,7 @@ static bento_status_t show_emulator_gap(const screen_t *screen)
     (void)printf(
         "%s / MQTT from C is not in the BENTO Emulator yet: run "
         "it on a Dev Kit or Eva Kit.\n",
-        notice);
+        console_line);
     drain_events(screen);
     return status;
 }
