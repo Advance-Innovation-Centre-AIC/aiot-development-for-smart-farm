@@ -51,6 +51,9 @@
  *   - A board without the model link (reTerminal) answers
  *     BENTO_E_UNSUPPORTED to bento_edgeai_init(): the same "no model"
  *     path as an empty edge_ai.models().
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
+ *     yet: the program says so and ends. The line goes up beside the
+ *     .py's own "no model" note, which then follows as before.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -407,15 +410,24 @@ static bento_status_t try_key(model_t *model, const char *key,
 
 /* By name, in MODEL_KEYS order: the order on the board can change
  * after a reboot. No link, or no list, means no model. */
-static bento_status_t find_model(model_t *model)
+static bento_status_t find_model(model_t *model, bool *no_link)
 {
     const uint32_t keys =
         (uint32_t)(sizeof(MODEL_KEYS) / sizeof(MODEL_KEYS[0]));
+    const bento_status_t link = bento_edgeai_init();
+    bool has_link = false;
     int32_t count = 0;
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
-    if ((bento_edgeai_init() != BENTO_OK) ||
+    /* a reTerminal answers init the same way but says "no link" to
+     * the query; only the BENTO Emulator's C runtime refuses both */
+    *no_link = false;
+    if (link == BENTO_E_UNSUPPORTED) {
+        *no_link =
+            bento_edgeai_supported(&has_link) == BENTO_E_UNSUPPORTED;
+    }
+    if ((link != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0;
     }
@@ -1032,6 +1044,25 @@ static bento_status_t finish(voice_t *voice, bento_status_t status)
     return status;
 }
 
+/* Edge AI from C is not in the BENTO Emulator yet: one line on the
+ * screen, clear of everything the .py still shows, and the Console. */
+static bento_status_t show_emulator_gap(voice_t *voice)
+{
+    static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+    static const part_t line = {KIND_LABEL, SLOT_NONE, gap,       180,
+                                240,        20,        COLOR_WARN};
+    const bento_status_t status = add_part(voice, &line);
+
+    if (status == BENTO_OK) {
+        poll_display(voice->ui);
+        (void)printf("%s / Edge AI from C is not in the BENTO Emulator "
+                     "yet: run it on a Dev Kit or Eva Kit.\n",
+                     gap);
+    }
+    return status;
+}
+
 static void report_no_model(const voice_t *voice)
 {
     show_text(voice, SLOT_MODEL, "ไม่พบโมเดล Voice Commands");
@@ -1075,6 +1106,7 @@ static bento_status_t run_with_model(voice_t *voice)
 int main(void)
 {
     voice_t *voice = &g_voice;
+    bool no_link = false;
     bento_status_t status;
 
     (void)memset(voice, 0, sizeof(*voice));
@@ -1087,7 +1119,10 @@ int main(void)
         status = build_screen(voice);
     }
     if (status == BENTO_OK) {
-        status = find_model(&voice->model);
+        status = find_model(&voice->model, &no_link);
+    }
+    if ((status == BENTO_OK) && no_link) {
+        status = show_emulator_gap(voice);
     }
     if ((status == BENTO_OK) && !voice->model.found) {
         report_no_model(voice);
