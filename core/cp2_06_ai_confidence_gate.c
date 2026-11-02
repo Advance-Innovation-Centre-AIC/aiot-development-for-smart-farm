@@ -43,7 +43,12 @@
  *   - ui.tone() and chart points are fire-and-forget in MicroPython,
  *     so their status is ignored here too;
  *   - Stop ends the program at the next sleep and main returns 0,
- *     without the closing line (MicroPython's KeyboardInterrupt).
+ *     without the closing line (MicroPython's KeyboardInterrupt);
+ *   - the Edge AI link is opened after the screen is drawn, where the
+ *     .py first asks edge_ai for its models.
+ * In the BENTO Emulator, Edge AI from C is not available yet: the
+ * program says so, then takes the .py's own "no model" path
+ * ("ไม่พบโมเดล ...") and ends calmly, as the .py does.
  */
 #include <math.h>
 #include <stdbool.h>
@@ -87,6 +92,8 @@ enum {
     MARGIN_X = 12,
     TITLE_Y = 6,
     MODEL_Y = 38,
+    GAP_X = 180, /* right of the title: one 609 px line fits */
+    GAP_Y = 8,
     HELP_Y = 352,
     CARD_RADIUS = 12,
     CARD_BORDER = 1,
@@ -904,6 +911,52 @@ static bento_status_t run_found(const screen_t *screen,
     return status;
 }
 
+/* The BENTO Emulator's C runtime has no Edge AI yet: say so on the
+ * screen and on the console. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap_text[] =
+        "Edge AI จาก C ยังไม่มีใน BENTO "
+        "Emulator ให้รันบน Dev Kit หรือ Eva Kit";
+    const label_spec_t spec = {GAP_X, GAP_Y, FONT_TEXT, COL_WARN};
+    bento_ui_id_t unused;
+
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    return add_label(ui, gap_text, &spec, &unused);
+}
+
+/* Opens the Edge AI link and looks for the model. Where the link is
+ * not there at all (the Emulator), the model counts as not found. */
+static bento_status_t look_for_model(const screen_t *screen,
+                                     const char *key, model_t *model)
+{
+    bento_status_t status = bento_edgeai_init();
+
+    model->found = false;
+    if (status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_gap(screen->ui);
+    } else if (status == BENTO_OK) {
+        find_model(key, model);
+    } else {
+        /* any other failure ends the program, as before */
+    }
+    return status;
+}
+
+/* No built-in model of this name: say so and end calmly. */
+static void show_not_found(const screen_t *screen, const char *key)
+{
+    char text[TEXT_BYTES];
+
+    (void)bento_ui_set_color(screen->ui, screen->model, COL_BAD);
+    (void)snprintf(text, sizeof(text), "ไม่พบโมเดล %s", key);
+    set_text(screen->ui, screen->model, text);
+    poll_screen(screen->ui);
+}
+
 int main(void)
 {
     screen_t screen;
@@ -911,7 +964,6 @@ int main(void)
     /* MODEL_KEY: the name (or part of it) of the built-in model; try
      * "Cough", "Alarm", "Siren" */
     static const char model_key[] = "Motion";
-    char text[TEXT_BYTES];
     bento_status_t status;
 
     (void)memset(&screen, 0, sizeof(screen));
@@ -919,22 +971,16 @@ int main(void)
     screen.ui = bento_runtime_get_ui();
     /* firmware 2.4.1 has no volume and refuses it; the .py skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
-    status = bento_edgeai_init();
+    status = build_screen(&screen);
     if (status == BENTO_OK) {
-        status = build_screen(&screen);
+        status = look_for_model(&screen, model_key, &model);
     }
-    if (status == BENTO_OK) {
-        find_model(model_key, &model);
-        if (model.found) {
-            status = run_found(&screen, &model);
-        } else {
-            /* no built-in model of this name: end calmly */
-            (void)bento_ui_set_color(screen.ui, screen.model, COL_BAD);
-            (void)snprintf(text, sizeof(text), "ไม่พบโมเดล %s",
-                           model_key);
-            set_text(screen.ui, screen.model, text);
-            poll_screen(screen.ui);
-        }
+    if ((status == BENTO_OK) && model.found) {
+        status = run_found(&screen, &model);
+    } else if (status == BENTO_OK) {
+        show_not_found(&screen, model_key);
+    } else {
+        /* the status chain ended earlier */
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }
