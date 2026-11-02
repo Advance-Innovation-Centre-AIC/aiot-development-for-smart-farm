@@ -43,6 +43,9 @@
  *   - A board without the model link (reTerminal) answers
  *     BENTO_E_UNSUPPORTED to bento_edgeai_init(): the same "no model"
  *     path as an empty edge_ai.models().
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available
+ *     yet: the program says so and ends. The line goes up beside the
+ *     .py's own "no model" note, which then follows as before.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -455,15 +458,18 @@ static bento_status_t try_key(model_t *model, const char *key,
 
 /* By name, in MODEL_KEYS order: the order on the board can change
  * after a reboot. No link, or no list, means no model. */
-static bento_status_t find_model(model_t *model)
+static bento_status_t find_model(model_t *model, bool *no_link)
 {
     const uint32_t keys =
         (uint32_t)(sizeof(MODEL_KEYS) / sizeof(MODEL_KEYS[0]));
+    const bento_status_t link = bento_edgeai_init();
     int32_t count = 0;
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
-    if ((bento_edgeai_init() != BENTO_OK) ||
+    /* the BENTO Emulator's C runtime answers this, for now */
+    *no_link = link == BENTO_E_UNSUPPORTED;
+    if ((link != BENTO_OK) ||
         (bento_edgeai_count(&count) != BENTO_OK)) {
         count = 0;
     }
@@ -1228,6 +1234,25 @@ static bento_status_t finish(pump_t *pump, bento_status_t run_status)
     return status;
 }
 
+/* Edge AI from C is not in the BENTO Emulator yet: one line on the
+ * screen, clear of everything the .py still shows, and the Console. */
+static bento_status_t show_emulator_gap(pump_t *pump)
+{
+    static const char gap[] = "Edge AI จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+    static const part_t line = {KIND_LABEL, SLOT_NONE, gap,       180,
+                                240,        20,        COLOR_WARN};
+    const bento_status_t status = add_part(pump, &line);
+
+    if (status == BENTO_OK) {
+        poll_display(pump->ui);
+        (void)printf("%s / Edge AI from C is not in the BENTO Emulator "
+                     "yet: run it on a Dev Kit or Eva Kit.\n",
+                     gap);
+    }
+    return status;
+}
+
 static void report_no_model(const pump_t *pump)
 {
     show_color(pump, SLOT_NOTE, COLOR_BAD);
@@ -1265,6 +1290,7 @@ static bento_status_t run_with_model(pump_t *pump)
 int main(void)
 {
     pump_t *pump = &g_pump;
+    bool no_link = false;
     bento_status_t status;
 
     (void)memset(pump, 0, sizeof(*pump));
@@ -1277,7 +1303,10 @@ int main(void)
         status = build_screen(pump);
     }
     if (status == BENTO_OK) {
-        status = find_model(&pump->model);
+        status = find_model(&pump->model, &no_link);
+    }
+    if ((status == BENTO_OK) && no_link) {
+        status = show_emulator_gap(pump);
     }
     if ((status == BENTO_OK) && !pump->model.found) {
         report_no_model(pump);
