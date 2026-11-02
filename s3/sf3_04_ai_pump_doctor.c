@@ -58,6 +58,7 @@ static const char *const MODEL_KEYS[] = {"AnomalousVibration",
                                          "Motion"};
 /* The danger classes are in is_danger(), the farm words in
  * meaning_of(). */
+/* SENSOR_MIC: now BENTO_EDGEAI_SENSOR_MIC in uses_mic(). */
 
 enum {
     VOLUME = 25,      /* tone loudness 0-127 (about 20 %) */
