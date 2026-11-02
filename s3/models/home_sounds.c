@@ -44,6 +44,8 @@
  *   - With no "water_tap" class, eps[tap] is the last sound's
  *     episode in the .py (index -1): an info episode that never
  *     latches, so ACK and the ACK colour use that one here too.
+ *   - In the BENTO Emulator, Edge AI from C is not available yet:
+ *     the program says so and ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1351,6 +1353,30 @@ static bento_status_t watch_model(app_t *app)
     return status;
 }
 
+/* The BENTO Emulator's C runtime has no Edge AI yet (every
+ * bento_edgeai_* call answers BENTO_E_UNSUPPORTED): say so on the
+ * screen and the console, and end normally. */
+static bento_status_t show_emulator_gap(app_t *app)
+{
+    static const char gap_text[] =
+        "Edge AI จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ "
+        "Eva Kit";
+    static const widget_spec_t gap = {
+        UI_WIDGET_LABEL, SLOT_STATUS, gap_text, 12, 186, AUTO, AUTO,
+        COLOR_WARN,      0,           0,        20};
+    bento_status_t status;
+
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    status = clear_screen(app);
+    if (status == BENTO_OK) {
+        status = add_widget(app, &gap);
+    }
+    return status;
+}
+
 int main(void)
 {
     app_t *app = &g_app;
@@ -1361,10 +1387,15 @@ int main(void)
     app->ui = bento_runtime_get_ui();
     app->has_buttons = bento_buttons_count() > 0U;
     status = bento_edgeai_supported(&supported);
-    if ((status == BENTO_OK) && !supported) {
+    if (status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_gap(app); /* no Edge AI from C there */
+        supported = false;
+    } else if ((status == BENTO_OK) && !supported) {
         status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
+    } else {
+        /* a board with the model link, or a link error that ends it */
     }
-    if (status == BENTO_OK) {
+    if ((status == BENTO_OK) && supported) {
         status = find_model(app) ? watch_model(app) : show_missing(app);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
