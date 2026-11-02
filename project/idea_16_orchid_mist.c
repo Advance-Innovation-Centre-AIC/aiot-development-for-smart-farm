@@ -58,6 +58,8 @@
  *     MicroPython; the C library prints none.
  *   - Stop ends the program quietly at the next sleep, where
  *     MicroPython raises KeyboardInterrupt.
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -133,6 +135,13 @@ enum {
     UNKNOWN_SHOW_MAX = 12, /* letters of an unknown command */
     TEAM_LEN = 6,          /* "team" and two digits */
     TEAM_PREFIX_LEN = 4
+};
+
+enum { /* the BENTO Emulator note, in px: two lines under the cards */
+    GAP_X = 316,
+    GAP_Y = 340,
+    GAP_W = 470,
+    GAP_FONT_PX = 20
 };
 
 /* Buffer sizes, in bytes. */
@@ -1505,10 +1514,36 @@ static bento_status_t open_broker(farm_t *farm, bool *linked)
         (void)bento_mqtt_close(farm->broker); /* the next try opens */
         farm->has_broker = false;
     }
-    if (status != BENTO_E_CANCELLED) {
+    /* E_UNSUPPORTED: the BENTO Emulator, where no try can link */
+    if ((status != BENTO_E_CANCELLED) &&
+        (status != BENTO_E_UNSUPPORTED)) {
         status = BENTO_OK;
     }
     return status;
+}
+
+/* The BENTO Emulator has no MQTT from C yet (every bento_mqtt_* call
+ * answers BENTO_E_UNSUPPORTED): one note on the screen, under the
+ * cards where it hides nothing, and the same on the console. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char note[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t id = 0U;
+
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\r\n",
+                 note);
+    bento_ui_widget_args_init(&args);
+    args.text = note;
+    args.text_len = (uint32_t)strlen(note);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W; /* wraps into two lines */
+    args.color = COL_DRY;
+    args.font_px = GAP_FONT_PX;
+    return bento_ui_label_create(ui, &args, &id);
 }
 
 /* Three tries, a new client id every time. */
@@ -1530,6 +1565,10 @@ static bento_status_t connect_broker(farm_t *farm, bool *linked)
             drain_events(farm->ui);
         }
         status = open_broker(farm, linked);
+    }
+    if (status == BENTO_E_UNSUPPORTED) {
+        /* then the .py's own path: "broker ไม่ตอบ" and the end */
+        status = show_emulator_gap(farm->ui);
     }
     return status;
 }
