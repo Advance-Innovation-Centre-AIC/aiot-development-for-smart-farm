@@ -76,28 +76,33 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า: แก้สามบรรทัดแรกก่อนรัน ---- */
-/* WIFI_SSID and WIFI_PASS are wifi_ssid and wifi_pass in join_wifi();
- * BROKER and the client id prefix are in open_broker(), the topic root
- * in main(): one function reads each (MISRA 8.9). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
 
-static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
-
-/* The mist pump, the thresholds and the times. */
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = "bento-farm-" + TEAM, + a number from the board's clock
+ * on every connect (never an old id), built in open_broker() */
+/* TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd", built in main() */
+/* TOPIC = "bento-aiot/" + TEAM + "/telemetry", built in main() */
 enum {
     PUMP_DEFAULT_S = 10, /* a command without "sec" */
     PUMP_MAX_S = 30,     /* whoever asks 9999 s gets 30 */
-    TANK_MIN =
-        10,      /* mist tank below this: no mist (a dry pump breaks) */
-    RH_DRY = 50, /* demo value: below = dry, mist */
-    RH_WET = 90, /* above = too damp, the roots may rot */
+    TANK_MIN = 10,       /* below this: no mist (a dry pump breaks) */
+    RH_DRY = 50,         /* demo value: below = dry, mist */
+    RH_WET = 90,         /* above = too damp, the roots may rot */
     SEND_MS = 5000,
     POLL_MS = 100,
     LISTEN_MS = 1800000,
     SPEAKER = 40, /* speaker volume, percent */
-    VOLUME = 20   /* an orchid house is quiet: softer than the others */
+    VOLUME = 20   /* an orchid house is quiet: softer than the rest */
 };
+/* ---- end of settings ---- */
+
+static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
 
 /* สีกล้วยไม้: ม่วงกลีบ ชมพู ฟ้าหมอก, 0xRRGGBB */
 enum {
@@ -1427,18 +1432,14 @@ static void show_air(const farm_t *farm, const knobs_t *knobs)
  * timed-out join is False; any other failure ends the program. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    /* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -1485,20 +1486,16 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(farm_t *farm, bool *linked)
 {
-    static const char broker_name[] = "broker.hivemq.com";
-    /* + a number from the board's clock on every connect: never an
-     * old id */
-    static const char client_prefix[] = "bento-farm-";
     char client_id[CLIENT_ID_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "bento-farm-%s-%04" PRIx32, TEAM,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_name;
-    config.host_len = (uint32_t)strlen(broker_name);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1946,7 +1943,6 @@ static bento_status_t run_farm(farm_t *farm)
 
 int main(void)
 {
-    static const char topic_root[] = "bento-aiot";
     farm_t farm = {0};
     bento_status_t status;
 
@@ -1956,10 +1952,10 @@ int main(void)
     farm.shown = -1;
     farm.rh_min = PERCENT; /* lowest and highest since the start */
     farm.rh_max = 0;
-    (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd), "%s/%s/cmd",
-                   topic_root, TEAM);
-    (void)snprintf(farm.topic, sizeof(farm.topic), "%s/%s/telemetry",
-                   topic_root, TEAM);
+    (void)snprintf(farm.topic_cmd, sizeof(farm.topic_cmd),
+                   "bento-aiot/%s/cmd", TEAM);
+    (void)snprintf(farm.topic, sizeof(farm.topic),
+                   "bento-aiot/%s/telemetry", TEAM);
     status = run_farm(&farm);
     if (farm.has_broker) {
         (void)bento_mqtt_close(
