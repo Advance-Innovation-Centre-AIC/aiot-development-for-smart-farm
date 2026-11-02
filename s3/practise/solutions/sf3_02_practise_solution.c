@@ -42,6 +42,7 @@
 #include "bento_runtime.h"
 #include "bento_time.h"
 
+/* PEAK_FULL: not used in C because the .py never reads it */
 /* Settings: change them and run again. */
 enum {
     VOLUME = 25,
