@@ -79,24 +79,21 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* Edit before running: the mission (see MISSIONS below), the team's
- * hotspot and the team. TEAM still teamXX = offline, every message
- * goes to the console. */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* The mission (pump siren barn night voice worker drill, see
+ * MISSIONS below), the team's hotspot (the password has 8 or more
+ * characters) and the team. TEAM still teamXX = offline, every
+ * message goes to the console. The spare broker is
+ * test.mosquitto.org. */
 static const char MISSION[] = "pump";
 static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-/* The hotspot's password is in wifi_up(), the broker in
- * open_broker(). */
-/* Where the other .py settings live:
- * SENSOR_MIC: now BENTO_EDGEAI_SENSOR_MIC in ai_select().
- * K_VIB: now K_VIB_TENTHS (3.0 = 30) below, read by judge_vib().
- * MOVE_VIB: now MOVE_VIB_TENTHS (0.3 = 3) below, read by read_imu().
- * ACK_REARM_MS: now ACKED_REARM_MS below, read by alarm_update().
- * LOOK_TEXT: now the text "LOOK" in wanted_picture().
- * CHECK_TEXT: now the text "OK? SW6" in wanted_picture().
- * MIC_SENS: not used in C because mic.* has no C API (header).
- * QUIET_GAP_MS: not used in C because only the mic's loud rule
- * reads it, and mic.* has no C API (header). */
+static const char BROKER[] = "broker.hivemq.com";
+/* CLIENT_ID = "bento-ai-" + TEAM (+ "-" and 4 new hex digits at each
+ * connect), built in open_broker() */
+/* BASE = "bento-aiot/" + TEAM + "/" (then "ai", "event", "ai/cmd",
+ * "plc/cmd"), built in start_state() */
 
 /* The AI side (counted as sf3_04). */
 enum {
@@ -104,23 +101,31 @@ enum {
     CONFIRM_N = 3,   /* the label must win this many times ... */
     WINDOW_N = 5,    /* ... in this many latest results */
     STALL_MS = 8000, /* no new result this long = "AI silent" */
-    MUTE_MS = 800    /* after the board's own tone, no listening */
+    MUTE_MS = 800,   /* after the board's own tone, no listening */
+    SENSOR_MIC = 2   /* the "sensor" of a model that hears the mic */
 };
+static const char RAIN[] = "rain"; /* night: an event, not an alarm */
 
 /* The rule side. */
 enum {
     SAMPLE_MS = 50, /* one pass of the loop */
     WIN = 20,       /* vibration over this many samples; misses */
-    LEARN_MS = 5000,
-    MIN_BASE_HUNDREDTHS = 5, /* pump: lowest normal, 0.05 m/s^2 */
-    K_VIB_TENTHS = 30,       /* pump: over normal x 3.0 = trouble */
-    COUGH_MAX = 10,          /* barn: this many coughs ... */
-    RATE_MS = 600000,        /* ... in 10 minutes */
-    TAP_S = 30,              /* barn: tap heard this long = left on */
-    MOVE_VIB_TENTHS = 3,     /* worker: moving above 0.3 m/s^2 */
-    STILL_S = 30,            /* worker: still this long = ask */
-    CHECKIN_S = 30,          /* worker: no answer this long = alarm */
-    LOUD_LV = 60             /* mic.level() from here on = loud */
+    LEARN_MS = 5000
+};
+static const bento_real_t MIN_BASE = (bento_real_t)0.05; /* m/s^2 */
+static const bento_real_t K_VIB = (bento_real_t)3.0; /* over normal x */
+enum {
+    MIC_SENS = 3,       /* not used in C: mic.* has no C API */
+    LOUD_LV = 60,       /* mic.level() from here on = loud */
+    QUIET_GAP_MS = 400, /* not used in C: mic.* has no C API */
+    COUGH_MAX = 10,     /* barn: this many coughs ... */
+    RATE_MS = 600000,   /* ... in 10 minutes */
+    TAP_S = 30          /* barn: tap heard this long = left on */
+};
+static const bento_real_t MOVE_VIB = (bento_real_t)0.3; /* worker */
+enum {
+    STILL_S = 30,  /* worker: still this long = ask */
+    CHECKIN_S = 30 /* worker: no answer this long = alarm */
 };
 
 /* The voice mission: the board is the PLC's gateway (item 4.2). */
@@ -139,7 +144,7 @@ enum {
     CMD_MAX = 200,   /* a longer ai/cmd is ignored */
     CMD_GAP_MS = 3000,
     ALARM_REPEAT_MS = 10000, /* 0 = sound once */
-    ACKED_REARM_MS = 10000,
+    ACKED_REARM_MS = 10000,  /* .py: ACK_REARM_MS */
     DRAW_MS = 500,
     MATRIX_MS = 3000, /* send the matrix picture again this often */
     SCROLL_MS = 80,
@@ -150,6 +155,12 @@ enum {
     SW6 = 0, /* button 0 is SW6 (top), 1 is SW5 (bottom) */
     SW5 = 1
 };
+
+/* "model" when the board has no model of the mission. */
+static const char RULE_ONLY[] = "rule-only";
+static const char LOOK_TEXT[] = "LOOK";     /* the matrix at level 1 */
+static const char CHECK_TEXT[] = "OK? SW6"; /* worker: the question */
+/* ---- end of settings ---- */
 
 /* The course palette, 0xRRGGBB. */
 enum {
@@ -263,9 +274,6 @@ static const mission_t MISSIONS[] = {
     {"drill", "ช่างซ่อมโรงเรือน", "สว่านทะลุชิ้นงาน (ผู้สอนสาธิต)",
      "DrillMaterialMic", "", "wood_out plastic_out", RULE_LOUD,
      "STOP DRILL", 1, "ไม่มีโมเดล: ใช้ความดังอย่างเดียว"}};
-
-/* "model" when the board has no model of the mission. */
-static const char RULE_ONLY[] = "rule-only";
 
 /* Who sees trouble; the screen's cells and the level follow it. */
 typedef enum {
@@ -987,7 +995,7 @@ static bento_status_t ai_select(ai_t *ai, uint32_t index,
         bento_edgeai_model_info_init(&info);
         known = bento_edgeai_model_info(index, &info) == BENTO_OK;
         /* the model's sensor: an unreadable row is not the mic */
-        ai->mic = known && (info.sensor == BENTO_EDGEAI_SENSOR_MIC);
+        ai->mic = known && (info.sensor == (uint8_t)SENSOR_MIC);
         read_labels(ai, known ? info.class_count : 0U);
         ai->running = true;
         ai_clear(ai, bento_time_ticks_ms());
@@ -1169,7 +1177,7 @@ static void ai_take(farm_t *farm, const bento_edgeai_result_t *result)
     }
     window_push(&ai->history, hit);
     if (farm->id == MISSION_NIGHT) { /* rain: an event, not an alarm */
-        window_push(&ai->rain, (strcmp(ai->label, "rain") == 0) &&
+        window_push(&ai->rain, (strcmp(ai->label, RAIN) == 0) &&
                                    (ai->conf >= CONF_MIN));
     }
 }
@@ -1292,8 +1300,6 @@ static bento_real_t spread(const bento_real_t *samples, uint32_t count)
 static bool vib_push(vib_t *vib, bento_real_t magnitude,
                      uint32_t now_ms)
 {
-    const bento_real_t min_base =
-        (bento_real_t)MIN_BASE_HUNDREDTHS / (bento_real_t)PERCENT;
     const bool full = (vib->count + 1U) >= (uint32_t)WIN;
 
     if (vib->count == (uint32_t)WIN) {
@@ -1313,7 +1319,7 @@ static bool vib_push(vib_t *vib, bento_real_t magnitude,
             const bento_real_t mean =
                 vib->total / (bento_real_t)vib->learnt;
 
-            vib->base = (mean > min_base) ? mean : min_base;
+            vib->base = (mean > MIN_BASE) ? mean : MIN_BASE;
             vib->has_base = true;
         }
     }
@@ -1324,8 +1330,6 @@ static bool vib_push(vib_t *vib, bento_real_t magnitude,
  * stillness count again. */
 static void read_imu(rules_t *rules, uint32_t now_ms)
 {
-    const bento_real_t move_vib =
-        (bento_real_t)MOVE_VIB_TENTHS / (bento_real_t)TENTHS;
     bento_real_t magnitude = (bento_real_t)0;
 
     if (!read_magnitude(&magnitude)) {
@@ -1334,7 +1338,7 @@ static void read_imu(rules_t *rules, uint32_t now_ms)
         rules->bad_run = 0;
         if (vib_push(&rules->vib, magnitude, now_ms) &&
             (rules->kind == RULE_DURATION) &&
-            (rules->vib.vib > move_vib)) {
+            (rules->vib.vib > MOVE_VIB)) {
             rules->still_ms = now_ms;
         }
     }
@@ -1435,13 +1439,11 @@ static judged_t judge_broken(const rules_t *rules,
 
 static judged_t judge_vib(const vib_t *vib)
 {
-    const bento_real_t k_vib =
-        (bento_real_t)K_VIB_TENTHS / (bento_real_t)TENTHS;
     judged_t judged = {0, RULE_VIB, real_rounded(vib->vib, PERCENT),
                        whole(0)};
 
     if (vib->has_base) {
-        const bento_real_t limit = vib->base * k_vib;
+        const bento_real_t limit = vib->base * K_VIB;
 
         judged.rule = (vib->vib > limit) ? 1 : 0;
         judged.limit = real_rounded(limit, PERCENT);
@@ -1726,8 +1728,6 @@ static bento_status_t wait_join(void)
 /* Joined with an address; only Stop is an error. */
 static bento_status_t wifi_up(bool *up)
 {
-    /* WIFI_PASS: at least 8 characters; never share a file with it */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status = BENTO_OK;
@@ -1737,8 +1737,8 @@ static bento_status_t wifi_up(bool *up)
         bento_wifi_connect_params_init(&params);
         params.ssid = WIFI_SSID;
         params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-        params.pass = wifi_pass;
-        params.pass_len = (uint32_t)strlen(wifi_pass);
+        params.pass = WIFI_PASS;
+        params.pass_len = (uint32_t)strlen(WIFI_PASS);
         params.flags = BENTO_WIFI_F_SAVE_CREDS; /* as the binding */
         status = bento_wifi_connect_start(&params);
         if (status == BENTO_OK) {
@@ -1780,8 +1780,6 @@ static void close_broker(state_t *state)
 /* One try, with a new client id, so an old id never collides. */
 static bento_status_t open_broker(state_t *state, bool *linked)
 {
-    /* BROKER; the spare is test.mosquitto.org (change the app too) */
-    static const char broker[] = "broker.hivemq.com";
     bento_mqtt_config_t config;
     char client_id[NAME_BYTES];
     bento_status_t status;
@@ -1790,8 +1788,8 @@ static bento_status_t open_broker(state_t *state, bool *linked)
         client_id, sizeof(client_id), "bento-ai-%s-%04" PRIx32, TEAM,
         bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -2618,8 +2616,7 @@ static void rule_text(const farm_t *farm, char *text, uint32_t capacity)
     char number[BENTO_FMT_BUF_SIZE];
 
     if (kind == RULE_VIB) {
-        const number_t k_vib = {true, (bento_real_t)K_VIB_TENTHS /
-                                          (bento_real_t)TENTHS};
+        const number_t k_vib = {true, K_VIB};
 
         format_short(number, sizeof(number), k_vib);
         (void)snprintf(text, capacity, "กฎ: ค่าสั่น > ค่าปกติ x %s", number);
@@ -2823,14 +2820,14 @@ static picture_t wanted_picture(const farm_t *farm, uint32_t now_ms)
         want.text = farm->mission->alarm_text;
         want.color = BENTO_RGBMATRIX_RED;
     } else if (state->has_asked) {
-        want.text = "OK? SW6";
+        want.text = CHECK_TEXT;
     } else if (state->has_say &&
                (bento_time_ticks_diff(now_ms, state->say_ms) <
                 VOICE_SHOW_MS)) {
         want.text = state->say_text;
         want.color = state->say_color;
     } else if ((state->level >= 1) && (farm->id != MISSION_VOICE)) {
-        want.text = "LOOK";
+        want.text = LOOK_TEXT;
     } else {
         const int32_t bar = (farm->ai.conf * MATRIX_BAR_MAX) / PERCENT;
 
