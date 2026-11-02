@@ -161,7 +161,7 @@ enum { /* layout, in px */
     CARD_BORDER = 2,
     CARD_TITLE_DX = 12,
     CARD_TITLE_DY = 6,
-    TITLE_PX = 16
+    TITLE_PX = 20 /* Thai on the board is 20 px or more */
 };
 enum {                      /* buffers, in bytes */
     TEXT_BYTES = 128,       /* a SET_TEXT carries at most 126 */
@@ -1144,7 +1144,7 @@ static const widget_spec_t *top_widgets(size_t *count)
          AUTO_PX, AUTO_PX, COL_TEXT, 0, 0, 24},
         {KIND_CARD, SLOT_NONE, "ดัชนีร้อนชื้น THI", 12, 44, 260, 300,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
-        {KIND_SCALE, SLOT_GAUGE, NULL, 42, 74, 200, 200, COL_TEXT,
+        {KIND_SCALE, SLOT_GAUGE, NULL, 42, 78, 200, 200, COL_TEXT,
          THI_LO, THI_HI, 0},
         {KIND_SEG7, SLOT_THI, "--", 24, 284, 110, 48, COL_STRAW, 0, 0,
          0},
@@ -1152,24 +1152,24 @@ static const widget_spec_t *top_widgets(size_t *count)
          COL_DIM, 0, 0, 20},
         {KIND_CARD, SLOT_NONE, "ในเล้า", 282, 44, 300, 190, COL_CARD,
          COL_EDGE, CARD_RADIUS, CARD_BORDER},
-        {KIND_LABEL, SLOT_CROP, "-", 294, 70, AUTO_PX, AUTO_PX, COL_DIM,
-         0, 0, 14},
-        {KIND_LABEL, SLOT_CLIMATE, "-- C  -- %", 294, 94, AUTO_PX,
+        {KIND_LABEL, SLOT_CROP, "-", 294, 78, AUTO_PX, AUTO_PX, COL_DIM,
+         0, 0, 20},
+        {KIND_LABEL, SLOT_CLIMATE, "-- C  -- %", 294, 106, AUTO_PX,
          AUTO_PX, COL_TEXT, 0, 0, 28},
-        {KIND_LABEL, SLOT_MOOD, "...", 294, 136, AUTO_PX, AUTO_PX,
-         COL_WARN, 0, 0, 0},
+        {KIND_LABEL, SLOT_MOOD, "...", 294, 146, AUTO_PX, AUTO_PX,
+         COL_WARN, 0, 0, 20},
         {KIND_LED, SLOT_LED_OK, NULL, 294, 196, 18, 18, COL_OK, 0, 0,
          0},
-        {KIND_LABEL, SLOT_NONE, "สบาย", 318, 196, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_NONE, "สบาย", 318, 192, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_LED_WARN, NULL, 390, 196, 18, 18, COL_WARN, 0,
          0, 0},
-        {KIND_LABEL, SLOT_NONE, "เครียด", 414, 196, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+        {KIND_LABEL, SLOT_NONE, "เครียด", 414, 192, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_LED_BAD, NULL, 486, 196, 18, 18, COL_BAD, 0, 0,
          0},
-        {KIND_LABEL, SLOT_NONE, "หนัก", 510, 196, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14}};
+        {KIND_LABEL, SLOT_NONE, "หนัก", 510, 192, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;
@@ -1181,21 +1181,21 @@ static const widget_spec_t *bottom_widgets(size_t *count)
     static const widget_spec_t widgets[] = {
         {KIND_CARD, SLOT_NONE, "แจ้งคนเลี้ยง", 592, 44, 188, 190, COL_CARD,
          COL_EDGE, CARD_RADIUS, CARD_BORDER},
-        {KIND_LABEL, SLOT_REPLY, "-", 604, 74, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 16},
+        {KIND_LABEL, SLOT_REPLY, "-", 604, 80, AUTO_PX, AUTO_PX,
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_NONE, "VR3 = แดดบนหลังคา\nSW5 = รับทราบ", 604,
-         170, AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 14},
+         170, AUTO_PX, AUTO_PX, COL_DIM, 0, 0, 20},
         {KIND_CARD, SLOT_NONE, "ไก่เครียดสะสม", 282, 244, 420, 100,
          COL_CARD, COL_EDGE, CARD_RADIUS, CARD_BORDER},
         {KIND_BAR, SLOT_STRESS, NULL, 294, 280, 396, 22, 0U, 0,
          STRESS_MAX_S, 0},
         {KIND_LABEL, SLOT_STRESS_TEXT, NULL, 294, 310, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 14},
+         COL_DIM, 0, 0, 20},
         {KIND_LABEL, SLOT_STATUS, "กำลังเริ่ม", 12, 352, AUTO_PX, AUTO_PX,
-         COL_DIM, 0, 0, 0},
+         COL_DIM, 0, 0, 20},
         {KIND_LED, SLOT_MQ, NULL, 606, 12, 18, 18, COL_OK, 0, 0, 0},
         {KIND_LABEL, SLOT_MQ_TEXT, "MQTT: ออฟไลน์", 632, 10, AUTO_PX,
-         AUTO_PX, COL_DIM, 0, 0, 16}};
+         AUTO_PX, COL_DIM, 0, 0, 20}};
 
     *count = sizeof(widgets) / sizeof(widgets[0]);
     return widgets;
