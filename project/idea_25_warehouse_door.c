@@ -10,8 +10,8 @@
  * SW5 หรือสวิตช์บนจอ = เปิด/ปิดเฝ้า SW6 = รับทราบ คนถึงประตู = ไซเรน
  * ซ้ำทุก 5 วินาทีจนมีคนรับทราบ (SW6 หรือ {"cmd":"ack"} จากแอป) บอร์ดส่ง
  * event ทาง MQTT เฉพาะตอนเกิด (armed intruder clear ack) ต่อเน็ตไม่ได้ก็
- * เฝ้าออฟไลน์ต่อ รอบละ 10 นาที ก่อนรันแก้ TEAM ที่หัวไฟล์ และชื่อกับรหัส
- * Hotspot (WIFI_SSID, WIFI_PASS ของ .py) ใน join_wifi()
+ * เฝ้าออฟไลน์ต่อ รอบละ 10 นาที ก่อนรันแก้ WIFI_SSID, WIFI_PASS และ TEAM
+ * ในบล็อกตั้งค่าที่หัวไฟล์
  * เกณฑ์เป็นค่าสาธิต ไม่ใช่ระบบรักษาความปลอดภัยจริง
  *
  * The warehouse door guard. A radar watches the door and tells a
@@ -24,13 +24,13 @@
  * they happen (armed, intruder, clear, ack); without the network
  * the guard keeps watching offline. One round lasts 10 minutes.
  * Dev Kit; in the Emulator VR1 is the distance and Shake is motion.
- * Edit TEAM at the top, and the hotspot name and password (the
- * .py's WIFI_SSID, WIFI_PASS) in join_wifi(), before running.
+ * Edit WIFI_SSID, WIFI_PASS and TEAM in the settings block at the
+ * top before running.
  *
  * Twin of idea_25_warehouse_door.py (aiot-development-for-smart-farm/project/idea_25_warehouse_door.py). Style: CLEAN_C.md.
  * Where C differs:
- *   - THRESH_DB is THRESH_DB_TENTHS (4.0 dB = 40): an enum holds no
- *     real number, and the radar takes tenths of a dB anyway.
+ *   - CLIENT_ID and the topics are "%s" texts filled with TEAM where
+ *     the .py adds TEAM to them ("bento-aiot/" + TEAM + "/cmd").
  *   - json.loads in is_acknowledge(): a small reader of one JSON object
  *     finds "cmd" at its top level and compares its text with "ack";
  *     a nested list or object is skipped by its brackets; text that
@@ -74,27 +74,35 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
-/* WIFI_SSID, WIFI_PASS ของ .py = wifi_ssid, wifi_pass ใน join_wifi()
- * BROKER = broker_host ใน open_broker() · หัวข้อ MQTT = topic_root ใน
- * main() (MISRA 8.9: ค่าที่ฟังก์ชันเดียวอ่านอยู่ในฟังก์ชันนั้น) */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
+static const char WIFI_SSID[] = "<ชื่อ Hotspot ของกลุ่ม>";
+/* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
+static const char WIFI_PASS[] = "<รหัส Hotspot ของกลุ่ม>";
 static const char TEAM[] = "teamXX";
-
-/* Settings: change them and run again. */
+static const char BROKER[] = "broker.hivemq.com";
+/* %s = TEAM; every connect adds "-" and 4 hex digits of the clock */
+static const char CLIENT_ID[] = "bento-farm-%s";
+static const char TOPIC_EVENT[] = "bento-aiot/%s/event"; /* %s = TEAM */
+static const char TOPIC_CMD[] = "bento-aiot/%s/cmd";     /* %s = TEAM */
 enum {
     BEEP_MS = 5000, /* the siren again this often until acknowledged */
     MIN_CM = 30,    /* VR3: the door zone 30-150 cm, the yard twice */
     SPAN_CM = 120,
-    CONFIRM_N = 3,         /* rounds in a row before we believe */
-    THRESH_DB_TENTHS = 40, /* 4.0 dB above the still scene */
-    MAX_CM = 300,          /* far end of the bar (cm) */
-    EXIT_S = 15,           /* seconds for the workers to leave */
+    CONFIRM_N = 3 /* rounds in a row before we believe (1 or more) */
+};
+/* dB above the still scene (0.1-60) */
+static const bento_real_t THRESH_DB = (bento_real_t)4.0;
+enum {
+    MAX_CM = 300, /* far end of the bar (cm) */
+    EXIT_S = 15,  /* seconds for the workers to leave */
     VOLUME = 25,
     SPEAKER = 40,
     RUN_MS = 600000, /* 10 minutes a round */
     SAMPLE_MS = 250, /* read the radar this often */
     TICK_MS = 500    /* redraw this often */
 };
+/* ---- end of settings ---- */
 
 /* สีโรงงาน, 0xRRGGBB */
 enum {
@@ -116,7 +124,6 @@ enum {
     ZONE_POT = 2, /* VR3 */
     POT_FULL = 4095,
     CM_PER_M = 100,
-    TENTHS_PER_DB = 10,
     TONE_MS = 100,
     TONE_GAP_MS = 110,
     NOTE_TAP = 76,  /* the arm switch and an acknowledgement */
@@ -142,12 +149,13 @@ enum {
 
 /* Buffer sizes, in bytes. */
 enum {
-    TEXT_BYTES = 128,     /* a label text: 126 at most */
-    NAME_BYTES = 48,      /* a topic */
-    CLIENT_ID_BYTES = 32, /* the broker takes 23 */
-    PAYLOAD_KEEP = 255,   /* what the MicroPython binding keeps */
-    WORD_BYTES = 8,       /* "ack", and room to see a longer word */
-    NUMBER_BYTES = 12,    /* any int32_t and its NUL */
+    TEXT_BYTES = 128,        /* a label text: 126 at most */
+    NAME_BYTES = 48,         /* a topic */
+    CLIENT_ID_BYTES = 32,    /* the broker takes 23 */
+    CLIENT_SUFFIX_BYTES = 8, /* "-" and 4 hex digits */
+    PAYLOAD_KEEP = 255,      /* what the MicroPython binding keeps */
+    WORD_BYTES = 8,          /* "ack", and room to see a longer word */
+    NUMBER_BYTES = 12,       /* any int32_t and its NUL */
     /* an event with every int32_t at its widest */
     EVENT_BYTES = 128
 };
@@ -361,8 +369,6 @@ static bool read_radar(radar_reading_t *reading)
  * false: the radar did not answer. */
 static bento_status_t calibrate_radar(bool *learned)
 {
-    const float threshold_db =
-        (float)THRESH_DB_TENTHS / (float)TENTHS_PER_DB;
     bento_status_t status = BENTO_OK;
 
     *learned = bento_sensors_radar_config(0.0F) == BENTO_OK;
@@ -370,7 +376,8 @@ static bento_status_t calibrate_radar(bool *learned)
         status = pause_ms(SCENE_SETTLE_MS);
     }
     if ((status == BENTO_OK) && *learned) {
-        *learned = bento_sensors_radar_config(threshold_db) == BENTO_OK;
+        *learned =
+            bento_sensors_radar_config((float)THRESH_DB) == BENTO_OK;
     }
     return status;
 }
@@ -1308,18 +1315,14 @@ static void show_door(door_app_t *app, const radar_reading_t *reading,
  * timed-out join is False; any other failure ends the program. */
 static bento_status_t join_wifi(bool *joined)
 {
-    /* ตั้งเอง: อังกฤษ/ตัวเลขสั้น ๆ ไม่มีเว้นวรรค */
-    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
-    /* อย่างน้อย 8 ตัว · อย่าส่งไฟล์ที่ใส่รหัสจริงให้ใคร */
-    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = wifi_ssid;
-    params.ssid_len = (uint32_t)strlen(wifi_ssid);
-    params.pass = wifi_pass;
-    params.pass_len = (uint32_t)strlen(wifi_pass);
+    params.ssid = WIFI_SSID;
+    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
+    params.pass = WIFI_PASS;
+    params.pass_len = (uint32_t)strlen(WIFI_PASS);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -1366,19 +1369,19 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * start or a broker that does not answer is the next try. */
 static bento_status_t open_broker(door_app_t *app, bool *linked)
 {
-    static const char broker_host[] = "broker.hivemq.com";
-    /* + a number from the board's clock: never an old id */
-    static const char client_prefix[] = "bento-farm-";
-    char client_id[CLIENT_ID_BYTES];
+    char base_id[CLIENT_ID_BYTES];
+    char client_id[CLIENT_ID_BYTES + CLIENT_SUFFIX_BYTES];
     bento_mqtt_config_t config;
     bento_status_t status;
 
+    /* + a number from the board's clock: never an old id */
+    (void)snprintf(base_id, sizeof(base_id), CLIENT_ID, TEAM);
     (void)snprintf(
-        client_id, sizeof(client_id), "%s%s-%04" PRIx32, client_prefix,
-        TEAM, bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
+        client_id, sizeof(client_id), "%s-%04" PRIx32, base_id,
+        bento_time_ticks_ms() & (uint32_t)CLIENT_SUFFIX_MASK);
     bento_mqtt_config_init(&config);
-    config.host = broker_host;
-    config.host_len = (uint32_t)strlen(broker_host);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1931,7 +1934,6 @@ static bento_status_t run_door(door_app_t *app)
 
 int main(void)
 {
-    static const char topic_root[] = "bento-aiot";
     door_app_t app;
     bento_status_t status;
 
@@ -1945,9 +1947,9 @@ int main(void)
     app.guard.exit_running = true;
     app.guard.arm_ms = bento_time_ticks_ms();
     (void)snprintf(app.topic_event, sizeof(app.topic_event),
-                   "%s/%s/event", topic_root, TEAM);
-    (void)snprintf(app.topic_cmd, sizeof(app.topic_cmd), "%s/%s/cmd",
-                   topic_root, TEAM);
+                   TOPIC_EVENT, TEAM);
+    (void)snprintf(app.topic_cmd, sizeof(app.topic_cmd), TOPIC_CMD,
+                   TEAM);
     status = run_door(&app);
     if (app.has_broker) {
         (void)bento_mqtt_close(app.broker); /* the .py ignores it */
