@@ -54,6 +54,8 @@
  *     none of them.
  *   - RESP_MS is named REPLY_MS here (CLEAN_C.md C3 bars "resp").
  *   - The tune table keeps only the tunes this program plays.
+ *   - In the BENTO Emulator, Edge AI/MQTT from C is not available yet:
+ *     the program says so and runs offline, as the .py does.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -214,6 +216,14 @@ typedef struct {
     int16_t y;
 } point_t;
 
+/* Where the Emulator's "no MQTT from C" line sits: on space that shows
+ * nothing at that point of the run. */
+enum {
+    GAP_X = 28,
+    GAP_Y = 300,
+    GAP_W = -1 /* one line */
+};
+
 typedef struct {
     int16_t x;
     int16_t y;
@@ -278,6 +288,7 @@ typedef struct {
     uint32_t request_ms;
     bool down[BUTTON_COUNT];
     bool online;
+    bool no_mqtt; /* the BENTO Emulator: no MQTT from C yet */
 } modbus_t;
 
 /* The one place a layout number narrows to the API's int16_t. */
@@ -900,6 +911,7 @@ static bento_status_t open_broker(modbus_t *app, bool *linked)
         status = wait_broker(app->broker);
     }
     *linked = status == BENTO_OK;
+    app->no_mqtt = status == BENTO_E_UNSUPPORTED;
     if (started && !*linked) {
         (void)bento_mqtt_close(
             app->broker); /* frees it, whatever state */
@@ -915,6 +927,35 @@ static bool subscribe_reply(const modbus_t *app)
     return bento_mqtt_subscribe(app->broker, app->topic_reply,
                                 (uint32_t)strlen(app->topic_reply), 0U,
                                 &granted) == BENTO_OK;
+}
+
+/* The BENTO Emulator's C runtime has no MQTT yet (every bento_mqtt_*
+ * call answers BENTO_E_UNSUPPORTED): say so on screen and in the
+ * console, in bento-ide's words. */
+static bento_status_t show_emulator_gap(bento_ui_t *ui)
+{
+    static const char gap[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                              "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+    bento_status_t status;
+
+    bento_ui_widget_args_init(&args);
+    args.text = gap;
+    args.text_len = (uint32_t)strlen(gap);
+    args.x = GAP_X;
+    args.y = GAP_Y;
+    args.w = GAP_W;
+    args.color = COL_WARN;
+    args.font_px = FONT_THAI;
+    status = bento_ui_label_create(ui, &args, &label);
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\n",
+                 gap);
+    if (status == BENTO_OK) {
+        present(ui);
+    }
+    return status;
 }
 
 /* WiFi, an address, the broker and the answers' topic (subscribed
@@ -934,6 +975,10 @@ static bento_status_t connect_farm(modbus_t *app, const char **problem)
     }
     if ((status == BENTO_OK) && passed) {
         status = open_broker(app, &passed);
+    }
+    /* then the .py's own offline path: the frame-view mode */
+    if ((status == BENTO_OK) && app->no_mqtt) {
+        status = show_emulator_gap(app->screen.ui);
     }
     if ((status == BENTO_OK) && (*problem == NULL)) {
         passed = passed && subscribe_reply(app);
