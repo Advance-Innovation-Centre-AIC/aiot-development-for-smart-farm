@@ -53,6 +53,9 @@
  *   - The Button and Farm classes and the widget dict are structs
  *     kept in main() and passed by pointer; the incoming payload and
  *     the JSON line are file-scope buffers (CLEAN_C.md C9).
+ *   - In the BENTO Emulator, MQTT from C is not available yet: the
+ *     program says so and runs offline, as the .py does when the
+ *     broker cannot be reached.
  */
 #include <inttypes.h>
 #include <math.h>
@@ -197,7 +200,9 @@ enum {
     SEND_W = 150,
     SEND_H = 46,
     JSON_X = 12,
-    JSON_Y = 352
+    JSON_Y = 352,
+    GAP_X = 12, /* the Emulator line, under the JSON line */
+    GAP_Y = 370
 };
 
 /* Colours, 0xRRGGBB. */
@@ -839,6 +844,23 @@ static bento_status_t connect_all(farm_t *farm)
     return step;
 }
 
+/* The BENTO Emulator has no MQTT from C yet: one line on the screen
+ * and on the Console; the farm then runs offline. */
+static void show_emulator_gap(const farm_screen_t *screen)
+{
+    static const char gap_text[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                                   "ให้รันบน Dev Kit หรือ Eva Kit";
+    const rect_t place = {GAP_X, GAP_Y, 0, 0};
+    bento_ui_id_t unused;
+
+    (void)printf("%s / MQTT from C is not in the BENTO Emulator yet: "
+                 "run it on a Dev Kit or Eva Kit.\n",
+                 gap_text);
+    /* a line that cannot be made leaves the farm running offline */
+    (void)add_label(screen->ui, gap_text, &place, COLOR_WARN, TEXT_PX,
+                    &unused);
+}
+
 /* Without a real TEAM nothing connects (client ids would clash).
  * farm->online false is offline; only Stop is an error. */
 static bento_status_t go_online(const farm_screen_t *screen,
@@ -855,6 +877,9 @@ static bento_status_t go_online(const farm_screen_t *screen,
         show_note(screen, "ต่อ WiFi...", COLOR_WARN);
         drain_events(screen->ui); /* the note shows before the wait */
         step = connect_all(farm);
+        if (step == BENTO_E_UNSUPPORTED) {
+            show_emulator_gap(screen);
+        }
         farm->online = step == BENTO_OK;
         (void)snprintf(text, sizeof(text), "ออนไลน์ %s", TEAM);
         show_note(screen, farm->online ? text : OFFLINE,
