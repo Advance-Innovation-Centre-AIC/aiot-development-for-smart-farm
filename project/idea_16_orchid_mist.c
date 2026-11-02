@@ -88,6 +88,11 @@ static const char BROKER[] = "broker.hivemq.com";
  * on every connect (never an old id), built in open_broker() */
 /* TOPIC_CMD = "bento-aiot/" + TEAM + "/cmd", built in main() */
 /* TOPIC = "bento-aiot/" + TEAM + "/telemetry", built in main() */
+/* ---- end of settings ---- */
+
+static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
+
+/* The mist pump, the thresholds and the times. */
 enum {
     PUMP_DEFAULT_S = 10, /* a command without "sec" */
     PUMP_MAX_S = 30,     /* whoever asks 9999 s gets 30 */
@@ -100,9 +105,6 @@ enum {
     SPEAKER = 40, /* speaker volume, percent */
     VOLUME = 20   /* an orchid house is quiet: softer than the rest */
 };
-/* ---- end of settings ---- */
-
-static const char STOP_BUTTON_NAME[] = "SW5"; /* BTN_NAMES[0] */
 
 /* สีกล้วยไม้: ม่วงกลีบ ชมพู ฟ้าหมอก, 0xRRGGBB */
 enum {
