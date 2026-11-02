@@ -45,6 +45,8 @@
  *     gives it back unchanged, so the percent is used as it comes.
  *   - The unused settings K, N, REFRACT_MS and HOLD_MS and the unused
  *     alarm states are left out.
+ *   - In the BENTO Emulator, Edge AI from C is not available yet: the
+ *     program says so and ends.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -1294,6 +1296,48 @@ static bento_status_t watch_model(app_t *app)
     return status;
 }
 
+/* The BENTO Emulator has no Edge AI for C yet (every call answers
+ * BENTO_E_UNSUPPORTED): the card the .py shows where the model is
+ * missing, then one line under it that says why. */
+static bento_status_t show_emulator_gap(app_t *app)
+{
+    enum {
+        GAP_X = 96, /* one line of 609 px ends at 705 */
+        GAP_Y = 304,
+        GAP_PX = 20
+    };
+    static const char gap_text[] =
+        "Edge AI จาก C ยังไม่มีใน BENTO Emulator ให้รันบน Dev Kit หรือ Eva "
+        "Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t gap = 0U;
+    bento_status_t status;
+
+    (void)printf(
+        "%s / Edge AI from C is not in the BENTO Emulator yet: "
+        "run it on a Dev Kit or Eva Kit.\n",
+        gap_text);
+    status = show_not_on_board(app);
+    if (status == BENTO_OK) {
+        bento_ui_widget_args_init(&args);
+        args.text = " ";
+        args.text_len = 1U;
+        args.x = GAP_X;
+        args.y = GAP_Y;
+        args.color = COLOR_WARN;
+        args.font_px = GAP_PX;
+        status = bento_ui_label_create(app->ui, &args, &gap);
+    }
+    if (status == BENTO_OK) {
+        /* CREATE carries 96 bytes, .text() the whole line; a setter's
+         * refusal was ignored before too (modui.c) */
+        (void)bento_ui_set_text(app->ui, gap, gap_text,
+                                (uint32_t)strlen(gap_text));
+        drain_events(app->ui);
+    }
+    return status;
+}
+
 int main(void)
 {
     app_t *app = &g_app;
@@ -1304,12 +1348,15 @@ int main(void)
     app->ui = bento_runtime_get_ui();
     app->has_buttons = bento_buttons_count() > 0U;
     status = bento_edgeai_supported(&supported);
-    if ((status == BENTO_OK) && !supported) {
+    if (status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_gap(app); /* the BENTO Emulator */
+    } else if ((status == BENTO_OK) && !supported) {
         status = BENTO_E_UNSUPPORTED; /* import edge_ai fails */
-    }
-    if (status == BENTO_OK) {
+    } else if (status == BENTO_OK) {
         status =
             find_model(app) ? watch_model(app) : show_not_on_board(app);
+    } else {
+        /* the query failed: its status ends the run */
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }
