@@ -173,7 +173,8 @@ enum {
     VALUE_BYTES = 256, /* a decoded value: never longer than its text */
     WORD_BYTES = 8,    /* the longest command word, and its NUL */
     SAY_BYTES = 24,
-    DO_BYTES = 24, /* "%d.%d" of any int32_t */
+    CUT_BYTES = 49, /* 12 letters of up to 4 bytes, and the NUL */
+    DO_BYTES = 24,  /* "%d.%d" of any int32_t */
     /* the telemetry with every int32_t at its widest */
     REPORT_BYTES = 224
 };
@@ -920,25 +921,48 @@ static void value_text(const command_t *command,
     }
 }
 
-/* text[:keep], counted in whole UTF-8 characters. */
-static void cut_text(char *text, uint32_t keep)
+/* The first byte of a UTF-8 character (not a 10xxxxxx follower). */
+static bool starts_character(uint8_t byte)
 {
     const uint8_t follow_mask = 0xC0U;
     const uint8_t follow = 0x80U;
-    uint32_t count = 0U;
-    uint32_t i = 0U;
-    bool cut = false;
 
-    while (!cut && (text[i] != '\0')) {
-        if (((uint8_t)text[i] & follow_mask) != follow) {
+    return (byte & follow_mask) != follow;
+}
+
+/* The bytes of text[:keep], counted in whole UTF-8 characters, that
+ * fit in cap bytes with the NUL; a character that does not fit whole
+ * is left out. */
+static uint32_t kept_bytes(const char *text, uint32_t keep,
+                           uint32_t cap)
+{
+    uint32_t count = 0U;
+    uint32_t end = 0U;
+    uint32_t i = 0U;
+
+    while ((text[i] != '\0') && (i < (cap - 1U)) && (count <= keep)) {
+        if (starts_character((uint8_t)text[i])) {
+            end = i; /* every byte before i is a whole character */
             count++;
-        }
-        cut = count > keep;
-        if (cut) {
-            text[i] = '\0';
         }
         i++;
     }
+    if ((count <= keep) &&
+        ((text[i] == '\0') || starts_character((uint8_t)text[i]))) {
+        end = i; /* the text or the room ended on a whole character */
+    }
+    return end;
+}
+
+/* text[:keep], counted in whole UTF-8 characters, copied into out
+ * (cap bytes). */
+static void cut_text(const char *text, uint32_t keep, char *out,
+                     uint32_t cap)
+{
+    const uint32_t end = kept_bytes(text, keep, cap);
+
+    (void)memcpy(out, text, end);
+    out[end] = '\0';
 }
 
 static bool number_is_zero(const command_t *command,
@@ -1112,14 +1136,15 @@ static void pump_command(const command_t *command, act_t act,
                          int32_t tank, outcome_t *outcome)
 {
     char shown[VALUE_BYTES];
+    char cut[CUT_BYTES];
 
     if ((act == ACT_LED) && !pump_number_is_zero(command)) {
         value_text(command, &command->fields[FIELD_N], shown,
                    sizeof(shown));
-        cut_text(shown, NUMBER_SHOW_MAX);
+        cut_text(shown, NUMBER_SHOW_MAX, cut, sizeof(cut));
         set_outcome(outcome, DO_DENY, "", COL_WATCH);
         (void)snprintf(outcome->note, sizeof(outcome->note),
-                       "ไม่มีเครื่องที่ %s", shown);
+                       "ไม่มีเครื่องที่ %s", cut);
     } else if (!value_is_true(command, &command->fields[FIELD_ON])) {
         set_outcome(outcome, DO_OFF, "สั่งหยุดเครื่องตีน้ำ", COL_CALM);
     } else if (tank < TANK_MIN) {
@@ -1138,6 +1163,7 @@ static void other_command(const command_t *command, act_t act,
                           outcome_t *outcome)
 {
     char shown[VALUE_BYTES];
+    char cut[CUT_BYTES];
 
     if (act == ACT_BEEP) {
         set_outcome(outcome, DO_BEEP, "เจ้าของบ่อเรียก!", COL_NIGHT);
@@ -1153,10 +1179,10 @@ static void other_command(const command_t *command, act_t act,
     } else if (act == ACT_OTHER) {
         value_text(command, &command->fields[FIELD_CMD], shown,
                    sizeof(shown));
-        cut_text(shown, UNKNOWN_SHOW_MAX);
+        cut_text(shown, UNKNOWN_SHOW_MAX, cut, sizeof(cut));
         set_outcome(outcome, DO_DENY, "", COL_WATCH);
         (void)snprintf(outcome->note, sizeof(outcome->note), "ไม่รู้จัก %s",
-                       shown);
+                       cut);
     } else {
         set_outcome(outcome, DO_NOTHING, "", COL_DIM);
     }
