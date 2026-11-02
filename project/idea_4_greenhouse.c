@@ -77,15 +77,8 @@
 #include "bento_wifi.h"
 
 /* ---- 1) Settings: edit these before running ---- */
-static const char WIFI_SSID[] =
-    "<ชื่อ Hotspot ของกลุ่ม>"; /* short, English or digits */
-static const char WIFI_PASS[] =
-    "<รหัส Hotspot ของกลุ่ม>"; /* 8 or more; share no real one */
+/* WIFI_SSID and WIFI_PASS: edit them at the top of join_wifi(). */
 static const char TEAM[] = "teamXX";
-
-static const char BROKER[] = "broker.hivemq.com";
-static const char ROOT[] = "bento-aiot";
-static const char CLIENT_ID[] = "bento-farm-"; /* + TEAM + a suffix */
 
 /* The valve, the soil and the timing. */
 enum {
@@ -336,9 +329,10 @@ static bento_status_t beep(bento_ui_t *ui, int32_t tune)
         uint32_t count;
     } tune_t;
     static const tune_t tunes[TUNE_COUNT] = {
-        {{76U}, 1U},           {{72U, 79U}, 2U}, {{79U, 72U}, 2U},
-        {{72U, 79U, 84U}, 3U}, {{84U, 76U}, 2U}, {{84U, 76U, 69U}, 3U},
-        {{88U}, 1U},
+        {{76U, 0U, 0U}, 1U},  {{72U, 79U, 0U}, 2U},
+        {{79U, 72U, 0U}, 2U}, {{72U, 79U, 84U}, 3U},
+        {{84U, 76U, 0U}, 2U}, {{84U, 76U, 69U}, 3U},
+        {{88U, 0U, 0U}, 1U},
     };
     const tune_t *chosen = &tunes[tune];
     bento_status_t status = BENTO_OK;
@@ -602,8 +596,8 @@ static void read_word(command_t *command, json_field_t *field)
         const uint32_t length = (uint32_t)strlen(words[i].word);
 
         known = ((command->length - command->at) >= length) &&
-                (memcmp(&command->text[command->at], words[i].word,
-                        length) == 0);
+                (strncmp((const char *)&command->text[command->at],
+                         words[i].word, length) == 0);
         if (known) {
             command->at += length;
             field->kind = words[i].kind;
@@ -679,7 +673,8 @@ static bool text_is(const command_t *command, const json_field_t *field,
 
     return (field->kind == JSON_TEXT) &&
            ((field->end - field->start) == length) &&
-           (memcmp(&command->text[field->start], wanted, length) == 0);
+           (strncmp((const char *)&command->text[field->start], wanted,
+                    length) == 0);
 }
 
 /* The field a key names, NULL for one the program never reads. */
@@ -939,15 +934,19 @@ static void handle_command(const uint8_t *payload, uint32_t length,
 /* wifi.connect(): any refusal is "not joined", Stop is Stop. */
 static bento_status_t join_wifi(bool *joined)
 {
+    /* edit these two: short, English or digits; 8 or more, share no
+     * real one */
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -990,6 +989,9 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * the broker never clashes with it. */
 static bento_status_t try_broker(valve_t *valve, bool *linked)
 {
+    static const char broker[] = "broker.hivemq.com";
+    static const char client_base[] =
+        "bento-farm-"; /* + TEAM + a suffix */
     char client_id[CLIENT_BYTES];
     bento_mqtt_config_t config;
     const uint32_t suffix =
@@ -997,10 +999,10 @@ static bento_status_t try_broker(valve_t *valve, bool *linked)
     bento_status_t status;
 
     (void)snprintf(client_id, sizeof(client_id), "%s%s-%04" PRIx32,
-                   CLIENT_ID, TEAM, suffix);
+                   client_base, TEAM, suffix);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -1681,6 +1683,7 @@ static bento_status_t run(const screen_t *screen, valve_t *valve)
 
 int main(void)
 {
+    static const char root[] = "bento-aiot";
     screen_t screen;
     valve_t valve;
     bento_status_t status;
@@ -1689,9 +1692,9 @@ int main(void)
     (void)memset(&valve, 0, sizeof(valve));
     screen.ui = bento_runtime_get_ui();
     (void)snprintf(valve.topic_cmd, sizeof(valve.topic_cmd),
-                   "%s/%s/cmd", ROOT, TEAM);
+                   "%s/%s/cmd", root, TEAM);
     (void)snprintf(valve.topic, sizeof(valve.topic), "%s/%s/telemetry",
-                   ROOT, TEAM);
+                   root, TEAM);
     /* a build without sound refuses it, as hasattr() skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
     status = build_screen(&screen);

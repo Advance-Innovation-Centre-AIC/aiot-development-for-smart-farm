@@ -78,22 +78,14 @@
 #include "bento_wifi.h"
 
 /* ---- 1) Settings: edit these before running ---- */
-static const char WIFI_SSID[] =
-    "<ชื่อ Hotspot ของกลุ่ม>"; /* short, English or digits */
-static const char WIFI_PASS[] =
-    "<รหัส Hotspot ของกลุ่ม>"; /* 8 or more; share no real one */
+/* WIFI_SSID and WIFI_PASS: edit them at the top of join_wifi(). */
+/* CROP: edit it at the top of run(). */
+/* TEMP_OFFSET: edit it at the top of read_climate(). */
 static const char TEAM[] = "teamXX";
-static const char CROP[] = "ผักสด";
-/* the board reads above the room: an offset such as -7.0 */
-static const bento_real_t TEMP_OFFSET = (bento_real_t)0.0;
 /* The demo trip: farm to market in about 10 minutes. */
 enum {
     ETA_MIN = 10
 };
-
-static const char BROKER[] = "broker.hivemq.com";
-static const char ROOT[] = "bento-aiot";
-static const char CLIENT_ID[] = "bento-farm-"; /* + TEAM + a suffix */
 
 /* Thai name, English code, temperature and humidity limits. A 27 C
  * room is normal; VR3 half way (+5) is hot. */
@@ -364,9 +356,9 @@ static bento_status_t beep(bento_ui_t *ui, int32_t tune)
         uint32_t count;
     } tune_t;
     static const tune_t tunes[TUNE_COUNT] = {
-        {{76U}, 1U},
+        {{76U, 0U, 0U}, 1U},
         {{72U, 79U, 84U}, 3U},
-        {{84U, 76U}, 2U},
+        {{84U, 76U, 0U}, 2U},
         {{84U, 76U, 69U}, 3U},
     };
     const tune_t *chosen = &tunes[tune];
@@ -412,12 +404,14 @@ static bento_status_t read_sun(int32_t *sun_c)
 /* Any failed read is "no reading": the next round tries again. */
 static bool read_climate(reading_t *reading)
 {
+    /* the board reads above the room: an offset such as -7.0 */
+    const bento_real_t temp_offset = (bento_real_t)0.0;
     float temp_c = 0.0F;
     float rh = 0.0F;
     bool read = bento_sensors_sht40_temperature(&temp_c) == BENTO_OK;
 
     read = read && (bento_sensors_sht40_humidity(&rh) == BENTO_OK);
-    reading->temp_c = (bento_real_t)temp_c + TEMP_OFFSET;
+    reading->temp_c = (bento_real_t)temp_c + temp_offset;
     reading->rh = (bento_real_t)rh;
     return read;
 }
@@ -541,15 +535,19 @@ static void format_tenths(char *text, bento_real_t value)
 /* wifi.connect(): any refusal is "not joined", Stop is Stop. */
 static bento_status_t join_wifi(bool *joined)
 {
+    /* edit these two: short, English or digits; 8 or more, share no
+     * real one */
+    static const char wifi_ssid[] = "<ชื่อ Hotspot ของกลุ่ม>";
+    static const char wifi_pass[] = "<รหัส Hotspot ของกลุ่ม>";
     bento_wifi_connect_params_t params;
     uint32_t address = 0U;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = WIFI_SSID;
-    params.ssid_len = (uint32_t)strlen(WIFI_SSID);
-    params.pass = WIFI_PASS;
-    params.pass_len = (uint32_t)strlen(WIFI_PASS);
+    params.ssid = wifi_ssid;
+    params.ssid_len = (uint32_t)strlen(wifi_ssid);
+    params.pass = wifi_pass;
+    params.pass_len = (uint32_t)strlen(wifi_pass);
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
     if (status == BENTO_OK) {
@@ -592,6 +590,9 @@ static bento_status_t wait_for_broker(uint32_t broker)
  * the broker never clashes with it. */
 static bento_status_t try_broker(watch_t *watch, bool *linked)
 {
+    static const char broker[] = "broker.hivemq.com";
+    static const char client_base[] =
+        "bento-farm-"; /* + TEAM + a suffix */
     char client_id[CLIENT_BYTES];
     bento_mqtt_config_t config;
     const uint32_t suffix =
@@ -599,10 +600,10 @@ static bento_status_t try_broker(watch_t *watch, bool *linked)
     bento_status_t status;
 
     (void)snprintf(client_id, sizeof(client_id), "%s%s-%04" PRIx32,
-                   CLIENT_ID, TEAM, suffix);
+                   client_base, TEAM, suffix);
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = broker;
+    config.host_len = (uint32_t)strlen(broker);
     config.port = (uint16_t)BROKER_PORT;
     config.keepalive_s = (uint16_t)KEEPALIVE_S;
     config.client_id = client_id;
@@ -892,9 +893,10 @@ static void show_trip(const screen_t *screen, int32_t elapsed_ms)
 {
     char line[TEXT_BYTES];
     const int32_t seconds = elapsed_ms / MS_PER_S;
-    const int32_t travelled =
-        (seconds * PERCENT) / (ETA_MIN * S_PER_MIN);
-    const int32_t left_min = ETA_MIN - (seconds / S_PER_MIN);
+    const int32_t travelled = (seconds * (int32_t)PERCENT) /
+                              ((int32_t)ETA_MIN * (int32_t)S_PER_MIN);
+    const int32_t left_min =
+        (int32_t)ETA_MIN - (seconds / (int32_t)S_PER_MIN);
 
     (void)snprintf(line, sizeof(line), "%02" PRId32 ".%02" PRId32,
                    (seconds / S_PER_MIN) % CLOCK_MIN_WRAP,
@@ -1038,10 +1040,12 @@ static bool send_delivered(const watch_t *watch, bool by_button,
                            int32_t trip_min)
 {
     char json[JSON_BYTES];
-    char temp_c[BENTO_FMT_BUF_SIZE] = "null";
+    char temp_c[BENTO_FMT_BUF_SIZE];
 
     if (watch->has_reading) {
         format_real(temp_c, round_tenth(watch->temp_c));
+    } else {
+        (void)snprintf(temp_c, sizeof(temp_c), "null");
     }
     (void)snprintf(json, sizeof(json),
                    "{\"id\": \"%s\", \"event\": \"delivered\", \"by\": "
@@ -1239,8 +1243,8 @@ static void read_word(command_t *command)
         const uint32_t length = (uint32_t)strlen(words[i]);
 
         known = ((command->length - command->at) >= length) &&
-                (memcmp(&command->text[command->at], words[i],
-                        length) == 0);
+                (strncmp((const char *)&command->text[command->at],
+                         words[i], length) == 0);
         if (known) {
             command->at += length;
         }
@@ -1295,7 +1299,8 @@ static bool text_is(const command_t *command, const json_field_t *field,
     const uint32_t length = (uint32_t)strlen(wanted);
 
     return field->is_text && ((field->end - field->start) == length) &&
-           (memcmp(&command->text[field->start], wanted, length) == 0);
+           (strncmp((const char *)&command->text[field->start], wanted,
+                    length) == 0);
 }
 
 /* One "key": value pair; the value lands in the field it names. */
@@ -1618,7 +1623,8 @@ static int32_t find_crop(const char *name)
 /* From the settings check to the end of the watch. */
 static bento_status_t run(screen_t *screen, watch_t *watch)
 {
-    const int32_t crop = find_crop(CROP);
+    static const char crop_name[] = "ผักสด"; /* CROP: one of CROPS */
+    const int32_t crop = find_crop(crop_name);
     const char *problem = NULL;
     bento_status_t status = BENTO_OK;
 
@@ -1647,6 +1653,7 @@ static bento_status_t run(screen_t *screen, watch_t *watch)
 
 int main(void)
 {
+    static const char root[] = "bento-aiot";
     screen_t screen;
     watch_t watch;
     bento_status_t status;
@@ -1655,9 +1662,9 @@ int main(void)
     (void)memset(&watch, 0, sizeof(watch));
     screen.ui = bento_runtime_get_ui();
     (void)snprintf(watch.topic_event, sizeof(watch.topic_event),
-                   "%s/%s/event", ROOT, TEAM);
+                   "%s/%s/event", root, TEAM);
     (void)snprintf(watch.topic_cmd, sizeof(watch.topic_cmd),
-                   "%s/%s/cmd", ROOT, TEAM);
+                   "%s/%s/cmd", root, TEAM);
     /* a build without sound refuses it, as hasattr() skips it */
     (void)bento_ui_sfx_volume_set(screen.ui, SPEAKER);
     status = build_screen(&screen);
